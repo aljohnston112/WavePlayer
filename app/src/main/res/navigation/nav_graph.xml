@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/FragmentTitle">
+
+    <fragment
+        android:id="@+id/FragmentTitle"
+        android:name="com.example.waveplayer.FragmentTitle"
+        android:label="@string/first_fragment_label"
+        tools:layout="@layout/fragment_title">
+
+        <action
+            android:id="@+id/action_FragmentTitle_to_FragmentSettings"
+            app:destination="@id/FragmentSettings" />
+        <action
+            android:id="@+id/action_FragmentTitle_to_FragmentPlaylists"
+            app:destination="@id/FragmentPlaylists" />
+        <action
+            android:id="@+id/action_FragmentTitle_to_fragmentSongs"
+            app:destination="@id/fragmentSongs" />
+    </fragment>
+    <fragment
+        android:id="@+id/FragmentSettings"
+        android:name="com.example.waveplayer.FragmentSettings"
+        android:label="@string/second_fragment_label"
+        tools:layout="@layout/fragment_settings"/>
+    <fragment
+        android:id="@+id/FragmentPlaylists"
+        android:name="com.example.waveplayer.FragmentPlaylists"
+        android:label="fragment_item_list"
+        tools:layout="@layout/fragment_playlist_list" />
+    <fragment
+        android:id="@+id/fragmentSongs"
+        android:name="com.example.waveplayer.FragmentSongs"
+        android:label="fragment_songs_list"
+        tools:layout="@layout/fragment_song_list" />
+</navigation>
