@@ -30,10 +30,17 @@
         android:id="@+id/FragmentPlaylists"
         android:name="com.example.waveplayer.FragmentPlaylists"
         android:label="fragment_item_list"
-        tools:layout="@layout/fragment_playlist_list" />
+        tools:layout="@layout/fragment_playlist_list" >
+        <argument android:name="ListPlaylists"
+            app:argType="java.util.ArrayList" />
+    </fragment>
     <fragment
         android:id="@+id/fragmentSongs"
         android:name="com.example.waveplayer.FragmentSongs"
         android:label="fragment_songs_list"
-        tools:layout="@layout/fragment_song_list" />
+        tools:layout="@layout/fragment_song_list" >
+        <argument
+            android:name="ListSongs"
+            app:argType="java.util.ArrayList" />
+    </fragment>
 </navigation>

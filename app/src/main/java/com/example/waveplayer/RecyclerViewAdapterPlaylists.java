@@ -1,29 +1,34 @@
 package com.example.waveplayer;
 
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.example.waveplayer.dummy.DummyContent.DummyItem;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
 /**
- * {@link RecyclerView.Adapter} that can display a {@link DummyItem}.
- * TODO: Replace the implementation with code for your data type.
+ * {@link RecyclerView.Adapter} that can display a {@link WaveURI}.
  */
 public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerViewAdapterPlaylists.ViewHolder> {
 
-    private final List<DummyItem> mValues;
+    private final List<WaveURI> waveURIS;
 
-    public RecyclerViewAdapterPlaylists(List<DummyItem> items) {
-        mValues = items;
+    public RecyclerViewAdapterPlaylists(List<WaveURI> items) {
+        waveURIS = items;
+    }
+
+    public void addPlaylists(List<WaveURI> items){
+        for(WaveURI waveURI : items){
+            this.waveURIS.add(waveURI);
+        }
     }
 
     @Override
+    @NonNull
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.fragment_playlist, parent, false);
@@ -32,32 +37,30 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        holder.mItem = mValues.get(position);
-        holder.mIdView.setText(mValues.get(position).id);
-        holder.mContentView.setText(mValues.get(position).content);
+        holder.waveURI = waveURIS.get(position);
+        holder.textViewPlaylistName.setText(waveURIS.get(position).name);
     }
 
     @Override
     public int getItemCount() {
-        return mValues.size();
+        return waveURIS.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
-        public final TextView mIdView;
-        public final TextView mContentView;
-        public DummyItem mItem;
+        public final TextView textViewPlaylistName;
+        public WaveURI waveURI;
 
         public ViewHolder(View view) {
             super(view);
             mView = view;
-            mIdView = (TextView) view.findViewById(R.id.item_number);
-            mContentView = (TextView) view.findViewById(R.id.content);
+            textViewPlaylistName = (TextView) view.findViewById(R.id.text_view_playlist_name);
         }
 
         @Override
+        @NonNull
         public String toString() {
-            return super.toString() + " '" + mContentView.getText() + "'";
+            return super.toString() + " '" + textViewPlaylistName.getText() + "'";
         }
     }
 }
