@@ -54,7 +54,7 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
         return audioURIS.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnCreateContextMenuListener{
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnCreateContextMenuListener {
 
         public final View mView;
         public final TextView textViewSongName;

@@ -14,6 +14,8 @@ public class RandomPlaylist implements Serializable {
 
     private static final long serialVersionUID = 2323326608918863420L;
 
+    private String name;
+
     // The ProbFun that randomly picks the media to play
     private ProbFunTree<AudioURI> probabilityFunction;
 
@@ -24,12 +26,13 @@ public class RandomPlaylist implements Serializable {
      * @throws IllegalArgumentException if there is not at least one AudioURI in music.
      * @throws IllegalArgumentException if folder is not a directory.
      */
-    public RandomPlaylist(List<AudioURI> music, double maxPercent) {
+    public RandomPlaylist(List<AudioURI> music, double maxPercent, String name) {
         if (music.isEmpty())
             throw new IllegalArgumentException("List music must contain at least one AudioURI");
         Set<AudioURI> files = new HashSet<>(music);
         int layers = 1;
         probabilityFunction = new ProbFunTree<>(files, layers, maxPercent);
+        this.name = name;
     }
 
     /**
@@ -37,6 +40,10 @@ public class RandomPlaylist implements Serializable {
      */
     public ProbFunTree<AudioURI> getProbFun() {
         return probabilityFunction;
+    }
+
+    public String getName(){
+        return name;
     }
 
 }

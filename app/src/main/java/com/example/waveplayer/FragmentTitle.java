@@ -2,6 +2,7 @@ package com.example.waveplayer;
 
 import android.Manifest;
 import android.content.ContentUris;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -37,26 +38,29 @@ public class FragmentTitle extends Fragment {
 
     List<AudioURI> audioList = new ArrayList<>();
 
+    List<RandomPlaylist> randomPlaylists = new ArrayList<>();
+
     @Override
-    public View onCreateView(
-            LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState
-    ) {
-        FloatingActionButton fab = Objects.requireNonNull(getActivity()).findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @RequiresApi(api = Build.VERSION_CODES.M)
-            @Override
-            public void onClick(View view) {
-                if(Objects.requireNonNull(getActivity()).checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
-                        != PackageManager.PERMISSION_GRANTED){
-                    requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
-                } else {
-                    try {
-                        getWaveFiles();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (Objects.requireNonNull(getActivity()).checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
+            } else {
+                try {
+                    getWaveFiles();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
+            }
+        } else {
+            try {
+                getWaveFiles();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
                 /*
                 Intent folderOpenIntent = new Intent();
                 folderOpenIntent.setAction(Intent.ACTION_OPEN_DOCUMENT_TREE);
@@ -64,8 +68,14 @@ public class FragmentTitle extends Fragment {
                     startActivityForResult(folderOpenIntent, OPEN_FOLDER);
                 }
                  */
-            }
-        });
+    }
+
+    @Override
+    public View onCreateView(
+            LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        FloatingActionButton fab = Objects.requireNonNull(getActivity()).findViewById(R.id.fab);
+        fab.hide();
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_title, container, false);
     }
@@ -77,7 +87,7 @@ public class FragmentTitle extends Fragment {
             @Override
             public void onClick(View view) {
                 FragmentTitleDirections.ActionFragmentTitleToFragmentPlaylists action =
-                        actionFragmentTitleToFragmentPlaylists((ArrayList) audioList);
+                        actionFragmentTitleToFragmentPlaylists((ArrayList) randomPlaylists);
                 NavHostFragment.findNavController(FragmentTitle.this)
                         .navigate(action);
             }
@@ -87,7 +97,7 @@ public class FragmentTitle extends Fragment {
             @Override
             public void onClick(View view) {
                 FragmentTitleDirections.ActionFragmentTitleToFragmentSongs action =
-                    actionFragmentTitleToFragmentSongs((ArrayList) audioList);
+                        actionFragmentTitleToFragmentSongs((ArrayList) audioList);
                 NavHostFragment.findNavController(FragmentTitle.this)
                         .navigate(action);
             }
@@ -107,7 +117,7 @@ public class FragmentTitle extends Fragment {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if(requestCode == REQUEST_PERMISSION && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if (requestCode == REQUEST_PERMISSION && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             try {
                 getWaveFiles();
             } catch (IOException e) {
@@ -117,7 +127,7 @@ public class FragmentTitle extends Fragment {
     }
 
     private void getWaveFiles() throws IOException {
-        String[] projection = new String[] {MediaStore.Audio.Media.DISPLAY_NAME,
+        String[] projection = new String[]{MediaStore.Audio.Media.DISPLAY_NAME,
                 MediaStore.Audio.Media.MIME_TYPE,
                 MediaStore.Audio.Media.IS_MUSIC,
                 MediaStore.Audio.Media._ID,
@@ -135,7 +145,7 @@ public class FragmentTitle extends Fragment {
          */
         String selection = MediaStore.Audio.Media.IS_MUSIC +
                 " != ?";
-        String[] selectionArgs = new String[] {
+        String[] selectionArgs = new String[]{
                 "0"
         };
         String sortOrder = MediaStore.Video.Media.DISPLAY_NAME + " ASC";
@@ -146,7 +156,7 @@ public class FragmentTitle extends Fragment {
                 selectionArgs,
                 sortOrder
         )) {
-            if(cursor != null) {
+            if (cursor != null) {
                 int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
                 int mimeTypeCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE);
                 int idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);

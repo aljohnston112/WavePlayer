@@ -1,5 +1,6 @@
 package com.example.waveplayer;
 
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,21 +15,24 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 /**
- * {@link RecyclerView.Adapter} that can display a {@link AudioURI}.
+ * {@link RecyclerView.Adapter} that can display a {@link RandomPlaylist}.
  */
 public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerViewAdapterPlaylists.ViewHolder> {
 
-    private final List<AudioURI> audioURISES;
+    private final List<RandomPlaylist> randomPlaylists;
 
     private final Fragment fragment;
 
-    public RecyclerViewAdapterPlaylists(List<AudioURI> items, Fragment fragment) {
-        audioURISES = items;
+    public static final int MENU_DELETE_PLAYLIST_GROUP_ID = 3357909;
+    public static final int MENU_EDIT_PLAYLIST_GROUP_ID = 3357910;
+
+    public RecyclerViewAdapterPlaylists(List<RandomPlaylist> items, Fragment fragment) {
+        randomPlaylists = items;
         this.fragment = fragment;
     }
 
-    public void addPlaylists(List<AudioURI> items){
-        this.audioURISES.addAll(items);
+    public void addPlaylists(List<RandomPlaylist> items){
+        this.randomPlaylists.addAll(items);
     }
 
     @Override
@@ -41,19 +45,19 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        holder.audioURI = audioURISES.get(position);
-        holder.textViewPlaylistName.setText(audioURISES.get(position).title);
+        holder.randomPlaylist = randomPlaylists.get(position);
+        holder.textViewPlaylistName.setText(randomPlaylists.get(position).getName());
     }
 
     @Override
     public int getItemCount() {
-        return audioURISES.size();
+        return randomPlaylists.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnCreateContextMenuListener {
         public final View mView;
         public final TextView textViewPlaylistName;
-        public AudioURI audioURI;
+        public RandomPlaylist randomPlaylist;
 
         public ViewHolder(View view) {
             super(view);
@@ -85,5 +89,13 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
         public String toString() {
             return super.toString() + " '" + textViewPlaylistName.getText() + "'";
         }
+
+        @Override
+        public void onCreateContextMenu(ContextMenu contextMenu, View view,
+                                        ContextMenu.ContextMenuInfo contextMenuInfo) {
+            contextMenu.add(MENU_DELETE_PLAYLIST_GROUP_ID, getAdapterPosition(), 0, "Add to playlist");
+            //groupId, itemId, order, title
+        }
+
     }
 }

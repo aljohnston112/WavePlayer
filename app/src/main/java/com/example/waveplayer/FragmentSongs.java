@@ -73,7 +73,6 @@ public class FragmentSongs extends Fragment {
                         (RecyclerViewAdapterSongs.ViewHolder)recyclerView.getChildViewHolder(
                                 recyclerView.getChildAt(item.getItemId()));
                 AudioURI audioURI = viewHolder.audioURI;
-
                 return true;
             default:
                 return super.onContextItemSelected(item);
