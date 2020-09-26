@@ -7,12 +7,14 @@ import android.os.Bundle;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatTextView;
 import androidx.appcompat.widget.Toolbar;
 
 import android.provider.DocumentsContract;
+import android.view.View;
+import android.view.ViewGroup;
 
-import android.view.Menu;
-import android.view.MenuItem;
+import java.util.ArrayList;
 
 public class ActivityMain extends AppCompatActivity {
 
@@ -24,6 +26,8 @@ public class ActivityMain extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        toolbar.setTitleTextColor(getResources().getColor(R.color.colorOnPrimary));
+        centerTitle();
     }
 
     @Override
@@ -47,25 +51,31 @@ public class ActivityMain extends AppCompatActivity {
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
+    private void centerTitle() {
+        ArrayList<View> textViews = new ArrayList<>();
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+        getWindow().getDecorView().findViewsWithText(textViews, getTitle(), View.FIND_VIEWS_WITH_TEXT);
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        if(textViews.size() > 0) {
+            AppCompatTextView appCompatTextView = null;
+            if(textViews.size() == 1) {
+                appCompatTextView = (AppCompatTextView) textViews.get(0);
+            } else {
+                for(View v : textViews) {
+                    if(v.getParent() instanceof Toolbar) {
+                        appCompatTextView = (AppCompatTextView) v;
+                        break;
+                    }
+                }
+            }
+
+            if(appCompatTextView != null) {
+                ViewGroup.LayoutParams params = appCompatTextView.getLayoutParams();
+                params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                appCompatTextView.setLayoutParams(params);
+                appCompatTextView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+            }
         }
-
-        return super.onOptionsItemSelected(item);
     }
+
 }

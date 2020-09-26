@@ -3,6 +3,8 @@ package com.example.waveplayer;
 import android.content.Context;
 import android.os.Bundle;
 
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -43,6 +45,8 @@ public class FragmentPlaylist extends Fragment {
         if(getArguments() != null) {
             // TODO
             //arrayList = FragmentSongsArgs.fromBundle(getArguments()).getListSongs();
+            // ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
+            // actionBar.setTitle(playlist name);
         }
 
         RecyclerView recyclerView = (RecyclerView)
