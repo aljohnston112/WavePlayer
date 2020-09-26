@@ -6,6 +6,7 @@ import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,23 +16,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * {@link RecyclerView.Adapter} that can display a {@link WaveURI}.
+ * {@link RecyclerView.Adapter} that can display a {@link AudioURI}.
  */
 public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewAdapterSongs.ViewHolder> {
 
-    private final List<WaveURI> waveURIS;
+    private final List<AudioURI> audioURIS;
 
     private final Fragment fragment;
 
-    public RecyclerViewAdapterSongs(ArrayList<WaveURI> items, Fragment fragment) {
-        waveURIS = items;
+    public static final int MENU_ADD_TO_PLAYLIST_GROUP_ID = 3357908;
+
+    public RecyclerViewAdapterSongs(ArrayList<AudioURI> items, Fragment fragment) {
+        audioURIS = items;
         this.fragment = fragment;
     }
 
-    public void addSongs(List<WaveURI> items){
-        for(WaveURI waveURI : items){
-            this.waveURIS.add(waveURI);
-        }
+    public void addSongs(List<AudioURI> items){
+        this.audioURIS.addAll(items);
     }
 
     @NonNull
@@ -44,24 +45,27 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        holder.waveURI = waveURIS.get(position);
-        holder.textViewSongName.setText(waveURIS.get(position).name);
+        holder.audioURI = audioURIS.get(position);
+        holder.textViewSongName.setText(audioURIS.get(position).title);
     }
 
     @Override
     public int getItemCount() {
-        return waveURIS.size();
+        return audioURIS.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnCreateContextMenuListener{
+
         public final View mView;
         public final TextView textViewSongName;
-        public WaveURI waveURI;
+        public AudioURI audioURI;
 
         public ViewHolder(View view) {
+
             super(view);
             mView = view;
             textViewSongName = (TextView) view.findViewById(R.id.text_view_song_name);
+            view.setOnCreateContextMenuListener(this);
             view.setOnClickListener(new View.OnClickListener(){
                 @Override
                 public void onClick(View v) {
@@ -72,9 +76,9 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                     // check if item still exists
                     if(pos != RecyclerView.NO_POSITION){
                         if(fragment instanceof FragmentSongs) {
-                            action = FragmentSongsDirections.actionFragmentSongsToFragmentSong(toString());
+                            action = FragmentSongsDirections.actionFragmentSongsToFragmentSong(audioURI.title);
                         } else if(fragment instanceof FragmentPlaylist){
-                          action = FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong(toString());
+                          action = FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong(audioURI.title);
                         }
                         if(action != null) {
                             NavHostFragment.findNavController(fragment)
@@ -83,12 +87,23 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                     }
                 }
             });
+
         }
 
         @NonNull
         @Override
         public String toString() {
-            return waveURI.name;
+            return audioURI.title;
         }
+
+        @Override
+        public void onCreateContextMenu(ContextMenu contextMenu, View view,
+                                        ContextMenu.ContextMenuInfo contextMenuInfo) {
+            contextMenu.add(MENU_ADD_TO_PLAYLIST_GROUP_ID, getAdapterPosition(), 0, "Add to playlist");
+            //groupId, itemId, order, title
+        }
+
+
     }
+
 }

@@ -39,7 +39,7 @@ public class FragmentPlaylist extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        ArrayList arrayList = new ArrayList<WaveURI>();
+        ArrayList arrayList = new ArrayList<AudioURI>();
         if(getArguments() != null) {
             // TODO
             //arrayList = FragmentSongsArgs.fromBundle(getArguments()).getListSongs();

@@ -9,15 +9,22 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  * A fragment representing a list of Items.
  */
 public class FragmentSongs extends Fragment {
+
+    RecyclerViewAdapterSongs recyclerViewAdapterSongs;
+
+    RecyclerView recyclerView;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -42,18 +49,35 @@ public class FragmentSongs extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        ArrayList arrayList = new ArrayList<WaveURI>();
+        ArrayList arrayList = new ArrayList<AudioURI>();
         if(getArguments() != null) {
             arrayList = FragmentSongsArgs.fromBundle(getArguments()).getListSongs();
         }
 
-        RecyclerView recyclerView = (RecyclerView)
+        recyclerView = (RecyclerView)
                 inflater.inflate(R.layout.fragment_song_list, container, false);
         // Set the adapter
             Context context = recyclerView.getContext();
                 recyclerView.setLayoutManager(new LinearLayoutManager(context));
-            recyclerView.setAdapter(new RecyclerViewAdapterSongs(arrayList, this));
+        recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(arrayList, this);
+            recyclerView.setAdapter(recyclerViewAdapterSongs);
         return recyclerView;
+    }
+
+    @Override
+    public boolean onContextItemSelected(@NonNull MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        switch (item.getGroupId()) {
+            case RecyclerViewAdapterSongs.MENU_ADD_TO_PLAYLIST_GROUP_ID:
+                RecyclerViewAdapterSongs.ViewHolder viewHolder =
+                        (RecyclerViewAdapterSongs.ViewHolder)recyclerView.getChildViewHolder(
+                                recyclerView.getChildAt(item.getItemId()));
+                AudioURI audioURI = viewHolder.audioURI;
+
+                return true;
+            default:
+                return super.onContextItemSelected(item);
+        }
     }
 
 }

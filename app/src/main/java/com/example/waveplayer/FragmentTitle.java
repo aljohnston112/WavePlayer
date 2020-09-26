@@ -35,7 +35,7 @@ public class FragmentTitle extends Fragment {
 
     private static final int REQUEST_PERMISSION = 2;
 
-    List<WaveURI> audioList = new ArrayList<>();
+    List<AudioURI> audioList = new ArrayList<>();
 
     @Override
     public View onCreateView(
@@ -119,11 +119,24 @@ public class FragmentTitle extends Fragment {
     private void getWaveFiles() throws IOException {
         String[] projection = new String[] {MediaStore.Audio.Media.DISPLAY_NAME,
                 MediaStore.Audio.Media.MIME_TYPE,
-                MediaStore.Video.Media._ID};
+                MediaStore.Audio.Media.IS_MUSIC,
+                MediaStore.Audio.Media._ID,
+                MediaStore.Audio.Media.TITLE,
+                MediaStore.Audio.Media.ARTIST_ID,
+                MediaStore.Audio.Media.ARTIST,
+                MediaStore.Audio.Media.COMPOSER,
+                MediaStore.Audio.Media.TRACK};
+        /*
         String selection = MediaStore.Audio.Media.MIME_TYPE +
                 " == ?";
         String[] selectionArgs = new String[] {
                 "audio/x-wav"
+        };
+         */
+        String selection = MediaStore.Audio.Media.IS_MUSIC +
+                " != ?";
+        String[] selectionArgs = new String[] {
+                "0"
         };
         String sortOrder = MediaStore.Video.Media.DISPLAY_NAME + " ASC";
         try (Cursor cursor = Objects.requireNonNull(getActivity()).getApplicationContext().getContentResolver().query(
@@ -137,10 +150,14 @@ public class FragmentTitle extends Fragment {
                 int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
                 int mimeTypeCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE);
                 int idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
+                int titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE);
+                int artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST);
+
                 while (cursor.moveToNext()) {
                     // Get values of columns for a given video.
                     long id = cursor.getLong(idCol);
-                    String name = cursor.getString(nameCol);
+                    String title = cursor.getString(titleCol);
+                    String artist = cursor.getString(artistCol);
                     Uri contentUri = ContentUris.withAppendedId(
                             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
                     Bitmap thumbnail =
@@ -149,7 +166,7 @@ public class FragmentTitle extends Fragment {
                         thumbnail = getActivity().getApplicationContext().getContentResolver().loadThumbnail(
                                 contentUri, new Size(640, 480), null);
                     }
-                    audioList.add(new WaveURI(contentUri, thumbnail, name));
+                    audioList.add(new AudioURI(contentUri, thumbnail, artist, title));
                 }
             }
         }

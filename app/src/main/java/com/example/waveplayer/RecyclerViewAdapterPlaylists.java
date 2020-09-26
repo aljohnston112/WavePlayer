@@ -14,21 +14,21 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 /**
- * {@link RecyclerView.Adapter} that can display a {@link WaveURI}.
+ * {@link RecyclerView.Adapter} that can display a {@link AudioURI}.
  */
 public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerViewAdapterPlaylists.ViewHolder> {
 
-    private final List<WaveURI> waveURIS;
+    private final List<AudioURI> audioURISES;
 
     private final Fragment fragment;
 
-    public RecyclerViewAdapterPlaylists(List<WaveURI> items, Fragment fragment) {
-        waveURIS = items;
+    public RecyclerViewAdapterPlaylists(List<AudioURI> items, Fragment fragment) {
+        audioURISES = items;
         this.fragment = fragment;
     }
 
-    public void addPlaylists(List<WaveURI> items){
-        this.waveURIS.addAll(items);
+    public void addPlaylists(List<AudioURI> items){
+        this.audioURISES.addAll(items);
     }
 
     @Override
@@ -41,19 +41,19 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        holder.waveURI = waveURIS.get(position);
-        holder.textViewPlaylistName.setText(waveURIS.get(position).name);
+        holder.audioURI = audioURISES.get(position);
+        holder.textViewPlaylistName.setText(audioURISES.get(position).title);
     }
 
     @Override
     public int getItemCount() {
-        return waveURIS.size();
+        return audioURISES.size();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
         public final TextView textViewPlaylistName;
-        public WaveURI waveURI;
+        public AudioURI audioURI;
 
         public ViewHolder(View view) {
             super(view);
