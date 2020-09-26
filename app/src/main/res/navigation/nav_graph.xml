@@ -33,6 +33,9 @@
         tools:layout="@layout/fragment_playlist_list" >
         <argument android:name="ListPlaylists"
             app:argType="java.util.ArrayList" />
+        <action
+            android:id="@+id/action_FragmentPlaylists_to_fragmentPlaylist"
+            app:destination="@id/fragmentPlaylist" />
     </fragment>
     <fragment
         android:id="@+id/fragmentSongs"
@@ -42,5 +45,26 @@
         <argument
             android:name="ListSongs"
             app:argType="java.util.ArrayList" />
+        <action
+            android:id="@+id/action_fragmentSongs_to_fragmentSong"
+            app:destination="@id/fragmentSong" />
+    </fragment>
+    <fragment
+        android:id="@+id/fragmentSong"
+        android:name="com.example.waveplayer.FragmentSong"
+        android:label="fragment_song2"
+        tools:layout="@layout/fragment_song" >
+        <argument
+            android:name="string_song_title"
+            app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/fragmentPlaylist"
+        android:name="com.example.waveplayer.FragmentPlaylist"
+        android:label="fragment_playlist2"
+        tools:layout="@layout/fragment_playlist" >
+        <action
+            android:id="@+id/action_fragmentPlaylist_to_fragmentSong"
+            app:destination="@id/fragmentSong" />
     </fragment>
 </navigation>
