@@ -51,7 +51,7 @@ public class FragmentPlaylists extends Fragment {
                 inflater.inflate(R.layout.fragment_playlist_list, container, false);
         Context context = recyclerView.getContext();
             recyclerView.setLayoutManager(new LinearLayoutManager(context));
-        recyclerView.setAdapter(new RecyclerViewAdapterPlaylists(arrayList));
+        recyclerView.setAdapter(new RecyclerViewAdapterPlaylists(arrayList, this));
         return recyclerView;
     }
 

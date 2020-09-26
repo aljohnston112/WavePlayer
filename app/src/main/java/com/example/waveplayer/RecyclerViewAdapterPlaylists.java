@@ -6,6 +6,9 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.navigation.NavDirections;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
@@ -17,14 +20,15 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
 
     private final List<WaveURI> waveURIS;
 
-    public RecyclerViewAdapterPlaylists(List<WaveURI> items) {
+    private final Fragment fragment;
+
+    public RecyclerViewAdapterPlaylists(List<WaveURI> items, Fragment fragment) {
         waveURIS = items;
+        this.fragment = fragment;
     }
 
     public void addPlaylists(List<WaveURI> items){
-        for(WaveURI waveURI : items){
-            this.waveURIS.add(waveURI);
-        }
+        this.waveURIS.addAll(items);
     }
 
     @Override
@@ -46,7 +50,7 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
         return waveURIS.size();
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
         public final TextView textViewPlaylistName;
         public WaveURI waveURI;
@@ -55,6 +59,25 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
             super(view);
             mView = view;
             textViewPlaylistName = (TextView) view.findViewById(R.id.text_view_playlist_name);
+            view.setOnClickListener(new View.OnClickListener(){
+                @Override
+                public void onClick(View v) {
+                    // get position
+                    int pos = getAdapterPosition();
+
+                    NavDirections action = null;
+                    // check if item still exists
+                    if(pos != RecyclerView.NO_POSITION){
+                       if(fragment instanceof FragmentPlaylists){
+                            action = FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentPlaylist(toString());
+                        }
+                        if(action != null) {
+                            NavHostFragment.findNavController(fragment)
+                                    .navigate(action);
+                        }
+                    }
+                }
+            });
         }
 
         @Override

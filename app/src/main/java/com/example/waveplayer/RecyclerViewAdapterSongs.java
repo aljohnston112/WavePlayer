@@ -1,21 +1,18 @@
 package com.example.waveplayer;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.TextView;
-
-import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentPlaylists;
 
 /**
  * {@link RecyclerView.Adapter} that can display a {@link WaveURI}.
@@ -24,11 +21,11 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
 
     private final List<WaveURI> waveURIS;
 
-    private final FragmentSongs fragmentSongs;
+    private final Fragment fragment;
 
-    public RecyclerViewAdapterSongs(ArrayList<WaveURI> items, FragmentSongs fragmentSongs) {
+    public RecyclerViewAdapterSongs(ArrayList<WaveURI> items, Fragment fragment) {
         waveURIS = items;
-        this.fragmentSongs = fragmentSongs;
+        this.fragment = fragment;
     }
 
     public void addSongs(List<WaveURI> items){
@@ -71,13 +68,18 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                     // get position
                     int pos = getAdapterPosition();
 
+                    NavDirections action = null;
                     // check if item still exists
                     if(pos != RecyclerView.NO_POSITION){
-                        WaveURI clickedDataItem = waveURIS.get(pos);
-                        FragmentSongsDirections.ActionFragmentSongsToFragmentSong action =
-                                FragmentSongsDirections.actionFragmentSongsToFragmentSong(toString());
-                        NavHostFragment.findNavController(fragmentSongs)
-                                .navigate(action);
+                        if(fragment instanceof FragmentSongs) {
+                            action = FragmentSongsDirections.actionFragmentSongsToFragmentSong(toString());
+                        } else if(fragment instanceof FragmentPlaylist){
+                          action = FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong(toString());
+                        }
+                        if(action != null) {
+                            NavHostFragment.findNavController(fragment)
+                                    .navigate(action);
+                        }
                     }
                 }
             });
