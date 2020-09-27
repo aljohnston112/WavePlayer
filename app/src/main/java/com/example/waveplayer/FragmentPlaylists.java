@@ -15,6 +15,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
 import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -60,9 +61,17 @@ public class FragmentPlaylists extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         arrayListPlayList = new ArrayList<RandomPlaylist>();
+    RandomPlaylist newRandomPlaylist = null;
         if(getArguments() != null) {
             arrayListPlayList = FragmentPlaylistsArgs.fromBundle(getArguments()).getListPlaylists();
             arrayListSongs = FragmentPlaylistsArgs.fromBundle(getArguments()).getListSongs();
+            newRandomPlaylist = (RandomPlaylist) getArguments().getSerializable(FragmentEditPlaylist.BUNDLE_KEY_NEW_PLAYLIST);
+        }
+        if(newRandomPlaylist != null){
+            NavController navController = NavHostFragment.findNavController(FragmentPlaylists.this);
+            navController.popBackStack();
+            navController.popBackStack();
+            arrayListPlayList.add(newRandomPlaylist);
         }
         recyclerView = (RecyclerView)
                 inflater.inflate(R.layout.fragment_playlist_list, container, false);

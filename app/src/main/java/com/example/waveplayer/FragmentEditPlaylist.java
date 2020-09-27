@@ -7,11 +7,15 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -29,6 +33,7 @@ public class FragmentEditPlaylist extends Fragment {
 
     ArrayList<AudioURI> songs;
     ArrayList<AudioURI> selectedSongs;
+    public static final String BUNDLE_KEY_NEW_PLAYLIST = "877";
 
     public FragmentEditPlaylist() {
         // Required empty public constructor
@@ -55,25 +60,6 @@ public class FragmentEditPlaylist extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        if (getArguments() != null) {
-            RandomPlaylist randomPlaylist = FragmentEditPlaylistArgs.fromBundle(getArguments()).getPlaylist();
-            if(randomPlaylist != null) {
-                selectedSongs = new ArrayList<>(randomPlaylist.getProbFun().getProbMap().keySet());
-            } else {
-                selectedSongs = new ArrayList<>();
-            }
-            songs = FragmentEditPlaylistArgs.fromBundle(getArguments()).getSongList();
-        }
-
-        FloatingActionButton fab = Objects.requireNonNull(getActivity()).findViewById(R.id.fab);
-        fab.setBackgroundDrawable(getResources().getDrawable(R.drawable.ic_check_white_24dp));
-        fab.setOnClickListener(null);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // TODO
-            }
-        });
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_edit_playlist, container, false);
     }
@@ -92,6 +78,45 @@ public class FragmentEditPlaylist extends Fragment {
                                 (ArrayList) songs, (ArrayList) selectedSongs);
                 NavHostFragment.findNavController(FragmentEditPlaylist.this)
                         .navigate(action);
+            }
+        });
+
+        ArrayList<AudioURI> userPickedSongs = null;
+        if (getArguments() != null) {
+            RandomPlaylist randomPlaylist = FragmentEditPlaylistArgs.fromBundle(getArguments()).getPlaylist();
+            if(randomPlaylist != null) {
+                selectedSongs = new ArrayList<>(randomPlaylist.getProbFun().getProbMap().keySet());
+            } else {
+                selectedSongs = new ArrayList<>();
+            }
+            songs = FragmentEditPlaylistArgs.fromBundle(getArguments()).getSongList();
+            userPickedSongs = (ArrayList<AudioURI>) getArguments().getSerializable(
+                    FragmentSelectSongs.BUNDLE_KEY_SELECTED_SONGS);
+        }
+        if(userPickedSongs != null){
+            ((ActivityMain)getActivity()).userPickedSongs = userPickedSongs;
+            NavController navController = NavHostFragment.findNavController(FragmentEditPlaylist.this);
+            navController.popBackStack();
+            navController.popBackStack();
+        }
+        FloatingActionButton fab = Objects.requireNonNull(getActivity()).findViewById(R.id.fab);
+        fab.setBackgroundDrawable(getResources().getDrawable(R.drawable.ic_check_white_24dp));
+        fab.setOnClickListener(null);
+        final ArrayList<AudioURI> finalUserPickedSongs = ((ActivityMain)getActivity()).userPickedSongs;
+        final EditText editText = view.findViewById(R.id.editTextPlaylistName);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // TODO put maxPercent in settings
+                if(finalUserPickedSongs != null) {
+                    RandomPlaylist randomPlaylist = new RandomPlaylist(finalUserPickedSongs, 0.1, editText.toString());
+                    Bundle bundle = new Bundle();
+                    bundle.putSerializable(BUNDLE_KEY_NEW_PLAYLIST, randomPlaylist);
+                    bundle.putSerializable("listPlaylists", null);
+                    bundle.putSerializable("listSongs", songs);
+                    NavController navController = NavHostFragment.findNavController(FragmentEditPlaylist.this);
+                    navController.navigate(R.id.FragmentPlaylists, bundle);
+                }
             }
         });
     }

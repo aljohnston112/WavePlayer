@@ -20,6 +20,8 @@ public class ActivityMain extends AppCompatActivity {
 
     private static final int OPEN_FOLDER = 1;
 
+    ArrayList<AudioURI> userPickedSongs;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

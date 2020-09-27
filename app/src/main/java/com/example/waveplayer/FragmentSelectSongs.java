@@ -8,6 +8,10 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavArgument;
+import androidx.navigation.NavController;
+import androidx.navigation.NavHostController;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -31,6 +35,8 @@ public class FragmentSelectSongs extends Fragment {
 
     ArrayList<AudioURI> songs;
     ArrayList<AudioURI> selectedSongs;
+
+    public static final String BUNDLE_KEY_SELECTED_SONGS = "876";
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -67,7 +73,20 @@ public class FragmentSelectSongs extends Fragment {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //TODO
+                ArrayList<AudioURI> selectedSongs = new ArrayList<>();
+                int size = songs.size();
+                for(int i = 0; i < size; i++) {
+                    if (songs.get(i).isChecked()){
+                        selectedSongs.add(songs.get(i));
+                        songs.get(i).setChecked(false);
+                    }
+                }
+                Bundle bundle = new Bundle();
+                bundle.putSerializable(BUNDLE_KEY_SELECTED_SONGS, selectedSongs);
+                bundle.putSerializable("Playlist", null);
+                bundle.putSerializable("SongList", songs);
+                NavController navController = NavHostFragment.findNavController(FragmentSelectSongs.this);
+                navController.navigate(R.id.fragmentEditPlaylist, bundle);
             }
         });
         // Set the adapter
