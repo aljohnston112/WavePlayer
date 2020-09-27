@@ -1,25 +1,21 @@
 package com.example.waveplayer;
 
-import android.content.Context;
 import android.os.Bundle;
 
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-
 import java.util.ArrayList;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link FragmentPlaylist#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class FragmentPlaylist extends Fragment {
 
     public FragmentPlaylist() {
@@ -27,10 +23,7 @@ public class FragmentPlaylist extends Fragment {
     }
 
     public static FragmentPlaylist newInstance() {
-        FragmentPlaylist fragment = new FragmentPlaylist();
-        Bundle args = new Bundle();
-        fragment.setArguments(args);
-        return fragment;
+        return new FragmentPlaylist();
     }
 
     @Override
@@ -41,20 +34,21 @@ public class FragmentPlaylist extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        ArrayList arrayList = new ArrayList<AudioURI>();
-        if(getArguments() != null) {
-            // TODO
-            //arrayList = FragmentSongsArgs.fromBundle(getArguments()).getListSongs();
-            // ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
-            // actionBar.setTitle(playlist name);
-        }
-
-        RecyclerView recyclerView = (RecyclerView)
-                inflater.inflate(R.layout.fragment_song_list, container, false);
-        // Set the adapter
-        Context context = recyclerView.getContext();
-        recyclerView.setLayoutManager(new LinearLayoutManager(context));
-        recyclerView.setAdapter(new RecyclerViewAdapterSongs(arrayList, this));
-        return recyclerView;
+        return inflater.inflate(R.layout.fragment_song_list, container, false);
     }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        // TODO
+        ActivityMain activityMain = ((ActivityMain) getActivity());
+        ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
+        actionBar.setTitle(activityMain.userPickedPlaylist.getName());
+
+        RecyclerView recyclerView = activityMain.findViewById(R.id.recycler_view_song_list);
+        recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
+        recyclerView.setAdapter(new RecyclerViewAdapterSongs(new ArrayList<>(
+                        activityMain.userPickedPlaylist.getProbFun().getProbMap().keySet()), this));
+    }
+
 }

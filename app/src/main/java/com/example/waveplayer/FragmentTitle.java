@@ -16,6 +16,7 @@ import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
@@ -32,19 +33,25 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentPlaylists;
+import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentSettings;
 import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentSongs;
 
 public class FragmentTitle extends Fragment {
 
-    private static final int REQUEST_PERMISSION = 2;
+    private static final int REQUEST_PERMISSION = 245083964;
 
-    List<AudioURI> audioList = new ArrayList<>();
-
-    List<RandomPlaylist> randomPlaylists = new ArrayList<>();
+    ActivityMain activityMain;
 
     @Override
-    public void onAttach(@NonNull Context context) {
-        super.onAttach(context);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_title, container, false);
+    }
+
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        activityMain = ((ActivityMain) getActivity());
+        activityMain.actionBar.setTitle(R.string.app_name);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (Objects.requireNonNull(getActivity()).checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
                     != PackageManager.PERMISSION_GRANTED) {
@@ -63,46 +70,22 @@ public class FragmentTitle extends Fragment {
                 e.printStackTrace();
             }
         }
-                /*
-                Intent folderOpenIntent = new Intent();
-                folderOpenIntent.setAction(Intent.ACTION_OPEN_DOCUMENT_TREE);
-                if(folderOpenIntent.resolveActivity(getPackageManager()) != null){
-                    startActivityForResult(folderOpenIntent, OPEN_FOLDER);
-                }
-                 */
-    }
 
-    @Override
-    public View onCreateView(
-            LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
-        FloatingActionButton fab = Objects.requireNonNull(getActivity()).findViewById(R.id.fab);
-        fab.hide();
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_title, container, false);
-    }
+        activityMain.fab.hide();
 
-    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
-        actionBar.setTitle(R.string.app_name);
         view.findViewById(R.id.button_playlists).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                FragmentTitleDirections.ActionFragmentTitleToFragmentPlaylists action =
-                        actionFragmentTitleToFragmentPlaylists((ArrayList) audioList, (ArrayList) randomPlaylists);
                 NavHostFragment.findNavController(FragmentTitle.this)
-                        .navigate(action);
+                        .navigate(actionFragmentTitleToFragmentPlaylists());
             }
         });
 
         view.findViewById(R.id.button_songs).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                FragmentTitleDirections.ActionFragmentTitleToFragmentSongs action =
-                        actionFragmentTitleToFragmentSongs((ArrayList) audioList);
                 NavHostFragment.findNavController(FragmentTitle.this)
-                        .navigate(action);
+                        .navigate(actionFragmentTitleToFragmentSongs());
             }
         });
 
@@ -110,7 +93,7 @@ public class FragmentTitle extends Fragment {
             @Override
             public void onClick(View view) {
                 NavHostFragment.findNavController(FragmentTitle.this)
-                        .navigate(R.id.action_FragmentTitle_to_FragmentSettings);
+                        .navigate(actionFragmentTitleToFragmentSettings());
             }
         });
 
@@ -120,12 +103,17 @@ public class FragmentTitle extends Fragment {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_PERMISSION && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if (requestCode == REQUEST_PERMISSION && grantResults.length > 0 &&
+                grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             try {
                 getWaveFiles();
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        } else{
+            Toast toast = Toast.makeText(getContext(), R.string.permission_needed, Toast.LENGTH_LONG);
+            toast.show();
+            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
         }
     }
 
@@ -139,13 +127,6 @@ public class FragmentTitle extends Fragment {
                 MediaStore.Audio.Media.ARTIST,
                 MediaStore.Audio.Media.COMPOSER,
                 MediaStore.Audio.Media.TRACK};
-        /*
-        String selection = MediaStore.Audio.Media.MIME_TYPE +
-                " == ?";
-        String[] selectionArgs = new String[] {
-                "audio/x-wav"
-        };
-         */
         String selection = MediaStore.Audio.Media.IS_MUSIC +
                 " != ?";
         String[] selectionArgs = new String[]{
@@ -179,7 +160,7 @@ public class FragmentTitle extends Fragment {
                         thumbnail = getActivity().getApplicationContext().getContentResolver().loadThumbnail(
                                 contentUri, new Size(640, 480), null);
                     }
-                    audioList.add(new AudioURI(contentUri, thumbnail, artist, title));
+                    activityMain.songs.add(new AudioURI(contentUri, thumbnail, artist, title));
                 }
             }
         }
@@ -187,7 +168,7 @@ public class FragmentTitle extends Fragment {
     }
 
     private void playWaveFile() throws IOException {
-        Uri myUri = audioList.get(0).uri;
+        Uri myUri = activityMain.songs.get(0).uri;
         MediaPlayer mediaPlayer = new MediaPlayer();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             mediaPlayer.setAudioAttributes(

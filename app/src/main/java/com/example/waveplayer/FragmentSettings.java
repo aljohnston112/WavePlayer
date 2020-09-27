@@ -24,7 +24,8 @@ public class FragmentSettings extends Fragment {
 
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
-        actionBar.setTitle(R.string.settings);
+        ActivityMain activityMain = ((ActivityMain) getActivity());
+        activityMain.actionBar.setTitle(R.string.settings);
     }
+
 }

@@ -1,49 +1,27 @@
 package com.example.waveplayer;
 
-import android.content.Context;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.ArrayList;
-import java.util.Objects;
-
-/**
- * A fragment representing a list of Items.
- */
 public class FragmentSongs extends Fragment {
 
+    RecyclerView recyclerView;
     RecyclerViewAdapterSongs recyclerViewAdapterSongs;
 
-    RecyclerView recyclerView;
-
-    /**
-     * Mandatory empty constructor for the fragment manager to instantiate the
-     * fragment (e.g. upon screen orientation changes).
-     */
     public FragmentSongs() {
     }
 
-    @SuppressWarnings("unused")
     public static FragmentSongs newInstance(int columnCount) {
-        FragmentSongs fragment = new FragmentSongs();
-        Bundle args = new Bundle();
-        fragment.setArguments(args);
-        return fragment;
+        return new FragmentSongs();
     }
 
     @Override
@@ -54,36 +32,30 @@ public class FragmentSongs extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        ArrayList arrayList = new ArrayList<AudioURI>();
-        if(getArguments() != null) {
-            arrayList = FragmentSongsArgs.fromBundle(getArguments()).getListSongs();
-        }
-        recyclerView = (RecyclerView)
-                inflater.inflate(R.layout.fragment_song_list, container, false);
-        // Set the adapter
-            Context context = recyclerView.getContext();
-                recyclerView.setLayoutManager(new LinearLayoutManager(context));
-        recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(arrayList, this);
-            recyclerView.setAdapter(recyclerViewAdapterSongs);
-        return recyclerView;
+        return inflater.inflate(R.layout.fragment_song_list, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
-        actionBar.setTitle(R.string.songs);
+        ActivityMain activityMain = ((ActivityMain) getActivity());
+        activityMain.actionBar.setTitle(R.string.songs);
+
+        recyclerView = activityMain.findViewById(R.id.recycler_view_song_list);
+        recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
+        recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(activityMain.songs, this);
+        recyclerView.setAdapter(recyclerViewAdapterSongs);
     }
 
     @Override
     public boolean onContextItemSelected(@NonNull MenuItem item) {
-        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
         switch (item.getGroupId()) {
             case RecyclerViewAdapterSongs.MENU_ADD_TO_PLAYLIST_GROUP_ID:
                 RecyclerViewAdapterSongs.ViewHolder viewHolder =
                         (RecyclerViewAdapterSongs.ViewHolder)recyclerView.getChildViewHolder(
                                 recyclerView.getChildAt(item.getItemId()));
                 AudioURI audioURI = viewHolder.audioURI;
+                // TODO
                 return true;
             default:
                 return super.onContextItemSelected(item);

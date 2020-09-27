@@ -37,22 +37,12 @@
         <action
             android:id="@+id/action_FragmentPlaylists_to_fragmentEditPlaylist"
             app:destination="@id/fragmentEditPlaylist" />
-        <argument
-            android:name="listSongs"
-            app:argType="java.util.ArrayList" />
-        <argument
-            android:name="listPlaylists"
-            app:argType="java.util.ArrayList"
-            app:nullable="true" />
     </fragment>
     <fragment
         android:id="@+id/fragmentSongs"
         android:name="com.example.waveplayer.FragmentSongs"
         android:label="fragment_songs_list"
         tools:layout="@layout/fragment_song_list" >
-        <argument
-            android:name="ListSongs"
-            app:argType="java.util.ArrayList" />
         <action
             android:id="@+id/action_fragmentSongs_to_fragmentSong"
             app:destination="@id/fragmentSong" />
@@ -61,11 +51,7 @@
         android:id="@+id/fragmentSong"
         android:name="com.example.waveplayer.FragmentSong"
         android:label="fragment_song2"
-        tools:layout="@layout/fragment_song" >
-        <argument
-            android:name="string_song_title"
-            app:argType="string" />
-    </fragment>
+        tools:layout="@layout/fragment_song" />
     <fragment
         android:id="@+id/fragmentPlaylist"
         android:name="com.example.waveplayer.FragmentPlaylist"
@@ -74,34 +60,16 @@
         <action
             android:id="@+id/action_fragmentPlaylist_to_fragmentSong"
             app:destination="@id/fragmentSong" />
-        <argument
-            android:name="string_playlist_name"
-            app:argType="string" />
     </fragment>
     <fragment
         android:id="@+id/FragmentSelectSongs"
         android:name="com.example.waveplayer.FragmentSelectSongs"
-        android:label="fragment_select_song_list">
-        <argument
-            android:name="ListSongs"
-            app:argType="java.util.ArrayList" />
-        <argument
-            android:name="ListSelectedSongs"
-            app:argType="java.util.ArrayList" />
-    </fragment>
+        android:label="fragment_select_song_list"/>
     <fragment
         android:id="@+id/fragmentEditPlaylist"
         android:name="com.example.waveplayer.FragmentEditPlaylist"
         android:label="fragment_edit_playlist"
         tools:layout="@layout/fragment_edit_playlist" >
-        <argument
-            android:name="Playlist"
-            app:argType="com.example.waveplayer.RandomPlaylist"
-            app:nullable="true" />
-        <argument
-            android:name="SongList"
-            app:argType="java.util.ArrayList"
-            app:nullable="true" />
         <action
             android:id="@+id/action_fragmentEditPlaylist_to_FragmentSelectSongs"
             app:destination="@id/FragmentSelectSongs" />

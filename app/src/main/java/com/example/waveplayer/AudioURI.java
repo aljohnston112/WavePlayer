@@ -28,7 +28,6 @@ public final class AudioURI implements Comparable<AudioURI> {
         this.title = title;
         this.artist = artist;
         this.thumbnail = thumbnail;
-
     }
 
     @Override
