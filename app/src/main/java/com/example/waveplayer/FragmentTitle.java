@@ -90,7 +90,7 @@ public class FragmentTitle extends Fragment {
             @Override
             public void onClick(View view) {
                 FragmentTitleDirections.ActionFragmentTitleToFragmentPlaylists action =
-                        actionFragmentTitleToFragmentPlaylists((ArrayList) randomPlaylists);
+                        actionFragmentTitleToFragmentPlaylists((ArrayList) audioList, (ArrayList) randomPlaylists);
                 NavHostFragment.findNavController(FragmentTitle.this)
                         .navigate(action);
             }

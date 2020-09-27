@@ -12,10 +12,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -25,22 +23,25 @@ import java.util.Objects;
 /**
  * A fragment representing a list of Items.
  */
-public class FragmentSongs extends Fragment {
+public class FragmentSelectSongs extends Fragment {
 
-    RecyclerViewAdapterSongs recyclerViewAdapterSongs;
+    RecyclerViewAdapterSelectSongs recyclerViewAdapterSelectSongs;
 
     RecyclerView recyclerView;
+
+    ArrayList<AudioURI> songs;
+    ArrayList<AudioURI> selectedSongs;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
-    public FragmentSongs() {
+    public FragmentSelectSongs() {
     }
 
     @SuppressWarnings("unused")
-    public static FragmentSongs newInstance(int columnCount) {
-        FragmentSongs fragment = new FragmentSongs();
+    public static FragmentSelectSongs newInstance(int columnCount) {
+        FragmentSelectSongs fragment = new FragmentSelectSongs();
         Bundle args = new Bundle();
         fragment.setArguments(args);
         return fragment;
@@ -54,17 +55,26 @@ public class FragmentSongs extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        ArrayList arrayList = new ArrayList<AudioURI>();
         if(getArguments() != null) {
-            arrayList = FragmentSongsArgs.fromBundle(getArguments()).getListSongs();
+            selectedSongs = FragmentSelectSongsArgs.fromBundle(getArguments()).getListSelectedSongs();
+            songs = FragmentSelectSongsArgs.fromBundle(getArguments()).getListSongs();
         }
         recyclerView = (RecyclerView)
                 inflater.inflate(R.layout.fragment_song_list, container, false);
+        FloatingActionButton fab = Objects.requireNonNull(getActivity()).findViewById(R.id.fab);
+        fab.setBackground(getResources().getDrawable(R.drawable.ic_check_white_24dp));
+        fab.setOnClickListener(null);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //TODO
+            }
+        });
         // Set the adapter
-            Context context = recyclerView.getContext();
-                recyclerView.setLayoutManager(new LinearLayoutManager(context));
-        recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(arrayList, this);
-            recyclerView.setAdapter(recyclerViewAdapterSongs);
+        Context context = recyclerView.getContext();
+        recyclerView.setLayoutManager(new LinearLayoutManager(context));
+        recyclerViewAdapterSelectSongs = new RecyclerViewAdapterSelectSongs(songs, selectedSongs, this);
+        recyclerView.setAdapter(recyclerViewAdapterSelectSongs);
         return recyclerView;
     }
 
@@ -72,22 +82,7 @@ public class FragmentSongs extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
-        actionBar.setTitle(R.string.songs);
-    }
-
-    @Override
-    public boolean onContextItemSelected(@NonNull MenuItem item) {
-        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-        switch (item.getGroupId()) {
-            case RecyclerViewAdapterSongs.MENU_ADD_TO_PLAYLIST_GROUP_ID:
-                RecyclerViewAdapterSongs.ViewHolder viewHolder =
-                        (RecyclerViewAdapterSongs.ViewHolder)recyclerView.getChildViewHolder(
-                                recyclerView.getChildAt(item.getItemId()));
-                AudioURI audioURI = viewHolder.audioURI;
-                return true;
-            default:
-                return super.onContextItemSelected(item);
-        }
+        actionBar.setTitle(R.string.select_songs);
     }
 
 }

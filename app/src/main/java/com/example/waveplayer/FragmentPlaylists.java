@@ -14,8 +14,9 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavDirections;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -30,6 +31,9 @@ import java.util.Objects;
 public class FragmentPlaylists extends Fragment {
 
     RecyclerView recyclerView;
+
+    ArrayList<AudioURI> arrayListSongs;
+    ArrayList<RandomPlaylist> arrayListPlayList;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -55,15 +59,16 @@ public class FragmentPlaylists extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        ArrayList arrayList = new ArrayList<AudioURI>();
+        arrayListPlayList = new ArrayList<RandomPlaylist>();
         if(getArguments() != null) {
-            arrayList = FragmentPlaylistsArgs.fromBundle(getArguments()).getListPlaylists();
+            arrayListPlayList = FragmentPlaylistsArgs.fromBundle(getArguments()).getListPlaylists();
+            arrayListSongs = FragmentPlaylistsArgs.fromBundle(getArguments()).getListSongs();
         }
         recyclerView = (RecyclerView)
                 inflater.inflate(R.layout.fragment_playlist_list, container, false);
         Context context = recyclerView.getContext();
             recyclerView.setLayoutManager(new LinearLayoutManager(context));
-        recyclerView.setAdapter(new RecyclerViewAdapterPlaylists(arrayList, this));
+        recyclerView.setAdapter(new RecyclerViewAdapterPlaylists(arrayListPlayList, this));
         return recyclerView;
     }
 
@@ -78,8 +83,11 @@ public class FragmentPlaylists extends Fragment {
             @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
             public void onClick(View view) {
-
-
+                FragmentPlaylistsDirections.ActionFragmentPlaylistsToFragmentEditPlaylist action =
+                        FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentEditPlaylist(
+                                null, arrayListSongs);
+                NavHostFragment.findNavController(FragmentPlaylists.this)
+                        .navigate(action);
             }
         });
     }

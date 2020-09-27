@@ -1,13 +1,17 @@
 package com.example.waveplayer;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.recyclerview.selection.ItemDetailsLookup;
+import androidx.recyclerview.selection.ItemKeyProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -31,7 +35,7 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
         this.fragment = fragment;
     }
 
-    public void addSongs(List<AudioURI> items){
+    public void addSongs(List<AudioURI> items) {
         this.audioURIS.addAll(items);
     }
 
@@ -66,7 +70,7 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
             mView = view;
             textViewSongName = (TextView) view.findViewById(R.id.text_view_song_name);
             view.setOnCreateContextMenuListener(this);
-            view.setOnClickListener(new View.OnClickListener(){
+            view.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     // get position
@@ -74,13 +78,13 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
 
                     NavDirections action = null;
                     // check if item still exists
-                    if(pos != RecyclerView.NO_POSITION){
-                        if(fragment instanceof FragmentSongs) {
+                    if (pos != RecyclerView.NO_POSITION) {
+                        if (fragment instanceof FragmentSongs) {
                             action = FragmentSongsDirections.actionFragmentSongsToFragmentSong(audioURI.title);
-                        } else if(fragment instanceof FragmentPlaylist){
-                          action = FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong(audioURI.title);
+                        } else if (fragment instanceof FragmentPlaylist) {
+                            action = FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong(audioURI.title);
                         }
-                        if(action != null) {
+                        if (action != null) {
                             NavHostFragment.findNavController(fragment)
                                     .navigate(action);
                         }
@@ -102,7 +106,6 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
             contextMenu.add(MENU_ADD_TO_PLAYLIST_GROUP_ID, getAdapterPosition(), 0, "Add to playlist");
             //groupId, itemId, order, title
         }
-
 
     }
 
