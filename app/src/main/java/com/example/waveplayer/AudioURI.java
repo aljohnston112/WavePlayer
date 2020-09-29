@@ -13,6 +13,8 @@ public final class AudioURI implements Comparable<AudioURI> {
 
     final Bitmap thumbnail;
 
+    final int duration;
+
     private boolean isChecked = false;
 
     public boolean isChecked() {
@@ -23,11 +25,12 @@ public final class AudioURI implements Comparable<AudioURI> {
         isChecked = checked;
     }
 
-    public AudioURI(Uri uri, Bitmap thumbnail, String artist, String title){
+    public AudioURI(Uri uri, Bitmap thumbnail, String artist, String title, int duration){
         this.uri = uri;
         this.title = title;
         this.artist = artist;
         this.thumbnail = thumbnail;
+        this.duration = duration;
     }
 
     @Override

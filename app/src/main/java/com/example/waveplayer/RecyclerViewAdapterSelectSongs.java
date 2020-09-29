@@ -1,6 +1,8 @@
 package com.example.waveplayer;
 
 import android.graphics.Color;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +16,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
 public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<RecyclerViewAdapterSelectSongs.ViewHolder>{
 
@@ -54,6 +57,7 @@ public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<Recycle
             holder.audioURI = audioURIS.get(position);
             holder.textViewSongName.setText(audioURIS.get(position).title);
         }
+
     }
 
 

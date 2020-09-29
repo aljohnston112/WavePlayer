@@ -14,6 +14,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 public class FragmentSongs extends Fragment {
 
+    public static int nVisibleItems = 0;
+
     RecyclerView recyclerView;
     RecyclerViewAdapterSongs recyclerViewAdapterSongs;
 
@@ -45,21 +47,26 @@ public class FragmentSongs extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
         recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(activityMain.songs, this);
         recyclerView.setAdapter(recyclerViewAdapterSongs);
+        LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+        int firstVisiblePosition = linearLayoutManager.findFirstVisibleItemPosition();
+        int lastVisiblePosition = linearLayoutManager.findLastVisibleItemPosition();
+        nVisibleItems = lastVisiblePosition - firstVisiblePosition + 1;
     }
 
-    @Override
-    public boolean onContextItemSelected(@NonNull MenuItem item) {
-        switch (item.getGroupId()) {
-            case RecyclerViewAdapterSongs.MENU_ADD_TO_PLAYLIST_GROUP_ID:
-                RecyclerViewAdapterSongs.ViewHolder viewHolder =
-                        (RecyclerViewAdapterSongs.ViewHolder)recyclerView.getChildViewHolder(
-                                recyclerView.getChildAt(item.getItemId()));
-                AudioURI audioURI = viewHolder.audioURI;
-                // TODO
-                return true;
-            default:
-                return super.onContextItemSelected(item);
+
+        @Override
+        public boolean onContextItemSelected (@NonNull MenuItem item){
+            switch (item.getGroupId()) {
+                case RecyclerViewAdapterSongs.MENU_ADD_TO_PLAYLIST_GROUP_ID:
+                    RecyclerViewAdapterSongs.ViewHolder viewHolder =
+                            (RecyclerViewAdapterSongs.ViewHolder) recyclerView.getChildViewHolder(
+                                    recyclerView.getChildAt(item.getItemId()));
+                    AudioURI audioURI = viewHolder.audioURI;
+                    // TODO
+                    return true;
+                default:
+                    return super.onContextItemSelected(item);
+            }
         }
-    }
 
-}
+    }

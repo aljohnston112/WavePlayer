@@ -2,12 +2,12 @@ package com.example.waveplayer;
 
 import android.Manifest;
 import android.content.ContentUris;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.media.AudioAttributes;
+import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -20,17 +20,12 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.loader.content.CursorLoader;
 import androidx.navigation.fragment.NavHostFragment;
-
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 
 import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentPlaylists;
 import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentSettings;
@@ -110,7 +105,7 @@ public class FragmentTitle extends Fragment {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        } else{
+        } else {
             Toast toast = Toast.makeText(getContext(), R.string.permission_needed, Toast.LENGTH_LONG);
             toast.show();
             requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
@@ -118,15 +113,13 @@ public class FragmentTitle extends Fragment {
     }
 
     private void getWaveFiles() throws IOException {
-        String[] projection = new String[]{MediaStore.Audio.Media.DISPLAY_NAME,
-                MediaStore.Audio.Media.MIME_TYPE,
-                MediaStore.Audio.Media.IS_MUSIC,
+        String[] projection = new String[]{
                 MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.TITLE,
-                MediaStore.Audio.Media.ARTIST_ID,
+                MediaStore.Audio.Media.DISPLAY_NAME,
+                MediaStore.Audio.Media.IS_MUSIC,
                 MediaStore.Audio.Media.ARTIST,
-                MediaStore.Audio.Media.COMPOSER,
-                MediaStore.Audio.Media.TRACK};
+                MediaStore.Audio.Media.TITLE,
+                MediaStore.Audio.Media.DURATION};
         String selection = MediaStore.Audio.Media.IS_MUSIC +
                 " != ?";
         String[] selectionArgs = new String[]{
@@ -141,46 +134,48 @@ public class FragmentTitle extends Fragment {
                 sortOrder
         )) {
             if (cursor != null) {
-                int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
-                int mimeTypeCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE);
                 int idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
+                int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
                 int titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE);
                 int artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST);
+                int durationCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION);
 
                 while (cursor.moveToNext()) {
                     // Get values of columns for a given video.
                     long id = cursor.getLong(idCol);
-                    String title = cursor.getString(titleCol);
+                    String track = cursor.getString(titleCol);
                     String artist = cursor.getString(artistCol);
-                    Uri contentUri = ContentUris.withAppendedId(
-                            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
-                    Bitmap thumbnail =
-                            null;
+                    String duration = cursor.getString(durationCol);
+                    Uri contentUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
+                    Bitmap thumbnail = null;
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                         thumbnail = getActivity().getApplicationContext().getContentResolver().loadThumbnail(
                                 contentUri, new Size(640, 480), null);
+                    } else{
+                        final int THUMBSIZE = 128;
+                        thumbnail= ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(getRealPathFromURI(contentUri)),
+                                THUMBSIZE, THUMBSIZE);
                     }
-                    activityMain.songs.add(new AudioURI(contentUri, thumbnail, artist, title));
+                    AudioURI audioURI = new AudioURI(contentUri, thumbnail, artist, track, Integer.valueOf(duration));
+                    activityMain.songs.add(audioURI);
+                }
+                if(activityMain.songs.size() != 0){
+                    activityMain.masterPlaylist = new RandomPlaylist(activityMain.songs, activityMain.MAX_PERCENT, "");
+                    activityMain.userPickedPlaylist = activityMain.masterPlaylist;
                 }
             }
         }
-        // playWaveFile();
     }
 
-    private void playWaveFile() throws IOException {
-        Uri myUri = activityMain.songs.get(0).uri;
-        MediaPlayer mediaPlayer = new MediaPlayer();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mediaPlayer.setAudioAttributes(
-                    new AudioAttributes.Builder()
-                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                            .setUsage(AudioAttributes.USAGE_MEDIA)
-                            .build()
-            );
-        }
-        mediaPlayer.setDataSource(Objects.requireNonNull(getActivity()).getApplicationContext(), myUri);
-        mediaPlayer.prepare();
-        mediaPlayer.start();
+    private String getRealPathFromURI(Uri contentUri) {
+        String[] proj = { MediaStore.Images.Media.DATA };
+        CursorLoader loader = new CursorLoader(getContext(), contentUri, proj, null, null, null);
+        Cursor cursor = loader.loadInBackground();
+        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+        cursor.moveToFirst();
+        String result = cursor.getString(column_index);
+        cursor.close();
+        return result;
     }
 
 }

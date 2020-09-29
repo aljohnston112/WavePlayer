@@ -6,7 +6,7 @@ import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.content.Context;
+import android.media.MediaPlayer;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,13 +14,14 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
 public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewAdapterSongs.ViewHolder> {
 
     public static final int MENU_ADD_TO_PLAYLIST_GROUP_ID = 3357908;
 
-    private final List<AudioURI> audioURIS;
-    private final Fragment fragment;
+    final List<AudioURI> audioURIS;
+    final Fragment fragment;
 
     public RecyclerViewAdapterSongs(List<AudioURI> items, Fragment fragment) {
         audioURIS = items;
@@ -42,6 +43,15 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.audioURI = audioURIS.get(position);
         holder.textViewSongName.setText(audioURIS.get(position).title);
+        ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
+        try {
+            if (!activityMain.songsMap.containsKey(holder.audioURI.uri)) {
+                activityMain.futureMediaPlayers.add(
+                        activityMain.executorService.submit(new NextMediaPlayer(holder.audioURI)));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -67,7 +77,7 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                     int pos = getAdapterPosition();
                     NavDirections action = null;
                     if (pos != RecyclerView.NO_POSITION) {
-                        ((ActivityMain)fragment.getActivity()).currentSong = audioURI;
+                        ((ActivityMain) fragment.getActivity()).currentSong = audioURI;
                         if (fragment instanceof FragmentSongs) {
                             action = FragmentSongsDirections.actionFragmentSongsToFragmentSong();
                         } else if (fragment instanceof FragmentPlaylist) {
@@ -93,6 +103,22 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                                         ContextMenu.ContextMenuInfo contextMenuInfo) {
             //groupId, itemId, order, title
             contextMenu.add(MENU_ADD_TO_PLAYLIST_GROUP_ID, getAdapterPosition(), 0, "Add to playlist");
+        }
+
+    }
+
+    public class NextMediaPlayer implements Callable<MediaPlayerWURI> {
+
+        AudioURI audioURI;
+
+        NextMediaPlayer(AudioURI audioURI) {
+            this.audioURI = audioURI;
+        }
+
+        @Override
+        public MediaPlayerWURI call() throws Exception {
+            MediaPlayer mediaPlayer = MediaPlayer.create(fragment.getContext(), audioURI.uri);
+            return new MediaPlayerWURI(mediaPlayer, audioURI);
         }
 
     }
