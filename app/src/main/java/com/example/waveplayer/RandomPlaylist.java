@@ -35,6 +35,10 @@ public class RandomPlaylist implements Serializable {
         this.name = name;
     }
 
+    public void setMaxPercent(double maxPercent) {
+        probabilityFunction.setMaxPercent(maxPercent);
+    }
+
     /**
      * @return the ProbFunTree that controls the probability of which media gets played.
      */

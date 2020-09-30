@@ -60,6 +60,9 @@
         <action
             android:id="@+id/action_fragmentPlaylist_to_fragmentSong"
             app:destination="@id/fragmentSong" />
+        <action
+            android:id="@+id/action_fragmentPlaylist_to_FragmentSelectSongs"
+            app:destination="@id/fragmentEditPlaylist" />
     </fragment>
     <fragment
         android:id="@+id/FragmentSelectSongs"

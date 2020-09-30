@@ -43,15 +43,6 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.audioURI = audioURIS.get(position);
         holder.textViewSongName.setText(audioURIS.get(position).title);
-        ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
-        try {
-            if (!activityMain.songsMap.containsKey(holder.audioURI.uri)) {
-                activityMain.futureMediaPlayers.add(
-                        activityMain.executorService.submit(new NextMediaPlayer(holder.audioURI)));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
@@ -69,7 +60,7 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
 
             super(view);
             songView = view;
-            textViewSongName = view.findViewById(R.id.text_view_song_name);
+            textViewSongName = view.findViewById(R.id.text_view_songs_name);
             view.setOnCreateContextMenuListener(this);
             view.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -103,22 +94,6 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                                         ContextMenu.ContextMenuInfo contextMenuInfo) {
             //groupId, itemId, order, title
             contextMenu.add(MENU_ADD_TO_PLAYLIST_GROUP_ID, getAdapterPosition(), 0, "Add to playlist");
-        }
-
-    }
-
-    public class NextMediaPlayer implements Callable<MediaPlayerWURI> {
-
-        AudioURI audioURI;
-
-        NextMediaPlayer(AudioURI audioURI) {
-            this.audioURI = audioURI;
-        }
-
-        @Override
-        public MediaPlayerWURI call() throws Exception {
-            MediaPlayer mediaPlayer = MediaPlayer.create(fragment.getContext(), audioURI.uri);
-            return new MediaPlayerWURI(mediaPlayer, audioURI);
         }
 
     }

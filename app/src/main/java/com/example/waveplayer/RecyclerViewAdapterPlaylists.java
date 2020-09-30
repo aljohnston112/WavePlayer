@@ -72,7 +72,7 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
                             action = FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentPlaylist();
                         }
                         if(action != null) {
-                            ((ActivityMain)fragment.getActivity()).userPickedPlaylist = randomPlaylist;
+                            ((ActivityMain)fragment.getActivity()).currentPlaylist = randomPlaylist;
                             NavHostFragment.findNavController(fragment).navigate(action);
                         }
                     }

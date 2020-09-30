@@ -47,6 +47,10 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
     // The number of layers deep this ProbFunTree is
     private int layer;
 
+    public void setMaxPercent(double maxPercent) {
+        this.maxPercent = maxPercent;
+    }
+
     private double maxPercent;
 
     // The rounding error to prevent over and under flow

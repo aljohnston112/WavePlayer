@@ -8,7 +8,7 @@
     android:background="@color/colorOnPrimary">
 
     <TextView
-        android:id="@+id/text_view_song_name"
+        android:id="@+id/text_view_songs_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/text_margin"

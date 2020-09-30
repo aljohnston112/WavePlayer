@@ -75,7 +75,7 @@ public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<Recycle
         public ViewHolder(final View view) {
             super(view);
             songView = view;
-            textViewSongName = view.findViewById(R.id.text_view_song_name);
+            textViewSongName = view.findViewById(R.id.text_view_songs_name);
             final LinearLayout linearLayout = view.findViewById(R.id.linear_layout_song_name);
             if(audioURI != null && audioURI.isChecked()){
                 textViewSongName.setBackgroundColor(Color.parseColor("#000057"));

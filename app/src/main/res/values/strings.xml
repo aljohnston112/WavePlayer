@@ -11,5 +11,16 @@
     <string name="not_enough_songs_for_playlist">Please pick at least one song</string>
     <string name="no_name_playlist">Please enter a name for the new playlist</string>
     <string name="permission_needed">Please allow permission to scan for media</string>
+    <string name="max_percent"><b>Max Grain Number:</b></string>
+    <string name="max_percent_desc">The max grain number determines how many songs play when you hit thumbs up on a lot of songs.
+    When set to 1, 1 song may repeat after hitting thumbs up a lot.</string>
+    <string name="max_percent_error">Please enter a positive number for Max Grain Number</string>
+    <string name="percent_change"><b>Mod Magnitude:</b></string>
+    <string name="percent_change_desc">The mod magnitude (1-100) determines how much a grain size changes
+        when the thumb up, thumb down, or skip button is tapped. 1 makes the smallest change and 100 makes the largest change.
+    When max grain size is 1 and mod magnitude is 100, a song will take the least number of taps to repeat.
+     When max grain zize is 1 and mod magnitude is 1, a song will take the most number of taps to repeat.</string>
+    <string name="percent_change_error">Please enter a number between 1 and 100 for Mod Magnitude</string>
+
 
 </resources>

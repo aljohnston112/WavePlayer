@@ -1,7 +1,6 @@
 package com.example.waveplayer;
 
 import android.app.Activity;
-import android.os.Binder;
 import android.os.Bundle;
 
 import android.view.LayoutInflater;
@@ -50,7 +49,7 @@ public class FragmentEditPlaylist extends Fragment {
         final ActivityMain activityMain = ((ActivityMain) getActivity());
         activityMain.actionBar.setTitle(R.string.edit_playlist);
 
-        RandomPlaylist randomPlaylist = activityMain.userPickedPlaylist;
+        RandomPlaylist randomPlaylist = activityMain.currentPlaylist;
         if (randomPlaylist != null) {
             activityMain.songsToHighlight = new ArrayList<>(randomPlaylist.getProbFun().getProbMap().keySet());
         } else {
@@ -72,10 +71,9 @@ public class FragmentEditPlaylist extends Fragment {
         activityMain.fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // TODO put maxPercent in settings
                 if (finalUserPickedSongs != null  && finalUserPickedSongs.size() != 0
                         && finalEditTextPlaylistName.length() != 0) {
-                    activityMain.playlists.add(new RandomPlaylist(finalUserPickedSongs, 0.1, finalEditTextPlaylistName.getText().toString()));
+                    activityMain.playlists.add(new RandomPlaylist(finalUserPickedSongs, ActivityMain.MAX_PERCENT, finalEditTextPlaylistName.getText().toString()));
                     for(AudioURI audioURI : finalUserPickedSongs){
                         audioURI.setChecked(false);
                     }

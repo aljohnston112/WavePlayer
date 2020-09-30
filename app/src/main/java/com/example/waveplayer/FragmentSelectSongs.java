@@ -47,7 +47,6 @@ public class FragmentSelectSongs extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         final ActivityMain activityMain = ((ActivityMain) getActivity());
         activityMain.actionBar.setTitle(R.string.select_songs);
-
         activityMain.fab.setBackground(getResources().getDrawable(R.drawable.ic_check_white_24dp));
         activityMain.fab.setOnClickListener(null);
         activityMain.fab.setOnClickListener(new View.OnClickListener() {
@@ -65,7 +64,8 @@ public class FragmentSelectSongs extends Fragment {
                 navController.popBackStack();
             }
         });
-
+        InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
         RecyclerView recyclerView = activityMain.findViewById(R.id.recycler_view_song_list);
         recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
         RecyclerViewAdapterSelectSongs recyclerViewAdapterSelectSongs = new RecyclerViewAdapterSelectSongs(
