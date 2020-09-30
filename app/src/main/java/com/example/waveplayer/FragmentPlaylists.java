@@ -46,12 +46,11 @@ public class FragmentPlaylists extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ActivityMain activityMain = ((ActivityMain) getActivity());
-        activityMain.setActionBarTitle(R.string.playlists);
+        activityMain.setActionBarTitle(getResources().getString(R.string.playlists));
 
-        FloatingActionButton fab = activityMain.fab;
-        fab.setImageDrawable(getResources().getDrawable(R.drawable.ic_add_black_24dp));
-        fab.show();
-        fab.setOnClickListener(new View.OnClickListener() {
+        activityMain.setFabImage(getResources().getDrawable(R.drawable.ic_add_black_24dp));
+        activityMain.showFab(true);
+        activityMain.setFabOnClickListener(new View.OnClickListener() {
             @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
             public void onClick(View view) {

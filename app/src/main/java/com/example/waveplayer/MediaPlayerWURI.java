@@ -3,9 +3,9 @@ package com.example.waveplayer;
 import android.media.MediaPlayer;
 import android.util.Log;
 
-import static com.example.waveplayer.ActivityMain.TAG;
-
 public class MediaPlayerWURI {
+
+    private static final String TAG = "MediaPlayerWURI";
 
     private final MediaPlayer mediaPlayer;
 

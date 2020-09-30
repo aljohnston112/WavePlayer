@@ -41,9 +41,8 @@ public class FragmentTitle extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         activityMain = ((ActivityMain) getActivity());
-        activityMain.setActionBarTitle(R.string.app_name);
-        activityMain.fab.hide();
-
+        activityMain.setActionBarTitle(getResources().getString(R.string.app_name));
+        activityMain.showFab(false);
         view.findViewById(R.id.button_playlists).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

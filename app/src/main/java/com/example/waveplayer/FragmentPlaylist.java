@@ -47,8 +47,7 @@ public class FragmentPlaylist extends Fragment {
         ActivityMain activityMain = ((ActivityMain) getActivity());
         activityMain.setActionBarTitle(activityMain.currentPlaylist.getName());
 
-        activityMain.fab.setOnClickListener(null);
-        activityMain.fab.setOnClickListener(new View.OnClickListener() {
+        activityMain.setFabOnClickListener(new View.OnClickListener() {
             @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
             public void onClick(View view) {

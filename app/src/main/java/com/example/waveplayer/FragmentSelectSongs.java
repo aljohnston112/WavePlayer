@@ -46,10 +46,9 @@ public class FragmentSelectSongs extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         final ActivityMain activityMain = ((ActivityMain) getActivity());
-        activityMain.setActionBarTitle(R.string.select_songs);
-        activityMain.fab.setBackground(getResources().getDrawable(R.drawable.ic_check_white_24dp));
-        activityMain.fab.setOnClickListener(null);
-        activityMain.fab.setOnClickListener(new View.OnClickListener() {
+        activityMain.setActionBarTitle(getResources().getString(R.string.select_songs));
+        activityMain.setFabImage(getResources().getDrawable(R.drawable.ic_check_white_24dp));
+        activityMain.setFabOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 activityMain.userPickedSongs = new ArrayList<>();

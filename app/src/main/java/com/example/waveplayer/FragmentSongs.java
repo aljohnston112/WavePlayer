@@ -41,7 +41,7 @@ public class FragmentSongs extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ActivityMain activityMain = ((ActivityMain) getActivity());
-        activityMain.setActionBarTitle(R.string.songs);
+        activityMain.setActionBarTitle(getResources().getString(R.string.songs));
 
         recyclerView = activityMain.findViewById(R.id.recycler_view_song_list);
         recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));

@@ -47,7 +47,7 @@ public class FragmentEditPlaylist extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         final ActivityMain activityMain = ((ActivityMain) getActivity());
-        activityMain.setActionBarTitle(R.string.edit_playlist);
+        activityMain.setActionBarTitle(getResources().getString(R.string.edit_playlist));
 
         RandomPlaylist randomPlaylist = activityMain.currentPlaylist;
         if (randomPlaylist != null) {
@@ -66,9 +66,8 @@ public class FragmentEditPlaylist extends Fragment {
 
         final ArrayList<AudioURI> finalUserPickedSongs = activityMain.userPickedSongs;
         final EditText finalEditTextPlaylistName = view.findViewById(R.id.editTextPlaylistName);
-        activityMain.fab.setImageDrawable(getResources().getDrawable(R.drawable.ic_check_black_24dp));
-        activityMain.fab.setOnClickListener(null);
-        activityMain.fab.setOnClickListener(new View.OnClickListener() {
+        activityMain.setFabImage(getResources().getDrawable(R.drawable.ic_check_black_24dp));
+        activityMain.setFabOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (finalUserPickedSongs != null  && finalUserPickedSongs.size() != 0

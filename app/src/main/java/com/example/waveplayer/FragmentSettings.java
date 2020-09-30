@@ -28,15 +28,14 @@ public class FragmentSettings extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         final ActivityMain activityMain = ((ActivityMain) getActivity());
-        activityMain.setActionBarTitle(R.string.settings);
-        activityMain.fab.setOnClickListener(null);
-        activityMain.fab.setImageDrawable(getResources().getDrawable(R.drawable.ic_check_black_24dp));
-        activityMain.fab.show();
+        activityMain.setActionBarTitle(getResources().getString(R.string.settings));
+        activityMain.setFabImage(getResources().getDrawable(R.drawable.ic_check_black_24dp));
+        activityMain.showFab(true);
         final EditText editTextNSongs = activityMain.findViewById(R.id.editTextNSongs);
         editTextNSongs.setText(String.valueOf((int)Math.round(1.0/ActivityMain.MAX_PERCENT)));
         final EditText editTextPercentChange = activityMain.findViewById(R.id.editTextPercentChange);
         editTextPercentChange.setText(String.valueOf((int)Math.round(ActivityMain.PERCENT_CHANGE*100.0)));
-        activityMain.fab.setOnClickListener(new View.OnClickListener() {
+        activityMain.setFabOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 int nSongs = -1;

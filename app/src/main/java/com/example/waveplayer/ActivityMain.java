@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
@@ -47,11 +48,9 @@ import java.util.concurrent.TimeUnit;
 
 public class ActivityMain extends AppCompatActivity {
 
-    public static final String TAG = "mainActivity";
+    private static final String TAG = "mainActivity";
 
     private static final int REQUEST_PERMISSION = 245083964;
-
-    FloatingActionButton fab;
 
     ArrayList<AudioURI> songs = new ArrayList<>();
     HashMap<Uri, MediaPlayerWURI> songsMap = new HashMap<>();
@@ -82,7 +81,6 @@ public class ActivityMain extends AppCompatActivity {
         toolbar.setTitleTextColor(getResources().getColor(R.color.colorOnPrimary));
         setSupportActionBar(toolbar);
         centerActionBarTitle();
-        fab = findViewById(R.id.fab);
         songQueueIterator = songQueue.listIterator();
         mOnCompletionListener = new MOnCompletionListener(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -105,14 +103,32 @@ public class ActivityMain extends AppCompatActivity {
         }
     }
 
-    public void setActionBarTitle(int stringID){
-        ActionBar actionBar = getSupportActionBar();
-        actionBar.setTitle(stringID);
-    }
-
     public void setActionBarTitle(String string){
         ActionBar actionBar = getSupportActionBar();
         actionBar.setTitle(string);
+    }
+
+    public void setFabImage(Drawable drawable){
+        FloatingActionButton fab;
+        fab = findViewById(R.id.fab);
+        fab.setImageDrawable(drawable);
+    }
+
+    public void showFab(boolean show){
+        FloatingActionButton fab;
+        fab = findViewById(R.id.fab);
+        if(show){
+            fab.show();
+        } else{
+            fab.hide();
+        }
+    }
+
+    public void setFabOnClickListener(View.OnClickListener onClickListener){
+        FloatingActionButton fab;
+        fab = findViewById(R.id.fab);
+        fab.setOnClickListener(null);
+        fab.setOnClickListener(onClickListener);
     }
 
     private void centerActionBarTitle() {
