@@ -28,7 +28,7 @@ public class FragmentSettings extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         final ActivityMain activityMain = ((ActivityMain) getActivity());
-        activityMain.actionBar.setTitle(R.string.settings);
+        activityMain.setActionBarTitle(R.string.settings);
         activityMain.fab.setOnClickListener(null);
         activityMain.fab.setImageDrawable(getResources().getDrawable(R.drawable.ic_check_black_24dp));
         activityMain.fab.show();

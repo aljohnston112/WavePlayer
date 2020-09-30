@@ -45,8 +45,7 @@ public class FragmentPlaylist extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         // TODO
         ActivityMain activityMain = ((ActivityMain) getActivity());
-        ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
-        actionBar.setTitle(activityMain.currentPlaylist.getName());
+        activityMain.setActionBarTitle(activityMain.currentPlaylist.getName());
 
         activityMain.fab.setOnClickListener(null);
         activityMain.fab.setOnClickListener(new View.OnClickListener() {

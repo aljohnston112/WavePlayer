@@ -47,7 +47,7 @@ public class FragmentEditPlaylist extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         final ActivityMain activityMain = ((ActivityMain) getActivity());
-        activityMain.actionBar.setTitle(R.string.edit_playlist);
+        activityMain.setActionBarTitle(R.string.edit_playlist);
 
         RandomPlaylist randomPlaylist = activityMain.currentPlaylist;
         if (randomPlaylist != null) {

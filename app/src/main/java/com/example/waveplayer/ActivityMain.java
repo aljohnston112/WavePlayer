@@ -51,7 +51,6 @@ public class ActivityMain extends AppCompatActivity {
 
     private static final int REQUEST_PERMISSION = 245083964;
 
-    ActionBar actionBar;
     FloatingActionButton fab;
 
     ArrayList<AudioURI> songs = new ArrayList<>();
@@ -82,7 +81,6 @@ public class ActivityMain extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         toolbar.setTitleTextColor(getResources().getColor(R.color.colorOnPrimary));
         setSupportActionBar(toolbar);
-        actionBar = getSupportActionBar();
         centerActionBarTitle();
         fab = findViewById(R.id.fab);
         songQueueIterator = songQueue.listIterator();
@@ -105,6 +103,16 @@ public class ActivityMain extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
+    }
+
+    public void setActionBarTitle(int stringID){
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setTitle(stringID);
+    }
+
+    public void setActionBarTitle(String string){
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setTitle(string);
     }
 
     private void centerActionBarTitle() {

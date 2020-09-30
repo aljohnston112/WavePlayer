@@ -46,7 +46,7 @@ public class FragmentPlaylists extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ActivityMain activityMain = ((ActivityMain) getActivity());
-        activityMain.actionBar.setTitle(R.string.playlists);
+        activityMain.setActionBarTitle(R.string.playlists);
 
         FloatingActionButton fab = activityMain.fab;
         fab.setImageDrawable(getResources().getDrawable(R.drawable.ic_add_black_24dp));

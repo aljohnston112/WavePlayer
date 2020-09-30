@@ -51,7 +51,7 @@ public class FragmentSong extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         activityMain = ((ActivityMain) getActivity());
-        activityMain.actionBar.setTitle(R.string.now_playing);
+        activityMain.setActionBarTitle(R.string.now_playing);
         activityMain.fab.hide();
         setUpButtons(view);
         playSelectedWaveFile(activityMain.currentSong);
