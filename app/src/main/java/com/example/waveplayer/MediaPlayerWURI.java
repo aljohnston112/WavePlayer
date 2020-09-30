@@ -61,8 +61,8 @@ public class MediaPlayerWURI {
         mediaPlayer.seekTo(millis);
     }
 
-    public void setOnCompletionListener(ActivityMain.MOnCompletionListener mOnCompletionListener) {
-        mediaPlayer.setOnCompletionListener(mOnCompletionListener);
+    public void setOnCompletionListener(MediaPlayer.OnCompletionListener onCompletionListener) {
+        mediaPlayer.setOnCompletionListener(onCompletionListener);
     }
 
     class MOnPreparedListener implements MediaPlayer.OnPreparedListener{

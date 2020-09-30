@@ -49,10 +49,10 @@ public class FragmentEditPlaylist extends Fragment {
         final ActivityMain activityMain = ((ActivityMain) getActivity());
         activityMain.setActionBarTitle(getResources().getString(R.string.edit_playlist));
 
-        RandomPlaylist randomPlaylist = activityMain.currentPlaylist;
+        RandomPlaylist currentPlaylist = activityMain.currentPlaylist;
         ArrayList<AudioURI> songsToHighlight = new ArrayList<>();
-        if (randomPlaylist != null) {
-            songsToHighlight = new ArrayList<>(randomPlaylist.getProbFun().getProbMap().keySet());
+        if (currentPlaylist != null) {
+            songsToHighlight = new ArrayList<>(currentPlaylist.getProbFun().getProbMap().keySet());
         } else {
             songsToHighlight = new ArrayList<>();
         }

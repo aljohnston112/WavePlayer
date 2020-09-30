@@ -7,30 +7,22 @@ public final class AudioURI implements Comparable<AudioURI> {
 
     public final Uri uri;
 
+    public final String displayName;
+
     public final String title;
 
     public final String artist;
 
-    final Bitmap thumbnail;
-
-    final int duration;
+    public final Bitmap thumbnail;
 
     private boolean isChecked = false;
 
-    public boolean isChecked() {
-        return isChecked;
-    }
-
-    public void setChecked(boolean checked) {
-        isChecked = checked;
-    }
-
-    public AudioURI(Uri uri, Bitmap thumbnail, String artist, String title, int duration){
+    public AudioURI(Uri uri, Bitmap thumbnail, String displayName, String artist, String title){
         this.uri = uri;
+        this.displayName = displayName;
         this.title = title;
         this.artist = artist;
         this.thumbnail = thumbnail;
-        this.duration = duration;
     }
 
     @Override
@@ -45,6 +37,14 @@ public final class AudioURI implements Comparable<AudioURI> {
         }
         h = title.compareTo(o.title);
         return h;
+    }
+
+    public boolean isChecked() {
+        return isChecked;
+    }
+
+    public void setChecked(boolean checked) {
+        isChecked = checked;
     }
 
 }
