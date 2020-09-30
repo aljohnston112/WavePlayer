@@ -55,7 +55,7 @@ public class ActivityMain extends AppCompatActivity {
     ArrayList<AudioURI> songs = new ArrayList<>();
     HashMap<Uri, MediaPlayerWURI> songsMap = new HashMap<>();
     ArrayList<RandomPlaylist> playlists = new ArrayList<>();
-    ArrayList<AudioURI> songsToHighlight = new ArrayList<>();
+    // TODO make fragments communicate
     ArrayList<AudioURI> userPickedSongs = new ArrayList<>();
     RandomPlaylist masterPlaylist;
     RandomPlaylist currentPlaylist = masterPlaylist;
