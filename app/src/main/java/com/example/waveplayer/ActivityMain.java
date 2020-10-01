@@ -2,7 +2,6 @@ package com.example.waveplayer;
 
 import android.Manifest;
 import android.content.ContentUris;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -16,7 +15,6 @@ import android.os.Build;
 import android.os.Bundle;
 
 import android.provider.MediaStore;
-import android.util.Log;
 import android.util.Size;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,22 +28,17 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatTextView;
 import androidx.appcompat.widget.Toolbar;
-import androidx.loader.content.CursorLoader;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
-import java.util.Locale;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -82,13 +75,12 @@ public class ActivityMain extends AppCompatActivity {
         public void onCompletion(MediaPlayer mediaPlayer) {
             scheduledExecutorService.shutdown();
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-            play(currentPlaylist.getProbFun().fun());
+            addToQueueAndPlay(currentPlaylist.getProbFun().fun());
             updateUI();
         }
     };
 
     // region onCreate
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -198,7 +190,7 @@ public class ActivityMain extends AppCompatActivity {
 
     // endregion onCreate
 
-
+    // region ActivityMain UI calls
     public void setActionBarTitle(String string) {
         ActionBar actionBar = getSupportActionBar();
         actionBar.setTitle(string);
@@ -226,126 +218,125 @@ public class ActivityMain extends AppCompatActivity {
         fab.setOnClickListener(null);
         fab.setOnClickListener(onClickListener);
     }
+    // endregion ActivityMain UI calls
 
+    // region Music Controls
+    void addToQueueAndPlay(AudioURI audioURI) {
+        stopPreviousAndPrepare();
+        MediaPlayerWURI mediaPlayerWURI = songsMap.get(audioURI.uri);
+        if (mediaPlayerWURI == null) {
+            mediaPlayerWURI = makeMediaPlayerWURI(audioURI);
+        }
+        songQueueIterator = null;
+        songQueue.add(mediaPlayerWURI.audioURI.uri);
+        songQueueIterator = songQueue.listIterator(songQueue.lastIndexOf(mediaPlayerWURI.audioURI.uri));
+        songQueueIterator.next();
+        mediaPlayerWURI.start();
+        currentSong = audioURI;
+        updateUI();
+    }
 
-
-
-    void playNext() {
-        synchronized (this) {
-            if (songQueueIterator.hasNext()) {
-                if (songQueueIterator.hasPrevious()) {
-                    MediaPlayerWURI mediaPlayer1 = songsMap.get(songQueueIterator.previous());
-                    if (mediaPlayer1.isPrepared && mediaPlayer1.isPlaying()) {
-                        mediaPlayer1.stop();
-                        mediaPlayer1.prepareAsync();
-                    }
+    private void stopPreviousAndPrepare() {
+        if (songQueueIterator.hasPrevious()) {
+            MediaPlayerWURI mediaPlayerWURI = songsMap.get(songQueueIterator.previous());
+            if (mediaPlayerWURI != null) {
+                if (mediaPlayerWURI.isPrepared && mediaPlayerWURI.isPlaying()) {
+                    mediaPlayerWURI.stop();
+                    mediaPlayerWURI.prepareAsync();
                     songQueueIterator.next();
                 }
-                MediaPlayerWURI mediaPlayerWURI = songsMap.get(songQueueIterator.next());
-                currentSong = mediaPlayerWURI.audioURI;
-                while (!mediaPlayerWURI.isPrepared) {
-                }
-                mediaPlayerWURI.start();
-                updateUI();
-            } else {
-                play(currentPlaylist.getProbFun().fun());
             }
         }
     }
 
+    private MediaPlayerWURI makeMediaPlayerWURI(AudioURI audioURI) {
+        MediaPlayerWURI mediaPlayerWURI = new CreateMediaPlayerWURIThread(this, audioURI).call();
+        songsMap.put(mediaPlayerWURI.audioURI.uri, mediaPlayerWURI);
+        while (!mediaPlayerWURI.isPrepared) {
+        }
+        mediaPlayerWURI.setOnCompletionListener(null);
+        mediaPlayerWURI.setOnCompletionListener(onCompletionListener);
+        return mediaPlayerWURI;
+    }
+
+    void playNext() {
+        stopPreviousAndPrepare();
+        if (songQueueIterator.hasNext()) {
+            MediaPlayerWURI mediaPlayerWURI = songsMap.get(songQueueIterator.next());
+            if (mediaPlayerWURI != null) {
+                currentSong = mediaPlayerWURI.audioURI;
+            }
+            while (!mediaPlayerWURI.isPrepared) {
+            }
+            mediaPlayerWURI.start();
+            updateUI();
+        } else {
+            addToQueueAndPlay(currentPlaylist.getProbFun().fun());
+        }
+    }
+
     public void playPrevious() {
+        stopPreviousAndPrepare();
+        Uri uri = null;
         if (songQueueIterator.hasPrevious()) {
-            MediaPlayerWURI mediaPlayer = songsMap.get(songQueueIterator.previous());
-            if (songQueueIterator.hasPrevious()) {
-                mediaPlayer.stop();
-                mediaPlayer.prepareAsync();
-                MediaPlayerWURI mediaPlayerWURI = songsMap.get(songQueueIterator.previous());
+            uri = songQueueIterator.previous();
+        }
+        if (songQueueIterator.hasPrevious()) {
+            MediaPlayerWURI mediaPlayerWURI = songsMap.get(songQueueIterator.previous());
+            if(mediaPlayerWURI!=null) {
                 while (!mediaPlayerWURI.isPrepared) {
                 }
                 mediaPlayerWURI.start();
                 currentSong = mediaPlayerWURI.audioURI;
-                songQueueIterator.next();
-            } else {
-                mediaPlayer.seekTo(0);
-                songQueueIterator.next();
+            }
+            songQueueIterator.next();
+        } else {
+            if(uri != null) {
+                MediaPlayerWURI mediaPlayerWURI = songsMap.get(uri);
+                if(mediaPlayerWURI != null) {
+                    while (!mediaPlayerWURI.isPrepared) {
+                    }
+                    mediaPlayerWURI.start();
+                    currentSong = mediaPlayerWURI.audioURI;
+                }
             }
         }
         updateUI();
     }
 
     public void pauseOrPlay() {
-        MediaPlayerWURI mediaPlayer = songsMap.get(currentSong.uri);
-        if (mediaPlayer.isPlaying()) {
-            mediaPlayer.pause();
-        } else {
-            while (!mediaPlayer.isPrepared) {
-            }
-            mediaPlayer.start();
-        }
-    }
-
-
-    void play(AudioURI audioURI) {
-        if (audioURI.uri.equals(currentSong.uri) && songsMap.get(currentSong.uri) != null &&
-                songsMap.get(currentSong.uri).isPlaying()) {
-            songsMap.get(currentSong.uri).seekTo(0);
-        } else {
-            if (songQueue.size() > 0) {
-                Log.v(TAG, "Stopping previous");
-                if (songQueueIterator.hasPrevious()) {
-                    MediaPlayerWURI mediaPlayer1 = songsMap.get(songQueueIterator.previous());
-                    if (mediaPlayer1 != null) {
-                        while (!mediaPlayer1.isPrepared) {
-                        }
-                        if (mediaPlayer1.isPlaying()) {
-                            mediaPlayer1.stop();
-                            mediaPlayer1.prepareAsync();
-                            songQueueIterator.next();
-                        }
-                    }
+        MediaPlayerWURI mediaPlayerWURI = songsMap.get(currentSong.uri);
+        if (mediaPlayerWURI != null) {
+            if (mediaPlayerWURI.isPrepared && mediaPlayerWURI.isPlaying()) {
+                mediaPlayerWURI.pause();
+            } else {
+                while (!mediaPlayerWURI.isPrepared) {
                 }
-                Log.v(TAG, "Stopped previous");
+                mediaPlayerWURI.start();
             }
-            MediaPlayerWURI mediaPlayerWURI = songsMap.get(audioURI.uri);
-            if (mediaPlayerWURI == null) {
-                Log.v(TAG, "Creating MediaPlayer");
-                mediaPlayerWURI = new NextMediaPlayer(this, audioURI).call();
-                songsMap.put(mediaPlayerWURI.audioURI.uri, mediaPlayerWURI);
-                Log.v(TAG, "MediaPlayer created");
-            }
-            Log.v(TAG, "Waiting for preparation");
-            while (!mediaPlayerWURI.isPrepared) {
-            }
-            Log.v(TAG, "Prepared");
-            mediaPlayerWURI.setOnCompletionListener(onCompletionListener);
-            songQueueIterator = null;
-            songQueue.add(mediaPlayerWURI.audioURI.uri);
-            songQueueIterator = songQueue.listIterator(songQueue.lastIndexOf(mediaPlayerWURI.audioURI.uri));
-            MediaPlayerWURI mediaPlayer = songsMap.get(songQueueIterator.next());
-            mediaPlayer.start();
         }
-        currentSong = audioURI;
-        updateUI();
     }
-
+    // endregion Music Controls
+    
     public void releaseMediaPlayers() {
         synchronized (this) {
             Iterator<MediaPlayerWURI> collection = songsMap.values().iterator();
+            MediaPlayerWURI mediaPlayerWURI;
             while (collection.hasNext()) {
-                MediaPlayerWURI m = collection.next();
-                m.release();
+                mediaPlayerWURI = collection.next();
+                mediaPlayerWURI.release();
                 collection.remove();
             }
         }
     }
 
-    public class NextMediaPlayer implements Callable<MediaPlayerWURI> {
+    public class CreateMediaPlayerWURIThread implements Callable<MediaPlayerWURI> {
 
         ActivityMain activityMain;
 
         AudioURI audioURI;
 
-        NextMediaPlayer(ActivityMain activityMain, AudioURI audioURI) {
+        CreateMediaPlayerWURIThread(ActivityMain activityMain, AudioURI audioURI) {
             this.activityMain = activityMain;
             this.audioURI = audioURI;
         }
@@ -403,7 +394,7 @@ public class ActivityMain extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_PERMISSION && grantResults.length > 0 &&
                 grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                getAudioFiles();
+            getAudioFiles();
         } else {
             Toast toast = Toast.makeText(getApplicationContext(), R.string.permission_needed, Toast.LENGTH_LONG);
             toast.show();

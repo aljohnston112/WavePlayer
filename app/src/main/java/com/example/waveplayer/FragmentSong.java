@@ -6,21 +6,17 @@ import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
 
-import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import android.widget.ImageButton;
 import android.widget.SeekBar;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import androidx.fragment.app.Fragment;
-
-import java.util.concurrent.TimeUnit;
 
 public class FragmentSong extends Fragment {
 
@@ -134,7 +130,7 @@ public class FragmentSong extends Fragment {
             }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
         }
         if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                activityMain.play(uri);
+                activityMain.addToQueueAndPlay(uri);
         }
     }
     }

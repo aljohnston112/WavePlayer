@@ -41,6 +41,7 @@ public class MediaPlayerWURI {
     }
 
     public void start(){
+
         mediaPlayer.start();
     }
 
