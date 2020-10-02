@@ -72,6 +72,7 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                     NavDirections action = null;
                     if (pos != RecyclerView.NO_POSITION) {
                         ((ActivityMain) fragment.getActivity()).currentSong = audioURI;
+                        ((ActivityMain) fragment.getActivity()).isPlaying = false;
                         if (fragment instanceof FragmentSongs) {
                             action = FragmentSongsDirections.actionFragmentSongsToFragmentSong();
                         } else if (fragment instanceof FragmentPlaylist) {

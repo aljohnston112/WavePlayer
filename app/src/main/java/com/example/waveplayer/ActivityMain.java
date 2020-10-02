@@ -93,7 +93,6 @@ public class ActivityMain extends AppCompatActivity {
             scheduledExecutorService.shutdown();
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
             addToQueueAndPlay(currentPlaylist.getProbFun().fun());
-            updateSongUI();
         }
     };
 

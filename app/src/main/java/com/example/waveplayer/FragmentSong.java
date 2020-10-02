@@ -55,8 +55,6 @@ public class FragmentSong extends Fragment {
         if(!activityMain.isPlaying) {
             playSelectedWaveFile(activityMain.currentSong);
             activityMain.isPlaying = true;
-        } else{
-            activityMain.updateSongUI();
         }
         activityMain.isStarted = true;
     }
