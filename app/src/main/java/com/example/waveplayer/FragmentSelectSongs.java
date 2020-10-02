@@ -70,6 +70,11 @@ public class FragmentSelectSongs extends Fragment {
         RecyclerViewAdapterSelectSongs recyclerViewAdapterSelectSongs = new RecyclerViewAdapterSelectSongs(
                 activityMain.songs, activityMain.userPickedSongs, this);
         recyclerView.setAdapter(recyclerViewAdapterSelectSongs);
+        if(activityMain.isPlaying){
+            activityMain.showSongPane();
+        } else{
+            activityMain.hideSongPane();
+        }
     }
 
 }

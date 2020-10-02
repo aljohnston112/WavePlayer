@@ -5,6 +5,8 @@ import android.util.Log;
 
 public class MediaPlayerWURI {
 
+    final MediaPlayerWURI mediaPlayerWURI = this;
+
     private static final String TAG = "MediaPlayerWURI";
 
     private final MediaPlayer mediaPlayer;
@@ -13,7 +15,9 @@ public class MediaPlayerWURI {
 
     final ActivityMain activityMain;
 
-    boolean isPrepared = true;
+    volatile boolean isPrepared = true;
+
+    volatile boolean shouldPlay = false;
 
     MediaPlayerWURI(ActivityMain activityMain, MediaPlayer mediaPlayer, AudioURI audioURI){
         this.activityMain = activityMain;
@@ -26,11 +30,19 @@ public class MediaPlayerWURI {
         mediaPlayer.setOnErrorListener(new MOnErrorListener());
     }
 
+    synchronized public void shouldStart(boolean shouldPlay){
+        if(shouldPlay && isPrepared){
+            mediaPlayer.start();
+        } else {
+            this.shouldPlay = shouldPlay;
+        }
+    }
+
     public void release(){
         mediaPlayer.release();
     }
 
-    public void prepareAsync(){
+    synchronized public void prepareAsync(){
         Log.v(TAG, "Waiting for prepareAsync");
         isPrepared = false;
         mediaPlayer.prepareAsync();
@@ -40,16 +52,11 @@ public class MediaPlayerWURI {
         return mediaPlayer.getCurrentPosition();
     }
 
-    public void start(){
-
-        mediaPlayer.start();
-    }
-
     public boolean isPlaying(){
         return mediaPlayer.isPlaying();
     }
 
-    public void stop(){
+    synchronized public void stop(){
         Log.v(TAG, "MediaPlayer stopped");
         isPrepared = false;
         mediaPlayer.stop();
@@ -58,6 +65,7 @@ public class MediaPlayerWURI {
     public void pause(){
         mediaPlayer.pause();
     }
+
     public void seekTo(int millis){
         mediaPlayer.seekTo(millis);
     }
@@ -76,8 +84,14 @@ public class MediaPlayerWURI {
 
         @Override
         public void onPrepared(MediaPlayer mediaPlayer) {
-            Log.v(TAG, "MediaPlayer prepared");
-            mediaPlayerWURI.isPrepared = true;
+            synchronized (mediaPlayerWURI) {
+                Log.v(TAG, "MediaPlayer prepared");
+                mediaPlayerWURI.isPrepared = true;
+                if (shouldPlay) {
+                    mediaPlayer.start();
+                    shouldPlay = false;
+                }
+            }
         }
     }
 
@@ -88,8 +102,10 @@ public class MediaPlayerWURI {
 
         @Override
         public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
+            synchronized (mediaPlayerWURI) {
                 activityMain.releaseMediaPlayers();
                 return false;
+            }
         }
 
     }

@@ -4,23 +4,23 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.media.MediaPlayer;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewAdapterSongs.ViewHolder> {
 
     public static final int MENU_ADD_TO_PLAYLIST_GROUP_ID = 3357908;
 
-    final List<AudioURI> audioURIS;
+    final public List<AudioURI> audioURIS;
     final Fragment fragment;
 
     public RecyclerViewAdapterSongs(List<AudioURI> items, Fragment fragment) {
@@ -61,6 +61,9 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
             super(view);
             songView = view;
             textViewSongName = view.findViewById(R.id.text_view_songs_name);
+            if(fragment instanceof FragmentSongs){
+                view.findViewById(R.id.handle).setVisibility(View.INVISIBLE);
+            }
             view.setOnCreateContextMenuListener(this);
             view.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -97,5 +100,6 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
         }
 
     }
+
 
 }

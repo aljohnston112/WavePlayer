@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import androidx.recyclerview.widget.RecyclerView;
@@ -41,7 +42,7 @@ public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<Recycle
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        final LinearLayout linearLayout = holder.songView.findViewById(R.id.linear_layout_song_name);
+        final ConstraintLayout linearLayout = holder.songView.findViewById(R.id.linear_layout_song_name);
         if(selectedSongs != null && audioURIS != null) {
             if (selectedSongs.contains(audioURIS.get(position))) {
                 audioURIS.get(position).setChecked(true);
@@ -74,9 +75,12 @@ public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<Recycle
 
         public ViewHolder(final View view) {
             super(view);
+            if(fragment instanceof FragmentSelectSongs){
+                view.findViewById(R.id.handle).setVisibility(View.INVISIBLE);
+            }
             songView = view;
             textViewSongName = view.findViewById(R.id.text_view_songs_name);
-            final LinearLayout linearLayout = view.findViewById(R.id.linear_layout_song_name);
+            final ConstraintLayout linearLayout = view.findViewById(R.id.linear_layout_song_name);
             if(audioURI != null && audioURI.isChecked()){
                 textViewSongName.setBackgroundColor(Color.parseColor("#000057"));
                 linearLayout.setBackgroundColor(Color.parseColor("#000057"));

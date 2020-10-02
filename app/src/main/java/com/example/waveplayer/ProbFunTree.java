@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -30,10 +31,10 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
     private static final long serialVersionUID = -6556634307811294014L;
 
     // The set of elements to be picked from, mapped to the probabilities of getting picked
-    private TreeMap<T, Double> probMap = new TreeMap<>();
+    private LinkedHashMap<T, Double> probMap = new LinkedHashMap<>();
 
     // The set of elements to be picked from, mapped to the probabilities of getting picked
-    private HashMap<T, ProbFunTree<T>> children = new HashMap<>();
+    private LinkedHashMap<T, ProbFunTree<T>> children = new LinkedHashMap<>();
 
     // The parent ProbFunTree of this ProbFunTree
     private ProbFunTree<T> parent = null;
@@ -221,8 +222,12 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
      * @return the Map of element-probability pairs that make up this ProbFunTree.
      * Any changes in the returned Map will be reflected in this ProbFunTree.
      */
-    public Map<T, Double> getProbMap() {
+    public LinkedHashMap<T, Double> getProbMap() {
         return this.probMap;
+    }
+
+    public void setProbMap(LinkedHashMap<T, Double> probMap) {
+        this.probMap = probMap;
     }
 
     /**

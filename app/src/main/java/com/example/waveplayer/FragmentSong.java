@@ -11,7 +11,9 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -50,7 +52,13 @@ public class FragmentSong extends Fragment {
         activityMain.setActionBarTitle(getResources().getString(R.string.now_playing));
         activityMain.showFab(false);
         setUpButtons(view);
-        playSelectedWaveFile(activityMain.currentSong);
+        if(!activityMain.isPlaying) {
+            playSelectedWaveFile(activityMain.currentSong);
+            activityMain.isPlaying = true;
+        } else{
+            activityMain.updateSongUI();
+        }
+        activityMain.isStarted = true;
     }
 
     private void setUpButtons(View view) {
