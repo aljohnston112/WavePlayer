@@ -24,14 +24,6 @@ public class FragmentSong extends Fragment {
 
     SeekBar seekBar;
 
-    public FragmentSong() {
-        // Required empty public constructor
-    }
-
-    public static FragmentSong newInstance() {
-        return new FragmentSong();
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,20 +39,12 @@ public class FragmentSong extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         activityMain = ((ActivityMain) getActivity());
-        activityMain.setActionBarTitle(getResources().getString(R.string.now_playing));
-        activityMain.showFab(false);
-        setUpButtons(view);
-        if(!activityMain.isPlaying) {
-            playSelectedWaveFile(activityMain.currentSong);
-            activityMain.isPlaying = true;
+        if (activityMain != null) {
+            activityMain.setActionBarTitle(getResources().getString(R.string.now_playing));
+            activityMain.showFab(false);
+            activityMain.updateSongUI();
+            setUpButtons(view);
         }
-        activityMain.isStarted = true;
-        activityMain.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                activityMain.updateSongUI();
-            }
-        });
     }
 
     private void setUpButtons(View view) {
@@ -76,7 +60,7 @@ public class FragmentSong extends Fragment {
             @Override
             public void onClick(View view) {
                 activityMain.currentPlaylist.getProbFun().bad(
-                        activityMain.currentSong, ActivityMain.PERCENT_CHANGE);
+                        activityMain.getCurrentSong(), ActivityMain.PERCENT_CHANGE);
             }
         });
 
@@ -84,14 +68,14 @@ public class FragmentSong extends Fragment {
             @Override
             public void onClick(View view) {
                 activityMain.currentPlaylist.getProbFun().good(
-                        activityMain.currentSong, ActivityMain.PERCENT_CHANGE);
+                        activityMain.getCurrentSong(), ActivityMain.PERCENT_CHANGE);
             }
         });
 
         buttonShuffle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-               //TODO
+                //TODO
             }
         });
 
@@ -112,7 +96,7 @@ public class FragmentSong extends Fragment {
         buttonNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                activityMain.currentPlaylist.getProbFun().bad(activityMain.currentSong, ActivityMain.PERCENT_CHANGE);
+                activityMain.currentPlaylist.getProbFun().bad(activityMain.getCurrentSong(), ActivityMain.PERCENT_CHANGE);
                 activityMain.playNext();
             }
         });
@@ -126,21 +110,4 @@ public class FragmentSong extends Fragment {
 
     }
 
-    private void playSelectedWaveFile(AudioURI uri) {
-        AudioManager audioManager = (AudioManager) activityMain.getSystemService(Context.AUDIO_SERVICE);
-        int result;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            result = audioManager.requestAudioFocus(new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN).build());
-        } else {
-            result = audioManager.requestAudioFocus(new AudioManager.OnAudioFocusChangeListener() {
-                @Override
-                public void onAudioFocusChange(int i) {
-
-                }
-            }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-        }
-        if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                activityMain.addToQueueAndPlay(uri);
-        }
-    }
-    }
+}

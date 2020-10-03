@@ -65,10 +65,15 @@ public final class AudioURI implements Comparable<AudioURI>, Serializable {
         if(uri == null){
             this.uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
         }
-        if(obj instanceof AudioURI && uri.equals(((AudioURI) obj).getUri())){
-            return true;
+        return obj instanceof AudioURI && uri.equals(((AudioURI) obj).getUri());
+    }
+
+    @Override
+    public int hashCode() {
+        if(uri == null) {
+            this.uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
         }
-        return false;
+        return uri.toString().hashCode();
     }
 
     public Uri getUri() {

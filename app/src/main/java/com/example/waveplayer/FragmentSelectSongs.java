@@ -2,7 +2,6 @@ package com.example.waveplayer;
 
 import android.app.Activity;
 import android.os.Bundle;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,25 +9,15 @@ import android.view.inputmethod.InputMethodManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import androidx.fragment.app.Fragment;
-
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.ArrayList;
-
 public class FragmentSelectSongs extends Fragment {
 
-    public FragmentSelectSongs() {
-    }
-
-    @SuppressWarnings("unused")
-    public static FragmentSelectSongs newInstance(int columnCount) {
-        return new FragmentSelectSongs();
-    }
+    ActivityMain activityMain;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -44,20 +33,31 @@ public class FragmentSelectSongs extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        final ActivityMain activityMain = ((ActivityMain) getActivity());
+        activityMain = ((ActivityMain) getActivity());
+        setupFAB();
         activityMain.setActionBarTitle(getResources().getString(R.string.select_songs));
+        InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        RecyclerView recyclerViewSongList = activityMain.findViewById(R.id.recycler_view_song_list);
+        recyclerViewSongList.setLayoutManager(new LinearLayoutManager(recyclerViewSongList.getContext()));
+        RecyclerViewAdapterSelectSongs recyclerViewAdapterSelectSongs = new RecyclerViewAdapterSelectSongs(
+                this, activityMain.songs, activityMain.userPickedSongs);
+        recyclerViewSongList.setAdapter(recyclerViewAdapterSelectSongs);
+    }
+
+    private void setupFAB() {
         activityMain.setFabImage(R.drawable.ic_check_white_24dp);
         activityMain.showFab(true);
         activityMain.setFabOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                activityMain.userPickedSongs = new ArrayList<>();
-                int size = activityMain.songs.size();
-                for(int i = 0; i < size; i++) {
+                activityMain.userPickedSongs.clear();
+                int nAllSongs = activityMain.songs.size();
+                for(int i = 0; i < nAllSongs; i++) {
                     if (activityMain.songs.get(i).isSelected()){
                         activityMain.userPickedSongs.add(activityMain.songs.get(i));
                         activityMain.songs.get(i).setSelected(false);
-                    } else if(activityMain.userPickedSongs.contains(activityMain.songs.get(i))){
+                    } else{
                         activityMain.userPickedSongs.remove(activityMain.songs.get(i));
                     }
                 }
@@ -65,18 +65,6 @@ public class FragmentSelectSongs extends Fragment {
                 navController.popBackStack();
             }
         });
-        InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(Activity.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-        RecyclerView recyclerView = activityMain.findViewById(R.id.recycler_view_song_list);
-        recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
-        RecyclerViewAdapterSelectSongs recyclerViewAdapterSelectSongs = new RecyclerViewAdapterSelectSongs(
-                activityMain.songs, activityMain.userPickedSongs, this);
-        recyclerView.setAdapter(recyclerViewAdapterSelectSongs);
-        if(activityMain.isPlaying){
-            activityMain.showSongPane();
-        } else{
-            activityMain.hideSongPane();
-        }
     }
 
 }

@@ -5,9 +5,9 @@ import android.util.Log;
 
 public class MediaPlayerWURI {
 
-    final MediaPlayerWURI mediaPlayerWURI = this;
-
     private static final String TAG = "MediaPlayerWURI";
+
+    private final MediaPlayerWURI mediaPlayerWURI = this;
 
     private final MediaPlayer mediaPlayer;
 
@@ -19,7 +19,7 @@ public class MediaPlayerWURI {
 
     volatile boolean shouldPlay = false;
 
-    MediaPlayerWURI(ActivityMain activityMain, MediaPlayer mediaPlayer, AudioURI audioURI){
+    MediaPlayerWURI(final ActivityMain activityMain, MediaPlayer mediaPlayer, AudioURI audioURI){
         this.activityMain = activityMain;
         this.mediaPlayer = mediaPlayer;
         this.audioURI = audioURI;
@@ -27,7 +27,16 @@ public class MediaPlayerWURI {
         mediaPlayer.setOnPreparedListener(null);
         mediaPlayer.setOnErrorListener(null);
         mediaPlayer.setOnPreparedListener(new MOnPreparedListener(this));
-        mediaPlayer.setOnErrorListener(new MOnErrorListener());
+        MediaPlayer.OnErrorListener onErrorListener = new MediaPlayer.OnErrorListener() {
+            @Override
+            public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
+                synchronized (mediaPlayerWURI) {
+                    activityMain.releaseMediaPlayers();
+                    return false;
+                }
+            }
+        };
+        mediaPlayer.setOnErrorListener(onErrorListener);
     }
 
     synchronized public void shouldStart(boolean shouldPlay){
@@ -67,15 +76,21 @@ public class MediaPlayerWURI {
     synchronized public void stop(){
         Log.v(TAG, "MediaPlayer stopped");
         isPrepared = false;
+        shouldPlay = false;
         mediaPlayer.stop();
     }
 
     public void pause(){
-        mediaPlayer.pause();
+        if(isPrepared) {
+            mediaPlayer.pause();
+        }
+        shouldPlay = false;
     }
 
     public void seekTo(int millis){
-        mediaPlayer.seekTo(millis);
+        if (isPrepared){
+            mediaPlayer.seekTo(millis);
+        }
     }
 
     public void setOnCompletionListener(MediaPlayer.OnCompletionListener onCompletionListener) {
@@ -101,21 +116,6 @@ public class MediaPlayerWURI {
                 }
             }
         }
-    }
-
-    class MOnErrorListener implements MediaPlayer.OnErrorListener {
-
-        public MOnErrorListener(){
-        }
-
-        @Override
-        public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
-            synchronized (mediaPlayerWURI) {
-                activityMain.releaseMediaPlayers();
-                return false;
-            }
-        }
-
     }
 
 }

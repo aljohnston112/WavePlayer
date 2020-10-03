@@ -1,29 +1,13 @@
 package com.example.waveplayer;
 
-import android.Manifest;
-import android.content.ContentUris;
-import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.media.ThumbnailUtils;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
-import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
-import androidx.loader.content.CursorLoader;
 import androidx.navigation.fragment.NavHostFragment;
-import java.io.IOException;
-import java.util.Objects;
 
 import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentPlaylists;
 import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentSettings;
@@ -41,8 +25,24 @@ public class FragmentTitle extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         activityMain = ((ActivityMain) getActivity());
-        activityMain.setActionBarTitle(getResources().getString(R.string.app_name));
-        activityMain.showFab(false);
+        updateMainContent();
+        setUpButtons(view);
+
+    }
+
+    private void updateMainContent() {
+        if(activityMain != null) {
+            activityMain.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    activityMain.setActionBarTitle(getResources().getString(R.string.app_name));
+                    activityMain.showFab(false);
+                }
+            });
+        }
+    }
+
+    private void setUpButtons(View view) {
         view.findViewById(R.id.button_playlists).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -50,7 +50,6 @@ public class FragmentTitle extends Fragment {
                         .navigate(actionFragmentTitleToFragmentPlaylists());
             }
         });
-
         view.findViewById(R.id.button_songs).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -58,7 +57,6 @@ public class FragmentTitle extends Fragment {
                         .navigate(actionFragmentTitleToFragmentSongs());
             }
         });
-
         view.findViewById(R.id.button_settings).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -66,7 +64,6 @@ public class FragmentTitle extends Fragment {
                         .navigate(actionFragmentTitleToFragmentSettings());
             }
         });
-
     }
 
 }

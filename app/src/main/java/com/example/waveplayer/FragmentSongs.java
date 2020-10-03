@@ -14,17 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 public class FragmentSongs extends Fragment {
 
-    public static int nVisibleItems = 0;
-
-    RecyclerView recyclerView;
-    RecyclerViewAdapterSongs recyclerViewAdapterSongs;
-
-    public FragmentSongs() {
-    }
-
-    public static FragmentSongs newInstance(int columnCount) {
-        return new FragmentSongs();
-    }
+    ActivityMain activityMain;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -40,33 +30,22 @@ public class FragmentSongs extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        activityMain = ((ActivityMain) getActivity());
+        updateMainContent();
+        setUpRecyclerView();
+    }
+
+    private void updateMainContent() {
         activityMain.setActionBarTitle(getResources().getString(R.string.songs));
-
-        recyclerView = activityMain.findViewById(R.id.recycler_view_song_list);
-        recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
-        recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(activityMain.songs, this);
-        recyclerView.setAdapter(recyclerViewAdapterSongs);
-        LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
-        int firstVisiblePosition = linearLayoutManager.findFirstVisibleItemPosition();
-        int lastVisiblePosition = linearLayoutManager.findLastVisibleItemPosition();
-        nVisibleItems = lastVisiblePosition - firstVisiblePosition + 1;
+        activityMain.showFab(false);
     }
 
-
-        @Override
-        public boolean onContextItemSelected (@NonNull MenuItem item){
-            switch (item.getGroupId()) {
-                case RecyclerViewAdapterSongs.MENU_ADD_TO_PLAYLIST_GROUP_ID:
-                    RecyclerViewAdapterSongs.ViewHolder viewHolder =
-                            (RecyclerViewAdapterSongs.ViewHolder) recyclerView.getChildViewHolder(
-                                    recyclerView.getChildAt(item.getItemId()));
-                    AudioURI audioURI = viewHolder.audioURI;
-                    // TODO
-                    return true;
-                default:
-                    return super.onContextItemSelected(item);
-            }
-        }
-
+    private void setUpRecyclerView() {
+        RecyclerView recyclerViewSongs = activityMain.findViewById(R.id.recycler_view_song_list);
+        RecyclerViewAdapterSongs recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(
+                this, activityMain.songs);
+        recyclerViewSongs.setLayoutManager(new LinearLayoutManager(recyclerViewSongs.getContext()));
+        recyclerViewSongs.setAdapter(recyclerViewAdapterSongs);
     }
+
+}

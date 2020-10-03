@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.media.ThumbnailUtils;
@@ -67,8 +68,11 @@ public class ActivityMain extends AppCompatActivity {
 
     private static final String TAG = "mainActivity";
     private static final int REQUEST_PERMISSION = 245083964;
+    private static final String FILE_ERROR_LOG = "error";
+    private static final String FILE_SAVE = "playlists";
 
     // Settings
+    // TODO UPDATE ALL PLAYLISTS WITH MAX_PERCENT
     static double MAX_PERCENT = 0.1;
     static double PERCENT_CHANGE = 0.5;
 
@@ -79,22 +83,28 @@ public class ActivityMain extends AppCompatActivity {
     final ArrayList<RandomPlaylist> playlists = new ArrayList<>();
 
     // TODO make fragments communicate
-    ArrayList<AudioURI> userPickedSongs = new ArrayList<>();
+    final ArrayList<AudioURI> userPickedSongs = new ArrayList<>();
     RandomPlaylist userPickedPlaylist;
     //--------------------------------
 
     RandomPlaylist masterPlaylist;
     RandomPlaylist currentPlaylist;
-    AudioURI currentSong;
+    private AudioURI currentSong;
+    public AudioURI getCurrentSong(){
+        return currentSong;
+    }
     final LinkedList<Uri> songQueue = new LinkedList<>();
     ListIterator<Uri> songQueueIterator;
 
-    boolean isPlaying = false;
+    private boolean isPlaying = false;
+    public boolean isPlaying(){
+        return isPlaying;
+    }
 
-    boolean isStarted = false;
+    private boolean haveAudioFocus = false;
 
     // For updating the SeekBar
-    ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+     ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
     final MediaPlayer.OnCompletionListener onCompletionListener = new MediaPlayer.OnCompletionListener() {
         @Override
@@ -110,25 +120,18 @@ public class ActivityMain extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        File file = new File(getBaseContext().getFilesDir(), "error");
-        if (file.exists()) {
-            try (BufferedReader bufferedReader  = new BufferedReader(new FileReader(file))) {
-                StringBuilder stringBuilder = new StringBuilder();
-                String sCurrentLine;
-                while ((sCurrentLine = bufferedReader.readLine()) != null) {
-                   stringBuilder.append(sCurrentLine);
-                }
-                Log.e(TAG, stringBuilder.toString());
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        setUpCrashSaver();
+        logLastCrash();
+        getExternalStoragePermissionAndFetchMediaFiles();
+        createUI();
+        loadSave();
+    }
+
+    private void setUpCrashSaver() {
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(@NonNull Thread paramThread, @NonNull Throwable paramThrowable) {
-                File file = new File(getBaseContext().getFilesDir(), "error");
+                File file = new File(getBaseContext().getFilesDir(), FILE_ERROR_LOG);
                 try (PrintWriter pw = new PrintWriter(file)) {
                     paramThrowable.printStackTrace(pw);
                     pw.flush();
@@ -140,16 +143,31 @@ public class ActivityMain extends AppCompatActivity {
                 }
             }
         });
-        getExternalStoragePermissionAndFetchMediaFiles();
-        createUI();
-        loadFiles();
     }
 
-    private void loadFiles() {
-        File file = new File(getBaseContext().getFilesDir(), "playlists");
+    private void logLastCrash() {
+        File file = new File(getBaseContext().getFilesDir(), FILE_ERROR_LOG);
         if (file.exists()) {
-            try (FileInputStream fos = getApplicationContext().openFileInput("playlists")) {
-                ObjectInputStream objectInputStream = new ObjectInputStream(fos);
+            try (BufferedReader bufferedReader  = new BufferedReader(new FileReader(file))) {
+                StringBuilder stringBuilder = new StringBuilder();
+                String sCurrentLine;
+                while ((sCurrentLine = bufferedReader.readLine()) != null) {
+                    stringBuilder.append(sCurrentLine);
+                }
+                Log.e(TAG, stringBuilder.toString());
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void loadSave() {
+        File file = new File(getBaseContext().getFilesDir(), FILE_SAVE);
+        if (file.exists()) {
+            try (FileInputStream fileInputStream = getApplicationContext().openFileInput("playlists");
+                 ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
                 MAX_PERCENT = objectInputStream.readDouble();
                 PERCENT_CHANGE = objectInputStream.readDouble();
                 masterPlaylist = (RandomPlaylist) objectInputStream.readObject();
@@ -298,7 +316,7 @@ public class ActivityMain extends AppCompatActivity {
             NavHostFragment.findNavController(fragment).addOnDestinationChangedListener(new NavController.OnDestinationChangedListener() {
                 @Override
                 public void onDestinationChanged(@NonNull NavController controller, @NonNull NavDestination destination, @Nullable Bundle arguments) {
-                    if (destination.getId() != R.id.fragmentSong && isStarted) {
+                    if (destination.getId() != R.id.fragmentSong && isPlaying) {
                         showSongPane();
                     } else {
                         hideSongPane();
@@ -379,10 +397,11 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     private void saveFile() {
-        File file = new File(getBaseContext().getFilesDir(), "playlists");
+        File file = new File(getBaseContext().getFilesDir(), FILE_SAVE);
+        //noinspection ResultOfMethodCallIgnored
         file.delete();
-        try (FileOutputStream fos = getApplicationContext().openFileOutput("playlists", Context.MODE_PRIVATE)) {
-            ObjectOutputStream objectOutputStream = new ObjectOutputStream(fos);
+        try (FileOutputStream fos = getApplicationContext().openFileOutput("playlists", Context.MODE_PRIVATE);
+             ObjectOutputStream objectOutputStream = new ObjectOutputStream(fos)) {
             objectOutputStream.writeDouble(MAX_PERCENT);
             objectOutputStream.writeDouble(PERCENT_CHANGE);
             objectOutputStream.writeObject(masterPlaylist);
@@ -391,7 +410,6 @@ public class ActivityMain extends AppCompatActivity {
                 objectOutputStream.writeObject(randomPlaylist);
             }
             objectOutputStream.flush();
-            objectOutputStream.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -565,15 +583,22 @@ public class ActivityMain extends AppCompatActivity {
 
     // region Music Controls
 
-    void addToQueueAndPlay(AudioURI audioURI) {
+    public void addToQueueAndPlay(AudioURI audioURI) {
         Log.v(TAG, "addToQueueAndPlay");
         stopAndPreparePrevious();
         MediaPlayerWURI mediaPlayerWURI = songsMap.get(audioURI.getUri());
         if (mediaPlayerWURI == null) {
             mediaPlayerWURI = makeMediaPlayerWURIAndPlay(audioURI);
         } else {
-            mediaPlayerWURI.shouldStart(true);
-            isStarted = true;
+            if(haveAudioFocus) {
+                mediaPlayerWURI.shouldStart(true);
+                isPlaying = true;
+            } else {
+                if(requestAudioFocus()){
+                    mediaPlayerWURI.shouldStart(true);
+                    isPlaying = true;
+                }
+            }
         }
         songQueueIterator = null;
         songQueue.add(mediaPlayerWURI.audioURI.getUri());
@@ -589,7 +614,7 @@ public class ActivityMain extends AppCompatActivity {
         });
     }
 
-    public void stopAndPreparePrevious() {
+    private void stopAndPreparePrevious() {
         Log.v(TAG, "stopPreviousAndPrepare");
         if (songQueueIterator.hasPrevious()) {
             final MediaPlayerWURI mediaPlayerWURI = songsMap.get(songQueueIterator.previous());
@@ -608,8 +633,15 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "makeMediaPlayerWURI");
         MediaPlayerWURI mediaPlayerWURI = new CreateMediaPlayerWURIThread(this, audioURI).call();
         songsMap.put(mediaPlayerWURI.audioURI.getUri(), mediaPlayerWURI);
-        mediaPlayerWURI.shouldStart(true);
-        isPlaying = true;
+        if(haveAudioFocus) {
+            mediaPlayerWURI.shouldStart(true);
+            isPlaying = true;
+        } else {
+            if(requestAudioFocus()){
+                mediaPlayerWURI.shouldStart(true);
+                isPlaying = true;
+            }
+        }
         currentSong = mediaPlayerWURI.audioURI;
         return mediaPlayerWURI;
     }
@@ -643,8 +675,15 @@ public class ActivityMain extends AppCompatActivity {
             MediaPlayerWURI mediaPlayerWURI = songsMap.get(songQueueIterator.next());
             if (mediaPlayerWURI != null) {
                 currentSong = mediaPlayerWURI.audioURI;
-                mediaPlayerWURI.shouldStart(true);
-                isPlaying = true;
+                if(haveAudioFocus) {
+                    mediaPlayerWURI.shouldStart(true);
+                    isPlaying = true;
+                } else {
+                    if(requestAudioFocus()){
+                        mediaPlayerWURI.shouldStart(true);
+                        isPlaying = true;
+                    }
+                }
             }
             runOnUiThread(new Runnable() {
                 @Override
@@ -668,18 +707,32 @@ public class ActivityMain extends AppCompatActivity {
         if (songQueueIterator.hasPrevious()) {
             MediaPlayerWURI mediaPlayerWURI = songsMap.get(songQueueIterator.previous());
             if (mediaPlayerWURI != null) {
-                mediaPlayerWURI.shouldStart(true);
+                if(haveAudioFocus) {
+                    mediaPlayerWURI.shouldStart(true);
+                    isPlaying = true;
+                } else {
+                    if(requestAudioFocus()){
+                        mediaPlayerWURI.shouldStart(true);
+                        isPlaying = true;
+                    }
+                }
                 currentSong = mediaPlayerWURI.audioURI;
-                isPlaying = true;
             }
             songQueueIterator.next();
         } else {
             if (uri != null) {
                 MediaPlayerWURI mediaPlayerWURI = songsMap.get(uri);
                 if (mediaPlayerWURI != null) {
-                    mediaPlayerWURI.shouldStart(true);
+                    if(haveAudioFocus) {
+                        mediaPlayerWURI.shouldStart(true);
+                        isPlaying = true;
+                    } else {
+                        if(requestAudioFocus()){
+                            mediaPlayerWURI.shouldStart(true);
+                            isPlaying = true;
+                        }
+                    }
                     currentSong = mediaPlayerWURI.audioURI;
-                    isPlaying = true;
                 }
                 songQueueIterator.next();
             }
@@ -703,8 +756,15 @@ public class ActivityMain extends AppCompatActivity {
                 mediaPlayerWURI.pause();
                 isPlaying = false;
             } else {
-                mediaPlayerWURI.shouldStart(true);
-                isPlaying = true;
+                if(haveAudioFocus) {
+                    mediaPlayerWURI.shouldStart(true);
+                    isPlaying = true;
+                } else {
+                    if(requestAudioFocus()){
+                        mediaPlayerWURI.shouldStart(true);
+                        isPlaying = true;
+                    }
+                }
             }
             runOnUiThread(new Runnable() {
                 @Override
@@ -740,6 +800,25 @@ public class ActivityMain extends AppCompatActivity {
                 collection.remove();
             }
         }
+    }
+
+    private boolean requestAudioFocus() {
+        if(haveAudioFocus){
+            return true;
+        }
+        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        int result = audioManager.requestAudioFocus(new AudioManager.OnAudioFocusChangeListener() {
+                @Override
+                public void onAudioFocusChange(int i) {
+
+                }
+            }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+        if(result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED){
+            haveAudioFocus = true;
+        } else{
+            haveAudioFocus = false;
+        }
+        return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
     }
 
 }

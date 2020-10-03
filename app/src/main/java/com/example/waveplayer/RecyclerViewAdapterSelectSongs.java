@@ -17,16 +17,21 @@ import java.util.List;
 
 public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<RecyclerViewAdapterSelectSongs.ViewHolder>{
 
-    private final List<AudioURI> audioURIS;
-
     private final Fragment fragment;
+
+    private final List<AudioURI> allSongs;
 
     private final List<AudioURI> selectedSongs;
 
-    public RecyclerViewAdapterSelectSongs(List<AudioURI> audioURIS, List<AudioURI> selectedSongs, Fragment fragment) {
-        this.audioURIS = audioURIS;
+    public RecyclerViewAdapterSelectSongs(Fragment fragment, List<AudioURI> allSongs, List<AudioURI> selectedSongs) {
+        this.allSongs = allSongs;
         this.fragment = fragment;
         this.selectedSongs = selectedSongs;
+        for(AudioURI audioURI : allSongs){
+            if(selectedSongs.contains(audioURI)){
+                audioURI.setSelected(true);
+            }
+        }
     }
 
     @NonNull
@@ -39,20 +44,20 @@ public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<Recycle
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         final ConstraintLayout linearLayout = holder.songView.findViewById(R.id.linear_layout_song_name);
-        if(selectedSongs != null && audioURIS != null) {
-            if (selectedSongs.contains(audioURIS.get(position))) {
-                audioURIS.get(position).setSelected(true);
+        if(selectedSongs != null && allSongs != null) {
+            if (selectedSongs.contains(allSongs.get(position))) {
+                allSongs.get(position).setSelected(true);
                 holder.textViewSongName.setBackgroundColor(Color.parseColor("#000057"));
                 linearLayout.setBackgroundColor(Color.parseColor("#000057"));
             } else {
-                audioURIS.get(position).setSelected(false);
+                allSongs.get(position).setSelected(false);
                 holder.textViewSongName.setBackgroundColor(Color.parseColor("#000000"));
                 linearLayout.setBackgroundColor(Color.parseColor("#000000"));
             }
         }
-        if(audioURIS != null){
-            holder.audioURI = audioURIS.get(position);
-            holder.textViewSongName.setText(audioURIS.get(position).title);
+        if(allSongs != null){
+            holder.audioURI = allSongs.get(position);
+            holder.textViewSongName.setText(allSongs.get(position).title);
         }
 
     }
@@ -60,7 +65,7 @@ public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<Recycle
 
     @Override
     public int getItemCount() {
-        return audioURIS.size();
+        return allSongs.size();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -77,25 +82,16 @@ public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<Recycle
             songView = view;
             textViewSongName = view.findViewById(R.id.text_view_songs_name);
             final ConstraintLayout linearLayout = view.findViewById(R.id.linear_layout_song_name);
-            if(audioURI != null && audioURI.isSelected()){
-                textViewSongName.setBackgroundColor(Color.parseColor("#000057"));
-                linearLayout.setBackgroundColor(Color.parseColor("#000057"));
-            } else {
-                textViewSongName.setBackgroundColor(Color.parseColor("#000000"));
-                linearLayout.setBackgroundColor(Color.parseColor("#000000"));
-            }
             view.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                         if(audioURI.isSelected()){
                             audioURI.setSelected(false);
-                            textViewSongName.setSelected(false);
                             textViewSongName.setBackgroundColor(Color.parseColor("#000000"));
                             linearLayout.setBackgroundColor(Color.parseColor("#000000"));
                             selectedSongs.remove(audioURI);
                         } else{
                             audioURI.setSelected(true);
-                            textViewSongName.setSelected(true);
                             textViewSongName.setBackgroundColor(Color.parseColor("#000057"));
                             linearLayout.setBackgroundColor(Color.parseColor("#000057"));
                             selectedSongs.add(audioURI);

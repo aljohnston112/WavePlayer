@@ -26,13 +26,10 @@ public class FragmentSongPane extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        //LinearLayout linearLayout = findViewById(R.id.linearLayoutSongPane);
-        //linearLayout.setVisibility(View.INVISIBLE);
-        updateSongPane(view);
+        setupSongPane(view);
     }
 
-    private void updateSongPane(final View view) {
-
+    private void setupSongPane(final View view) {
         view.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
             @Override
             public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
@@ -45,12 +42,14 @@ public class FragmentSongPane extends Fragment {
             private void setUpNext() {
                 ImageView imageView = view.findViewById(R.id.imageButtonSongPaneNext);
                 int height = imageView.getMeasuredHeight();
+                //noinspection SuspiciousNameCombination
+                int width = height;
                 Drawable drawable = getResources().getDrawable(R.drawable.skip_next_black_24dp);
-                drawable.setBounds(0, 0, height, height);
-                Bitmap bitmap = Bitmap.createBitmap(height, height, Bitmap.Config.ARGB_8888);
+                drawable.setBounds(0, 0, width, height);
+                Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
                 Canvas canvas = new Canvas(bitmap);
                 drawable.draw(canvas);
-                Bitmap bitmapResized = getResizedBitmap(bitmap, height, height);
+                Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
                 bitmap.recycle();
                 imageView.setImageBitmap(bitmapResized);
             }
@@ -58,17 +57,20 @@ public class FragmentSongPane extends Fragment {
             private void setUpPlay() {
                 ImageView imageView = view.findViewById(R.id.imageButtonSongPanePlayPause);
                 int height = imageView.getMeasuredHeight();
+                //noinspection SuspiciousNameCombination
+                int width = height;
                 Drawable drawable;
-                if(((ActivityMain)getActivity()).isPlaying) {
+                ActivityMain activityMain = ((ActivityMain)getActivity());
+                if(activityMain != null && activityMain.isPlaying()) {
                     drawable = getResources().getDrawable(R.drawable.pause_black_24dp);
                 } else{
                     drawable = getResources().getDrawable(R.drawable.play_arrow_black_24dp);
                 }
-                drawable.setBounds(0, 0, height, height);
-                Bitmap bitmap = Bitmap.createBitmap(height, height, Bitmap.Config.ARGB_8888);
+                drawable.setBounds(0, 0, width, height);
+                Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
                 Canvas canvas = new Canvas(bitmap);
                 drawable.draw(canvas);
-                Bitmap bitmapResized = getResizedBitmap(bitmap, height, height);
+                Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
                 bitmap.recycle();
                 imageView.setImageBitmap(bitmapResized);
             }
@@ -76,25 +78,29 @@ public class FragmentSongPane extends Fragment {
             private void setUpPrev() {
                 ImageView imageView = view.findViewById(R.id.imageButtonSongPanePrev);
                 int height = imageView.getMeasuredHeight();
+                //noinspection SuspiciousNameCombination
+                int width = height;
                 Drawable drawable = getResources().getDrawable(R.drawable.skip_previous_black_24dp);
-                drawable.setBounds(0, 0, height, height);
-                Bitmap bitmap = Bitmap.createBitmap(height, height, Bitmap.Config.ARGB_8888);
+                drawable.setBounds(0, 0, width, height);
+                Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
                 Canvas canvas = new Canvas(bitmap);
                 drawable.draw(canvas);
-                Bitmap bitmapResized = getResizedBitmap(bitmap, height, height);
+                Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
                 bitmap.recycle();
                 imageView.setImageBitmap(bitmapResized);
             }
 
             private void setUpSongArt() {
                 ImageView imageViewSongArt = view.findViewById(R.id.imageViewSongPaneSongArt);
-                int songArtHeight = imageViewSongArt.getMeasuredHeight();
+                int height = imageViewSongArt.getMeasuredHeight();
+                //noinspection SuspiciousNameCombination
+                int width = height;
                 Drawable drawableSongArt = getResources().getDrawable(R.drawable.music_note_black_48dp);
-                drawableSongArt.setBounds(0, 0, songArtHeight, songArtHeight);
-                Bitmap bitmapSongArt = Bitmap.createBitmap(songArtHeight, songArtHeight, Bitmap.Config.ARGB_8888);
+                drawableSongArt.setBounds(0, 0, width, height);
+                Bitmap bitmapSongArt = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
                 Canvas canvas = new Canvas(bitmapSongArt);
                 drawableSongArt.draw(canvas);
-                Bitmap bitmapSongArtResized = getResizedBitmap(bitmapSongArt, songArtHeight, songArtHeight);
+                Bitmap bitmapSongArtResized = getResizedBitmap(bitmapSongArt, width, height);
                 bitmapSongArt.recycle();
                 imageViewSongArt.setImageBitmap(bitmapSongArtResized);
             }
