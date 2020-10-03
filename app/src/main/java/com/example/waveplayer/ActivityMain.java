@@ -2,6 +2,7 @@ package com.example.waveplayer;
 
 import android.Manifest;
 import android.content.ContentUris;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -42,7 +43,16 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -100,8 +110,61 @@ public class ActivityMain extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        File file = new File(getBaseContext().getFilesDir(), "error");
+        if (file.exists()) {
+            try (BufferedReader bufferedReader  = new BufferedReader(new FileReader(file))) {
+                StringBuilder stringBuilder = new StringBuilder();
+                String sCurrentLine;
+                while ((sCurrentLine = bufferedReader.readLine()) != null) {
+                   stringBuilder.append(sCurrentLine);
+                }
+                Log.e(TAG, stringBuilder.toString());
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(@NonNull Thread paramThread, @NonNull Throwable paramThrowable) {
+                File file = new File(getBaseContext().getFilesDir(), "error");
+                try (PrintWriter pw = new PrintWriter(file)) {
+                    paramThrowable.printStackTrace(pw);
+                    pw.flush();
+                    System.exit(2);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
         getExternalStoragePermissionAndFetchMediaFiles();
         createUI();
+        loadFiles();
+    }
+
+    private void loadFiles() {
+        File file = new File(getBaseContext().getFilesDir(), "playlists");
+        if (file.exists()) {
+            try (FileInputStream fos = getApplicationContext().openFileInput("playlists")) {
+                ObjectInputStream objectInputStream = new ObjectInputStream(fos);
+                MAX_PERCENT = objectInputStream.readDouble();
+                PERCENT_CHANGE = objectInputStream.readDouble();
+                masterPlaylist = (RandomPlaylist) objectInputStream.readObject();
+                int playlistSize = objectInputStream.readInt();
+                for (int i = 0; i < playlistSize; i++) {
+                    playlists.add((RandomPlaylist) objectInputStream.readObject());
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void getExternalStoragePermissionAndFetchMediaFiles() {
@@ -177,7 +240,7 @@ public class ActivityMain extends AppCompatActivity {
                         thumbnail = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(data),
                                 thumbNailWidthAndHeight, thumbNailWidthAndHeight);
                     }
-                    AudioURI audioURI = new AudioURI(uri, thumbnail, displayName, artist, title);
+                    AudioURI audioURI = new AudioURI(uri, thumbnail, displayName, artist, title, id);
                     songs.add(audioURI);
                 }
                 if (!songs.isEmpty()) {
@@ -307,6 +370,38 @@ public class ActivityMain extends AppCompatActivity {
 
     // endregion onCreate
 
+// region onStop
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        saveFile();
+    }
+
+    private void saveFile() {
+        File file = new File(getBaseContext().getFilesDir(), "playlists");
+        file.delete();
+        try (FileOutputStream fos = getApplicationContext().openFileOutput("playlists", Context.MODE_PRIVATE)) {
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(fos);
+            objectOutputStream.writeDouble(MAX_PERCENT);
+            objectOutputStream.writeDouble(PERCENT_CHANGE);
+            objectOutputStream.writeObject(masterPlaylist);
+            objectOutputStream.writeInt(playlists.size());
+            for (RandomPlaylist randomPlaylist : playlists) {
+                objectOutputStream.writeObject(randomPlaylist);
+            }
+            objectOutputStream.flush();
+            objectOutputStream.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+// endregion onStop
+
     // region ActivityMain UI calls
 
     public void setActionBarTitle(String string) {
@@ -342,7 +437,7 @@ public class ActivityMain extends AppCompatActivity {
     public void updateSongUI() {
         // TODO move to onCreate when saving data is implemented
         MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-        mediaMetadataRetriever.setDataSource(getApplicationContext(), currentSong.uri);
+        mediaMetadataRetriever.setDataSource(getApplicationContext(), currentSong.getUri());
         String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
         if (time == null) {
             time = "00:00:00";
@@ -387,7 +482,7 @@ public class ActivityMain extends AppCompatActivity {
 
                 @Override
                 public void onStopTrackingTouch(SeekBar seekBar) {
-                    MediaPlayerWURI mediaPlayerWURI = songsMap.get(currentSong.uri);
+                    MediaPlayerWURI mediaPlayerWURI = songsMap.get(currentSong.getUri());
                     if (mediaPlayerWURI != null) {
                         mediaPlayerWURI.seekTo(seekBar.getProgress());
                     }
@@ -396,7 +491,7 @@ public class ActivityMain extends AppCompatActivity {
             scheduledExecutorService.shutdown();
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
             scheduledExecutorService.scheduleAtFixedRate(
-                    new SeekBarUpdater(songsMap.get(currentSong.uri), seekBar, textViewCurrent, millis),
+                    new SeekBarUpdater(songsMap.get(currentSong.getUri()), seekBar, textViewCurrent, millis),
                     0L, 1L, TimeUnit.SECONDS);
         }
     }
@@ -423,15 +518,17 @@ public class ActivityMain extends AppCompatActivity {
             seekBar.post(new Runnable() {
                 @Override
                 public void run() {
-                    int currentMilliseconds = mediaPlayerWURI.getCurrentPosition();
-                    seekBar.setProgress(currentMilliseconds);
-                    final String currentTime = String.format(getResources().getConfiguration().locale,
-                            "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(currentMilliseconds),
-                            TimeUnit.MILLISECONDS.toMinutes(currentMilliseconds) -
-                                    TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(currentMilliseconds)),
-                            TimeUnit.MILLISECONDS.toSeconds(currentMilliseconds) -
-                                    TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(currentMilliseconds)));
-                    textViewCurrentTime.setText(currentTime);
+                    if (mediaPlayerWURI.isPlaying()) {
+                        int currentMilliseconds = mediaPlayerWURI.getCurrentPosition();
+                        seekBar.setProgress(currentMilliseconds);
+                        final String currentTime = String.format(getResources().getConfiguration().locale,
+                                "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(currentMilliseconds),
+                                TimeUnit.MILLISECONDS.toMinutes(currentMilliseconds) -
+                                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(currentMilliseconds)),
+                                TimeUnit.MILLISECONDS.toSeconds(currentMilliseconds) -
+                                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(currentMilliseconds)));
+                        textViewCurrentTime.setText(currentTime);
+                    }
                 }
             });
         }
@@ -471,7 +568,7 @@ public class ActivityMain extends AppCompatActivity {
     void addToQueueAndPlay(AudioURI audioURI) {
         Log.v(TAG, "addToQueueAndPlay");
         stopAndPreparePrevious();
-        MediaPlayerWURI mediaPlayerWURI = songsMap.get(audioURI.uri);
+        MediaPlayerWURI mediaPlayerWURI = songsMap.get(audioURI.getUri());
         if (mediaPlayerWURI == null) {
             mediaPlayerWURI = makeMediaPlayerWURIAndPlay(audioURI);
         } else {
@@ -479,8 +576,8 @@ public class ActivityMain extends AppCompatActivity {
             isStarted = true;
         }
         songQueueIterator = null;
-        songQueue.add(mediaPlayerWURI.audioURI.uri);
-        songQueueIterator = songQueue.listIterator(songQueue.lastIndexOf(mediaPlayerWURI.audioURI.uri));
+        songQueue.add(mediaPlayerWURI.audioURI.getUri());
+        songQueueIterator = songQueue.listIterator(songQueue.lastIndexOf(mediaPlayerWURI.audioURI.getUri()));
         songQueueIterator.next();
         currentSong = audioURI;
         runOnUiThread(new Runnable() {
@@ -510,7 +607,7 @@ public class ActivityMain extends AppCompatActivity {
     private MediaPlayerWURI makeMediaPlayerWURIAndPlay(AudioURI audioURI) {
         Log.v(TAG, "makeMediaPlayerWURI");
         MediaPlayerWURI mediaPlayerWURI = new CreateMediaPlayerWURIThread(this, audioURI).call();
-        songsMap.put(mediaPlayerWURI.audioURI.uri, mediaPlayerWURI);
+        songsMap.put(mediaPlayerWURI.audioURI.getUri(), mediaPlayerWURI);
         mediaPlayerWURI.shouldStart(true);
         isPlaying = true;
         currentSong = mediaPlayerWURI.audioURI;
@@ -531,7 +628,7 @@ public class ActivityMain extends AppCompatActivity {
         @Override
         public MediaPlayerWURI call() {
             MediaPlayerWURI mediaPlayerWURI = new MediaPlayerWURI(
-                    activityMain, MediaPlayer.create(getApplicationContext(), audioURI.uri), audioURI);
+                    activityMain, MediaPlayer.create(getApplicationContext(), audioURI.getUri()), audioURI);
             mediaPlayerWURI.setOnCompletionListener(null);
             mediaPlayerWURI.setOnCompletionListener(onCompletionListener);
             return mediaPlayerWURI;
@@ -598,7 +695,7 @@ public class ActivityMain extends AppCompatActivity {
 
     public void pauseOrPlay() {
         Log.v(TAG, "pauseOrPlay");
-        MediaPlayerWURI mediaPlayerWURI = songsMap.get(currentSong.uri);
+        MediaPlayerWURI mediaPlayerWURI = songsMap.get(currentSong.getUri());
         final ImageButton imageButtonPlayPause = findViewById(R.id.imageButtonPlayPause);
         final ImageButton imageButtonSongPanePlayPause = findViewById(R.id.imageButtonSongPanePlayPause);
         if (mediaPlayerWURI != null) {

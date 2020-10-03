@@ -1,13 +1,17 @@
 package com.example.waveplayer;
 
+import android.content.ContentUris;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.provider.MediaStore;
 
 import androidx.annotation.Nullable;
 
-public final class AudioURI implements Comparable<AudioURI> {
+import java.io.Serializable;
 
-    public final Uri uri;
+public final class AudioURI implements Comparable<AudioURI>, Serializable {
+
+    transient private Uri uri;
 
     public final Bitmap thumbnail;
 
@@ -17,14 +21,21 @@ public final class AudioURI implements Comparable<AudioURI> {
 
     public final String title;
 
+    final long id;
+
     private boolean isSelected = false;
 
-    public AudioURI(Uri uri, Bitmap thumbnail, String displayName, String artist, String title){
-        this.uri = uri;
+    public AudioURI(Uri uri, Bitmap thumbnail, String displayName, String artist, String title, long id){
+        if(uri != null) {
+            this.uri = uri;
+        } else{
+            this.uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
+        }
         this.thumbnail = thumbnail;
         this.displayName = displayName;
         this.artist = artist;
         this.title = title;
+        this.id = id;
     }
 
     @Override
@@ -51,9 +62,20 @@ public final class AudioURI implements Comparable<AudioURI> {
 
     @Override
     public boolean equals(@Nullable Object obj) {
-        if(obj instanceof AudioURI && uri.equals(((AudioURI) obj).uri)){
+        if(uri == null){
+            this.uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
+        }
+        if(obj instanceof AudioURI && uri.equals(((AudioURI) obj).getUri())){
             return true;
         }
         return false;
     }
+
+    public Uri getUri() {
+        if(uri == null){
+            this.uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
+        }
+        return uri;
+    }
+
 }

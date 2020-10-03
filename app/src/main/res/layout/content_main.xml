@@ -5,7 +5,30 @@
     android:id="@+id/constraintMain"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/colorOnPrimary"
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="@dimen/fab_margin"
+        android:backgroundTint="@color/colorPrimary"
+        app:layout_constraintBottom_toTopOf="@+id/fragmentSongPane"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:rippleColor="@color/colorPrimaryVariant" />
+
+    <fragment
+        android:id="@+id/fragmentSongPane"
+        android:name="com.example.waveplayer.FragmentSongPane"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <fragment
         android:id="@+id/nav_host_fragment"
@@ -19,29 +42,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/nav_graph" />
-
-    <fragment
-        android:id="@+id/fragmentSongPane"
-        android:name="com.example.waveplayer.FragmentSongPane"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-         />
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="@dimen/fab_margin"
-        android:backgroundTint="@color/colorPrimary"
-        app:layout_constraintBottom_toTopOf="@+id/fragmentSongPane"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:rippleColor="@color/colorPrimaryVariant" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
