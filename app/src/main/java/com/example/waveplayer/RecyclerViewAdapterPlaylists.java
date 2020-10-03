@@ -65,6 +65,7 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
             view.setOnClickListener(new View.OnClickListener(){
                 @Override
                 public void onClick(View v) {
+                    ActivityMain activityMain = ((ActivityMain)fragment.getActivity());
                     int pos = getAdapterPosition();
                     NavDirections action = null;
                     if(pos != RecyclerView.NO_POSITION){
@@ -72,7 +73,8 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
                             action = FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentPlaylist();
                         }
                         if(action != null) {
-                            ((ActivityMain)fragment.getActivity()).currentPlaylist = randomPlaylist;
+                            activityMain.userPickedPlaylist = randomPlaylist;
+                            activityMain.currentPlaylist = randomPlaylist;
                             NavHostFragment.findNavController(fragment).navigate(action);
                         }
                     }

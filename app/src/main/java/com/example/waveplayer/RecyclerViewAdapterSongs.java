@@ -71,11 +71,17 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                     int pos = getAdapterPosition();
                     NavDirections action = null;
                     if (pos != RecyclerView.NO_POSITION) {
-                        ((ActivityMain) fragment.getActivity()).currentSong = audioURI;
+                        ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
+                        activityMain.currentSong = audioURI;
                         ((ActivityMain) fragment.getActivity()).isPlaying = false;
                         if (fragment instanceof FragmentSongs) {
                             action = FragmentSongsDirections.actionFragmentSongsToFragmentSong();
                         } else if (fragment instanceof FragmentPlaylist) {
+                            activityMain.stopAndPreparePrevious();
+                            activityMain.songQueueIterator = null;
+                            activityMain.songQueue.clear();
+                            activityMain.songQueueIterator = activityMain.songQueue.listIterator();
+                            activityMain.currentPlaylist = activityMain.userPickedPlaylist;
                             action = FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong();
                         }
                         if (action != null) {

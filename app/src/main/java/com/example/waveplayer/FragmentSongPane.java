@@ -1,8 +1,5 @@
 package com.example.waveplayer;
 
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -12,13 +9,10 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.Toast;
 
 public class FragmentSongPane extends Fragment {
 
@@ -62,7 +56,7 @@ public class FragmentSongPane extends Fragment {
             }
 
             private void setUpPlay() {
-                ImageView imageView = view.findViewById(R.id.imageButtonSongPanePlay);
+                ImageView imageView = view.findViewById(R.id.imageButtonSongPanePlayPause);
                 int height = imageView.getMeasuredHeight();
                 Drawable drawable;
                 if(((ActivityMain)getActivity()).isPlaying) {

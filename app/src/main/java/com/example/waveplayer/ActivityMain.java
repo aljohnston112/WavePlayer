@@ -28,7 +28,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatTextView;
@@ -63,31 +62,31 @@ public class ActivityMain extends AppCompatActivity {
     static double MAX_PERCENT = 0.1;
     static double PERCENT_CHANGE = 0.5;
 
-    static final String MASTER_PLAYLIST_NAME = "xdlkrvnadiyfoghj";
+    static final String MASTER_PLAYLIST_NAME = "MASTER_PLAYLIST_NAME";
 
-    ArrayList<AudioURI> songs = new ArrayList<>();
-    HashMap<Uri, MediaPlayerWURI> songsMap = new HashMap<>();
-    ArrayList<RandomPlaylist> playlists = new ArrayList<>();
+    final ArrayList<AudioURI> songs = new ArrayList<>();
+    final HashMap<Uri, MediaPlayerWURI> songsMap = new HashMap<>();
+    final ArrayList<RandomPlaylist> playlists = new ArrayList<>();
 
     // TODO make fragments communicate
     ArrayList<AudioURI> userPickedSongs = new ArrayList<>();
+    RandomPlaylist userPickedPlaylist;
     //--------------------------------
 
     RandomPlaylist masterPlaylist;
     RandomPlaylist currentPlaylist;
     AudioURI currentSong;
-    LinkedList<Uri> songQueue = new LinkedList<>();
+    final LinkedList<Uri> songQueue = new LinkedList<>();
     ListIterator<Uri> songQueueIterator;
 
     boolean isPlaying = false;
 
     boolean isStarted = false;
 
-
     // For updating the SeekBar
     ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
-    MediaPlayer.OnCompletionListener onCompletionListener = new MediaPlayer.OnCompletionListener() {
+    final MediaPlayer.OnCompletionListener onCompletionListener = new MediaPlayer.OnCompletionListener() {
         @Override
         public void onCompletion(MediaPlayer mediaPlayer) {
             scheduledExecutorService.shutdown();
@@ -96,113 +95,13 @@ public class ActivityMain extends AppCompatActivity {
         }
     };
 
-    NavController.OnDestinationChangedListener onDestinationChangedListener = new NavController.OnDestinationChangedListener() {
-        @Override
-        public void onDestinationChanged(@NonNull NavController controller, @NonNull NavDestination destination, @Nullable Bundle arguments) {
-            if (destination.getId() != R.id.fragmentSong && isStarted) {
-                showSongPane();
-            } else {
-                hideSongPane();
-            }
-        }
-
-    };
-
     // region onCreate
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        createUI();
         getExternalStoragePermissionAndFetchMediaFiles();
-        songQueueIterator = songQueue.listIterator();
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
-        NavHostFragment.findNavController(fragment).addOnDestinationChangedListener(onDestinationChangedListener);
-    }
-
-    private void createUI() {
-        setContentView(R.layout.activity_main);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        toolbar.setTitleTextColor(getResources().getColor(R.color.colorOnPrimary));
-        setSupportActionBar(toolbar);
-        centerActionBarTitle();
-        hideSongPane();
-        linkButtons();
-    }
-
-    private void linkButtons() {
-        findViewById(R.id.imageButtonSongPaneNext).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                playNext();
-            }
-        });
-        findViewById(R.id.imageButtonSongPanePlay).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                pauseOrPlay();
-            }
-        });
-        findViewById(R.id.imageButtonSongPanePrev).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                playPrevious();
-            }
-        });
-        findViewById(R.id.textViewSongPaneSongName).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
-                NavHostFragment.findNavController(fragment).navigate(R.id.fragmentSong);
-            }
-        });
-        findViewById(R.id.imageViewSongPaneSongArt).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
-                NavHostFragment.findNavController(fragment).navigate(R.id.fragmentSong);
-            }
-        });
-    }
-
-    public void hideSongPane() {
-        findViewById(R.id.fragmentSongPane).setVisibility(View.INVISIBLE);
-        ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
-        ConstraintSet constraintSet = new ConstraintSet();
-        constraintSet.clone(constraintLayout);
-        constraintSet.connect(R.id.nav_host_fragment, ConstraintSet.BOTTOM, R.id.constraintMain, ConstraintSet.BOTTOM);
-        constraintSet.applyTo(constraintLayout);
-    }
-
-    public void showSongPane() {
-        findViewById(R.id.fragmentSongPane).setVisibility(View.VISIBLE);
-        ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
-        ConstraintSet constraintSet = new ConstraintSet();
-        constraintSet.clone(constraintLayout);
-        constraintSet.connect(R.id.nav_host_fragment, ConstraintSet.BOTTOM, R.id.fragmentSongPane, ConstraintSet.TOP);
-        constraintSet.applyTo(constraintLayout);
-    }
-
-    private void centerActionBarTitle() {
-        ArrayList<View> textViews = new ArrayList<>();
-        getWindow().getDecorView().findViewsWithText(textViews, getTitle(), View.FIND_VIEWS_WITH_TEXT);
-        if (!textViews.isEmpty()) {
-            AppCompatTextView appCompatTextView = null;
-            for (View v : textViews) {
-                if (v.getParent() instanceof Toolbar) {
-                    appCompatTextView = (AppCompatTextView) v;
-                    break;
-                }
-            }
-            if (appCompatTextView != null) {
-                ViewGroup.LayoutParams params = appCompatTextView.getLayoutParams();
-                params.width = ViewGroup.LayoutParams.MATCH_PARENT;
-                appCompatTextView.setLayoutParams(params);
-                appCompatTextView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-            }
-        }
+        createUI();
     }
 
     private void getExternalStoragePermissionAndFetchMediaFiles() {
@@ -215,6 +114,22 @@ public class ActivityMain extends AppCompatActivity {
             }
         } else {
             getAudioFiles();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_PERMISSION && grantResults.length > 0 &&
+                grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            getAudioFiles();
+        } else {
+            Toast toast = Toast.makeText(getApplicationContext(), R.string.permission_needed, Toast.LENGTH_LONG);
+            toast.show();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
+            }
         }
     }
 
@@ -258,16 +173,18 @@ public class ActivityMain extends AppCompatActivity {
                         thumbnail = getApplicationContext().getContentResolver().loadThumbnail(
                                 uri, new Size(640, 480), null);
                     } else {
-                        final int THUMBSIZE = 128;
+                        final int thumbNailWidthAndHeight = 128;
                         thumbnail = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(data),
-                                THUMBSIZE, THUMBSIZE);
+                                thumbNailWidthAndHeight, thumbNailWidthAndHeight);
                     }
                     AudioURI audioURI = new AudioURI(uri, thumbnail, displayName, artist, title);
                     songs.add(audioURI);
                 }
                 if (!songs.isEmpty()) {
+                    // TODO load master playlist from file
                     masterPlaylist = new RandomPlaylist(songs, MAX_PERCENT, MASTER_PLAYLIST_NAME);
                     currentPlaylist = masterPlaylist;
+                    songQueueIterator = songQueue.listIterator();
                 }
             }
         } catch (IOException e) {
@@ -276,10 +193,122 @@ public class ActivityMain extends AppCompatActivity {
         }
     }
 
+    private void createUI() {
+        setContentView(R.layout.activity_main);
+        setUpActionBar();
+        setUpSongPane();
+    }
+
+    private void setUpActionBar() {
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        toolbar.setTitleTextColor(getResources().getColor(R.color.colorOnPrimary));
+        setSupportActionBar(toolbar);
+        centerActionBarTitle();
+    }
+
+    private void centerActionBarTitle() {
+        ArrayList<View> textViews = new ArrayList<>();
+        getWindow().getDecorView().findViewsWithText(textViews, getTitle(), View.FIND_VIEWS_WITH_TEXT);
+        if (!textViews.isEmpty()) {
+            AppCompatTextView appCompatTextView = null;
+            for (View v : textViews) {
+                if (v.getParent() instanceof Toolbar) {
+                    appCompatTextView = (AppCompatTextView) v;
+                    break;
+                }
+            }
+            if (appCompatTextView != null) {
+                ViewGroup.LayoutParams params = appCompatTextView.getLayoutParams();
+                params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                appCompatTextView.setLayoutParams(params);
+                appCompatTextView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+            }
+        }
+    }
+
+    private void setUpSongPane() {
+        hideSongPane();
+        linkSongPaneButtons();
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
+        if (fragment != null) {
+            NavHostFragment.findNavController(fragment).addOnDestinationChangedListener(new NavController.OnDestinationChangedListener() {
+                @Override
+                public void onDestinationChanged(@NonNull NavController controller, @NonNull NavDestination destination, @Nullable Bundle arguments) {
+                    if (destination.getId() != R.id.fragmentSong && isStarted) {
+                        showSongPane();
+                    } else {
+                        hideSongPane();
+                    }
+                }
+
+            });
+        }
+    }
+
+    public void hideSongPane() {
+        findViewById(R.id.fragmentSongPane).setVisibility(View.INVISIBLE);
+        ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
+        ConstraintSet constraintSet = new ConstraintSet();
+        constraintSet.clone(constraintLayout);
+        constraintSet.connect(R.id.fab, ConstraintSet.BOTTOM, R.id.constraintMain, ConstraintSet.BOTTOM);
+        constraintSet.applyTo(constraintLayout);
+    }
+
+    public void showSongPane() {
+        findViewById(R.id.fragmentSongPane).setVisibility(View.VISIBLE);
+        ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
+        ConstraintSet constraintSet = new ConstraintSet();
+        constraintSet.clone(constraintLayout);
+        constraintSet.connect(R.id.fab, ConstraintSet.BOTTOM, R.id.fragmentSongPane, ConstraintSet.TOP);
+        constraintSet.applyTo(constraintLayout);
+    }
+
+    private void linkSongPaneButtons() {
+        findViewById(R.id.imageButtonSongPaneNext).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                playNext();
+            }
+        });
+        findViewById(R.id.imageButtonSongPanePlayPause).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                pauseOrPlay();
+            }
+        });
+        findViewById(R.id.imageButtonSongPanePrev).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                playPrevious();
+            }
+        });
+        findViewById(R.id.textViewSongPaneSongName).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
+                if (fragment != null) {
+                    NavHostFragment.findNavController(fragment).navigate(R.id.fragmentSong);
+                }
+            }
+        });
+        findViewById(R.id.imageViewSongPaneSongArt).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
+                if (fragment != null) {
+                    NavHostFragment.findNavController(fragment).navigate(R.id.fragmentSong);
+                }
+            }
+        });
+    }
+
     // endregion onCreate
 
-
     // region ActivityMain UI calls
+
     public void setActionBarTitle(String string) {
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
@@ -287,10 +316,10 @@ public class ActivityMain extends AppCompatActivity {
         }
     }
 
-    public void setFabImage(Drawable drawable) {
+    public void setFabImage(int id) {
         FloatingActionButton fab;
         fab = findViewById(R.id.fab);
-        fab.setImageDrawable(drawable);
+        fab.setImageDrawable(getResources().getDrawable(id));
     }
 
     public void showFab(boolean show) {
@@ -309,27 +338,161 @@ public class ActivityMain extends AppCompatActivity {
         fab.setOnClickListener(null);
         fab.setOnClickListener(onClickListener);
     }
+
+    public void updateSongUI() {
+        // TODO move to onCreate when saving data is implemented
+        MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+        mediaMetadataRetriever.setDataSource(getApplicationContext(), currentSong.uri);
+        String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+        if (time == null) {
+            time = "00:00:00";
+        }
+        int millis = Integer.parseInt(time);
+        mediaMetadataRetriever.release();
+        //-------------------------------------------------------
+
+        ImageView imageViewSongArt = findViewById(R.id.image_view_song_art);
+        if (imageViewSongArt != null) {
+            imageViewSongArt.setImageBitmap(currentSong.thumbnail);
+        }
+        TextView textViewSongName = findViewById(R.id.text_view_song_name);
+        if (textViewSongName != null) {
+            textViewSongName.setText(currentSong.title);
+        }
+        String stringEndTime = String.format(getResources().getConfiguration().locale,
+                "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(millis),
+                TimeUnit.MILLISECONDS.toMinutes(millis) -
+                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
+                TimeUnit.MILLISECONDS.toSeconds(millis) -
+                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
+        TextView textViewCurrent = findViewById(R.id.editTextCurrentTime);
+        if (textViewCurrent != null) {
+            textViewCurrent.setText(R.string.start_time);
+        }
+        TextView textViewEnd = findViewById(R.id.editTextEndTime);
+        if (textViewEnd != null) {
+            textViewEnd.setText(stringEndTime);
+        }
+        SeekBar seekBar = findViewById(R.id.seekBar);
+        if (seekBar != null) {
+            seekBar.setMax(millis);
+            seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int i, boolean fromUser) {
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+                }
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                    MediaPlayerWURI mediaPlayerWURI = songsMap.get(currentSong.uri);
+                    if (mediaPlayerWURI != null) {
+                        mediaPlayerWURI.seekTo(seekBar.getProgress());
+                    }
+                }
+            });
+            scheduledExecutorService.shutdown();
+            scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+            scheduledExecutorService.scheduleAtFixedRate(
+                    new SeekBarUpdater(songsMap.get(currentSong.uri), seekBar, textViewCurrent, millis),
+                    0L, 1L, TimeUnit.SECONDS);
+        }
+    }
+
+    class SeekBarUpdater implements Runnable {
+
+        final MediaPlayerWURI mediaPlayerWURI;
+
+        final SeekBar seekBar;
+
+        final int milliSeconds;
+
+        final TextView textViewCurrentTime;
+
+        SeekBarUpdater(MediaPlayerWURI mediaPlayerWURI, SeekBar seekBar, TextView textViewCurrentTime, int milliSeconds) {
+            this.mediaPlayerWURI = mediaPlayerWURI;
+            this.seekBar = seekBar;
+            this.textViewCurrentTime = textViewCurrentTime;
+            this.milliSeconds = milliSeconds;
+        }
+
+        @Override
+        public void run() {
+            seekBar.post(new Runnable() {
+                @Override
+                public void run() {
+                    int currentMilliseconds = mediaPlayerWURI.getCurrentPosition();
+                    seekBar.setProgress(currentMilliseconds);
+                    final String currentTime = String.format(getResources().getConfiguration().locale,
+                            "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(currentMilliseconds),
+                            TimeUnit.MILLISECONDS.toMinutes(currentMilliseconds) -
+                                    TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(currentMilliseconds)),
+                            TimeUnit.MILLISECONDS.toSeconds(currentMilliseconds) -
+                                    TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(currentMilliseconds)));
+                    textViewCurrentTime.setText(currentTime);
+                }
+            });
+        }
+    }
+
+    public void updateSongPaneUI() {
+        TextView textViewSongPaneSongName = findViewById(R.id.textViewSongPaneSongName);
+        if (textViewSongPaneSongName != null) {
+            textViewSongPaneSongName.setText(currentSong.title);
+        }
+        ImageView imageViewSongPaneSongArt = findViewById(R.id.imageViewSongPaneSongArt);
+        int songArtHeight = imageViewSongPaneSongArt.getMeasuredHeight();
+        @SuppressWarnings("SuspiciousNameCombination") int songArtWidth = songArtHeight;
+        Bitmap bitmapSongArt = currentSong.thumbnail;
+        if (bitmapSongArt != null) {
+            Bitmap bitmapSongArtResized = FragmentSongPane.getResizedBitmap(bitmapSongArt, songArtWidth, songArtHeight);
+            imageViewSongPaneSongArt.setImageBitmap(bitmapSongArtResized);
+        } else {
+            songArtHeight = imageViewSongPaneSongArt.getMeasuredHeight();
+            //noinspection SuspiciousNameCombination
+            songArtWidth = songArtHeight;
+            Drawable drawableSongArt = getResources().getDrawable(R.drawable.music_note_black_48dp);
+            drawableSongArt.setBounds(0, 0, songArtWidth, songArtHeight);
+            bitmapSongArt = Bitmap.createBitmap(songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmapSongArt);
+            drawableSongArt.draw(canvas);
+            Bitmap bitmapSongArtResized = FragmentSongPane.getResizedBitmap(bitmapSongArt, songArtWidth, songArtHeight);
+            bitmapSongArt.recycle();
+            imageViewSongPaneSongArt.setImageBitmap(bitmapSongArtResized);
+        }
+    }
+
     // endregion ActivityMain UI calls
 
     // region Music Controls
+
     void addToQueueAndPlay(AudioURI audioURI) {
         Log.v(TAG, "addToQueueAndPlay");
-        stopPreviousAndPrepare();
+        stopAndPreparePrevious();
         MediaPlayerWURI mediaPlayerWURI = songsMap.get(audioURI.uri);
         if (mediaPlayerWURI == null) {
             mediaPlayerWURI = makeMediaPlayerWURIAndPlay(audioURI);
         } else {
             mediaPlayerWURI.shouldStart(true);
+            isStarted = true;
         }
         songQueueIterator = null;
         songQueue.add(mediaPlayerWURI.audioURI.uri);
         songQueueIterator = songQueue.listIterator(songQueue.lastIndexOf(mediaPlayerWURI.audioURI.uri));
         songQueueIterator.next();
         currentSong = audioURI;
-        updateSongUI();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                updateSongUI();
+                updateSongPaneUI();
+            }
+        });
     }
 
-    private void stopPreviousAndPrepare() {
+    public void stopAndPreparePrevious() {
         Log.v(TAG, "stopPreviousAndPrepare");
         if (songQueueIterator.hasPrevious()) {
             final MediaPlayerWURI mediaPlayerWURI = songsMap.get(songQueueIterator.previous());
@@ -337,9 +500,10 @@ public class ActivityMain extends AppCompatActivity {
                 if (mediaPlayerWURI.isPrepared && mediaPlayerWURI.isPlaying()) {
                     mediaPlayerWURI.stop();
                     mediaPlayerWURI.prepareAsync();
-                    songQueueIterator.next();
+                    isPlaying = false;
                 }
             }
+            songQueueIterator.next();
         }
     }
 
@@ -348,108 +512,16 @@ public class ActivityMain extends AppCompatActivity {
         MediaPlayerWURI mediaPlayerWURI = new CreateMediaPlayerWURIThread(this, audioURI).call();
         songsMap.put(mediaPlayerWURI.audioURI.uri, mediaPlayerWURI);
         mediaPlayerWURI.shouldStart(true);
+        isPlaying = true;
+        currentSong = mediaPlayerWURI.audioURI;
         return mediaPlayerWURI;
-    }
-
-    void playNext() {
-        Log.v(TAG, "playNext");
-        stopPreviousAndPrepare();
-        if (songQueueIterator.hasNext()) {
-            MediaPlayerWURI mediaPlayerWURI = songsMap.get(songQueueIterator.next());
-            if (mediaPlayerWURI != null) {
-                currentSong = mediaPlayerWURI.audioURI;
-                mediaPlayerWURI.shouldStart(true);
-            }
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    updateSongUI();
-                }
-            });
-        } else {
-            addToQueueAndPlay(currentPlaylist.getProbFun().fun());
-        }
-    }
-
-    public void playPrevious() {
-        Log.v(TAG, "playPrevious");
-        stopPreviousAndPrepare();
-        Uri uri = null;
-        if (songQueueIterator.hasPrevious()) {
-            uri = songQueueIterator.previous();
-        }
-        if (songQueueIterator.hasPrevious()) {
-            MediaPlayerWURI mediaPlayerWURI = songsMap.get(songQueueIterator.previous());
-            if (mediaPlayerWURI != null) {
-                mediaPlayerWURI.shouldStart(true);
-                currentSong = mediaPlayerWURI.audioURI;
-            }
-            songQueueIterator.next();
-        } else {
-            if (uri != null) {
-                MediaPlayerWURI mediaPlayerWURI = songsMap.get(uri);
-                if (mediaPlayerWURI != null) {
-                    mediaPlayerWURI.shouldStart(true);
-                    currentSong = mediaPlayerWURI.audioURI;
-                }
-            }
-        }
-        if (!songQueueIterator.hasPrevious()) {
-            if (songQueueIterator.hasNext()) {
-                songQueueIterator.next();
-            }
-        }
-        updateSongUI();
-    }
-
-    public void pauseOrPlay() {
-        Log.v(TAG, "pause OrPlay");
-        MediaPlayerWURI mediaPlayerWURI = songsMap.get(currentSong.uri);
-        ImageButton imageButton = findViewById(R.id.imageButtonPause);
-        ImageButton imageButton2 = findViewById(R.id.imageButtonSongPanePlay);
-        if (mediaPlayerWURI != null) {
-            if (mediaPlayerWURI.isPrepared && mediaPlayerWURI.isPlaying()) {
-                mediaPlayerWURI.pause();
-                isPlaying = false;
-            } else {
-                mediaPlayerWURI.shouldStart(true);
-                isPlaying = true;
-            }
-            if (imageButton != null) {
-                if (isPlaying) {
-                    imageButton.setImageDrawable(getResources().getDrawable(R.drawable.pause_black_24dp));
-                } else {
-                    imageButton.setImageDrawable(getResources().getDrawable(R.drawable.play_arrow_black_24dp));
-                }
-            }
-            if (imageButton2 != null) {
-                if (isPlaying) {
-                    imageButton2.setImageDrawable(getResources().getDrawable(R.drawable.pause_black_24dp));
-                } else {
-                    imageButton2.setImageDrawable(getResources().getDrawable(R.drawable.play_arrow_black_24dp));
-                }
-            }
-        }
-    }
-    // endregion Music Controls
-
-    public void releaseMediaPlayers() {
-        synchronized (this) {
-            Iterator<MediaPlayerWURI> collection = songsMap.values().iterator();
-            MediaPlayerWURI mediaPlayerWURI;
-            while (collection.hasNext()) {
-                mediaPlayerWURI = collection.next();
-                mediaPlayerWURI.release();
-                collection.remove();
-            }
-        }
     }
 
     public class CreateMediaPlayerWURIThread implements Callable<MediaPlayerWURI> {
 
-        ActivityMain activityMain;
+        final ActivityMain activityMain;
 
-        AudioURI audioURI;
+        final AudioURI audioURI;
 
         CreateMediaPlayerWURIThread(ActivityMain activityMain, AudioURI audioURI) {
             this.activityMain = activityMain;
@@ -467,172 +539,109 @@ public class ActivityMain extends AppCompatActivity {
 
     }
 
-    public void updateSongUI() {
-        // TODO move to onCreate when saving data is implemented
-        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-        retriever.setDataSource(getApplicationContext(), currentSong.uri);
-        String time = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-        if (time == null) {
-            time = "00:00:00";
-        }
-        int millis = Integer.parseInt(time);
-        retriever.release();
-        //-------------------------------------------------------
-        TextView textViewSongPaneSongName = findViewById(R.id.textViewSongPaneSongName);
-        if (textViewSongPaneSongName != null) {
-            textViewSongPaneSongName.setText(currentSong.title);
-        }
-
-        ImageView imageViewSongArt = findViewById(R.id.imageViewSongPaneSongArt);
-        int songArtHeight = imageViewSongArt.getMeasuredHeight();
-        Bitmap bitmapSongArt = currentSong.thumbnail;
-        if (bitmapSongArt != null) {
-            Bitmap bitmapSongArtResized = FragmentSongPane.getResizedBitmap(bitmapSongArt, songArtHeight, songArtHeight);
-            imageViewSongArt.setImageBitmap(bitmapSongArtResized);
-        } else {
-            songArtHeight = imageViewSongArt.getMeasuredHeight();
-            Drawable drawableSongArt = getResources().getDrawable(R.drawable.music_note_black_48dp);
-            drawableSongArt.setBounds(0, 0, songArtHeight, songArtHeight);
-            bitmapSongArt = Bitmap.createBitmap(songArtHeight, songArtHeight, Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(bitmapSongArt);
-            drawableSongArt.draw(canvas);
-            Bitmap bitmapSongArtResized = FragmentSongPane.getResizedBitmap(bitmapSongArt, songArtHeight, songArtHeight);
-            bitmapSongArt.recycle();
-            imageViewSongArt.setImageBitmap(bitmapSongArtResized);
-        }
-
-        ImageView imageView = ((ImageView) findViewById(R.id.image_view_song_art));
-        if (imageView != null) {
-            imageView.setImageBitmap(currentSong.thumbnail);
-        }
-        TextView textViewSongName = findViewById(R.id.text_view_song_name);
-        if (textViewSongName != null) {
-            textViewSongName.setText(currentSong.title);
-        }
-        String endTime = String.format(getResources().getConfiguration().locale,
-                "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(millis),
-                TimeUnit.MILLISECONDS.toMinutes(millis) -
-                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
-                TimeUnit.MILLISECONDS.toSeconds(millis) -
-                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
-        TextView textViewCurrent = findViewById(R.id.editTextCurrentTime);
-        if (textViewCurrent != null) {
-            textViewCurrent.setText("00:00:00");
-        }
-        TextView textViewEnd = findViewById(R.id.editTextEndTime);
-        if (textViewEnd != null) {
-            textViewEnd.setText(endTime);
-        }
-        SeekBar seekBar = findViewById(R.id.seekBar);
-        if (seekBar != null) {
-            seekBar.setMax(millis);
-            seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+    void playNext() {
+        Log.v(TAG, "playNext");
+        stopAndPreparePrevious();
+        if (songQueueIterator.hasNext()) {
+            MediaPlayerWURI mediaPlayerWURI = songsMap.get(songQueueIterator.next());
+            if (mediaPlayerWURI != null) {
+                currentSong = mediaPlayerWURI.audioURI;
+                mediaPlayerWURI.shouldStart(true);
+                isPlaying = true;
+            }
+            runOnUiThread(new Runnable() {
                 @Override
-                public void onProgressChanged(SeekBar seekBar, int i, boolean fromUser) {
-                    if (fromUser) {
-                        MediaPlayerWURI mediaPlayerWURI = songsMap.get(currentSong.uri);
-                        if (mediaPlayerWURI != null) {
-                            mediaPlayerWURI.seekTo(i);
+                public void run() {
+                    updateSongUI();
+                    updateSongPaneUI();
+                }
+            });
+        } else {
+            addToQueueAndPlay(currentPlaylist.getProbFun().fun());
+        }
+    }
+
+    public void playPrevious() {
+        Log.v(TAG, "playPrevious");
+        stopAndPreparePrevious();
+        Uri uri = null;
+        if (songQueueIterator.hasPrevious()) {
+            uri = songQueueIterator.previous();
+        }
+        if (songQueueIterator.hasPrevious()) {
+            MediaPlayerWURI mediaPlayerWURI = songsMap.get(songQueueIterator.previous());
+            if (mediaPlayerWURI != null) {
+                mediaPlayerWURI.shouldStart(true);
+                currentSong = mediaPlayerWURI.audioURI;
+                isPlaying = true;
+            }
+            songQueueIterator.next();
+        } else {
+            if (uri != null) {
+                MediaPlayerWURI mediaPlayerWURI = songsMap.get(uri);
+                if (mediaPlayerWURI != null) {
+                    mediaPlayerWURI.shouldStart(true);
+                    currentSong = mediaPlayerWURI.audioURI;
+                    isPlaying = true;
+                }
+                songQueueIterator.next();
+            }
+        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                updateSongUI();
+                updateSongPaneUI();
+            }
+        });
+    }
+
+    public void pauseOrPlay() {
+        Log.v(TAG, "pauseOrPlay");
+        MediaPlayerWURI mediaPlayerWURI = songsMap.get(currentSong.uri);
+        final ImageButton imageButtonPlayPause = findViewById(R.id.imageButtonPlayPause);
+        final ImageButton imageButtonSongPanePlayPause = findViewById(R.id.imageButtonSongPanePlayPause);
+        if (mediaPlayerWURI != null) {
+            if (mediaPlayerWURI.isPrepared && mediaPlayerWURI.isPlaying()) {
+                mediaPlayerWURI.pause();
+                isPlaying = false;
+            } else {
+                mediaPlayerWURI.shouldStart(true);
+                isPlaying = true;
+            }
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (imageButtonPlayPause != null) {
+                        if (isPlaying) {
+                            imageButtonPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.pause_black_24dp));
+                        } else {
+                            imageButtonPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.play_arrow_black_24dp));
+                        }
+                    }
+                    if (imageButtonSongPanePlayPause != null) {
+                        if (isPlaying) {
+                            imageButtonSongPanePlayPause.setImageDrawable(getResources().getDrawable(R.drawable.pause_black_24dp));
+                        } else {
+                            imageButtonSongPanePlayPause.setImageDrawable(getResources().getDrawable(R.drawable.play_arrow_black_24dp));
                         }
                     }
                 }
-
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {
-
-                }
-
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {
-
-                }
-
             });
-            scheduledExecutorService.shutdown();
-            scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-            scheduledExecutorService.scheduleAtFixedRate(
-                    new SeekBarUpdater(songsMap.get(currentSong.uri), seekBar, textViewCurrent, millis),
-                    0L, 1L, TimeUnit.SECONDS);
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.Q)
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_PERMISSION && grantResults.length > 0 &&
-                grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            getAudioFiles();
-        } else {
-            Toast toast = Toast.makeText(getApplicationContext(), R.string.permission_needed, Toast.LENGTH_LONG);
-            toast.show();
-            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
-        }
-    }
+    // endregion Music Controls
 
-    /*
-    class SeekBarUpdater implements Runnable {
-
-        MediaPlayerWURI mediaPlayerWURI;
-
-        SeekBar seekBar;
-
-        SeekBarUpdater(MediaPlayerWURI mediaPlayerWURI, SeekBar seekBar) {
-            this.mediaPlayerWURI = mediaPlayerWURI;
-            this.seekBar = seekBar;
-        }
-
-        @Override
-        public void run() {
-            int mCurrentPosition = mediaPlayerWURI.getCurrentPosition();
-            seekBar.setProgress(mCurrentPosition);
-        }
-    }
-
-     */
-
-    class SeekBarUpdater implements Runnable {
-
-        MediaPlayerWURI mediaPlayerWURI;
-
-        SeekBar seekBar;
-
-        int millis;
-
-        TextView textViewCurrent;
-
-        SeekBarUpdater(MediaPlayerWURI mediaPlayerWURI, SeekBar seekBar, TextView textViewCurrent, int millis) {
-            this.mediaPlayerWURI = mediaPlayerWURI;
-            this.seekBar = seekBar;
-            this.millis = millis;
-            this.textViewCurrent = textViewCurrent;
-        }
-
-        @Override
-        public void run() {
-            seekBar.post(new Runnable() {
-                @Override
-                public void run() {
-                    int mCurrentPosition = mediaPlayerWURI.getCurrentPosition();
-                    seekBar.setProgress(mCurrentPosition);
-                    int tMillis = mCurrentPosition;
-                    final String currentTime = String.format(getResources().getConfiguration().locale,
-                            "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(tMillis),
-                            TimeUnit.MILLISECONDS.toMinutes(tMillis) -
-                                    TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(tMillis)),
-                            TimeUnit.MILLISECONDS.toSeconds(tMillis) -
-                                    TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(tMillis)));
-                    if (textViewCurrent != null) {
-                        textViewCurrent.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                textViewCurrent.setText(currentTime);
-                            }
-                        });
-                    }
-                }
-            });
+    public void releaseMediaPlayers() {
+        synchronized (this) {
+            Iterator<MediaPlayerWURI> collection = songsMap.values().iterator();
+            MediaPlayerWURI mediaPlayerWURI;
+            while (collection.hasNext()) {
+                mediaPlayerWURI = collection.next();
+                mediaPlayerWURI.release();
+                collection.remove();
+            }
         }
     }
 

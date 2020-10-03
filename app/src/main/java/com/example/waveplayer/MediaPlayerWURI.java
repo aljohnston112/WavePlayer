@@ -49,11 +49,19 @@ public class MediaPlayerWURI {
     }
 
     public int getCurrentPosition(){
-        return mediaPlayer.getCurrentPosition();
+        if(isPrepared && isPlaying()) {
+            return mediaPlayer.getCurrentPosition();
+        } else{
+            return -1;
+        }
     }
 
     public boolean isPlaying(){
-        return mediaPlayer.isPlaying();
+        if(isPrepared) {
+            return mediaPlayer.isPlaying();
+        } else {
+            return false;
+        }
     }
 
     synchronized public void stop(){

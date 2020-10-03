@@ -52,11 +52,12 @@ public class FragmentPlaylist extends Fragment {
         // TODO
         activityMain = ((ActivityMain) getActivity());
         activityMain.setActionBarTitle(activityMain.currentPlaylist.getName());
-
+        activityMain.setFabImage(R.drawable.ic_add_black_24dp);
         activityMain.setFabOnClickListener(new View.OnClickListener() {
             @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
             public void onClick(View view) {
+                activityMain.userPickedSongs = null;
                 NavHostFragment.findNavController(FragmentPlaylist.this)
                         .navigate(FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSelectSongs());
             }

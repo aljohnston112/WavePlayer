@@ -3,26 +3,28 @@ package com.example.waveplayer;
 import android.graphics.Bitmap;
 import android.net.Uri;
 
+import androidx.annotation.Nullable;
+
 public final class AudioURI implements Comparable<AudioURI> {
 
     public final Uri uri;
 
-    public final String displayName;
+    public final Bitmap thumbnail;
 
-    public final String title;
+    public final String displayName;
 
     public final String artist;
 
-    public final Bitmap thumbnail;
+    public final String title;
 
-    private boolean isChecked = false;
+    private boolean isSelected = false;
 
     public AudioURI(Uri uri, Bitmap thumbnail, String displayName, String artist, String title){
         this.uri = uri;
-        this.displayName = displayName;
-        this.title = title;
-        this.artist = artist;
         this.thumbnail = thumbnail;
+        this.displayName = displayName;
+        this.artist = artist;
+        this.title = title;
     }
 
     @Override
@@ -39,12 +41,19 @@ public final class AudioURI implements Comparable<AudioURI> {
         return h;
     }
 
-    public boolean isChecked() {
-        return isChecked;
+    public boolean isSelected() {
+        return isSelected;
     }
 
-    public void setChecked(boolean checked) {
-        isChecked = checked;
+    public void setSelected(boolean selected) {
+        isSelected = selected;
     }
 
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        if(obj instanceof AudioURI && uri.equals(((AudioURI) obj).uri)){
+            return true;
+        }
+        return false;
+    }
 }

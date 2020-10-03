@@ -350,6 +350,8 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
         double probability = 1.0 / (this.probMap.size());
         if (!this.probMap.containsKey(element)) {
             this.probMap.put(element, probability);
+        } else {
+            return;
         }
         scaleProbs();
         if (!this.children.containsKey(element) && elements != null && !elements.isEmpty()) {

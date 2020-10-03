@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.util.ArrayList;
 import java.util.Collections;
 
 public class FragmentPlaylists extends Fragment {
@@ -48,15 +49,17 @@ public class FragmentPlaylists extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        final ActivityMain activityMain = ((ActivityMain) getActivity());
         activityMain.setActionBarTitle(getResources().getString(R.string.playlists));
 
-        activityMain.setFabImage(getResources().getDrawable(R.drawable.ic_add_black_24dp));
+        activityMain.setFabImage(R.drawable.ic_add_black_24dp);
         activityMain.showFab(true);
         activityMain.setFabOnClickListener(new View.OnClickListener() {
             @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
             public void onClick(View view) {
+                activityMain.userPickedPlaylist = null;
+                activityMain.userPickedSongs = new ArrayList<>();
                 NavHostFragment.findNavController(FragmentPlaylists.this)
                         .navigate(FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentEditPlaylist());
             }

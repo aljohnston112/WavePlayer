@@ -11,9 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.SeekBar;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -57,6 +55,12 @@ public class FragmentSong extends Fragment {
             activityMain.isPlaying = true;
         }
         activityMain.isStarted = true;
+        activityMain.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                activityMain.updateSongUI();
+            }
+        });
     }
 
     private void setUpButtons(View view) {
@@ -64,7 +68,7 @@ public class FragmentSong extends Fragment {
         ImageButton buttonGood = activityMain.findViewById(R.id.button_thumb_up);
         ImageButton buttonShuffle = activityMain.findViewById(R.id.imageButtonShuffle);
         ImageButton buttonPrev = activityMain.findViewById(R.id.imageButtonPrev);
-        ImageButton buttonPause = activityMain.findViewById(R.id.imageButtonPause);
+        ImageButton buttonPause = activityMain.findViewById(R.id.imageButtonPlayPause);
         ImageButton buttonNext = activityMain.findViewById(R.id.imageButtonNext);
         ImageButton buttonLoop = activityMain.findViewById(R.id.imageButtonRepeat);
 

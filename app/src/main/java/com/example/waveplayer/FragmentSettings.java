@@ -29,7 +29,7 @@ public class FragmentSettings extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         final ActivityMain activityMain = ((ActivityMain) getActivity());
         activityMain.setActionBarTitle(getResources().getString(R.string.settings));
-        activityMain.setFabImage(getResources().getDrawable(R.drawable.ic_check_black_24dp));
+        activityMain.setFabImage(R.drawable.ic_check_black_24dp);
         activityMain.showFab(true);
         final EditText editTextNSongs = activityMain.findViewById(R.id.editTextNSongs);
         editTextNSongs.setText(String.valueOf((int)Math.round(1.0/ActivityMain.MAX_PERCENT)));

@@ -47,50 +47,88 @@ public class FragmentEditPlaylist extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         final ActivityMain activityMain = ((ActivityMain) getActivity());
-        activityMain.setActionBarTitle(getResources().getString(R.string.edit_playlist));
-
-        RandomPlaylist currentPlaylist = activityMain.currentPlaylist;
-        ArrayList<AudioURI> songsToHighlight = new ArrayList<>();
-        if (currentPlaylist != null) {
-            songsToHighlight = new ArrayList<>(currentPlaylist.getProbFun().getProbMap().keySet());
-        } else {
-            songsToHighlight = new ArrayList<>();
-        }
-
-        view.findViewById(R.id.buttonChangeSongs).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                NavHostFragment.findNavController(FragmentEditPlaylist.this).navigate(
-                        FragmentEditPlaylistDirections.actionFragmentEditPlaylistToFragmentSelectSongs());
-            }
-        });
-
-        final ArrayList<AudioURI> finalUserPickedSongs = activityMain.userPickedSongs;
         final EditText finalEditTextPlaylistName = view.findViewById(R.id.editTextPlaylistName);
-        activityMain.setFabImage(getResources().getDrawable(R.drawable.ic_check_black_24dp));
-        activityMain.setFabOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (finalUserPickedSongs != null  && finalUserPickedSongs.size() != 0
-                        && finalEditTextPlaylistName.length() != 0) {
-                    activityMain.playlists.add(new RandomPlaylist(finalUserPickedSongs, ActivityMain.MAX_PERCENT, finalEditTextPlaylistName.getText().toString()));
-                    for(AudioURI audioURI : finalUserPickedSongs){
-                        audioURI.setChecked(false);
+        if (activityMain != null) {
+            activityMain.setActionBarTitle(getResources().getString(R.string.edit_playlist));
+            RandomPlaylist userPickedPlaylist = activityMain.userPickedPlaylist;
+            ArrayList<AudioURI> playlistSongs = new ArrayList<>();
+            if (userPickedPlaylist != null) {
+                if(activityMain.userPickedSongs == null) {
+                    activityMain.userPickedSongs = new ArrayList<>(userPickedPlaylist.getProbFun().getProbMap().keySet());
+                }
+                playlistSongs  = new ArrayList<>(userPickedPlaylist.getProbFun().getProbMap().keySet());
+                finalEditTextPlaylistName.setText(userPickedPlaylist.getName());
+            }
+            final ArrayList<AudioURI> finalPlaylistSongs = playlistSongs;
+            activityMain.showFab(true);
+            activityMain.setFabImage(R.drawable.ic_check_black_24dp);
+            activityMain.setFabOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    String playlistName = finalEditTextPlaylistName.getText().toString();
+                    int playlistIndex = indexOfPlaylistWName(playlistName);
+                    if (activityMain.userPickedSongs.size() == 0) {
+                        Toast toast = Toast.makeText(getContext(), R.string.not_enough_songs_for_playlist, Toast.LENGTH_LONG);
+                        toast.show();
+                    } else if (playlistName.length() == 0) {
+                        Toast toast = Toast.makeText(getContext(), R.string.no_name_playlist, Toast.LENGTH_LONG);
+                        toast.show();
+                    } else if(playlistIndex != -1 && activityMain.userPickedPlaylist == null){
+                        Toast toast = Toast.makeText(getContext(), R.string.duplicate_name_playlist, Toast.LENGTH_LONG);
+                        toast.show();
+                    } else if (activityMain.userPickedPlaylist == null) {
+                        activityMain.playlists.add(new RandomPlaylist(
+                                activityMain.userPickedSongs,
+                                ActivityMain.MAX_PERCENT,
+                                finalEditTextPlaylistName.getText().toString()));
+                        for (AudioURI audioURI : activityMain.userPickedSongs) {
+                            audioURI.setSelected(false);
+                        }
+                        activityMain.userPickedSongs = new ArrayList<>();
+                        popBackStack(view);
+                    }  else{
+                        for(AudioURI audioURI : finalPlaylistSongs) {
+                            if (!activityMain.userPickedSongs.contains(audioURI)){
+                                activityMain.userPickedPlaylist.getProbFun().remove(audioURI);
+                            }
+                        }
+                        for(AudioURI audioURI : activityMain.userPickedSongs){
+                            activityMain.userPickedPlaylist.getProbFun().add(audioURI, null);
+                        }
+                        popBackStack(view);
                     }
-                    activityMain.userPickedSongs = new ArrayList<>();
+                }
+
+                private int indexOfPlaylistWName(String playlistName) {
+                    boolean containsName = false;
+                    int playlistIndex = -1;
+                    int i = 0;
+                    for (RandomPlaylist randomPlaylist : activityMain.playlists) {
+                        if (randomPlaylist.getName().equals(playlistName)) {
+                            containsName = true;
+                            playlistIndex = i;
+                        }
+                        i++;
+                    }
+                    return playlistIndex;
+                }
+
+                private void popBackStack(View view) {
                     NavController navController = NavHostFragment.findNavController(FragmentEditPlaylist.this);
                     navController.popBackStack();
                     InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(Activity.INPUT_METHOD_SERVICE);
                     imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-                } else if(finalUserPickedSongs == null || finalUserPickedSongs.size() == 0){
-                    Toast toast = Toast.makeText(getContext(), R.string.not_enough_songs_for_playlist, Toast.LENGTH_LONG);
-                    toast.show();
-                } else if(finalEditTextPlaylistName.length() == 0){
-                    Toast toast = Toast.makeText(getContext(), R.string.no_name_playlist, Toast.LENGTH_LONG);
-                    toast.show();
                 }
-            }
-        });
+            });
+
+            view.findViewById(R.id.buttonEditSongs).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    NavHostFragment.findNavController(FragmentEditPlaylist.this).navigate(
+                            FragmentEditPlaylistDirections.actionFragmentEditPlaylistToFragmentSelectSongs());
+                }
+            });
+        }
     }
 
 }
