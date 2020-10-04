@@ -54,8 +54,6 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
     // The rounding error to prevent over and under flow
     private double roundingError = 0;
 
-    private final Random random = new Random();
-
     /**
      * Creates a ProbFunTree where there is an equal chance of getting any element from choices when fun() in called.
      * Note that the elements in choices passed into this constructor will NOT be copied and will be added by reference.
@@ -498,18 +496,18 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
      * @return a randomly picked element from this ProbFunTree.
      * Any changes in the element will be reflected in this ProbFunTree.
      */
-    public T fun() {
+    public T fun(Random random) {
         ArrayList<T> previousElements = new ArrayList<>();
         if (this.previousElement == null) {
-            return nextValue();
+            return nextValue(random);
         } else if (!this.children.isEmpty()) {
             previousElements.add(previousElement);
             ProbFunTree<T> pf = this.children.get(this.previousElement);
             T t = pf.previousElement;
             if (t == null && pf != null) {
-                return pf.nextValue();
+                return pf.nextValue(random);
             } else if (t == null) {
-                return this.nextValue();
+                return this.nextValue(random);
             }
             while (t != null) {
                 previousElements.add(t);
@@ -531,14 +529,14 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
                 if (pf == null) {
                     clearHistory();
                     this.previousElement = previousElements.get(previousElements.size() - 1);
-                    return this.nextValue();
+                    return this.nextValue(random);
                 }
-                return pf.fun();
+                return pf.fun(random);
             } else {
-                return this.children.get(this.previousElement).fun();
+                return this.children.get(this.previousElement).fun(random);
             }
         } else {
-            return nextValue();
+            return nextValue(random);
         }
     }
 
@@ -547,7 +545,7 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
      *
      * @return the next generated value.
      */
-    private T nextValue() {
+    private T nextValue(Random random) {
         double randomChoice = random.nextDouble();
         double sumOfProbabilities = 0.0;
         Iterator<Entry<T, Double>> entries = this.probMap.entrySet().iterator();

@@ -19,7 +19,7 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
 
     private final Fragment fragment;
 
-    private final List<RandomPlaylist> randomPlaylists;
+    public final List<RandomPlaylist> randomPlaylists;
 
     public RecyclerViewAdapterPlaylists(Fragment fragment, List<RandomPlaylist> items) {
         this.fragment = fragment;
@@ -57,6 +57,7 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
             if(randomPlaylist!= null){
             textViewPlaylistName.setText(randomPlaylist.getName());
             }
+            view.setOnCreateContextMenuListener(this);
             view.setOnClickListener(new View.OnClickListener(){
                 @Override
                 public void onClick(View v) {

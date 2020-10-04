@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
@@ -20,6 +21,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Size;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
@@ -59,6 +61,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -70,13 +73,13 @@ public class ActivityMain extends AppCompatActivity {
     private static final int REQUEST_PERMISSION = 245083964;
     private static final String FILE_ERROR_LOG = "error";
     private static final String FILE_SAVE = "playlists";
+    private static final String MASTER_PLAYLIST_NAME = "MASTER_PLAYLIST_NAME";
+    public static final Random random = new Random();
 
     // Settings
     // TODO UPDATE ALL PLAYLISTS WITH MAX_PERCENT
     static double MAX_PERCENT = 0.1;
     static double PERCENT_CHANGE = 0.5;
-
-    static final String MASTER_PLAYLIST_NAME = "MASTER_PLAYLIST_NAME";
 
     final ArrayList<AudioURI> songs = new ArrayList<>();
     final HashMap<Uri, MediaPlayerWURI> songsMap = new HashMap<>();
@@ -111,7 +114,7 @@ public class ActivityMain extends AppCompatActivity {
         public void onCompletion(MediaPlayer mediaPlayer) {
             scheduledExecutorService.shutdown();
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-            addToQueueAndPlay(currentPlaylist.getProbFun().fun());
+            addToQueueAndPlay(currentPlaylist.getProbFun().fun(random));
         }
     };
 
@@ -283,6 +286,7 @@ public class ActivityMain extends AppCompatActivity {
     private void setUpActionBar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         toolbar.setTitleTextColor(getResources().getColor(R.color.colorOnPrimary));
+        toolbar.getOverflowIcon().setColorFilter(getResources().getColor(R.color.colorOnPrimary), PorterDuff.Mode.SRC_ATOP);
         setSupportActionBar(toolbar);
         centerActionBarTitle();
     }
@@ -466,7 +470,11 @@ public class ActivityMain extends AppCompatActivity {
 
         ImageView imageViewSongArt = findViewById(R.id.image_view_song_art);
         if (imageViewSongArt != null) {
-            imageViewSongArt.setImageBitmap(currentSong.thumbnail);
+            if(currentSong.thumbnail == null){
+                imageViewSongArt.setImageDrawable(getResources().getDrawable((R.drawable.music_note_black_48dp)));
+            } else {
+                imageViewSongArt.setImageBitmap(currentSong.thumbnail);
+            }
         }
         TextView textViewSongName = findViewById(R.id.text_view_song_name);
         if (textViewSongName != null) {
@@ -670,6 +678,7 @@ public class ActivityMain extends AppCompatActivity {
 
     void playNext() {
         Log.v(TAG, "playNext");
+        currentPlaylist.getProbFun().bad(getCurrentSong(), ActivityMain.PERCENT_CHANGE);
         stopAndPreparePrevious();
         if (songQueueIterator.hasNext()) {
             MediaPlayerWURI mediaPlayerWURI = songsMap.get(songQueueIterator.next());
@@ -693,7 +702,7 @@ public class ActivityMain extends AppCompatActivity {
                 }
             });
         } else {
-            addToQueueAndPlay(currentPlaylist.getProbFun().fun());
+            addToQueueAndPlay(currentPlaylist.getProbFun().fun(random));
         }
     }
 
@@ -819,6 +828,12 @@ public class ActivityMain extends AppCompatActivity {
             haveAudioFocus = false;
         }
         return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.reset_probs, menu);
+        return true;
     }
 
 }

@@ -31,6 +31,7 @@ public class FragmentSongs extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         activityMain = ((ActivityMain) getActivity());
+        activityMain.userPickedPlaylist = activityMain.masterPlaylist;
         updateMainContent();
         setUpRecyclerView();
     }
@@ -46,6 +47,16 @@ public class FragmentSongs extends Fragment {
                 this, activityMain.songs);
         recyclerViewSongs.setLayoutManager(new LinearLayoutManager(recyclerViewSongs.getContext()));
         recyclerViewSongs.setAdapter(recyclerViewAdapterSongs);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.action_reset_probs:
+                activityMain.userPickedPlaylist.getProbFun().clearProbs();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
 }

@@ -4,6 +4,8 @@ import android.os.Build;
 import android.os.Bundle;
 
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -59,6 +61,7 @@ public class FragmentPlaylist extends Fragment {
 
     private void updateFAB() {
         activityMain.setFabImage(R.drawable.ic_add_black_24dp);
+        activityMain.showFab(true);
         activityMain.setFabOnClickListener(new View.OnClickListener() {
             @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
@@ -104,6 +107,16 @@ public class FragmentPlaylist extends Fragment {
             recyclerViewAdapterSongsList.notifyItemRemoved(position);
         }
 
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.action_reset_probs:
+                activityMain.userPickedPlaylist.getProbFun().clearProbs();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
 }

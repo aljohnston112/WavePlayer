@@ -1,5 +1,6 @@
 package com.example.waveplayer;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
@@ -7,6 +8,7 @@ import android.os.Build;
 import android.os.Bundle;
 
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -47,14 +49,15 @@ public class FragmentSong extends Fragment {
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void setUpButtons(View view) {
-        ImageButton buttonBad = activityMain.findViewById(R.id.button_thumb_down);
-        ImageButton buttonGood = activityMain.findViewById(R.id.button_thumb_up);
-        ImageButton buttonShuffle = activityMain.findViewById(R.id.imageButtonShuffle);
-        ImageButton buttonPrev = activityMain.findViewById(R.id.imageButtonPrev);
-        ImageButton buttonPause = activityMain.findViewById(R.id.imageButtonPlayPause);
-        ImageButton buttonNext = activityMain.findViewById(R.id.imageButtonNext);
-        ImageButton buttonLoop = activityMain.findViewById(R.id.imageButtonRepeat);
+        final ImageButton buttonBad = activityMain.findViewById(R.id.button_thumb_down);
+        final ImageButton buttonGood = activityMain.findViewById(R.id.button_thumb_up);
+        final ImageButton buttonShuffle = activityMain.findViewById(R.id.imageButtonShuffle);
+        final  ImageButton buttonPrev = activityMain.findViewById(R.id.imageButtonPrev);
+        final ImageButton buttonPause = activityMain.findViewById(R.id.imageButtonPlayPause);
+        final ImageButton buttonNext = activityMain.findViewById(R.id.imageButtonNext);
+        final  ImageButton buttonLoop = activityMain.findViewById(R.id.imageButtonRepeat);
 
         buttonBad.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -64,11 +67,38 @@ public class FragmentSong extends Fragment {
             }
         });
 
+        buttonBad.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                switch(motionEvent.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        buttonBad.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
+                    case MotionEvent.ACTION_UP:
+                        buttonBad.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                }
+                return false;
+            }
+        });
+
+
         buttonGood.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 activityMain.currentPlaylist.getProbFun().good(
                         activityMain.getCurrentSong(), ActivityMain.PERCENT_CHANGE);
+            }
+        });
+
+        buttonGood.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                switch(motionEvent.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        buttonGood.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
+                    case MotionEvent.ACTION_UP:
+                        buttonGood.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                }
+                return false;
             }
         });
 
@@ -79,10 +109,36 @@ public class FragmentSong extends Fragment {
             }
         });
 
+        buttonShuffle.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                switch(motionEvent.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        buttonShuffle.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
+                    case MotionEvent.ACTION_UP:
+                        buttonShuffle.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                }
+                return false;
+            }
+        });
+
         buttonPrev.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 activityMain.playPrevious();
+            }
+        });
+
+        buttonPrev.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                switch(motionEvent.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        buttonPrev.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
+                    case MotionEvent.ACTION_UP:
+                        buttonPrev.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                }
+                return false;
             }
         });
 
@@ -93,11 +149,36 @@ public class FragmentSong extends Fragment {
             }
         });
 
+        buttonPause.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                switch(motionEvent.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        buttonPause.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
+                    case MotionEvent.ACTION_UP:
+                        buttonPause.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                }
+                return false;
+            }
+        });
+
         buttonNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                activityMain.currentPlaylist.getProbFun().bad(activityMain.getCurrentSong(), ActivityMain.PERCENT_CHANGE);
                 activityMain.playNext();
+            }
+        });
+
+        buttonNext.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                switch(motionEvent.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        buttonNext.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
+                    case MotionEvent.ACTION_UP:
+                        buttonNext.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                }
+                return false;
             }
         });
 
@@ -105,6 +186,19 @@ public class FragmentSong extends Fragment {
             @Override
             public void onClick(View view) {
                 //TODO
+            }
+        });
+
+        buttonLoop.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                switch(motionEvent.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        buttonLoop.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
+                    case MotionEvent.ACTION_UP:
+                        buttonLoop.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                }
+                return false;
             }
         });
 
