@@ -1,8 +1,16 @@
 package com.example.waveplayer;
 
 import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
+import android.content.ComponentName;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -14,18 +22,24 @@ import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.media.ThumbnailUtils;
+import android.media.session.MediaSession;
 import android.net.Uri;
+import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
 
+import android.os.IBinder;
 import android.provider.MediaStore;
+import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
 import android.util.Size;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.RemoteViews;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -38,6 +52,8 @@ import androidx.appcompat.widget.AppCompatTextView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavController;
@@ -93,21 +109,24 @@ public class ActivityMain extends AppCompatActivity {
     RandomPlaylist masterPlaylist;
     RandomPlaylist currentPlaylist;
     private AudioURI currentSong;
-    public AudioURI getCurrentSong(){
+
+    public AudioURI getCurrentSong() {
         return currentSong;
     }
+
     final LinkedList<Uri> songQueue = new LinkedList<>();
     ListIterator<Uri> songQueueIterator;
 
     private boolean isPlaying = false;
-    public boolean isPlaying(){
+
+    public boolean isPlaying() {
         return isPlaying;
     }
 
     private boolean haveAudioFocus = false;
 
     // For updating the SeekBar
-     ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+    ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
     final MediaPlayer.OnCompletionListener onCompletionListener = new MediaPlayer.OnCompletionListener() {
         @Override
@@ -128,6 +147,37 @@ public class ActivityMain extends AppCompatActivity {
         getExternalStoragePermissionAndFetchMediaFiles();
         createUI();
         loadSave();
+        //doBindService();
+        makeNotification();
+    }
+
+    void makeNotification() {
+        String CHANNEL_ID = "PinkyPlayer";
+        RemoteViews notificationLayout = new RemoteViews(getPackageName(), R.layout.fragment_song_pane);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.drawable.music_note_black_48dp)
+                .setContentTitle("Pinky Player")
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
+                .setCustomContentView(notificationLayout);
+        if (currentSong != null) {
+            builder.setStyle(new NotificationCompat.BigTextStyle()
+                    .bigText((currentSong.title)));
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence channelName = "PinkyPlayer";
+            String description = "Intelligent music player";
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, channelName, importance);
+            channel.setDescription(description);
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        notificationManager.notify(CHANNEL_ID.hashCode(), builder.build());
     }
 
     private void setUpCrashSaver() {
@@ -151,7 +201,7 @@ public class ActivityMain extends AppCompatActivity {
     private void logLastCrash() {
         File file = new File(getBaseContext().getFilesDir(), FILE_ERROR_LOG);
         if (file.exists()) {
-            try (BufferedReader bufferedReader  = new BufferedReader(new FileReader(file))) {
+            try (BufferedReader bufferedReader = new BufferedReader(new FileReader(file))) {
                 StringBuilder stringBuilder = new StringBuilder();
                 String sCurrentLine;
                 while ((sCurrentLine = bufferedReader.readLine()) != null) {
@@ -325,6 +375,17 @@ public class ActivityMain extends AppCompatActivity {
                     } else {
                         hideSongPane();
                     }
+                    Toolbar toolbar = findViewById(R.id.toolbar);
+                    Menu menu = toolbar.getMenu();
+                    if (destination.getId() == R.id.fragmentPlaylist || destination.getId() == R.id.fragmentSongs) {
+                        if (menu.size() > 0) {
+                            menu.getItem(0).setVisible(true);
+                        }
+                    } else {
+                        if (menu.size() > 0) {
+                            menu.getItem(0).setVisible(false);
+                        }
+                    }
                 }
 
             });
@@ -470,7 +531,7 @@ public class ActivityMain extends AppCompatActivity {
 
         ImageView imageViewSongArt = findViewById(R.id.image_view_song_art);
         if (imageViewSongArt != null) {
-            if(currentSong.thumbnail == null){
+            if (currentSong.thumbnail == null) {
                 imageViewSongArt.setImageDrawable(getResources().getDrawable((R.drawable.music_note_black_48dp)));
             } else {
                 imageViewSongArt.setImageBitmap(currentSong.thumbnail);
@@ -598,11 +659,11 @@ public class ActivityMain extends AppCompatActivity {
         if (mediaPlayerWURI == null) {
             mediaPlayerWURI = makeMediaPlayerWURIAndPlay(audioURI);
         } else {
-            if(haveAudioFocus) {
+            if (haveAudioFocus) {
                 mediaPlayerWURI.shouldStart(true);
                 isPlaying = true;
             } else {
-                if(requestAudioFocus()){
+                if (requestAudioFocus()) {
                     mediaPlayerWURI.shouldStart(true);
                     isPlaying = true;
                 }
@@ -641,11 +702,11 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "makeMediaPlayerWURI");
         MediaPlayerWURI mediaPlayerWURI = new CreateMediaPlayerWURIThread(this, audioURI).call();
         songsMap.put(mediaPlayerWURI.audioURI.getUri(), mediaPlayerWURI);
-        if(haveAudioFocus) {
+        if (haveAudioFocus) {
             mediaPlayerWURI.shouldStart(true);
             isPlaying = true;
         } else {
-            if(requestAudioFocus()){
+            if (requestAudioFocus()) {
                 mediaPlayerWURI.shouldStart(true);
                 isPlaying = true;
             }
@@ -684,11 +745,11 @@ public class ActivityMain extends AppCompatActivity {
             MediaPlayerWURI mediaPlayerWURI = songsMap.get(songQueueIterator.next());
             if (mediaPlayerWURI != null) {
                 currentSong = mediaPlayerWURI.audioURI;
-                if(haveAudioFocus) {
+                if (haveAudioFocus) {
                     mediaPlayerWURI.shouldStart(true);
                     isPlaying = true;
                 } else {
-                    if(requestAudioFocus()){
+                    if (requestAudioFocus()) {
                         mediaPlayerWURI.shouldStart(true);
                         isPlaying = true;
                     }
@@ -716,11 +777,11 @@ public class ActivityMain extends AppCompatActivity {
         if (songQueueIterator.hasPrevious()) {
             MediaPlayerWURI mediaPlayerWURI = songsMap.get(songQueueIterator.previous());
             if (mediaPlayerWURI != null) {
-                if(haveAudioFocus) {
+                if (haveAudioFocus) {
                     mediaPlayerWURI.shouldStart(true);
                     isPlaying = true;
                 } else {
-                    if(requestAudioFocus()){
+                    if (requestAudioFocus()) {
                         mediaPlayerWURI.shouldStart(true);
                         isPlaying = true;
                     }
@@ -732,11 +793,11 @@ public class ActivityMain extends AppCompatActivity {
             if (uri != null) {
                 MediaPlayerWURI mediaPlayerWURI = songsMap.get(uri);
                 if (mediaPlayerWURI != null) {
-                    if(haveAudioFocus) {
+                    if (haveAudioFocus) {
                         mediaPlayerWURI.shouldStart(true);
                         isPlaying = true;
                     } else {
-                        if(requestAudioFocus()){
+                        if (requestAudioFocus()) {
                             mediaPlayerWURI.shouldStart(true);
                             isPlaying = true;
                         }
@@ -765,11 +826,11 @@ public class ActivityMain extends AppCompatActivity {
                 mediaPlayerWURI.pause();
                 isPlaying = false;
             } else {
-                if(haveAudioFocus) {
+                if (haveAudioFocus) {
                     mediaPlayerWURI.shouldStart(true);
                     isPlaying = true;
                 } else {
-                    if(requestAudioFocus()){
+                    if (requestAudioFocus()) {
                         mediaPlayerWURI.shouldStart(true);
                         isPlaying = true;
                     }
@@ -812,19 +873,19 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     private boolean requestAudioFocus() {
-        if(haveAudioFocus){
+        if (haveAudioFocus) {
             return true;
         }
         AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         int result = audioManager.requestAudioFocus(new AudioManager.OnAudioFocusChangeListener() {
-                @Override
-                public void onAudioFocusChange(int i) {
+            @Override
+            public void onAudioFocusChange(int i) {
 
-                }
-            }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-        if(result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED){
+            }
+        }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+        if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
             haveAudioFocus = true;
-        } else{
+        } else {
             haveAudioFocus = false;
         }
         return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
@@ -834,6 +895,75 @@ public class ActivityMain extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.reset_probs, menu);
         return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_reset_probs:
+                userPickedPlaylist.getProbFun().clearProbs();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+
+    public class MService extends Service {
+
+        public final MyBinder binder = new MyBinder();
+
+        public class MyBinder extends Binder {
+            MService getService() {
+                return MService.this;
+            }
+        }
+
+        @Override
+        public void onCreate() {
+            super.onCreate();
+            RemoteViews notificationLayout = new RemoteViews(getPackageName(), R.layout.fragment_song_pane);
+            Intent notificationIntent = new Intent(this, ActivityMain.class);
+            PendingIntent pendingIntent =
+                    PendingIntent.getActivity(this, 0, notificationIntent, 0);
+            Notification notification =
+                    null;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                notification = new Notification.Builder(this, "ID_PINKY_PLAYER")
+                        .setContentTitle("PinkyPlayer")
+                        .setContentText(currentSong.title)
+                        .setContentIntent(pendingIntent)
+                        .setTicker("?")
+                        .setCustomContentView(notificationLayout)
+                        .build();
+            }
+            //.setSmallIcon(R.drawable.icon)
+            startForeground(235794, notification);
+        }
+
+        @Nullable
+        @Override
+        public IBinder onBind(Intent intent) {
+            return binder;
+        }
+    }
+
+    private MService myServiceBinder;
+    public ServiceConnection myConnection = new ServiceConnection() {
+        public void onServiceConnected(ComponentName className, IBinder binder) {
+            myServiceBinder = ((MService.MyBinder) binder).getService();
+            Log.d("ServiceConnection", "connected");
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+            Log.d("ServiceConnection", "disconnected");
+            myServiceBinder = null;
+        }
+    };
+
+    public void doBindService() {
+        Intent intent = null;
+        intent = new Intent(this, MService.class);
+        bindService(intent, myConnection, Context.BIND_AUTO_CREATE);
     }
 
 }

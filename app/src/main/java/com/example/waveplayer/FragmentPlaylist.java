@@ -109,14 +109,4 @@ public class FragmentPlaylist extends Fragment {
 
     }
 
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        switch (item.getItemId()){
-            case R.id.action_reset_probs:
-                activityMain.userPickedPlaylist.getProbFun().clearProbs();
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
 }

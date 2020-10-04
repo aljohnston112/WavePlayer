@@ -97,7 +97,7 @@ public class FragmentEditPlaylist extends Fragment {
                         }
                     }
                     for(AudioURI audioURI : activityMain.userPickedSongs){
-                        activityMain.userPickedPlaylist.getProbFun().add(audioURI, null);
+                        activityMain.userPickedPlaylist.getProbFun().add(audioURI);
                         audioURI.setSelected(false);
                     }
                     popBackStackAndHideKeyboard(view);

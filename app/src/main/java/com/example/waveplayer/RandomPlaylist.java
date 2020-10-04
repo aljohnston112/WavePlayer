@@ -30,8 +30,7 @@ public class RandomPlaylist implements Serializable {
         if (music.isEmpty())
             throw new IllegalArgumentException("List music must contain at least one AudioURI");
         Set<AudioURI> files = new HashSet<>(music);
-        int layers = 1;
-        probabilityFunction = new ProbFunTree<>(files, layers, maxPercent);
+        probabilityFunction = new ProbFunTree<>(files, maxPercent);
         this.name = name;
     }
 
