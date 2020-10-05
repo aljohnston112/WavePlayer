@@ -13,14 +13,14 @@ public class MediaPlayerWURI {
 
     final AudioURI audioURI;
 
-    final ActivityMain activityMain;
+    final ServiceMain serviceMain;
 
     volatile boolean isPrepared = true;
 
     volatile boolean shouldPlay = false;
 
-    MediaPlayerWURI(final ActivityMain activityMain, MediaPlayer mediaPlayer, AudioURI audioURI){
-        this.activityMain = activityMain;
+    MediaPlayerWURI(final ServiceMain serviceMain, MediaPlayer mediaPlayer, AudioURI audioURI){
+        this.serviceMain = serviceMain;
         this.mediaPlayer = mediaPlayer;
         this.audioURI = audioURI;
         Log.v(TAG, "Set on prepared");
@@ -31,7 +31,7 @@ public class MediaPlayerWURI {
             @Override
             public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
                 synchronized (mediaPlayerWURI) {
-                    activityMain.releaseMediaPlayers();
+                    serviceMain.releaseMediaPlayers();
                     return false;
                 }
             }

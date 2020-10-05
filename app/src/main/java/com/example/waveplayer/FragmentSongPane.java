@@ -66,7 +66,7 @@ public class FragmentSongPane extends Fragment {
                 int width = height;
                 Drawable drawable;
                 ActivityMain activityMain = ((ActivityMain)getActivity());
-                if(activityMain != null && activityMain.isPlaying()) {
+                if(activityMain != null && activityMain.serviceMain != null && activityMain.serviceMain.isPlaying()) {
                     drawable = getResources().getDrawable(R.drawable.pause_black_24dp);
                 } else{
                     drawable = getResources().getDrawable(R.drawable.play_arrow_black_24dp);

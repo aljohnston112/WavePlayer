@@ -1,0 +1,56 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/linearLayoutNotificationSongPane"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    android:orientation="horizontal"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/nav_host_fragment">
+
+    <ImageView
+        android:id="@+id/imageViewNotificationSongPaneSongArt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="4dp"
+        android:background="@color/colorPrimary"
+        android:src="@drawable/music_note_black_48dp" />
+
+    <TextView
+        android:id="@+id/textViewNotificationSongPaneSongName"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp"
+        android:layout_weight="1"
+        android:text="TextView" />
+
+    <ImageButton
+        android:id="@+id/imageButtonNotificationSongPanePrev"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp"
+        android:background="@color/colorPrimary"
+        android:src="@drawable/skip_previous_black_24dp" />
+
+    <ImageButton
+        android:id="@+id/imageButtonNotificationSongPanePlayPause"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="4dp"
+        android:background="@color/colorPrimary"
+        android:src="@drawable/pause_black_24dp" />
+
+    <ImageButton
+        android:id="@+id/imageButtonNotificationSongPaneNext"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="8dp"
+        android:background="@color/colorPrimary"
+        android:src="@drawable/skip_next_black_24dp" />
+
+</LinearLayout>

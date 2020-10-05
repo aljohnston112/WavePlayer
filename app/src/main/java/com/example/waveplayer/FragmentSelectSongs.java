@@ -41,7 +41,7 @@ public class FragmentSelectSongs extends Fragment {
         RecyclerView recyclerViewSongList = activityMain.findViewById(R.id.recycler_view_song_list);
         recyclerViewSongList.setLayoutManager(new LinearLayoutManager(recyclerViewSongList.getContext()));
         RecyclerViewAdapterSelectSongs recyclerViewAdapterSelectSongs = new RecyclerViewAdapterSelectSongs(
-                this, activityMain.songs, activityMain.userPickedSongs);
+                this, activityMain.serviceMain.songs, activityMain.userPickedSongs);
         recyclerViewSongList.setAdapter(recyclerViewAdapterSelectSongs);
     }
 
@@ -52,13 +52,13 @@ public class FragmentSelectSongs extends Fragment {
             @Override
             public void onClick(View view) {
                 activityMain.userPickedSongs.clear();
-                int nAllSongs = activityMain.songs.size();
+                int nAllSongs = activityMain.serviceMain.songs.size();
                 for(int i = 0; i < nAllSongs; i++) {
-                    if (activityMain.songs.get(i).isSelected()){
-                        activityMain.userPickedSongs.add(activityMain.songs.get(i));
-                        activityMain.songs.get(i).setSelected(false);
+                    if (activityMain.serviceMain.songs.get(i).isSelected()){
+                        activityMain.userPickedSongs.add(activityMain.serviceMain.songs.get(i));
+                        activityMain.serviceMain.songs.get(i).setSelected(false);
                     } else{
-                        activityMain.userPickedSongs.remove(activityMain.songs.get(i));
+                        activityMain.userPickedSongs.remove(activityMain.serviceMain.songs.get(i));
                     }
                 }
                 NavController navController = NavHostFragment.findNavController(FragmentSelectSongs.this);

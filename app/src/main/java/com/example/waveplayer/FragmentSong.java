@@ -62,8 +62,8 @@ public class FragmentSong extends Fragment {
         buttonBad.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                activityMain.currentPlaylist.getProbFun().bad(
-                        activityMain.getCurrentSong(), ActivityMain.PERCENT_CHANGE);
+                activityMain.serviceMain.currentPlaylist.getProbFun().bad(
+                        activityMain.serviceMain.getCurrentSong(), ServiceMain.PERCENT_CHANGE);
             }
         });
 
@@ -84,8 +84,8 @@ public class FragmentSong extends Fragment {
         buttonGood.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                activityMain.currentPlaylist.getProbFun().good(
-                        activityMain.getCurrentSong(), ActivityMain.PERCENT_CHANGE);
+                activityMain.serviceMain.currentPlaylist.getProbFun().good(
+                        activityMain.serviceMain.getCurrentSong(), ServiceMain.PERCENT_CHANGE);
             }
         });
 

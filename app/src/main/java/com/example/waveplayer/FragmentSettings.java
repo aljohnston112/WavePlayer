@@ -89,11 +89,11 @@ public class FragmentSettings extends Fragment {
             }
 
             private void updateSettings(int nSongs, int percentChange) {
-                ActivityMain.MAX_PERCENT = (1.0 / (double)nSongs);
-                for (RandomPlaylist randomPlaylist : activityMain.playlists) {
-                    randomPlaylist.setMaxPercent(ActivityMain.MAX_PERCENT);
+                ServiceMain.MAX_PERCENT = (1.0 / (double)nSongs);
+                for (RandomPlaylist randomPlaylist : activityMain.serviceMain.playlists) {
+                    randomPlaylist.setMaxPercent(ServiceMain.MAX_PERCENT);
                 }
-                ActivityMain.PERCENT_CHANGE = ((double) percentChange) / 100.0;
+                ServiceMain.PERCENT_CHANGE = ((double) percentChange) / 100.0;
             }
 
         });
@@ -102,8 +102,8 @@ public class FragmentSettings extends Fragment {
     private void loadSettings() {
         EditText editTextNSongs = activityMain.findViewById(R.id.editTextNSongs);
         EditText editTextPercentChange = activityMain.findViewById(R.id.editTextPercentChange);
-        editTextNSongs.setText(String.valueOf((int)Math.round(1.0/ActivityMain.MAX_PERCENT)));
-        editTextPercentChange.setText(String.valueOf((int)Math.round(ActivityMain.PERCENT_CHANGE*100.0)));
+        editTextNSongs.setText(String.valueOf((int)Math.round(1.0/ServiceMain.MAX_PERCENT)));
+        editTextPercentChange.setText(String.valueOf((int)Math.round(ServiceMain.PERCENT_CHANGE*100.0)));
     }
 
 }

@@ -49,7 +49,7 @@ public class FragmentPlaylists extends Fragment {
         activityMain.setActionBarTitle(getResources().getString(R.string.playlists));
         recyclerView = activityMain.findViewById(R.id.recycler_view_playlist_list);
         recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
-        recyclerViewAdapter = new RecyclerViewAdapterPlaylists(this, activityMain.playlists);
+        recyclerViewAdapter = new RecyclerViewAdapterPlaylists(this, activityMain.serviceMain.playlists);
         recyclerView.setAdapter(recyclerViewAdapter);
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new PlaylistItemTouchListener());
         itemTouchHelper.attachToRecyclerView(recyclerView);
@@ -74,7 +74,7 @@ public class FragmentPlaylists extends Fragment {
     public boolean onContextItemSelected(@NonNull MenuItem item) {
         switch (item.getGroupId()) {
             case RecyclerViewAdapterPlaylists.MENU_DELETE_PLAYLIST_GROUP_ID:
-                activityMain.playlists.remove(item.getItemId());
+                activityMain.serviceMain.playlists.remove(item.getItemId());
                 recyclerViewAdapter.notifyItemRemoved(item.getItemId());
                 return true;
             default:
@@ -94,7 +94,7 @@ public class FragmentPlaylists extends Fragment {
         @Override
         public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
             Collections.swap(recyclerViewAdapter.randomPlaylists, viewHolder.getAdapterPosition(), target.getAdapterPosition());
-            Collections.swap(activityMain.playlists, viewHolder.getAdapterPosition(), target.getAdapterPosition());
+            Collections.swap(activityMain.serviceMain.playlists, viewHolder.getAdapterPosition(), target.getAdapterPosition());
             recyclerViewAdapter.notifyItemMoved(viewHolder.getAdapterPosition(), target.getAdapterPosition());
             return true;
         }

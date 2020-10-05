@@ -81,9 +81,9 @@ public class FragmentEditPlaylist extends Fragment {
                     Toast toast = Toast.makeText(getContext(), R.string.duplicate_name_playlist, Toast.LENGTH_LONG);
                     toast.show();
                 } else if (activityMain.userPickedPlaylist == null) {
-                    activityMain.playlists.add(new RandomPlaylist(
+                    activityMain.serviceMain.playlists.add(new RandomPlaylist(
                             activityMain.userPickedSongs,
-                            ActivityMain.MAX_PERCENT,
+                            ServiceMain.MAX_PERCENT,
                             finalEditTextPlaylistName.getText().toString()));
                     for (AudioURI audioURI : activityMain.userPickedSongs) {
                         audioURI.setSelected(false);
@@ -107,7 +107,7 @@ public class FragmentEditPlaylist extends Fragment {
             private int indexOfPlaylistWName(String playlistName) {
                 int playlistIndex = -1;
                 int i = 0;
-                for (RandomPlaylist randomPlaylist : activityMain.playlists) {
+                for (RandomPlaylist randomPlaylist : activityMain.serviceMain.playlists) {
                     if (randomPlaylist.getName().equals(playlistName)) {
                         playlistIndex = i;
                     }

@@ -63,15 +63,15 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                         ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
                         if(activityMain != null) {
                             activityMain.addToQueueAndPlay(audioURI);
-                            activityMain.songQueueIterator = null;
-                            activityMain.songQueue.clear();
-                            activityMain.songQueueIterator = activityMain.songQueue.listIterator();
-                            activityMain.songQueueIterator.add(audioURI.getUri());
+                            activityMain.serviceMain.songQueueIterator = null;
+                            activityMain.serviceMain.songQueue.clear();
+                            activityMain.serviceMain.songQueueIterator = activityMain.serviceMain.songQueue.listIterator();
+                            activityMain.serviceMain.songQueueIterator.add(audioURI.getUri());
                             if (fragment instanceof FragmentSongs) {
-                                activityMain.currentPlaylist = activityMain.masterPlaylist;
+                                activityMain.serviceMain.currentPlaylist = activityMain.serviceMain.masterPlaylist;
                                 action = FragmentSongsDirections.actionFragmentSongsToFragmentSong();
                             } else if (fragment instanceof FragmentPlaylist) {
-                                activityMain.currentPlaylist = activityMain.userPickedPlaylist;
+                                activityMain.serviceMain.currentPlaylist = activityMain.userPickedPlaylist;
                                 action = FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong();
                             }
                         }

@@ -31,7 +31,7 @@ public class FragmentSongs extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         activityMain = ((ActivityMain) getActivity());
-        activityMain.userPickedPlaylist = activityMain.masterPlaylist;
+        activityMain.userPickedPlaylist = activityMain.serviceMain.masterPlaylist;
         updateMainContent();
         setUpRecyclerView();
     }
@@ -44,7 +44,7 @@ public class FragmentSongs extends Fragment {
     private void setUpRecyclerView() {
         RecyclerView recyclerViewSongs = activityMain.findViewById(R.id.recycler_view_song_list);
         RecyclerViewAdapterSongs recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(
-                this, activityMain.songs);
+                this, activityMain.serviceMain.songs);
         recyclerViewSongs.setLayoutManager(new LinearLayoutManager(recyclerViewSongs.getContext()));
         recyclerViewSongs.setAdapter(recyclerViewAdapterSongs);
     }

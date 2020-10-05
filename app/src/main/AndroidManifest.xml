@@ -8,6 +8,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <service android:name="ServiceMain"
+            android:exported="false"
+            android:description="@string/service_description"
+           />
         <activity
             android:name=".ActivityMain"
             android:label="@string/app_name">
