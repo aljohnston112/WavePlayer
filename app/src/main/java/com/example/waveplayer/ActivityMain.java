@@ -1,8 +1,11 @@
 package com.example.waveplayer;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -13,6 +16,7 @@ import android.media.MediaMetadataRetriever;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Parcelable;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -40,10 +44,13 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class ActivityMain extends AppCompatActivity {
+
+    // TODO update fab with exteded FAB
 
     private static final int REQUEST_PERMISSION = 245083964;
 
@@ -57,25 +64,38 @@ public class ActivityMain extends AppCompatActivity {
 
     // region onCreate
 
-    Intent intent;
+    Intent intentServiceMain;
+
+    BroadcastReceiverOnCompletion broadcastReceiverOnCompletion;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setUpActionBar();
-        intent = new Intent(ActivityMain.this, ServiceMain.class);
+        intentServiceMain = new Intent(ActivityMain.this, ServiceMain.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent);
+            startForegroundService(intentServiceMain);
         } else {
-            startService(intent);
+            startService(intentServiceMain);
         }
+        broadcastReceiverOnCompletion = new BroadcastReceiverOnCompletion(this);
+        IntentFilter filter = new IntentFilter();
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        filter.addAction("Complete");
+        registerReceiver(broadcastReceiverOnCompletion, filter);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        this.unregisterReceiver(broadcastReceiverOnCompletion);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        getApplicationContext().bindService(intent, connection, BIND_AUTO_CREATE);
+        getApplicationContext().bindService(intentServiceMain, connection, BIND_AUTO_CREATE);
     }
 
     @Override
@@ -136,7 +156,10 @@ public class ActivityMain extends AppCompatActivity {
     private void setUpActionBar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         toolbar.setTitleTextColor(getResources().getColor(R.color.colorOnPrimary));
-        toolbar.getOverflowIcon().setColorFilter(getResources().getColor(R.color.colorOnPrimary), PorterDuff.Mode.SRC_ATOP);
+        Drawable overflowIcon = toolbar.getOverflowIcon();
+        if (overflowIcon != null) {
+            overflowIcon.setColorFilter(getResources().getColor(R.color.colorOnPrimary), PorterDuff.Mode.SRC_ATOP);
+        }
         setSupportActionBar(toolbar);
         centerActionBarTitle();
     }
@@ -167,28 +190,28 @@ public class ActivityMain extends AppCompatActivity {
         FragmentManager fragmentManager = getSupportFragmentManager();
         Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
         if (fragment != null) {
-            NavHostFragment.findNavController(fragment).addOnDestinationChangedListener(new NavController.OnDestinationChangedListener() {
-                @Override
-                public void onDestinationChanged(@NonNull NavController controller, @NonNull NavDestination destination, @Nullable Bundle arguments) {
-                    if (destination.getId() != R.id.fragmentSong && serviceMain.isPlaying()) {
-                        showSongPane();
-                    } else {
-                        hideSongPane();
-                    }
-                    Toolbar toolbar = findViewById(R.id.toolbar);
-                    Menu menu = toolbar.getMenu();
-                    if (destination.getId() == R.id.fragmentPlaylist || destination.getId() == R.id.fragmentSongs) {
-                        if (menu.size() > 0) {
-                            menu.getItem(0).setVisible(true);
+            NavHostFragment.findNavController(fragment).addOnDestinationChangedListener(
+                    new NavController.OnDestinationChangedListener() {
+                        @Override
+                        public void onDestinationChanged(@NonNull NavController controller,
+                                                         @NonNull NavDestination destination,
+                                                         @Nullable Bundle arguments) {
+                            if (destination.getId() != R.id.fragmentSong && serviceMain.isPlaying()) {
+                                showSongPane();
+                            } else {
+                                hideSongPane();
+                            }
+                            Toolbar toolbar = findViewById(R.id.toolbar);
+                            Menu menu = toolbar.getMenu();
+                            if (menu.size() > 0) {
+                                if (destination.getId() == R.id.fragmentPlaylist || destination.getId() == R.id.fragmentSongs) {
+                                    menu.getItem(0).setVisible(true);
+                                } else {
+                                    menu.getItem(0).setVisible(false);
+                                }
+                            }
                         }
-                    } else {
-                        if (menu.size() > 0) {
-                            menu.getItem(0).setVisible(false);
-                        }
-                    }
-                }
-
-            });
+                    });
         }
     }
 
@@ -214,19 +237,19 @@ public class ActivityMain extends AppCompatActivity {
         findViewById(R.id.imageButtonSongPaneNext).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                serviceMain.playNext();
+                playNext();
             }
         });
         findViewById(R.id.imageButtonSongPanePlayPause).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                serviceMain.pauseOrPlay();
+                pauseOrPlay();
             }
         });
         findViewById(R.id.imageButtonSongPanePrev).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                serviceMain.playPrevious();
+                playPrevious();
             }
         });
         findViewById(R.id.textViewSongPaneSongName).setOnClickListener(new View.OnClickListener() {
@@ -458,20 +481,21 @@ public class ActivityMain extends AppCompatActivity {
             public void run() {
                 if (imageButtonPlayPause != null) {
                     if (serviceMain.isPlaying()) {
-                        imageButtonPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.pause_black_24dp));
-                    } else {
                         imageButtonPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.play_arrow_black_24dp));
+                    } else {
+                        imageButtonPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.pause_black_24dp));
                     }
                 }
                 if (imageButtonSongPanePlayPause != null) {
                     if (serviceMain.isPlaying()) {
-                        imageButtonSongPanePlayPause.setImageDrawable(getResources().getDrawable(R.drawable.pause_black_24dp));
-                    } else {
                         imageButtonSongPanePlayPause.setImageDrawable(getResources().getDrawable(R.drawable.play_arrow_black_24dp));
+                    } else {
+                        imageButtonSongPanePlayPause.setImageDrawable(getResources().getDrawable(R.drawable.pause_black_24dp));
                     }
                 }
             }
         });
+        serviceMain.pauseOrPlay();
     }
 
     @Override

@@ -145,6 +145,7 @@ public class FragmentSong extends Fragment {
         buttonPause.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
                 activityMain.pauseOrPlay();
             }
         });

@@ -97,6 +97,10 @@ public class ServiceMain extends Service {
             scheduledExecutorService.shutdown();
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
             addToQueueAndPlay(currentPlaylist.getProbFun().fun(random));
+            Intent intent = new Intent();
+            intent.addCategory(Intent.CATEGORY_DEFAULT);
+            intent.setAction("Complete");
+            sendBroadcast(intent);
         }
     };
 
@@ -114,12 +118,7 @@ public class ServiceMain extends Service {
 
         @Override
         public void handleMessage(Message msg) {
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                // Restore interrupt status.
-                Thread.currentThread().interrupt();
-            }
+
         }
     }
 
