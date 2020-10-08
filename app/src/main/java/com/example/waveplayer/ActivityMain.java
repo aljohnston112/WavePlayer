@@ -107,17 +107,17 @@ public class ActivityMain extends AppCompatActivity {
         super.onDestroy();
         this.unregisterReceiver(broadcastReceiverOnCompletion);
         getApplicationContext().unbindService(connection);
-        serviceMain.destroy();
+        //serviceMain.destroy();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        getApplicationContext().bindService(intentServiceMain, connection, BIND_AUTO_CREATE);
     }
 
     @Override
     protected void onStart() {
+        getApplicationContext().bindService(intentServiceMain, connection, BIND_AUTO_CREATE | BIND_IMPORTANT);
         super.onStart();
     }
 
@@ -479,25 +479,25 @@ public class ActivityMain extends AppCompatActivity {
             public void run() {
                 updateSongUI();
                 updateSongPaneUI();
-                if(serviceMain!=null) {
                     serviceMain.updateNotification();
-                }
             }
         });
     }
 
     public void playPrevious() {
         serviceMain.playPrevious();
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                updateSongUI();
-                updateSongPaneUI();
-                if(serviceMain!=null) {
-                    serviceMain.updateNotification();
+        if(serviceMain.currentSong != null) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    updateSongUI();
+                    updateSongPaneUI();
+                    if (serviceMain != null) {
+                        serviceMain.updateNotification();
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     public void pauseOrPlay() {
@@ -522,7 +522,9 @@ public class ActivityMain extends AppCompatActivity {
                 }
             }
         });
-        serviceMain.pauseOrPlay();
+        if(serviceMain.currentSong != null) {
+            serviceMain.pauseOrPlay();
+        }
     }
 
     @Override

@@ -25,6 +25,8 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.os.Process;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -50,6 +52,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -166,7 +169,7 @@ public class ServiceMain extends Service {
         builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.music_note_black_48dp)
                 .setContentTitle("Pinky Player")
-                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
                 .setCustomContentView(remoteViewNotificationLayout)
@@ -191,7 +194,8 @@ public class ServiceMain extends Service {
 
         Intent intentPrev = new Intent("Previous");
         intentPrev.addCategory(Intent.CATEGORY_DEFAULT);
-        PendingIntent pendingIntentPrev = PendingIntent.getBroadcast(this, 0, intentPrev, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntentPrev = PendingIntent.getBroadcast(
+                this, 0, intentPrev, PendingIntent.FLAG_UPDATE_CURRENT);
         remoteViewNotificationLayout.setOnClickPendingIntent(R.id.imageButtonNotificationSongPanePrev, pendingIntentPrev);
         /*
         if (currentSong != null) {
@@ -202,7 +206,7 @@ public class ServiceMain extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence channelName = "PinkyPlayer";
             String description = "Intelligent music player";
-            int importance = NotificationManager.IMPORTANCE_HIGH;
+            int importance = NotificationManager.IMPORTANCE_LOW;
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, channelName, importance);
             channel.setDescription(description);
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
@@ -220,6 +224,35 @@ public class ServiceMain extends Service {
         } else{
             remoteViewNotificationLayout.setTextViewText(R.id.textViewNotificationSongPaneSongName, "PinkyPlayer");
         }
+
+
+
+        try {
+            Field field = remoteViewNotificationLayout.getClass().getDeclaredField("mActions");
+            field.setAccessible(true);
+            ArrayList<Parcelable> actions = (ArrayList<Parcelable>) field.get(remoteViewNotificationLayout);
+            for (Parcelable p : actions) {
+                Parcel parcel = Parcel.obtain();
+                p.writeToParcel(parcel, 0);
+                parcel.setDataPosition(0);
+                int tag = parcel.readInt();
+                if (tag != 2) continue;
+                // View ID
+                parcel.readInt();
+                String methodName = parcel.readString();
+                if (methodName == null) continue;
+
+                    // Save strings
+                else if (methodName.equals("setMinimumHeight")) {
+                    parcel.readInt();
+                    int height = parcel.readInt();
+                }
+                parcel.recycle();
+            }
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+
 
         View view = remoteViewNotificationLayout.apply(this, null);
         /*
@@ -509,7 +542,9 @@ public class ServiceMain extends Service {
 
     void playNext() {
         Log.v(TAG, "playNext");
-        currentPlaylist.getProbFun().bad(getCurrentSong(), PERCENT_CHANGE);
+        if(currentSong != null) {
+            currentPlaylist.getProbFun().bad(getCurrentSong(), PERCENT_CHANGE);
+        }
         stopAndPreparePrevious();
         if (songQueueIterator.hasNext()) {
             MediaPlayerWURI mediaPlayerWURI = songsMap.get(songQueueIterator.next());

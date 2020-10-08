@@ -44,11 +44,11 @@ public class FragmentSong extends Fragment {
         if (activityMain != null) {
             activityMain.setActionBarTitle(getResources().getString(R.string.now_playing));
             activityMain.showFab(false);
-            activityMain.updateSongUI();
             if(activityMain.serviceMain!=null) {
+                activityMain.updateSongUI();
                 activityMain.serviceMain.updateNotification();
+                setUpButtons(view);
             }
-            setUpButtons(view);
         }
     }
 

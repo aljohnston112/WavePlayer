@@ -17,34 +17,38 @@ public class BroadcastReceiverNotification extends BroadcastReceiver {
             if (action != null && activityMain != null) {
                 switch (action) {
                     case "Next":
-                        activityMain.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                activityMain.playNext();
-                                activityMain.updateSongPaneUI();
-                                activityMain.updateSongUI();
-                            }
-                        });
+                            activityMain.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    activityMain.playNext();
+                                    activityMain.updateSongPaneUI();
+                                    activityMain.updateSongUI();
+                                }
+                            });
                         break;
                     case "PlayPause":
-                        activityMain.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                activityMain.pauseOrPlay();
-                                activityMain.updateSongPaneUI();
-                                activityMain.updateSongUI();
-                            }
-                        });
+                        if(activityMain.serviceMain.currentSong != null) {
+                            activityMain.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    activityMain.pauseOrPlay();
+                                    activityMain.updateSongPaneUI();
+                                    activityMain.updateSongUI();
+                                }
+                            });
+                        }
                         break;
                     case "Previous":
-                        activityMain.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                activityMain.playPrevious();
-                                activityMain.updateSongPaneUI();
-                                activityMain.updateSongUI();
-                            }
-                        });
+                        if(activityMain.serviceMain.currentSong != null) {
+                            activityMain.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    activityMain.playPrevious();
+                                    activityMain.updateSongPaneUI();
+                                    activityMain.updateSongUI();
+                                }
+                            });
+                        }
                 }
             }
     }
