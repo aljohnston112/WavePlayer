@@ -45,6 +45,9 @@ public class FragmentSong extends Fragment {
             activityMain.setActionBarTitle(getResources().getString(R.string.now_playing));
             activityMain.showFab(false);
             activityMain.updateSongUI();
+            if(activityMain.serviceMain!=null) {
+                activityMain.serviceMain.updateNotification();
+            }
             setUpButtons(view);
         }
     }

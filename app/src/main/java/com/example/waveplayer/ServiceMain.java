@@ -1,5 +1,6 @@
 package com.example.waveplayer;
 
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -7,9 +8,12 @@ import android.app.Service;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.ThumbnailUtils;
@@ -25,6 +29,10 @@ import android.os.Process;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Size;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
@@ -110,6 +118,14 @@ public class ServiceMain extends Service {
 
     private final IBinder serviceMainBinder = new ServiceMainBinder();
 
+    private RemoteViews remoteViewNotificationLayout;
+
+    NotificationCompat.Builder builder;
+
+    Notification notification;
+
+    String CHANNEL_ID = "PinkyPlayer";
+
     private final class ServiceMainHandler extends Handler {
 
         public ServiceMainHandler(Looper looper) {
@@ -143,20 +159,40 @@ public class ServiceMain extends Service {
         Message msg = serviceMainHandler.obtainMessage();
         msg.arg1 = startId;
         serviceMainHandler.sendMessage(msg);
-
+        remoteViewNotificationLayout = new RemoteViews(getPackageName(), R.layout.notification_song_pane);
         Intent notificationIntent = new Intent(this, ServiceMain.class);
         PendingIntent pendingIntent =
                 PendingIntent.getActivity(this, 0, notificationIntent, 0);
-        String CHANNEL_ID = "PinkyPlayer";
-        RemoteViews notificationLayout = new RemoteViews(getPackageName(), R.layout.notification_song_pane);
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+        builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.music_note_black_48dp)
                 .setContentTitle("Pinky Player")
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
-                .setCustomContentView(notificationLayout)
+                .setCustomContentView(remoteViewNotificationLayout)
                 .setContentIntent(pendingIntent);
+        if(currentSong != null) {
+            remoteViewNotificationLayout.setTextViewText(R.id.textViewNotificationSongPaneSongName, currentSong.title);
+        } else{
+            remoteViewNotificationLayout.setTextViewText(R.id.textViewNotificationSongPaneSongName, "PinkyPlayer");
+        }
+        View view = remoteViewNotificationLayout.apply(this, null);
+        remoteViewNotificationLayout.reapply(this, view);
+
+        Intent intentNext = new Intent("Next");
+        intentNext.addCategory(Intent.CATEGORY_DEFAULT);
+        PendingIntent pendingIntentNext = PendingIntent.getBroadcast(this, 0, intentNext, PendingIntent.FLAG_UPDATE_CURRENT);
+        remoteViewNotificationLayout.setOnClickPendingIntent(R.id.imageButtonNotificationSongPaneNext, pendingIntentNext);
+
+        Intent intentPlayPause = new Intent("PlayPause");
+        intentPlayPause.addCategory(Intent.CATEGORY_DEFAULT);
+        PendingIntent pendingIntentPlayPause = PendingIntent.getBroadcast(this, 0, intentPlayPause, PendingIntent.FLAG_UPDATE_CURRENT);
+        remoteViewNotificationLayout.setOnClickPendingIntent(R.id.imageButtonNotificationSongPanePlayPause, pendingIntentPlayPause);
+
+        Intent intentPrev = new Intent("Previous");
+        intentPrev.addCategory(Intent.CATEGORY_DEFAULT);
+        PendingIntent pendingIntentPrev = PendingIntent.getBroadcast(this, 0, intentPrev, PendingIntent.FLAG_UPDATE_CURRENT);
+        remoteViewNotificationLayout.setOnClickPendingIntent(R.id.imageButtonNotificationSongPanePrev, pendingIntentPrev);
         /*
         if (currentSong != null) {
             builder.setStyle(new NotificationCompat.BigTextStyle()
@@ -172,8 +208,44 @@ public class ServiceMain extends Service {
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
-        startForeground(CHANNEL_ID.hashCode(), builder.build());
+
+        notification = builder.build();
+        startForeground(CHANNEL_ID.hashCode(), notification);
         return START_STICKY;
+    }
+
+    public void updateNotification(){
+        if(currentSong != null) {
+            remoteViewNotificationLayout.setTextViewText(R.id.textViewNotificationSongPaneSongName, currentSong.title);
+        } else{
+            remoteViewNotificationLayout.setTextViewText(R.id.textViewNotificationSongPaneSongName, "PinkyPlayer");
+        }
+
+        View view = remoteViewNotificationLayout.apply(this, null);
+        /*
+        LayoutInflater layoutInflater = (LayoutInflater) getSystemService( Context.LAYOUT_INFLATER_SERVICE );
+        view = layoutInflater.inflate(R.layout.notification_song_pane, (ViewGroup) view.getRootView());
+        ImageView imageView = view.findViewById(R.id.imageButtonNotificationSongPaneNext);
+        int height = imageView.getMeasuredHeight();
+        //noinspection SuspiciousNameCombination
+        int width = height;
+        Drawable drawable = getResources().getDrawable(R.drawable.skip_next_black_24dp);
+        drawable.setBounds(0, 0, width, height);
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.draw(canvas);
+        Bitmap bitmapResized = FragmentSongPane.getResizedBitmap(bitmap, width, height);
+        bitmap.recycle();
+        // imageView.setImageBitmap(bitmapResized);
+        remoteViewNotificationLayout.setBitmap(R.id.imageButtonNotificationSongPaneNext, "setImageBitmap", bitmapResized);
+        view = remoteViewNotificationLayout.apply(this, null);
+
+         */
+        remoteViewNotificationLayout.reapply(this, view);
+        builder.setContent(remoteViewNotificationLayout);
+
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(CHANNEL_ID.hashCode(), builder.build());
     }
 
     public class ServiceMainBinder extends Binder {
@@ -192,6 +264,14 @@ public class ServiceMain extends Service {
     public void onDestroy() {
         saveFile();
         Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
+    }
+
+    public void destroy(){
+        if(isPlaying) {
+            pauseOrPlay();
+        }
+        releaseMediaPlayers();
+        stopSelf();
     }
 
 

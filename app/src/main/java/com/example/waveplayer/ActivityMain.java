@@ -80,16 +80,34 @@ public class ActivityMain extends AppCompatActivity {
             startService(intentServiceMain);
         }
         broadcastReceiverOnCompletion = new BroadcastReceiverOnCompletion(this);
-        IntentFilter filter = new IntentFilter();
-        filter.addCategory(Intent.CATEGORY_DEFAULT);
-        filter.addAction("Complete");
-        registerReceiver(broadcastReceiverOnCompletion, filter);
+        IntentFilter filterComplete = new IntentFilter();
+        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
+        filterComplete.addAction("Complete");
+        registerReceiver(broadcastReceiverOnCompletion, filterComplete);
+
+        IntentFilter filterNext = new IntentFilter();
+        filterNext.addAction("Next");
+        filterNext.addCategory(Intent.CATEGORY_DEFAULT);
+        BroadcastReceiverNotification actionBroadcastReceiver = new BroadcastReceiverNotification(this);
+        registerReceiver(actionBroadcastReceiver, filterNext);
+
+        IntentFilter filterPrev = new IntentFilter();
+        filterPrev.addAction("Previous");
+        filterPrev.addCategory(Intent.CATEGORY_DEFAULT);
+        registerReceiver(actionBroadcastReceiver, filterPrev);
+
+        IntentFilter filterPlayPause = new IntentFilter();
+        filterPlayPause.addAction("PlayPause");
+        filterPlayPause.addCategory(Intent.CATEGORY_DEFAULT);
+        registerReceiver(actionBroadcastReceiver, filterPlayPause);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         this.unregisterReceiver(broadcastReceiverOnCompletion);
+        getApplicationContext().unbindService(connection);
+        serviceMain.destroy();
     }
 
     @Override
@@ -447,6 +465,9 @@ public class ActivityMain extends AppCompatActivity {
             public void run() {
                 updateSongUI();
                 updateSongPaneUI();
+                if(serviceMain!=null) {
+                    serviceMain.updateNotification();
+                }
             }
         });
     }
@@ -458,6 +479,9 @@ public class ActivityMain extends AppCompatActivity {
             public void run() {
                 updateSongUI();
                 updateSongPaneUI();
+                if(serviceMain!=null) {
+                    serviceMain.updateNotification();
+                }
             }
         });
     }
@@ -469,6 +493,9 @@ public class ActivityMain extends AppCompatActivity {
             public void run() {
                 updateSongUI();
                 updateSongPaneUI();
+                if(serviceMain!=null) {
+                    serviceMain.updateNotification();
+                }
             }
         });
     }
