@@ -33,7 +33,6 @@ public class FragmentTitle extends Fragment {
         activityMain = ((ActivityMain) getActivity());
         updateMainContent();
         setUpButtons(view);
-
     }
 
     private void updateMainContent() {

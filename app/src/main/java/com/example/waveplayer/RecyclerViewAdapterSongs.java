@@ -71,7 +71,7 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                                 activityMain.serviceMain.currentPlaylist = activityMain.serviceMain.masterPlaylist;
                                 action = FragmentSongsDirections.actionFragmentSongsToFragmentSong();
                             } else if (fragment instanceof FragmentPlaylist) {
-                                activityMain.serviceMain.currentPlaylist = activityMain.userPickedPlaylist;
+                                activityMain.serviceMain.currentPlaylist = activityMain.serviceMain.userPickedPlaylist;
                                 action = FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong();
                             }
                         }

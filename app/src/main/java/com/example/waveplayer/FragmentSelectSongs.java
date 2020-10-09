@@ -1,6 +1,9 @@
 package com.example.waveplayer;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,17 +34,32 @@ public class FragmentSelectSongs extends Fragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         activityMain = ((ActivityMain) getActivity());
         setupFAB();
         activityMain.setActionBarTitle(getResources().getString(R.string.select_songs));
         InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(Activity.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-        RecyclerView recyclerViewSongList = activityMain.findViewById(R.id.recycler_view_song_list);
+        if(activityMain.serviceMain != null) {
+            setUpRecyclerView(view);
+        }
+        IntentFilter filterComplete = new IntentFilter();
+        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
+        filterComplete.addAction("ServiceConnected");
+        activityMain.registerReceiver(new BroadcastReceiverOnServiceConnected() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                setUpRecyclerView(view);
+            }
+        }, filterComplete);
+    }
+
+    private void setUpRecyclerView(View view) {
+        RecyclerView recyclerViewSongList = view.findViewById(R.id.recycler_view_song_list);
         recyclerViewSongList.setLayoutManager(new LinearLayoutManager(recyclerViewSongList.getContext()));
         RecyclerViewAdapterSelectSongs recyclerViewAdapterSelectSongs = new RecyclerViewAdapterSelectSongs(
-                this, activityMain.serviceMain.songs, activityMain.userPickedSongs);
+                this, activityMain.serviceMain.songs, activityMain.serviceMain.userPickedSongs);
         recyclerViewSongList.setAdapter(recyclerViewAdapterSelectSongs);
     }
 
@@ -51,14 +69,14 @@ public class FragmentSelectSongs extends Fragment {
         activityMain.setFabOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                activityMain.userPickedSongs.clear();
+                activityMain.serviceMain.userPickedSongs.clear();
                 int nAllSongs = activityMain.serviceMain.songs.size();
                 for(int i = 0; i < nAllSongs; i++) {
                     if (activityMain.serviceMain.songs.get(i).isSelected()){
-                        activityMain.userPickedSongs.add(activityMain.serviceMain.songs.get(i));
+                        activityMain.serviceMain.userPickedSongs.add(activityMain.serviceMain.songs.get(i));
                         activityMain.serviceMain.songs.get(i).setSelected(false);
                     } else{
-                        activityMain.userPickedSongs.remove(activityMain.serviceMain.songs.get(i));
+                        activityMain.serviceMain.userPickedSongs.remove(activityMain.serviceMain.songs.get(i));
                     }
                 }
                 NavController navController = NavHostFragment.findNavController(FragmentSelectSongs.this);

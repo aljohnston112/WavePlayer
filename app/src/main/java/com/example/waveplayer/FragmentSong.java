@@ -2,6 +2,8 @@ package com.example.waveplayer;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.os.Build;
@@ -24,7 +26,7 @@ public class FragmentSong extends Fragment {
 
     ActivityMain activityMain;
 
-    SeekBar seekBar;
+    View view;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -40,6 +42,7 @@ public class FragmentSong extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        this.view = view;
         activityMain = ((ActivityMain) getActivity());
         if (activityMain != null) {
             activityMain.setActionBarTitle(getResources().getString(R.string.now_playing));
@@ -50,17 +53,32 @@ public class FragmentSong extends Fragment {
                 setUpButtons(view);
             }
         }
+        IntentFilter filterComplete = new IntentFilter();
+        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
+        filterComplete.addAction("ServiceConnected");
+        activityMain.registerReceiver(new BroadcastReceiverOnServiceConnected() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                notifyServiceConnected();
+            }
+        }, filterComplete);
+    }
+
+    public void notifyServiceConnected(){
+        activityMain.updateSongUI();
+        activityMain.serviceMain.updateNotification();
+        setUpButtons(view);
     }
 
     @SuppressLint("ClickableViewAccessibility")
     private void setUpButtons(View view) {
-        final ImageButton buttonBad = activityMain.findViewById(R.id.button_thumb_down);
-        final ImageButton buttonGood = activityMain.findViewById(R.id.button_thumb_up);
-        final ImageButton buttonShuffle = activityMain.findViewById(R.id.imageButtonShuffle);
-        final  ImageButton buttonPrev = activityMain.findViewById(R.id.imageButtonPrev);
-        final ImageButton buttonPause = activityMain.findViewById(R.id.imageButtonPlayPause);
-        final ImageButton buttonNext = activityMain.findViewById(R.id.imageButtonNext);
-        final  ImageButton buttonLoop = activityMain.findViewById(R.id.imageButtonRepeat);
+        final ImageButton buttonBad = view.findViewById(R.id.button_thumb_down);
+        final ImageButton buttonGood = view.findViewById(R.id.button_thumb_up);
+        final ImageButton buttonShuffle = view.findViewById(R.id.imageButtonShuffle);
+        final  ImageButton buttonPrev = view.findViewById(R.id.imageButtonPrev);
+        final ImageButton buttonPause = view.findViewById(R.id.imageButtonPlayPause);
+        final ImageButton buttonNext = view.findViewById(R.id.imageButtonNext);
+        final  ImageButton buttonLoop = view.findViewById(R.id.imageButtonRepeat);
 
         buttonBad.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -76,8 +94,11 @@ public class FragmentSong extends Fragment {
                 switch(motionEvent.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         buttonBad.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
+                        return true;
                     case MotionEvent.ACTION_UP:
                         buttonBad.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                        buttonBad.performClick();
+                        return true;
                 }
                 return false;
             }
@@ -98,8 +119,11 @@ public class FragmentSong extends Fragment {
                 switch(motionEvent.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         buttonGood.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
+                        return true;
                     case MotionEvent.ACTION_UP:
                         buttonGood.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                        buttonGood.performClick();
+                        return true;
                 }
                 return false;
             }
@@ -118,8 +142,11 @@ public class FragmentSong extends Fragment {
                 switch(motionEvent.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         buttonShuffle.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
+                        return true;
                     case MotionEvent.ACTION_UP:
                         buttonShuffle.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                        buttonShuffle.performClick();
+                        return true;
                 }
                 return false;
             }
@@ -138,8 +165,11 @@ public class FragmentSong extends Fragment {
                 switch(motionEvent.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         buttonPrev.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
+                        return true;
                     case MotionEvent.ACTION_UP:
                         buttonPrev.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                        buttonPrev.performClick();
+                        return true;
                 }
                 return false;
             }
@@ -159,8 +189,11 @@ public class FragmentSong extends Fragment {
                 switch(motionEvent.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         buttonPause.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
+                        return true;
                     case MotionEvent.ACTION_UP:
                         buttonPause.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                        buttonPause.performClick();
+                        return true;
                 }
                 return false;
             }
@@ -179,8 +212,11 @@ public class FragmentSong extends Fragment {
                 switch(motionEvent.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         buttonNext.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
+                        return true;
                     case MotionEvent.ACTION_UP:
                         buttonNext.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                        buttonNext.performClick();
+                        return true;
                 }
                 return false;
             }
@@ -199,8 +235,11 @@ public class FragmentSong extends Fragment {
                 switch(motionEvent.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         buttonLoop.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
+                        return true;
                     case MotionEvent.ACTION_UP:
                         buttonLoop.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                        buttonLoop.performClick();
+                        return true;
                 }
                 return false;
             }

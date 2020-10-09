@@ -1,5 +1,8 @@
 package com.example.waveplayer;
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -42,21 +45,36 @@ public class FragmentPlaylist extends Fragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         // TODO
         activityMain = ((ActivityMain) getActivity());
         if(activityMain != null) {
             updateFAB();
-            activityMain.setActionBarTitle(activityMain.userPickedPlaylist.getName());
-            recyclerViewSongList = activityMain.findViewById(R.id.recycler_view_song_list);
-            recyclerViewSongList.setLayoutManager(new LinearLayoutManager(recyclerViewSongList.getContext()));
-            recyclerViewAdapterSongsList = new RecyclerViewAdapterSongs(this, new ArrayList<>(
-                    activityMain.userPickedPlaylist.getProbFun().getProbMap().keySet()));
-            recyclerViewSongList.setAdapter(recyclerViewAdapterSongsList);
-            ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new SongItemTouchListener());
-            itemTouchHelper.attachToRecyclerView(recyclerViewSongList);
+            if(activityMain.serviceMain != null) {
+                setUpUI(view);
+            }
         }
+        IntentFilter filterComplete = new IntentFilter();
+        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
+        filterComplete.addAction("ServiceConnected");
+        activityMain.registerReceiver(new BroadcastReceiverOnServiceConnected() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                setUpUI(view);
+            }
+        }, filterComplete);
+    }
+
+    private void setUpUI(View view) {
+        activityMain.setActionBarTitle(activityMain.serviceMain.userPickedPlaylist.getName());
+        recyclerViewSongList = view.findViewById(R.id.recycler_view_song_list);
+        recyclerViewSongList.setLayoutManager(new LinearLayoutManager(recyclerViewSongList.getContext()));
+        recyclerViewAdapterSongsList = new RecyclerViewAdapterSongs(this, new ArrayList<>(
+                activityMain.serviceMain.userPickedPlaylist.getProbFun().getProbMap().keySet()));
+        recyclerViewSongList.setAdapter(recyclerViewAdapterSongsList);
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new SongItemTouchListener());
+        itemTouchHelper.attachToRecyclerView(recyclerViewSongList);
     }
 
     private void updateFAB() {
@@ -66,7 +84,7 @@ public class FragmentPlaylist extends Fragment {
             @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
             public void onClick(View view) {
-                activityMain.userPickedSongs.clear();
+                activityMain.serviceMain.userPickedSongs.clear();
                 NavHostFragment.findNavController(FragmentPlaylist.this)
                         .navigate(FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSelectSongs());
             }
@@ -86,14 +104,14 @@ public class FragmentPlaylist extends Fragment {
         public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
             Collections.swap(recyclerViewAdapterSongsList.audioURIS, viewHolder.getAdapterPosition(), target.getAdapterPosition());
             ArrayList<AudioURI> keySetList = new ArrayList<>();
-            LinkedHashMap<AudioURI, Double> oldMap = activityMain.userPickedPlaylist.getProbFun().getProbMap();
+            LinkedHashMap<AudioURI, Double> oldMap = activityMain.serviceMain.userPickedPlaylist.getProbFun().getProbMap();
             keySetList.addAll(oldMap.keySet());
             Collections.swap(keySetList, viewHolder.getAdapterPosition(), target.getAdapterPosition());
             LinkedHashMap<AudioURI, Double> swappedMap = new LinkedHashMap<>();
             for(AudioURI oldSwappedKey:keySetList) {
                 swappedMap.put(oldSwappedKey, oldMap.get(oldSwappedKey));
             }
-            activityMain.userPickedPlaylist.getProbFun().setProbMap(swappedMap);
+            activityMain.serviceMain.userPickedPlaylist.getProbFun().setProbMap(swappedMap);
             recyclerViewAdapterSongsList.notifyItemMoved(viewHolder.getAdapterPosition(), target.getAdapterPosition());
             return true;
         }
@@ -101,7 +119,7 @@ public class FragmentPlaylist extends Fragment {
         @Override
         public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
             int position = viewHolder.getAdapterPosition();
-            activityMain.userPickedPlaylist.getProbFun().remove(
+            activityMain.serviceMain.userPickedPlaylist.getProbFun().remove(
                     recyclerViewAdapterSongsList.audioURIS.get(position));
             recyclerViewAdapterSongsList.audioURIS.remove(position);
             recyclerViewAdapterSongsList.notifyItemRemoved(position);

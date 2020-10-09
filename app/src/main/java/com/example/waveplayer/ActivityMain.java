@@ -1,9 +1,7 @@
 package com.example.waveplayer;
 
 import android.Manifest;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -16,7 +14,6 @@ import android.media.MediaMetadataRetriever;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.Parcelable;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -44,7 +41,6 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
-import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -54,9 +50,6 @@ public class ActivityMain extends AppCompatActivity {
 
     private static final int REQUEST_PERMISSION = 245083964;
 
-    // TODO make fragments communicate
-    final ArrayList<AudioURI> userPickedSongs = new ArrayList<>();
-    RandomPlaylist userPickedPlaylist;
     //--------------------------------
 
     ServiceMain serviceMain;
@@ -64,21 +57,22 @@ public class ActivityMain extends AppCompatActivity {
 
     // region onCreate
 
-    Intent intentServiceMain;
-
     BroadcastReceiverOnCompletion broadcastReceiverOnCompletion;
+
+    Fragment startFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setUpActionBar();
-        intentServiceMain = new Intent(ActivityMain.this, ServiceMain.class);
+        Intent intentServiceMain = new Intent(ActivityMain.this, ServiceMain.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(intentServiceMain);
         } else {
             startService(intentServiceMain);
         }
+        getApplicationContext().bindService(intentServiceMain, connection, BIND_AUTO_CREATE | BIND_IMPORTANT);
         broadcastReceiverOnCompletion = new BroadcastReceiverOnCompletion(this);
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
@@ -103,11 +97,16 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        serviceMain.saveFile();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         this.unregisterReceiver(broadcastReceiverOnCompletion);
         getApplicationContext().unbindService(connection);
-        //serviceMain.destroy();
     }
 
     @Override
@@ -117,7 +116,6 @@ public class ActivityMain extends AppCompatActivity {
 
     @Override
     protected void onStart() {
-        getApplicationContext().bindService(intentServiceMain, connection, BIND_AUTO_CREATE | BIND_IMPORTANT);
         super.onStart();
     }
 
@@ -128,8 +126,19 @@ public class ActivityMain extends AppCompatActivity {
             ServiceMain.ServiceMainBinder binder = (ServiceMain.ServiceMainBinder) service;
             serviceMain = binder.getService();
             serviceMainBound = true;
-            getExternalStoragePermissionAndFetchMediaFiles();
+            if(!serviceMain.filesFetched) {
+                getExternalStoragePermissionAndFetchMediaFiles();
+                serviceMain.filesFetched = true;
+            }
             createUI();
+            if (serviceMain.currentSong != null) {
+                updateSongUI();
+                updateSongPaneUI();
+            }
+            Intent intent = new Intent();
+            intent.addCategory(Intent.CATEGORY_DEFAULT);
+            intent.setAction("ServiceConnected");
+            sendBroadcast(intent);
         }
 
         @Override
@@ -438,6 +447,11 @@ public class ActivityMain extends AppCompatActivity {
         }
         ImageView imageViewSongPaneSongArt = findViewById(R.id.imageViewSongPaneSongArt);
         int songArtHeight = imageViewSongPaneSongArt.getMeasuredHeight();
+        if(songArtHeight != 0){
+            serviceMain.songPaneArtHeight = songArtHeight;
+        } else{
+            songArtHeight = serviceMain.songPaneArtHeight;
+        }
         @SuppressWarnings("SuspiciousNameCombination") int songArtWidth = songArtHeight;
         Bitmap bitmapSongArt = serviceMain.currentSong.thumbnail;
         if (bitmapSongArt != null) {
@@ -445,6 +459,11 @@ public class ActivityMain extends AppCompatActivity {
             imageViewSongPaneSongArt.setImageBitmap(bitmapSongArtResized);
         } else {
             songArtHeight = imageViewSongPaneSongArt.getMeasuredHeight();
+            if(songArtHeight != 0){
+                serviceMain.songPaneArtHeight = songArtHeight;
+            } else{
+                songArtHeight = serviceMain.songPaneArtHeight;
+            }
             //noinspection SuspiciousNameCombination
             songArtWidth = songArtHeight;
             Drawable drawableSongArt = getResources().getDrawable(R.drawable.music_note_black_48dp);
@@ -465,7 +484,7 @@ public class ActivityMain extends AppCompatActivity {
             public void run() {
                 updateSongUI();
                 updateSongPaneUI();
-                if(serviceMain!=null) {
+                if (serviceMain != null) {
                     serviceMain.updateNotification();
                 }
             }
@@ -479,14 +498,14 @@ public class ActivityMain extends AppCompatActivity {
             public void run() {
                 updateSongUI();
                 updateSongPaneUI();
-                    serviceMain.updateNotification();
+                serviceMain.updateNotification();
             }
         });
     }
 
     public void playPrevious() {
         serviceMain.playPrevious();
-        if(serviceMain.currentSong != null) {
+        if (serviceMain.currentSong != null) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -522,7 +541,7 @@ public class ActivityMain extends AppCompatActivity {
                 }
             }
         });
-        if(serviceMain.currentSong != null) {
+        if (serviceMain.currentSong != null) {
             serviceMain.pauseOrPlay();
         }
     }
@@ -537,7 +556,7 @@ public class ActivityMain extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_reset_probs:
-                userPickedPlaylist.getProbFun().clearProbs();
+                serviceMain.userPickedPlaylist.getProbFun().clearProbs();
                 return true;
         }
         return super.onOptionsItemSelected(item);

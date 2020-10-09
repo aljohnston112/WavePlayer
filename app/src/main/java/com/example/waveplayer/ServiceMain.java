@@ -1,5 +1,6 @@
 package com.example.waveplayer;
 
+import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -9,6 +10,7 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -71,6 +73,10 @@ public class ServiceMain extends Service {
     private static final String MASTER_PLAYLIST_NAME = "MASTER_PLAYLIST_NAME";
     public static final Random random = new Random();
 
+    // TODO make fragments communicate
+    final ArrayList<AudioURI> userPickedSongs = new ArrayList<>();
+    RandomPlaylist userPickedPlaylist;
+
     // Settings
     // TODO UPDATE ALL PLAYLISTS WITH MAX_PERCENT
     static double MAX_PERCENT = 0.1;
@@ -129,6 +135,12 @@ public class ServiceMain extends Service {
 
     String CHANNEL_ID = "PinkyPlayer";
 
+    boolean serviceStarted = false;
+
+    boolean filesFetched = false;
+
+    int songPaneArtHeight;
+
     private final class ServiceMainHandler extends Handler {
 
         public ServiceMainHandler(Looper looper) {
@@ -156,65 +168,68 @@ public class ServiceMain extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
-        // For each start request, send a message to start a job and deliver the
-        // start ID so we know which request we're stopping when we finish the job
-        Message msg = serviceMainHandler.obtainMessage();
-        msg.arg1 = startId;
-        serviceMainHandler.sendMessage(msg);
-        remoteViewNotificationLayout = new RemoteViews(getPackageName(), R.layout.notification_song_pane);
-        Intent notificationIntent = new Intent(this, ServiceMain.class);
-        PendingIntent pendingIntent =
-                PendingIntent.getActivity(this, 0, notificationIntent, 0);
-        builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.music_note_black_48dp)
-                .setContentTitle("Pinky Player")
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
-                .setCustomContentView(remoteViewNotificationLayout)
-                .setContentIntent(pendingIntent);
-        if(currentSong != null) {
-            remoteViewNotificationLayout.setTextViewText(R.id.textViewNotificationSongPaneSongName, currentSong.title);
-        } else{
-            remoteViewNotificationLayout.setTextViewText(R.id.textViewNotificationSongPaneSongName, "PinkyPlayer");
-        }
-        View view = remoteViewNotificationLayout.apply(this, null);
-        remoteViewNotificationLayout.reapply(this, view);
+        if(!serviceStarted) {
+            Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
+            // For each start request, send a message to start a job and deliver the
+            // start ID so we know which request we're stopping when we finish the job
+            Message msg = serviceMainHandler.obtainMessage();
+            msg.arg1 = startId;
+            serviceMainHandler.sendMessage(msg);
+            remoteViewNotificationLayout = new RemoteViews(getPackageName(), R.layout.notification_song_pane);
+            Intent notificationIntent = new Intent(this, ServiceMain.class);
+            PendingIntent pendingIntent =
+                    PendingIntent.getActivity(this, 0, notificationIntent, 0);
+            builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                    .setSmallIcon(R.drawable.music_note_black_48dp)
+                    .setContentTitle("Pinky Player")
+                    .setPriority(NotificationCompat.PRIORITY_LOW)
+                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                    .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
+                    .setCustomContentView(remoteViewNotificationLayout)
+                    .setContentIntent(pendingIntent);
+            if (currentSong != null) {
+                remoteViewNotificationLayout.setTextViewText(R.id.textViewNotificationSongPaneSongName, currentSong.title);
+            } else {
+                remoteViewNotificationLayout.setTextViewText(R.id.textViewNotificationSongPaneSongName, "PinkyPlayer");
+            }
+            View view = remoteViewNotificationLayout.apply(this, null);
+            remoteViewNotificationLayout.reapply(this, view);
 
-        Intent intentNext = new Intent("Next");
-        intentNext.addCategory(Intent.CATEGORY_DEFAULT);
-        PendingIntent pendingIntentNext = PendingIntent.getBroadcast(this, 0, intentNext, PendingIntent.FLAG_UPDATE_CURRENT);
-        remoteViewNotificationLayout.setOnClickPendingIntent(R.id.imageButtonNotificationSongPaneNext, pendingIntentNext);
+            Intent intentNext = new Intent("Next");
+            intentNext.addCategory(Intent.CATEGORY_DEFAULT);
+            PendingIntent pendingIntentNext = PendingIntent.getBroadcast(this, 0, intentNext, PendingIntent.FLAG_UPDATE_CURRENT);
+            remoteViewNotificationLayout.setOnClickPendingIntent(R.id.imageButtonNotificationSongPaneNext, pendingIntentNext);
 
-        Intent intentPlayPause = new Intent("PlayPause");
-        intentPlayPause.addCategory(Intent.CATEGORY_DEFAULT);
-        PendingIntent pendingIntentPlayPause = PendingIntent.getBroadcast(this, 0, intentPlayPause, PendingIntent.FLAG_UPDATE_CURRENT);
-        remoteViewNotificationLayout.setOnClickPendingIntent(R.id.imageButtonNotificationSongPanePlayPause, pendingIntentPlayPause);
+            Intent intentPlayPause = new Intent("PlayPause");
+            intentPlayPause.addCategory(Intent.CATEGORY_DEFAULT);
+            PendingIntent pendingIntentPlayPause = PendingIntent.getBroadcast(this, 0, intentPlayPause, PendingIntent.FLAG_UPDATE_CURRENT);
+            remoteViewNotificationLayout.setOnClickPendingIntent(R.id.imageButtonNotificationSongPanePlayPause, pendingIntentPlayPause);
 
-        Intent intentPrev = new Intent("Previous");
-        intentPrev.addCategory(Intent.CATEGORY_DEFAULT);
-        PendingIntent pendingIntentPrev = PendingIntent.getBroadcast(
-                this, 0, intentPrev, PendingIntent.FLAG_UPDATE_CURRENT);
-        remoteViewNotificationLayout.setOnClickPendingIntent(R.id.imageButtonNotificationSongPanePrev, pendingIntentPrev);
+            Intent intentPrev = new Intent("Previous");
+            intentPrev.addCategory(Intent.CATEGORY_DEFAULT);
+            PendingIntent pendingIntentPrev = PendingIntent.getBroadcast(
+                    this, 0, intentPrev, PendingIntent.FLAG_UPDATE_CURRENT);
+            remoteViewNotificationLayout.setOnClickPendingIntent(R.id.imageButtonNotificationSongPanePrev, pendingIntentPrev);
         /*
         if (currentSong != null) {
             builder.setStyle(new NotificationCompat.BigTextStyle()
                     .bigText((currentSong.title)));
         }
          */
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence channelName = "PinkyPlayer";
-            String description = "Intelligent music player";
-            int importance = NotificationManager.IMPORTANCE_LOW;
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, channelName, importance);
-            channel.setDescription(description);
-            NotificationManager notificationManager = getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
-        }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                CharSequence channelName = "PinkyPlayer";
+                String description = "Intelligent music player";
+                int importance = NotificationManager.IMPORTANCE_LOW;
+                NotificationChannel channel = new NotificationChannel(CHANNEL_ID, channelName, importance);
+                channel.setDescription(description);
+                NotificationManager notificationManager = getSystemService(NotificationManager.class);
+                notificationManager.createNotificationChannel(channel);
+            }
 
-        notification = builder.build();
-        startForeground(CHANNEL_ID.hashCode(), notification);
+            notification = builder.build();
+            startForeground(CHANNEL_ID.hashCode(), notification);
+        }
+        serviceStarted = true;
         return START_STICKY;
     }
 
@@ -295,7 +310,6 @@ public class ServiceMain extends Service {
 
     @Override
     public void onDestroy() {
-        saveFile();
         Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
     }
 
@@ -430,7 +444,7 @@ public class ServiceMain extends Service {
 
 // region onStop
 
-    private void saveFile() {
+    void saveFile() {
         File file = new File(getBaseContext().getFilesDir(), FILE_SAVE);
         //noinspection ResultOfMethodCallIgnored
         file.delete();

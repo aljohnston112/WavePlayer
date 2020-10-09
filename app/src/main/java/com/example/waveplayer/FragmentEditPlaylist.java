@@ -1,6 +1,9 @@
 package com.example.waveplayer;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 
 import android.view.LayoutInflater;
@@ -37,11 +40,13 @@ public class FragmentEditPlaylist extends Fragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         activityMain = ((ActivityMain) getActivity());
         if (activityMain != null) {
-            updateFAB(view);
+            if(activityMain.serviceMain != null) {
+                updateFAB(view);
+            }
             activityMain.setActionBarTitle(getResources().getString(R.string.edit_playlist));
             view.findViewById(R.id.buttonEditSongs).setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -51,6 +56,15 @@ public class FragmentEditPlaylist extends Fragment {
                 }
             });
         }
+        IntentFilter filterComplete = new IntentFilter();
+        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
+        filterComplete.addAction("ServiceConnected");
+        activityMain.registerReceiver(new BroadcastReceiverOnServiceConnected() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                updateFAB(view);
+            }
+        }, filterComplete);
     }
 
     private void updateFAB(View view) {
@@ -58,12 +72,15 @@ public class FragmentEditPlaylist extends Fragment {
         activityMain.setFabImage(R.drawable.ic_check_black_24dp);
         final EditText finalEditTextPlaylistName = view.findViewById(R.id.editTextPlaylistName);
         ArrayList<AudioURI> playlistSongs = new ArrayList<>();
-        if (activityMain.userPickedPlaylist != null) {
-            if(activityMain.userPickedSongs.isEmpty()) {
-                activityMain.userPickedSongs.addAll(activityMain.userPickedPlaylist.getProbFun().getProbMap().keySet());
+        if (activityMain.serviceMain.userPickedPlaylist != null) {
+            if(activityMain.serviceMain.userPickedSongs.isEmpty()) {
+                activityMain.serviceMain.userPickedSongs.addAll(
+                        activityMain.serviceMain.userPickedPlaylist.getProbFun().getProbMap().keySet());
             }
-            playlistSongs  = new ArrayList<>(activityMain.userPickedPlaylist.getProbFun().getProbMap().keySet());
-            finalEditTextPlaylistName.setText(activityMain.userPickedPlaylist.getName());
+            playlistSongs  = new ArrayList<>(
+                    activityMain.serviceMain.userPickedPlaylist.getProbFun().getProbMap().keySet());
+            finalEditTextPlaylistName.setText(
+                    activityMain.serviceMain.userPickedPlaylist.getName());
         }
         final ArrayList<AudioURI> finalPlaylistSongs = playlistSongs;
         activityMain.setFabOnClickListener(new View.OnClickListener() {
@@ -71,33 +88,33 @@ public class FragmentEditPlaylist extends Fragment {
             public void onClick(View view) {
                 String playlistName = finalEditTextPlaylistName.getText().toString();
                 int playlistIndex = indexOfPlaylistWName(playlistName);
-                if (activityMain.userPickedSongs.size() == 0) {
+                if (activityMain.serviceMain.userPickedSongs.size() == 0) {
                     Toast toast = Toast.makeText(getContext(), R.string.not_enough_songs_for_playlist, Toast.LENGTH_LONG);
                     toast.show();
                 } else if (playlistName.length() == 0) {
                     Toast toast = Toast.makeText(getContext(), R.string.no_name_playlist, Toast.LENGTH_LONG);
                     toast.show();
-                } else if(playlistIndex != -1 && activityMain.userPickedPlaylist == null){
+                } else if(playlistIndex != -1 && activityMain.serviceMain.userPickedPlaylist == null){
                     Toast toast = Toast.makeText(getContext(), R.string.duplicate_name_playlist, Toast.LENGTH_LONG);
                     toast.show();
-                } else if (activityMain.userPickedPlaylist == null) {
+                } else if (activityMain.serviceMain.userPickedPlaylist == null) {
                     activityMain.serviceMain.playlists.add(new RandomPlaylist(
-                            activityMain.userPickedSongs,
+                            activityMain.serviceMain.userPickedSongs,
                             ServiceMain.MAX_PERCENT,
                             finalEditTextPlaylistName.getText().toString()));
-                    for (AudioURI audioURI : activityMain.userPickedSongs) {
+                    for (AudioURI audioURI : activityMain.serviceMain.userPickedSongs) {
                         audioURI.setSelected(false);
                     }
-                    activityMain.userPickedSongs.clear();
+                    activityMain.serviceMain.userPickedSongs.clear();
                     popBackStackAndHideKeyboard(view);
                 }  else{
                     for(AudioURI audioURI : finalPlaylistSongs) {
-                        if (!activityMain.userPickedSongs.contains(audioURI)){
-                            activityMain.userPickedPlaylist.getProbFun().remove(audioURI);
+                        if (!activityMain.serviceMain.userPickedSongs.contains(audioURI)){
+                            activityMain.serviceMain.userPickedPlaylist.getProbFun().remove(audioURI);
                         }
                     }
-                    for(AudioURI audioURI : activityMain.userPickedSongs){
-                        activityMain.userPickedPlaylist.getProbFun().add(audioURI);
+                    for(AudioURI audioURI : activityMain.serviceMain.userPickedSongs){
+                        activityMain.serviceMain.userPickedPlaylist.getProbFun().add(audioURI);
                         audioURI.setSelected(false);
                     }
                     popBackStackAndHideKeyboard(view);

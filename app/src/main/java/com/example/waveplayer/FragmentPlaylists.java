@@ -1,5 +1,8 @@
 package com.example.waveplayer;
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -41,13 +44,28 @@ public class FragmentPlaylists extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         activityMain = ((ActivityMain) getActivity());
-        updateMainContent();
+        updateMainContent(view);
     }
 
-    private void updateMainContent() {
+    private void updateMainContent(final View view) {
         updateFAB();
         activityMain.setActionBarTitle(getResources().getString(R.string.playlists));
-        recyclerView = activityMain.findViewById(R.id.recycler_view_playlist_list);
+        if(activityMain.serviceMain != null) {
+            setUpRecyclerView(view);
+        }
+        IntentFilter filterComplete = new IntentFilter();
+        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
+        filterComplete.addAction("ServiceConnected");
+        activityMain.registerReceiver(new BroadcastReceiverOnServiceConnected() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                setUpRecyclerView(view);
+            }
+        }, filterComplete);
+    }
+
+    private void setUpRecyclerView(View view) {
+        recyclerView = view.findViewById(R.id.recycler_view_playlist_list);
         recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
         recyclerViewAdapter = new RecyclerViewAdapterPlaylists(this, activityMain.serviceMain.playlists);
         recyclerView.setAdapter(recyclerViewAdapter);
@@ -62,8 +80,8 @@ public class FragmentPlaylists extends Fragment {
             @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
             public void onClick(View view) {
-                activityMain.userPickedPlaylist = null;
-                activityMain.userPickedSongs.clear();
+                activityMain.serviceMain.userPickedPlaylist = null;
+                activityMain.serviceMain.userPickedSongs.clear();
                 NavHostFragment.findNavController(FragmentPlaylists.this)
                         .navigate(FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentEditPlaylist());
             }
