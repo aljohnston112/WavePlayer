@@ -17,6 +17,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
@@ -61,6 +62,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -114,9 +116,10 @@ public class ServiceMain extends Service {
             scheduledExecutorService.shutdown();
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
             addToQueueAndPlay(currentPlaylist.getProbFun().fun(random));
+            updateNotification();
             Intent intent = new Intent();
             intent.addCategory(Intent.CATEGORY_DEFAULT);
-            intent.setAction("Complete");
+            intent.setAction(getResources().getString(R.string.broadcast_receiver_action_on_completion));
             sendBroadcast(intent);
         }
     };
@@ -137,9 +140,9 @@ public class ServiceMain extends Service {
 
     boolean serviceStarted = false;
 
-    boolean filesFetched = false;
-
     int songPaneArtHeight;
+
+    boolean loaded = false;
 
     private final class ServiceMainHandler extends Handler {
 
@@ -159,16 +162,17 @@ public class ServiceMain extends Service {
         HandlerThread thread = new HandlerThread("ServiceMainStartArguments",
                 Process.THREAD_PRIORITY_BACKGROUND);
         thread.start();
-        serviceMainLooper = thread.getLooper();
+        serviceMainLooper = Looper.getMainLooper();
         serviceMainHandler = new ServiceMainHandler(serviceMainLooper);
         //setUpCrashSaver();
         //logLastCrash();
         loadSave();
+        loaded = true;
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if(!serviceStarted) {
+        if (!serviceStarted) {
             Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
             // For each start request, send a message to start a job and deliver the
             // start ID so we know which request we're stopping when we finish the job
@@ -233,46 +237,17 @@ public class ServiceMain extends Service {
         return START_STICKY;
     }
 
-    public void updateNotification(){
-        if(currentSong != null) {
+    public void updateNotification() {
+        if (currentSong != null) {
             remoteViewNotificationLayout.setTextViewText(R.id.textViewNotificationSongPaneSongName, currentSong.title);
-        } else{
+        } else {
             remoteViewNotificationLayout.setTextViewText(R.id.textViewNotificationSongPaneSongName, "PinkyPlayer");
         }
-
-
-
-        try {
-            Field field = remoteViewNotificationLayout.getClass().getDeclaredField("mActions");
-            field.setAccessible(true);
-            ArrayList<Parcelable> actions = (ArrayList<Parcelable>) field.get(remoteViewNotificationLayout);
-            for (Parcelable p : actions) {
-                Parcel parcel = Parcel.obtain();
-                p.writeToParcel(parcel, 0);
-                parcel.setDataPosition(0);
-                int tag = parcel.readInt();
-                if (tag != 2) continue;
-                // View ID
-                parcel.readInt();
-                String methodName = parcel.readString();
-                if (methodName == null) continue;
-
-                    // Save strings
-                else if (methodName.equals("setMinimumHeight")) {
-                    parcel.readInt();
-                    int height = parcel.readInt();
-                }
-                parcel.recycle();
-            }
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            e.printStackTrace();
-        }
-
-
         View view = remoteViewNotificationLayout.apply(this, null);
+
         /*
-        LayoutInflater layoutInflater = (LayoutInflater) getSystemService( Context.LAYOUT_INFLATER_SERVICE );
-        view = layoutInflater.inflate(R.layout.notification_song_pane, (ViewGroup) view.getRootView());
+        view = remoteViewNotificationLayout.apply(
+                this, (ViewGroup) view.findViewById(remoteViewNotificationLayout.getLayoutId()));
         ImageView imageView = view.findViewById(R.id.imageButtonNotificationSongPaneNext);
         int height = imageView.getMeasuredHeight();
         //noinspection SuspiciousNameCombination
@@ -289,6 +264,8 @@ public class ServiceMain extends Service {
         view = remoteViewNotificationLayout.apply(this, null);
 
          */
+
+
         remoteViewNotificationLayout.reapply(this, view);
         builder.setContent(remoteViewNotificationLayout);
 
@@ -313,15 +290,19 @@ public class ServiceMain extends Service {
         Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
     }
 
-    public void destroy(){
-        if(isPlaying) {
+    public void destroy() {
+        if (isPlaying) {
             pauseOrPlay();
         }
         releaseMediaPlayers();
         stopSelf();
     }
 
-
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        super.onTaskRemoved(rootIntent);
+        destroy();
+    }
 
     private void setUpCrashSaver() {
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
@@ -415,28 +396,36 @@ public class ServiceMain extends Service {
                     String artist = cursor.getString(artistCol);
                     String data = cursor.getString(dataCol);
                     Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
-                    Bitmap thumbnail;
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        thumbnail = getApplicationContext().getContentResolver().loadThumbnail(
-                                uri, new Size(640, 480), null);
-                    } else {
-                        final int thumbNailWidthAndHeight = 128;
-                        thumbnail = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(data),
-                                thumbNailWidthAndHeight, thumbNailWidthAndHeight);
-                    }
-                    AudioURI audioURI = new AudioURI(uri, thumbnail, displayName, artist, title, id);
+                    AudioURI audioURI = new AudioURI(getApplicationContext(), uri, data, displayName, artist, title, id);
                     songs.add(audioURI);
                 }
                 if (!songs.isEmpty()) {
-                    // TODO load master playlist from file
-                    masterPlaylist = new RandomPlaylist(songs, MAX_PERCENT, MASTER_PLAYLIST_NAME);
-                    currentPlaylist = masterPlaylist;
-                    songQueueIterator = songQueue.listIterator();
+                    if (loaded) {
+                        if (masterPlaylist != null) {
+                            for (int i = 0; i < songs.size(); i++) {
+                                if (!masterPlaylist.getProbFun().getProbMap().containsKey(songs.get(i))) {
+                                    masterPlaylist.getProbFun().add(songs.get(i));
+                                }
+                            }
+                            Set<AudioURI> masterPlaylistSongSet =
+                                    masterPlaylist.getProbFun().getProbMap().keySet();
+                            AudioURI[] masterPlaylistSongs = new AudioURI[masterPlaylistSongSet.size()];
+                            masterPlaylistSongSet.toArray(masterPlaylistSongs);
+                            AudioURI a;
+                            for (int i = 0; i < masterPlaylistSongs.length; i++) {
+                                a = masterPlaylistSongs[i];
+                                if (!songs.contains(a)) {
+                                    masterPlaylist.getProbFun().remove(a);
+                                }
+                            }
+                        } else {
+                            masterPlaylist = new RandomPlaylist(songs, MAX_PERCENT, MASTER_PLAYLIST_NAME);
+                        }
+                        currentPlaylist = masterPlaylist;
+                        songQueueIterator = songQueue.listIterator();
+                    }
                 }
             }
-        } catch (IOException e) {
-            Toast toast = Toast.makeText(getApplicationContext(), R.string.thumbnail_error, Toast.LENGTH_SHORT);
-            toast.show();
         }
     }
 
@@ -469,8 +458,6 @@ public class ServiceMain extends Service {
 // endregion onStop
 
     // region ActivityMain UI calls
-
-
 
     // endregion ActivityMain UI calls
 
@@ -556,7 +543,7 @@ public class ServiceMain extends Service {
 
     void playNext() {
         Log.v(TAG, "playNext");
-        if(currentSong != null) {
+        if (currentSong != null) {
             currentPlaylist.getProbFun().bad(getCurrentSong(), PERCENT_CHANGE);
         }
         stopAndPreparePrevious();
@@ -577,6 +564,7 @@ public class ServiceMain extends Service {
         } else {
             addToQueueAndPlay(currentPlaylist.getProbFun().fun(random));
         }
+        saveFile();
     }
 
     public void playPrevious() {

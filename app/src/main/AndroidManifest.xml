@@ -11,6 +11,7 @@
         <service android:name="ServiceMain"
             android:exported="false"
             android:description="@string/service_description"
+            android:stopWithTask="true"
            />
         <activity
             android:name=".ActivityMain"

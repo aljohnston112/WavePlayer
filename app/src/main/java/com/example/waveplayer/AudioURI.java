@@ -1,19 +1,27 @@
 package com.example.waveplayer;
 
 import android.content.ContentUris;
+import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.MediaMetadataRetriever;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.MediaStore;
+import android.util.Size;
 
 import androidx.annotation.Nullable;
 
+import java.io.IOException;
 import java.io.Serializable;
 
 public final class AudioURI implements Comparable<AudioURI>, Serializable {
 
+
     transient private Uri uri;
 
-    public final Bitmap thumbnail;
+    private Bitmap thumbnail;
 
     public final String displayName;
 
@@ -21,21 +29,57 @@ public final class AudioURI implements Comparable<AudioURI>, Serializable {
 
     public final String title;
 
+    private int duration = -1;
+
     final long id;
+
+    final Context context;
+
+    final String data;
 
     private boolean isSelected = false;
 
-    public AudioURI(Uri uri, Bitmap thumbnail, String displayName, String artist, String title, long id){
-        if(uri != null) {
-            this.uri = uri;
-        } else{
-            this.uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
-        }
-        this.thumbnail = thumbnail;
+    public AudioURI(Context context, Uri uri, String data, String displayName, String artist, String title, long id) {
         this.displayName = displayName;
         this.artist = artist;
         this.title = title;
         this.id = id;
+        this.context = context;
+        this.data = data;
+    }
+
+    public Bitmap getThumbnail(){
+        if(thumbnail == null){
+            Bitmap thumbnail = null;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                try {
+                    thumbnail = context.getContentResolver().loadThumbnail(
+                            uri, new Size(640, 480), null);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                final int thumbNailWidthAndHeight = 128;
+                thumbnail = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(data),
+                        thumbNailWidthAndHeight, thumbNailWidthAndHeight);
+            }
+            this.thumbnail = thumbnail;
+        }
+        return thumbnail;
+    }
+
+    public int getDuration() {
+        if(duration == -1){
+            MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+            mediaMetadataRetriever.setDataSource(context,uri);
+            String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+            if (time == null) {
+                time = "00:00:00";
+            }
+            this.duration = Integer.parseInt(time);
+            mediaMetadataRetriever.release();
+        }
+        return duration;
     }
 
     @Override

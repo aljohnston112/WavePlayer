@@ -85,6 +85,7 @@ public class FragmentSong extends Fragment {
             public void onClick(View view) {
                 activityMain.serviceMain.currentPlaylist.getProbFun().bad(
                         activityMain.serviceMain.getCurrentSong(), ServiceMain.PERCENT_CHANGE);
+                activityMain.serviceMain.saveFile();
             }
         });
 
@@ -110,6 +111,7 @@ public class FragmentSong extends Fragment {
             public void onClick(View view) {
                 activityMain.serviceMain.currentPlaylist.getProbFun().good(
                         activityMain.serviceMain.getCurrentSong(), ServiceMain.PERCENT_CHANGE);
+                activityMain.serviceMain.saveFile();
             }
         });
 

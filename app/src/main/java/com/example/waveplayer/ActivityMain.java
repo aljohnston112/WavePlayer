@@ -10,7 +10,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
-import android.media.MediaMetadataRetriever;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -50,134 +49,46 @@ public class ActivityMain extends AppCompatActivity {
 
     private static final int REQUEST_PERMISSION = 245083964;
 
-    //--------------------------------
+    private static final int MENU_ACTION_RESET_PROBS_INDEX = 0;
 
     ServiceMain serviceMain;
-    boolean serviceMainBound = false;
-
-    // region onCreate
-
-    BroadcastReceiverOnCompletion broadcastReceiverOnCompletion;
-
-    Fragment startFragment;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        setUpActionBar();
-        Intent intentServiceMain = new Intent(ActivityMain.this, ServiceMain.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intentServiceMain);
-        } else {
-            startService(intentServiceMain);
-        }
-        getApplicationContext().bindService(intentServiceMain, connection, BIND_AUTO_CREATE | BIND_IMPORTANT);
-        broadcastReceiverOnCompletion = new BroadcastReceiverOnCompletion(this);
-        IntentFilter filterComplete = new IntentFilter();
-        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
-        filterComplete.addAction("Complete");
-        registerReceiver(broadcastReceiverOnCompletion, filterComplete);
-
-        IntentFilter filterNext = new IntentFilter();
-        filterNext.addAction("Next");
-        filterNext.addCategory(Intent.CATEGORY_DEFAULT);
-        BroadcastReceiverNotification actionBroadcastReceiver = new BroadcastReceiverNotification(this);
-        registerReceiver(actionBroadcastReceiver, filterNext);
-
-        IntentFilter filterPrev = new IntentFilter();
-        filterPrev.addAction("Previous");
-        filterPrev.addCategory(Intent.CATEGORY_DEFAULT);
-        registerReceiver(actionBroadcastReceiver, filterPrev);
-
-        IntentFilter filterPlayPause = new IntentFilter();
-        filterPlayPause.addAction("PlayPause");
-        filterPlayPause.addCategory(Intent.CATEGORY_DEFAULT);
-        registerReceiver(actionBroadcastReceiver, filterPlayPause);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        serviceMain.saveFile();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        this.unregisterReceiver(broadcastReceiverOnCompletion);
-        getApplicationContext().unbindService(connection);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-    }
 
     private ServiceConnection connection = new ServiceConnection() {
-
         @Override
         public void onServiceConnected(ComponentName className, IBinder service) {
             ServiceMain.ServiceMainBinder binder = (ServiceMain.ServiceMainBinder) service;
             serviceMain = binder.getService();
-            serviceMainBound = true;
-            if(!serviceMain.filesFetched) {
-                getExternalStoragePermissionAndFetchMediaFiles();
-                serviceMain.filesFetched = true;
-            }
-            createUI();
+            getExternalStoragePermissionAndFetchMediaFiles();
+            setUpSongPane();
             if (serviceMain.currentSong != null) {
                 updateSongUI();
                 updateSongPaneUI();
             }
             Intent intent = new Intent();
             intent.addCategory(Intent.CATEGORY_DEFAULT);
-            intent.setAction("ServiceConnected");
+            intent.setAction(getResources().getString(R.string.broadcast_receiver_action_service_connected));
             sendBroadcast(intent);
         }
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
-            serviceMainBound = false;
+
         }
     };
 
-    private void getExternalStoragePermissionAndFetchMediaFiles() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
-            } else {
-                serviceMain.getAudioFiles();
-            }
-        } else {
-            serviceMain.getAudioFiles();
-        }
-    }
+    BroadcastReceiverOnCompletion broadcastReceiverOnCompletion = new BroadcastReceiverOnCompletion(this);
+
+    BroadcastReceiverNotification broadcastReceiverNotificationButtons = new BroadcastReceiverNotification(this);
+
+    // region onCreate
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_PERMISSION && grantResults.length > 0 &&
-                grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            serviceMain.getAudioFiles();
-        } else {
-            Toast toast = Toast.makeText(getApplicationContext(), R.string.permission_needed, Toast.LENGTH_LONG);
-            toast.show();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
-            }
-        }
-    }
-
-    private void createUI() {
-        setUpSongPane();
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        setUpActionBar();
+        startAndBindServiceMain();
+        setUpBroadcastReceivers();
     }
 
     private void setUpActionBar() {
@@ -211,6 +122,45 @@ public class ActivityMain extends AppCompatActivity {
         }
     }
 
+    private void startAndBindServiceMain() {
+        Intent intentServiceMain = new Intent(ActivityMain.this, ServiceMain.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intentServiceMain);
+        } else {
+            startService(intentServiceMain);
+        }
+        getApplicationContext().bindService(intentServiceMain, connection, BIND_AUTO_CREATE | BIND_IMPORTANT);
+    }
+
+    private void getExternalStoragePermissionAndFetchMediaFiles() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
+            } else {
+                serviceMain.getAudioFiles();
+            }
+        } else {
+            serviceMain.getAudioFiles();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_PERMISSION && grantResults.length > 0 &&
+                grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            serviceMain.getAudioFiles();
+        } else {
+            Toast toast = Toast.makeText(getApplicationContext(), R.string.permission_needed, Toast.LENGTH_LONG);
+            toast.show();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
+            }
+        }
+    }
+
     private void setUpSongPane() {
         hideSongPane();
         linkSongPaneButtons();
@@ -232,9 +182,9 @@ public class ActivityMain extends AppCompatActivity {
                             Menu menu = toolbar.getMenu();
                             if (menu.size() > 0) {
                                 if (destination.getId() == R.id.fragmentPlaylist || destination.getId() == R.id.fragmentSongs) {
-                                    menu.getItem(0).setVisible(true);
+                                    menu.getItem(MENU_ACTION_RESET_PROBS_INDEX).setVisible(true);
                                 } else {
-                                    menu.getItem(0).setVisible(false);
+                                    menu.getItem(MENU_ACTION_RESET_PROBS_INDEX).setVisible(false);
                                 }
                             }
                         }
@@ -242,7 +192,7 @@ public class ActivityMain extends AppCompatActivity {
         }
     }
 
-    public void hideSongPane() {
+    private void hideSongPane() {
         findViewById(R.id.fragmentSongPane).setVisibility(View.INVISIBLE);
         ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
         ConstraintSet constraintSet = new ConstraintSet();
@@ -251,7 +201,7 @@ public class ActivityMain extends AppCompatActivity {
         constraintSet.applyTo(constraintLayout);
     }
 
-    public void showSongPane() {
+    private void showSongPane() {
         findViewById(R.id.fragmentSongPane).setVisibility(View.VISIBLE);
         ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
         ConstraintSet constraintSet = new ConstraintSet();
@@ -301,139 +251,157 @@ public class ActivityMain extends AppCompatActivity {
         });
     }
 
+    private void setUpBroadcastReceivers() {
+        IntentFilter filterComplete = new IntentFilter();
+        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
+        filterComplete.addAction(getResources().getString(R.string.broadcast_receiver_action_on_completion));
+        registerReceiver(broadcastReceiverOnCompletion, filterComplete);
+
+        IntentFilter filterNext = new IntentFilter();
+        filterNext.addAction(getResources().getString(R.string.broadcast_receiver_action_next));
+        filterNext.addCategory(Intent.CATEGORY_DEFAULT);
+        registerReceiver(broadcastReceiverNotificationButtons, filterNext);
+
+        IntentFilter filterPrevious = new IntentFilter();
+        filterPrevious.addAction(getResources().getString(R.string.broadcast_receiver_action_previous));
+        filterPrevious.addCategory(Intent.CATEGORY_DEFAULT);
+        registerReceiver(broadcastReceiverNotificationButtons, filterPrevious);
+
+        IntentFilter filterPlayPause = new IntentFilter();
+        filterPlayPause.addAction(getResources().getString(R.string.broadcast_receiver_action_play_pause));
+        filterPlayPause.addCategory(Intent.CATEGORY_DEFAULT);
+        registerReceiver(broadcastReceiverNotificationButtons, filterPlayPause);
+    }
+
+    // endregion onCreate
+
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onPause() {
+        super.onPause();
+        serviceMain.saveFile();
     }
 
-    public void setActionBarTitle(String string) {
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setTitle(string);
-        }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        this.unregisterReceiver(broadcastReceiverOnCompletion);
+        this.unregisterReceiver(broadcastReceiverNotificationButtons);
+        getApplicationContext().unbindService(connection);
     }
 
-    public void setFabImage(int id) {
-        FloatingActionButton fab;
-        fab = findViewById(R.id.fab);
-        fab.setImageDrawable(getResources().getDrawable(id));
+    // region publicUI
+
+    public void setActionBarTitle(final String string) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ActionBar actionBar = getSupportActionBar();
+                if (actionBar != null) {
+                    actionBar.setTitle(string);
+                }
+            }
+        });
     }
 
-    public void showFab(boolean show) {
-        FloatingActionButton fab;
-        fab = findViewById(R.id.fab);
-        if (show) {
-            fab.show();
-        } else {
-            fab.hide();
-        }
+    public void setFabImage(final int id) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                FloatingActionButton fab;
+                fab = findViewById(R.id.fab);
+                fab.setImageDrawable(getResources().getDrawable(id));
+            }
+        });
     }
 
-    public void setFabOnClickListener(View.OnClickListener onClickListener) {
-        FloatingActionButton fab;
-        fab = findViewById(R.id.fab);
-        fab.setOnClickListener(null);
-        fab.setOnClickListener(onClickListener);
+    public void showFab(final boolean show) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                FloatingActionButton fab;
+                fab = findViewById(R.id.fab);
+                if (show) {
+                    fab.show();
+                } else {
+                    fab.hide();
+                }
+            }
+        });
+    }
+
+    public void setFabOnClickListener(final View.OnClickListener onClickListener) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                FloatingActionButton fab;
+                fab = findViewById(R.id.fab);
+                fab.setOnClickListener(null);
+                fab.setOnClickListener(onClickListener);
+            }
+        });
     }
 
     public void updateSongUI() {
-        // TODO move to onCreate when saving data is implemented
-        MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-        mediaMetadataRetriever.setDataSource(getApplicationContext(), serviceMain.currentSong.getUri());
-        String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-        if (time == null) {
-            time = "00:00:00";
-        }
-        int millis = Integer.parseInt(time);
-        mediaMetadataRetriever.release();
-        //-------------------------------------------------------
+        if (serviceMain.currentSong != null) {
+            final int millis = serviceMain.currentSong.getDuration();
+            final String stringEndTime = String.format(getResources().getConfiguration().locale,
+                    "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(millis),
+                    TimeUnit.MILLISECONDS.toMinutes(millis) -
+                            TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
+                    TimeUnit.MILLISECONDS.toSeconds(millis) -
+                            TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
+            //-------------------------------------------------------
 
-        ImageView imageViewSongArt = findViewById(R.id.image_view_song_art);
-        if (imageViewSongArt != null) {
-            if (serviceMain.currentSong.thumbnail == null) {
-                imageViewSongArt.setImageDrawable(getResources().getDrawable((R.drawable.music_note_black_48dp)));
-            } else {
-                imageViewSongArt.setImageBitmap(serviceMain.currentSong.thumbnail);
-            }
-        }
-        TextView textViewSongName = findViewById(R.id.text_view_song_name);
-        if (textViewSongName != null) {
-            textViewSongName.setText(serviceMain.currentSong.title);
-        }
-        String stringEndTime = String.format(getResources().getConfiguration().locale,
-                "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(millis),
-                TimeUnit.MILLISECONDS.toMinutes(millis) -
-                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
-                TimeUnit.MILLISECONDS.toSeconds(millis) -
-                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
-        TextView textViewCurrent = findViewById(R.id.editTextCurrentTime);
-        if (textViewCurrent != null) {
-            textViewCurrent.setText(R.string.start_time);
-        }
-        TextView textViewEnd = findViewById(R.id.editTextEndTime);
-        if (textViewEnd != null) {
-            textViewEnd.setText(stringEndTime);
-        }
-        SeekBar seekBar = findViewById(R.id.seekBar);
-        if (seekBar != null) {
-            seekBar.setMax(millis);
-            seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int i, boolean fromUser) {
-                }
-
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {
-                }
-
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {
-                    MediaPlayerWURI mediaPlayerWURI = serviceMain.songsMap.get(serviceMain.currentSong.getUri());
-                    if (mediaPlayerWURI != null) {
-                        mediaPlayerWURI.seekTo(seekBar.getProgress());
-                    }
-                }
-            });
-            serviceMain.scheduledExecutorService.shutdown();
-            serviceMain.scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-            serviceMain.scheduledExecutorService.scheduleAtFixedRate(
-                    new SeekBarUpdater(serviceMain.songsMap.get(serviceMain.currentSong.getUri()), seekBar, textViewCurrent, millis),
-                    0L, 1L, TimeUnit.SECONDS);
-        }
-    }
-
-    class SeekBarUpdater implements Runnable {
-
-        final MediaPlayerWURI mediaPlayerWURI;
-
-        final SeekBar seekBar;
-
-        final int milliSeconds;
-
-        final TextView textViewCurrentTime;
-
-        SeekBarUpdater(MediaPlayerWURI mediaPlayerWURI, SeekBar seekBar, TextView textViewCurrentTime, int milliSeconds) {
-            this.mediaPlayerWURI = mediaPlayerWURI;
-            this.seekBar = seekBar;
-            this.textViewCurrentTime = textViewCurrentTime;
-            this.milliSeconds = milliSeconds;
-        }
-
-        @Override
-        public void run() {
-            seekBar.post(new Runnable() {
+            runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if (mediaPlayerWURI.isPlaying()) {
-                        int currentMilliseconds = mediaPlayerWURI.getCurrentPosition();
-                        seekBar.setProgress(currentMilliseconds);
-                        final String currentTime = String.format(getResources().getConfiguration().locale,
-                                "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(currentMilliseconds),
-                                TimeUnit.MILLISECONDS.toMinutes(currentMilliseconds) -
-                                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(currentMilliseconds)),
-                                TimeUnit.MILLISECONDS.toSeconds(currentMilliseconds) -
-                                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(currentMilliseconds)));
-                        textViewCurrentTime.setText(currentTime);
+                    ImageView imageViewSongArt = findViewById(R.id.image_view_song_art);
+                    if (imageViewSongArt != null) {
+                        if (serviceMain.currentSong.getThumbnail() == null) {
+                            imageViewSongArt.setImageDrawable(getResources().getDrawable((R.drawable.music_note_black_48dp)));
+                        } else {
+                            imageViewSongArt.setImageBitmap(serviceMain.currentSong.getThumbnail());
+                        }
+                    }
+                    TextView textViewSongName = findViewById(R.id.text_view_song_name);
+                    if (textViewSongName != null) {
+                        textViewSongName.setText(serviceMain.currentSong.title);
+                    }
+                    TextView textViewCurrent = findViewById(R.id.editTextCurrentTime);
+                    if (textViewCurrent != null) {
+                        textViewCurrent.setText(R.string.start_time);
+                    }
+                    TextView textViewEnd = findViewById(R.id.editTextEndTime);
+                    if (textViewEnd != null) {
+                        textViewEnd.setText(stringEndTime);
+                    }
+                    SeekBar seekBar = findViewById(R.id.seekBar);
+                    if (seekBar != null) {
+                        seekBar.setMax(millis);
+                        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                            @Override
+                            public void onProgressChanged(SeekBar seekBar, int i, boolean fromUser) {
+                            }
+
+                            @Override
+                            public void onStartTrackingTouch(SeekBar seekBar) {
+                            }
+
+                            @Override
+                            public void onStopTrackingTouch(SeekBar seekBar) {
+                                MediaPlayerWURI mediaPlayerWURI = serviceMain.songsMap.get(serviceMain.currentSong.getUri());
+                                if (mediaPlayerWURI != null) {
+                                    mediaPlayerWURI.seekTo(seekBar.getProgress());
+                                }
+                            }
+                        });
+                        serviceMain.scheduledExecutorService.shutdown();
+                        serviceMain.scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+                        serviceMain.scheduledExecutorService.scheduleAtFixedRate(
+                                new RunnableSeekBarUpdater(
+                                        serviceMain.songsMap.get(serviceMain.currentSong.getUri()),
+                                        seekBar, textViewCurrent, millis, getResources().getConfiguration().locale),
+                                0L, 1L, TimeUnit.SECONDS);
                     }
                 }
             });
@@ -441,90 +409,85 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     public void updateSongPaneUI() {
-        TextView textViewSongPaneSongName = findViewById(R.id.textViewSongPaneSongName);
-        if (textViewSongPaneSongName != null) {
-            textViewSongPaneSongName.setText(serviceMain.currentSong.title);
-        }
-        ImageView imageViewSongPaneSongArt = findViewById(R.id.imageViewSongPaneSongArt);
-        int songArtHeight = imageViewSongPaneSongArt.getMeasuredHeight();
-        if(songArtHeight != 0){
-            serviceMain.songPaneArtHeight = songArtHeight;
-        } else{
-            songArtHeight = serviceMain.songPaneArtHeight;
-        }
-        @SuppressWarnings("SuspiciousNameCombination") int songArtWidth = songArtHeight;
-        Bitmap bitmapSongArt = serviceMain.currentSong.thumbnail;
-        if (bitmapSongArt != null) {
-            Bitmap bitmapSongArtResized = FragmentSongPane.getResizedBitmap(bitmapSongArt, songArtWidth, songArtHeight);
-            imageViewSongPaneSongArt.setImageBitmap(bitmapSongArtResized);
-        } else {
-            songArtHeight = imageViewSongPaneSongArt.getMeasuredHeight();
-            if(songArtHeight != 0){
-                serviceMain.songPaneArtHeight = songArtHeight;
-            } else{
-                songArtHeight = serviceMain.songPaneArtHeight;
-            }
-            //noinspection SuspiciousNameCombination
-            songArtWidth = songArtHeight;
-            Drawable drawableSongArt = getResources().getDrawable(R.drawable.music_note_black_48dp);
-            drawableSongArt.setBounds(0, 0, songArtWidth, songArtHeight);
-            bitmapSongArt = Bitmap.createBitmap(songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(bitmapSongArt);
-            drawableSongArt.draw(canvas);
-            Bitmap bitmapSongArtResized = FragmentSongPane.getResizedBitmap(bitmapSongArt, songArtWidth, songArtHeight);
-            bitmapSongArt.recycle();
-            imageViewSongPaneSongArt.setImageBitmap(bitmapSongArtResized);
-        }
-    }
-
-    public void addToQueueAndPlay(AudioURI audioURI) {
-        serviceMain.addToQueueAndPlay(audioURI);
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                updateSongUI();
-                updateSongPaneUI();
-                if (serviceMain != null) {
-                    serviceMain.updateNotification();
-                }
-            }
-        });
-    }
-
-    public void playNext() {
-        serviceMain.playNext();
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                updateSongUI();
-                updateSongPaneUI();
-                serviceMain.updateNotification();
-            }
-        });
-    }
-
-    public void playPrevious() {
-        serviceMain.playPrevious();
         if (serviceMain.currentSong != null) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    updateSongUI();
-                    updateSongPaneUI();
-                    if (serviceMain != null) {
-                        serviceMain.updateNotification();
+                    if (serviceMain.isPlaying()) {
+                        TextView textViewSongPaneSongName = findViewById(R.id.textViewSongPaneSongName);
+                        if (textViewSongPaneSongName != null) {
+                            textViewSongPaneSongName.setText(serviceMain.currentSong.title);
+                        }
+                        ImageView imageViewSongPaneSongArt = findViewById(R.id.imageViewSongPaneSongArt);
+                        int songArtHeight = imageViewSongPaneSongArt.getMeasuredHeight();
+                        if (songArtHeight != 0) {
+                            serviceMain.songPaneArtHeight = songArtHeight;
+                        } else {
+                            songArtHeight = serviceMain.songPaneArtHeight;
+                        }
+                        @SuppressWarnings("SuspiciousNameCombination") int songArtWidth = songArtHeight;
+                        Bitmap bitmapSongArt = serviceMain.currentSong.getThumbnail();
+                        if (bitmapSongArt != null) {
+                            Bitmap bitmapSongArtResized = FragmentSongPane.getResizedBitmap(bitmapSongArt, songArtWidth, songArtHeight);
+                            imageViewSongPaneSongArt.setImageBitmap(bitmapSongArtResized);
+                        } else {
+                            songArtHeight = imageViewSongPaneSongArt.getMeasuredHeight();
+                            if (songArtHeight != 0) {
+                                serviceMain.songPaneArtHeight = songArtHeight;
+                            } else {
+                                songArtHeight = serviceMain.songPaneArtHeight;
+                            }
+                            //noinspection SuspiciousNameCombination
+                            songArtWidth = songArtHeight;
+                            Drawable drawableSongArt = getResources().getDrawable(R.drawable.music_note_black_48dp);
+                            drawableSongArt.setBounds(0, 0, songArtWidth, songArtHeight);
+                            bitmapSongArt = Bitmap.createBitmap(songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888);
+                            Canvas canvas = new Canvas(bitmapSongArt);
+                            drawableSongArt.draw(canvas);
+                            Bitmap bitmapSongArtResized = FragmentSongPane.getResizedBitmap(bitmapSongArt, songArtWidth, songArtHeight);
+                            bitmapSongArt.recycle();
+                            imageViewSongPaneSongArt.setImageBitmap(bitmapSongArtResized);
+                        }
                     }
                 }
             });
         }
     }
 
+    // endregion publicUI
+
+    // region playbackControls
+
+    public void addToQueueAndPlay(AudioURI audioURI) {
+        serviceMain.addToQueueAndPlay(audioURI);
+        serviceMain.updateNotification();
+        updateSongUI();
+        updateSongPaneUI();
+    }
+
+    public void playNext() {
+        serviceMain.playNext();
+        serviceMain.updateNotification();
+        updateSongUI();
+        updateSongPaneUI();
+    }
+
+    public void playPrevious() {
+        serviceMain.playPrevious();
+        serviceMain.updateNotification();
+        updateSongUI();
+        updateSongPaneUI();
+    }
+
     public void pauseOrPlay() {
-        final ImageButton imageButtonPlayPause = findViewById(R.id.imageButtonPlayPause);
-        final ImageButton imageButtonSongPanePlayPause = findViewById(R.id.imageButtonSongPanePlayPause);
+        if (serviceMain.currentSong != null) {
+            serviceMain.pauseOrPlay();
+        }
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                final ImageButton imageButtonPlayPause = findViewById(R.id.imageButtonPlayPause);
+                final ImageButton imageButtonSongPanePlayPause = findViewById(R.id.imageButtonSongPanePlayPause);
                 if (imageButtonPlayPause != null) {
                     if (serviceMain.isPlaying()) {
                         imageButtonPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.play_arrow_black_24dp));
@@ -541,10 +504,9 @@ public class ActivityMain extends AppCompatActivity {
                 }
             }
         });
-        if (serviceMain.currentSong != null) {
-            serviceMain.pauseOrPlay();
-        }
     }
+
+    // endregion playbackControls
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
