@@ -57,7 +57,7 @@ public class MediaPlayerWURI {
         mediaPlayer.prepareAsync();
     }
 
-    public int getCurrentPosition(){
+    synchronized public int getCurrentPosition(){
         if(isPrepared && isPlaying()) {
             return mediaPlayer.getCurrentPosition();
         } else{
@@ -65,7 +65,7 @@ public class MediaPlayerWURI {
         }
     }
 
-    public boolean isPlaying(){
+    synchronized public boolean isPlaying(){
         if(isPrepared) {
             return mediaPlayer.isPlaying();
         } else {
@@ -80,14 +80,14 @@ public class MediaPlayerWURI {
         mediaPlayer.stop();
     }
 
-    public void pause(){
+    synchronized public void pause(){
         if(isPrepared) {
             mediaPlayer.pause();
         }
         shouldPlay = false;
     }
 
-    public void seekTo(int millis){
+    synchronized public void seekTo(int millis){
         if (isPrepared){
             mediaPlayer.seekTo(millis);
         }

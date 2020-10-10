@@ -1,6 +1,5 @@
 package com.example.waveplayer;
 
-import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -9,17 +8,9 @@ import android.app.Service;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
-import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
-import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
@@ -28,16 +19,10 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.os.Process;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.util.Size;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
@@ -55,7 +40,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -115,7 +99,22 @@ public class ServiceMain extends Service {
         public void onCompletion(MediaPlayer mediaPlayer) {
             scheduledExecutorService.shutdown();
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-            addToQueueAndPlay(currentPlaylist.getProbFun().fun(random));
+            if(!songQueueIterator.hasNext()) {
+                addToQueueAndPlay(currentPlaylist.getProbFun().fun(random));
+            } else{
+                MediaPlayerWURI mediaPlayerWURI = songsMap.get(songQueueIterator.next());
+                if (haveAudioFocus) {
+                    mediaPlayerWURI.shouldStart(true);
+                    isPlaying = true;
+                    currentSong = mediaPlayerWURI.audioURI;
+                } else {
+                    if (requestAudioFocus()) {
+                        mediaPlayerWURI.shouldStart(true);
+                        isPlaying = true;
+                        currentSong = mediaPlayerWURI.audioURI;
+                    }
+                }
+            }
             updateNotification();
             Intent intent = new Intent();
             intent.addCategory(Intent.CATEGORY_DEFAULT);
@@ -164,8 +163,8 @@ public class ServiceMain extends Service {
         thread.start();
         serviceMainLooper = Looper.getMainLooper();
         serviceMainHandler = new ServiceMainHandler(serviceMainLooper);
-        //setUpCrashSaver();
-        //logLastCrash();
+        setUpCrashSaver();
+        logLastCrash();
         loadSave();
         loaded = true;
     }

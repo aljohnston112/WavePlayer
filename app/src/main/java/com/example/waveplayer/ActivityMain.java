@@ -31,6 +31,7 @@ import androidx.appcompat.widget.AppCompatTextView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavController;
@@ -46,7 +47,6 @@ import java.util.concurrent.TimeUnit;
 public class ActivityMain extends AppCompatActivity {
 
     // TODO update fab with exteded FAB
-
     private static final int REQUEST_PERMISSION = 245083964;
 
     private static final int MENU_ACTION_RESET_PROBS_INDEX = 0;
@@ -309,7 +309,7 @@ public class ActivityMain extends AppCompatActivity {
             public void run() {
                 FloatingActionButton fab;
                 fab = findViewById(R.id.fab);
-                fab.setImageDrawable(getResources().getDrawable(id));
+                fab.setImageDrawable(ResourcesCompat.getDrawable(getResources(), id, null));
             }
         });
     }
@@ -358,7 +358,8 @@ public class ActivityMain extends AppCompatActivity {
                     ImageView imageViewSongArt = findViewById(R.id.image_view_song_art);
                     if (imageViewSongArt != null) {
                         if (serviceMain.currentSong.getThumbnail() == null) {
-                            imageViewSongArt.setImageDrawable(getResources().getDrawable((R.drawable.music_note_black_48dp)));
+                            imageViewSongArt.setImageDrawable(ResourcesCompat.getDrawable(
+                                    getResources(), R.drawable.music_note_black_48dp, null));
                         } else {
                             imageViewSongArt.setImageBitmap(serviceMain.currentSong.getThumbnail());
                         }
@@ -439,14 +440,17 @@ public class ActivityMain extends AppCompatActivity {
                             }
                             //noinspection SuspiciousNameCombination
                             songArtWidth = songArtHeight;
-                            Drawable drawableSongArt = getResources().getDrawable(R.drawable.music_note_black_48dp);
-                            drawableSongArt.setBounds(0, 0, songArtWidth, songArtHeight);
-                            bitmapSongArt = Bitmap.createBitmap(songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888);
-                            Canvas canvas = new Canvas(bitmapSongArt);
-                            drawableSongArt.draw(canvas);
-                            Bitmap bitmapSongArtResized = FragmentSongPane.getResizedBitmap(bitmapSongArt, songArtWidth, songArtHeight);
-                            bitmapSongArt.recycle();
-                            imageViewSongPaneSongArt.setImageBitmap(bitmapSongArtResized);
+                            Drawable drawableSongArt = ResourcesCompat.getDrawable(
+                                    getResources(), R.drawable.music_note_black_48dp, null);
+                            if(drawableSongArt != null) {
+                                drawableSongArt.setBounds(0, 0, songArtWidth, songArtHeight);
+                                bitmapSongArt = Bitmap.createBitmap(songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888);
+                                Canvas canvas = new Canvas(bitmapSongArt);
+                                drawableSongArt.draw(canvas);
+                                Bitmap bitmapSongArtResized = FragmentSongPane.getResizedBitmap(bitmapSongArt, songArtWidth, songArtHeight);
+                                bitmapSongArt.recycle();
+                                imageViewSongPaneSongArt.setImageBitmap(bitmapSongArtResized);
+                            }
                         }
                     }
                 }
@@ -490,16 +494,20 @@ public class ActivityMain extends AppCompatActivity {
                 final ImageButton imageButtonSongPanePlayPause = findViewById(R.id.imageButtonSongPanePlayPause);
                 if (imageButtonPlayPause != null) {
                     if (serviceMain.isPlaying()) {
-                        imageButtonPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.play_arrow_black_24dp));
+                        imageButtonPlayPause.setImageDrawable(ResourcesCompat.getDrawable(
+                                getResources(), R.drawable.play_arrow_black_24dp, null));
                     } else {
-                        imageButtonPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.pause_black_24dp));
+                        imageButtonPlayPause.setImageDrawable(ResourcesCompat.getDrawable(
+                                getResources(), R.drawable.pause_black_24dp, null));
                     }
                 }
                 if (imageButtonSongPanePlayPause != null) {
                     if (serviceMain.isPlaying()) {
-                        imageButtonSongPanePlayPause.setImageDrawable(getResources().getDrawable(R.drawable.play_arrow_black_24dp));
+                        imageButtonSongPanePlayPause.setImageDrawable(ResourcesCompat.getDrawable(
+                                getResources(), R.drawable.play_arrow_black_24dp, null));
                     } else {
-                        imageButtonSongPanePlayPause.setImageDrawable(getResources().getDrawable(R.drawable.pause_black_24dp));
+                        imageButtonSongPanePlayPause.setImageDrawable(ResourcesCompat.getDrawable(
+                                getResources(), R.drawable.pause_black_24dp, null));
                     }
                 }
             }
