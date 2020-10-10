@@ -18,6 +18,9 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class FragmentSelectSongs extends Fragment {
 
     ActivityMain activityMain;
@@ -59,7 +62,8 @@ public class FragmentSelectSongs extends Fragment {
         RecyclerView recyclerViewSongList = view.findViewById(R.id.recycler_view_song_list);
         recyclerViewSongList.setLayoutManager(new LinearLayoutManager(recyclerViewSongList.getContext()));
         RecyclerViewAdapterSelectSongs recyclerViewAdapterSelectSongs = new RecyclerViewAdapterSelectSongs(
-                this, activityMain.serviceMain.songs, activityMain.serviceMain.userPickedSongs);
+                this, new ArrayList<>(
+                        activityMain.serviceMain.uriMap.values()), activityMain.serviceMain.userPickedSongs);
         recyclerViewSongList.setAdapter(recyclerViewAdapterSelectSongs);
     }
 
@@ -70,13 +74,15 @@ public class FragmentSelectSongs extends Fragment {
             @Override
             public void onClick(View view) {
                 activityMain.serviceMain.userPickedSongs.clear();
-                int nAllSongs = activityMain.serviceMain.songs.size();
+                int nAllSongs = activityMain.serviceMain.uriMap.values().size();
                 for(int i = 0; i < nAllSongs; i++) {
-                    if (activityMain.serviceMain.songs.get(i).isSelected()){
-                        activityMain.serviceMain.userPickedSongs.add(activityMain.serviceMain.songs.get(i));
-                        activityMain.serviceMain.songs.get(i).setSelected(false);
+                    if (new ArrayList<>(activityMain.serviceMain.uriMap.values()).get(i).isSelected()){
+                        activityMain.serviceMain.userPickedSongs.add(
+                                new ArrayList<>(activityMain.serviceMain.uriMap.values()).get(i));
+                        new ArrayList<>(activityMain.serviceMain.uriMap.values()).get(i).setSelected(false);
                     } else{
-                        activityMain.serviceMain.userPickedSongs.remove(activityMain.serviceMain.songs.get(i));
+                        activityMain.serviceMain.userPickedSongs.remove(
+                                new ArrayList<>(activityMain.serviceMain.uriMap.values()).get(i));
                     }
                 }
                 NavController navController = NavHostFragment.findNavController(FragmentSelectSongs.this);

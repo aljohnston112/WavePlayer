@@ -78,7 +78,7 @@ public class ActivityMain extends AppCompatActivity {
 
     BroadcastReceiverOnCompletion broadcastReceiverOnCompletion = new BroadcastReceiverOnCompletion(this);
 
-    BroadcastReceiverNotification broadcastReceiverNotificationButtons = new BroadcastReceiverNotification(this);
+    BroadcastReceiverNotificationForActivityMain broadcastReceiverNotificationForActivityMainButtons = new BroadcastReceiverNotificationForActivityMain(this);
 
     // region onCreate
 
@@ -138,10 +138,14 @@ public class ActivityMain extends AppCompatActivity {
                     != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
             } else {
-                serviceMain.getAudioFiles();
+                if(!serviceMain.audioFilesLoaded) {
+                    serviceMain.getAudioFiles();
+                }
             }
         } else {
-            serviceMain.getAudioFiles();
+            if(!serviceMain.audioFilesLoaded) {
+                serviceMain.getAudioFiles();
+            }
         }
     }
 
@@ -260,17 +264,17 @@ public class ActivityMain extends AppCompatActivity {
         IntentFilter filterNext = new IntentFilter();
         filterNext.addAction(getResources().getString(R.string.broadcast_receiver_action_next));
         filterNext.addCategory(Intent.CATEGORY_DEFAULT);
-        registerReceiver(broadcastReceiverNotificationButtons, filterNext);
+        registerReceiver(broadcastReceiverNotificationForActivityMainButtons, filterNext);
 
         IntentFilter filterPrevious = new IntentFilter();
         filterPrevious.addAction(getResources().getString(R.string.broadcast_receiver_action_previous));
         filterPrevious.addCategory(Intent.CATEGORY_DEFAULT);
-        registerReceiver(broadcastReceiverNotificationButtons, filterPrevious);
+        registerReceiver(broadcastReceiverNotificationForActivityMainButtons, filterPrevious);
 
         IntentFilter filterPlayPause = new IntentFilter();
         filterPlayPause.addAction(getResources().getString(R.string.broadcast_receiver_action_play_pause));
         filterPlayPause.addCategory(Intent.CATEGORY_DEFAULT);
-        registerReceiver(broadcastReceiverNotificationButtons, filterPlayPause);
+        registerReceiver(broadcastReceiverNotificationForActivityMainButtons, filterPlayPause);
     }
 
     // endregion onCreate
@@ -278,14 +282,16 @@ public class ActivityMain extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        serviceMain.saveFile();
+        if(serviceMain != null) {
+            serviceMain.saveFile();
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         this.unregisterReceiver(broadcastReceiverOnCompletion);
-        this.unregisterReceiver(broadcastReceiverNotificationButtons);
+        this.unregisterReceiver(broadcastReceiverNotificationForActivityMainButtons);
         getApplicationContext().unbindService(connection);
     }
 
@@ -343,7 +349,7 @@ public class ActivityMain extends AppCompatActivity {
 
     public void updateSongUI() {
         if (serviceMain.currentSong != null) {
-            final int millis = serviceMain.currentSong.getDuration();
+            final int millis = serviceMain.currentSong.getDuration(getApplicationContext());
             final String stringEndTime = String.format(getResources().getConfiguration().locale,
                     "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(millis),
                     TimeUnit.MILLISECONDS.toMinutes(millis) -
@@ -357,11 +363,11 @@ public class ActivityMain extends AppCompatActivity {
                 public void run() {
                     ImageView imageViewSongArt = findViewById(R.id.image_view_song_art);
                     if (imageViewSongArt != null) {
-                        if (serviceMain.currentSong.getThumbnail() == null) {
+                        if (serviceMain.currentSong.getThumbnail(getApplicationContext()) == null) {
                             imageViewSongArt.setImageDrawable(ResourcesCompat.getDrawable(
                                     getResources(), R.drawable.music_note_black_48dp, null));
                         } else {
-                            imageViewSongArt.setImageBitmap(serviceMain.currentSong.getThumbnail());
+                            imageViewSongArt.setImageBitmap(serviceMain.currentSong.getThumbnail(getApplicationContext()));
                         }
                     }
                     TextView textViewSongName = findViewById(R.id.text_view_song_name);
@@ -427,7 +433,7 @@ public class ActivityMain extends AppCompatActivity {
                             songArtHeight = serviceMain.songPaneArtHeight;
                         }
                         @SuppressWarnings("SuspiciousNameCombination") int songArtWidth = songArtHeight;
-                        Bitmap bitmapSongArt = serviceMain.currentSong.getThumbnail();
+                        Bitmap bitmapSongArt = serviceMain.currentSong.getThumbnail(getApplicationContext());
                         if (bitmapSongArt != null) {
                             Bitmap bitmapSongArtResized = FragmentSongPane.getResizedBitmap(bitmapSongArt, songArtWidth, songArtHeight);
                             imageViewSongPaneSongArt.setImageBitmap(bitmapSongArtResized);

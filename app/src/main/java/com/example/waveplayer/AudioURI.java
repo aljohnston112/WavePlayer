@@ -33,22 +33,19 @@ public final class AudioURI implements Comparable<AudioURI>, Serializable {
 
     final long id;
 
-    final Context context;
-
     final String data;
 
     private boolean isSelected = false;
 
-    public AudioURI(Context context, Uri uri, String data, String displayName, String artist, String title, long id) {
+    public AudioURI(Uri uri, String data, String displayName, String artist, String title, long id) {
         this.displayName = displayName;
         this.artist = artist;
         this.title = title;
         this.id = id;
-        this.context = context;
         this.data = data;
     }
 
-    public Bitmap getThumbnail(){
+    public Bitmap getThumbnail(Context context){
         if(thumbnail == null){
             Bitmap thumbnail = null;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -68,7 +65,7 @@ public final class AudioURI implements Comparable<AudioURI>, Serializable {
         return thumbnail;
     }
 
-    public int getDuration() {
+    public int getDuration(Context context) {
         if(duration == -1){
             MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
             mediaMetadataRetriever.setDataSource(context,uri);

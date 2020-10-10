@@ -4,11 +4,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-public class BroadcastReceiverNotification extends BroadcastReceiver {
+public class BroadcastReceiverNotificationForActivityMain extends BroadcastReceiver {
 
     ActivityMain activityMain;
 
-    BroadcastReceiverNotification(ActivityMain activityMain){
+    BroadcastReceiverNotificationForActivityMain(ActivityMain activityMain){
         this.activityMain = activityMain;
     }
 

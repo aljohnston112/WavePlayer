@@ -15,6 +15,9 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class FragmentSongs extends Fragment {
 
     ActivityMain activityMain;
@@ -61,7 +64,7 @@ public class FragmentSongs extends Fragment {
     private void setUpRecyclerView(View view) {
         RecyclerView recyclerViewSongs = view.findViewById(R.id.recycler_view_song_list);
         RecyclerViewAdapterSongs recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(
-                this, activityMain.serviceMain.songs);
+                this,  new ArrayList<>(activityMain.serviceMain.uriMap.values()));
         recyclerViewSongs.setLayoutManager(new LinearLayoutManager(recyclerViewSongs.getContext()));
         recyclerViewSongs.setAdapter(recyclerViewAdapterSongs);
     }

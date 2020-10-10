@@ -9,7 +9,7 @@ public class MediaPlayerWURI {
 
     private final MediaPlayerWURI mediaPlayerWURI = this;
 
-    private final MediaPlayer mediaPlayer;
+    private MediaPlayer mediaPlayer;
 
     final AudioURI audioURI;
 
@@ -19,6 +19,16 @@ public class MediaPlayerWURI {
 
     volatile boolean shouldPlay = false;
 
+    private final MediaPlayer.OnErrorListener onErrorListener = new MediaPlayer.OnErrorListener() {
+        @Override
+        public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
+            synchronized (mediaPlayerWURI) {
+                serviceMain.releaseMediaPlayers();
+                return false;
+            }
+        }
+    };
+
     MediaPlayerWURI(final ServiceMain serviceMain, MediaPlayer mediaPlayer, AudioURI audioURI){
         this.serviceMain = serviceMain;
         this.mediaPlayer = mediaPlayer;
@@ -27,15 +37,6 @@ public class MediaPlayerWURI {
         mediaPlayer.setOnPreparedListener(null);
         mediaPlayer.setOnErrorListener(null);
         mediaPlayer.setOnPreparedListener(new MOnPreparedListener(this));
-        MediaPlayer.OnErrorListener onErrorListener = new MediaPlayer.OnErrorListener() {
-            @Override
-            public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
-                synchronized (mediaPlayerWURI) {
-                    serviceMain.releaseMediaPlayers();
-                    return false;
-                }
-            }
-        };
         mediaPlayer.setOnErrorListener(onErrorListener);
     }
 
@@ -47,8 +48,20 @@ public class MediaPlayerWURI {
         }
     }
 
-    public void release(){
+    synchronized public void release(){
+        isPrepared = false;
+        shouldPlay = false;
         mediaPlayer.release();
+        /*
+        mediaPlayer = MediaPlayer.create(serviceMain.getApplicationContext(), audioURI.getUri());
+        setOnCompletionListener(null);
+        setOnCompletionListener(serviceMain.onCompletionListener);
+        mediaPlayer.setOnPreparedListener(null);
+        mediaPlayer.setOnErrorListener(null);
+        mediaPlayer.setOnPreparedListener(new MOnPreparedListener(this));
+        mediaPlayer.setOnErrorListener(onErrorListener);
+
+         */
     }
 
     synchronized public void prepareAsync(){
