@@ -8,6 +8,7 @@ import android.app.Service;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -43,6 +44,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Random;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -90,9 +92,17 @@ public class ServiceMain extends Service {
     // For updating the SeekBar
     ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+    BroadcastReceiverNotificationForServiceMain broadcastReceiverNotificationForServiceMainButtons = new BroadcastReceiverNotificationForServiceMain(this);
+
     public final MediaPlayer.OnCompletionListener onCompletionListener = new MediaPlayer.OnCompletionListener() {
         @Override
         public void onCompletion(MediaPlayer mediaPlayer) {
+            String string = "Media player: " +
+                    mediaPlayer.hashCode() +
+                    " onCompletion started";
+            Log.v(TAG, string);
             scheduledExecutorService.shutdown();
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
             if (!songQueueIterator.hasNext()) {
@@ -101,15 +111,22 @@ public class ServiceMain extends Service {
                 stopAndPreparePrevious();
                 playNextInQueue();
             }
-            updateNotification();
             sendBroadcastOnCompletion();
+            string = "Media player: " +
+                    mediaPlayer.hashCode() +
+                    " onCompletion ended";
+            Log.v(TAG, string);
         }
 
         private void sendBroadcastOnCompletion() {
             Intent intent = new Intent();
             intent.addCategory(Intent.CATEGORY_DEFAULT);
             intent.setAction(getResources().getString(R.string.broadcast_receiver_action_on_completion));
+            String string = "onCompletion broadcast started";
+            Log.v(TAG, string);
             sendBroadcast(intent);
+            string = "onCompletion broadcast ended";
+            Log.v(TAG, string);
         }
 
     };
@@ -132,11 +149,44 @@ public class ServiceMain extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        String string = "onCreate started";
+        Log.v(TAG, string);
         if (!loaded) {
+            string = "onCreate is loading";
+            Log.v(TAG, string);
+            setUpBroadCastReceivers();
            // setUpExceptionSaver();
            // logLastThrownException();
             loadSaveFile();
+            string = "onCreate done loading";
+            Log.v(TAG, string);
+        } else {
+            string = "onCreate already loaded";
+            Log.v(TAG, string);
         }
+        string = "onCreate ended";
+        Log.v(TAG, string);
+    }
+
+    private void setUpBroadCastReceivers() {
+        String string = "Setting up Broadcast receivers for notification buttons";
+        Log.v(TAG, string);
+        IntentFilter filterNext = new IntentFilter();
+        filterNext.addAction(getResources().getString(R.string.broadcast_receiver_action_next));
+        filterNext.addCategory(Intent.CATEGORY_DEFAULT);
+        registerReceiver(broadcastReceiverNotificationForServiceMainButtons, filterNext);
+
+        IntentFilter filterPrevious = new IntentFilter();
+        filterPrevious.addAction(getResources().getString(R.string.broadcast_receiver_action_previous));
+        filterPrevious.addCategory(Intent.CATEGORY_DEFAULT);
+        registerReceiver(broadcastReceiverNotificationForServiceMainButtons, filterPrevious);
+
+        IntentFilter filterPlayPause = new IntentFilter();
+        filterPlayPause.addAction(getResources().getString(R.string.broadcast_receiver_action_play_pause));
+        filterPlayPause.addCategory(Intent.CATEGORY_DEFAULT);
+        registerReceiver(broadcastReceiverNotificationForServiceMainButtons, filterPlayPause);
+        string = "Done setting up Broadcast receivers for notification buttons";
+        Log.v(TAG, string);
     }
 
     private void setUpExceptionSaver() {
@@ -172,6 +222,8 @@ public class ServiceMain extends Service {
     }
 
     private void loadSaveFile() {
+        String string = "Loading the save file";
+        Log.v(TAG, string);
         File file = new File(getBaseContext().getFilesDir(), FILE_SAVE);
         if (file.exists()) {
             try (FileInputStream fileInputStream = getApplicationContext().openFileInput(FILE_SAVE);
@@ -185,9 +237,13 @@ public class ServiceMain extends Service {
                 }
             } catch (ClassNotFoundException | IOException e) {
                 e.printStackTrace();
+                string = "Error encountered while loading the save file";
+                Log.v(TAG, string);
             }
         }
         loaded = true;
+        string = "Save file loaded";
+        Log.v(TAG, string);
     }
 
     // endregion onCreate
@@ -196,18 +252,31 @@ public class ServiceMain extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        String string = "onStartCommand started";
+        Log.v(TAG, string);
         if (!serviceStarted) {
+            string = "onStartCommand setting up service";
+            Log.v(TAG, string);
             Toast.makeText(getApplicationContext(), "PinkyPlayer starting", Toast.LENGTH_SHORT).show();
             setUpNotificationBuilder();
             setUpBroadCasts();
             notification = builder.build();
             startForeground(CHANNEL_ID.hashCode(), notification);
+            string = "onStartCommand done setting up service";
+            Log.v(TAG, string);
+        } else {
+            string = "onStartCommandalready set up service";
+            Log.v(TAG, string);
         }
         serviceStarted = true;
+        string = "onStartCommand ended";
+        Log.v(TAG, string);
         return START_STICKY;
     }
 
     private void setUpNotificationBuilder() {
+        String string = "Setting up notification builder";
+        Log.v(TAG, string);
         builder = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_ID)
                 .setSmallIcon(R.drawable.music_note_black_48dp)
                 .setContentTitle(CHANNEL_ID)
@@ -235,9 +304,13 @@ public class ServiceMain extends Service {
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
+        string = "Done setting up notification builder";
+        Log.v(TAG, string);
     }
 
     public void updateNotification() {
+        String string = "Updating the notification";
+        Log.v(TAG, string);
         if (currentSong != null) {
             remoteViewNotificationLayout.setTextViewText(R.id.textViewNotificationSongPaneSongName, currentSong.title);
         } else {
@@ -248,9 +321,13 @@ public class ServiceMain extends Service {
         builder.setContent(remoteViewNotificationLayout);
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(CHANNEL_ID.hashCode(), builder.build());
+        string = "Done updating the notification";
+        Log.v(TAG, string);
     }
 
     private void setUpBroadCasts() {
+        String string = "Setting up broadcasts";
+        Log.v(TAG, string);
         Intent intentNext = new Intent(getResources().getString(R.string.broadcast_receiver_action_next));
         intentNext.addCategory(Intent.CATEGORY_DEFAULT);
         PendingIntent pendingIntentNext = PendingIntent.getBroadcast(
@@ -271,6 +348,8 @@ public class ServiceMain extends Service {
                 getApplicationContext(), 0, intentPrev, PendingIntent.FLAG_UPDATE_CURRENT);
         remoteViewNotificationLayout.setOnClickPendingIntent(
                 R.id.imageButtonNotificationSongPanePrev, pendingIntentPrev);
+        string = "Done setting up broadcasts";
+        Log.v(TAG, string);
     }
 
     // endregion onStartCommand
@@ -308,9 +387,12 @@ public class ServiceMain extends Service {
         }
         releaseMediaPlayers();
         stopSelf();
+        unregisterReceiver(broadcastReceiverNotificationForServiceMainButtons);
     }
 
     public void releaseMediaPlayers() {
+        String string = "Releasing MediaPlayers";
+        Log.v(TAG, string);
         synchronized (this) {
             Iterator<MediaPlayerWURI> iterator = songsMap.values().iterator();
             MediaPlayerWURI mediaPlayerWURI;
@@ -320,9 +402,13 @@ public class ServiceMain extends Service {
                 iterator.remove();
             }
         }
+        string = "Done releasing MediaPlayers";
+        Log.v(TAG, string);
     }
 
     void getAudioFiles() {
+        String string = "Getting audio files";
+        Log.v(TAG, string);
         String[] projection = new String[]{
                 MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DISPLAY_NAME, MediaStore.Audio.Media.IS_MUSIC,
                 MediaStore.Audio.Media.ARTIST, MediaStore.Audio.Media.TITLE, MediaStore.Images.Media.DATA
@@ -337,10 +423,8 @@ public class ServiceMain extends Service {
                 if (!uriMap.isEmpty() && loaded) {
                     if (masterPlaylist != null) {
                         // Add new songs to the masterPlaylist
-                        AudioURI audioURIFromURIMap;
-                        for (int i = 0; i < uriMap.size(); i++) {
-                            audioURIFromURIMap = uriMap.get(i);
-                            if(audioURIFromURIMap != null) {
+                        for (AudioURI audioURIFromURIMap : uriMap.values()) {
+                            if (audioURIFromURIMap != null) {
                                 if (!masterPlaylist.getProbFun().getProbMap().containsKey(audioURIFromURIMap)) {
                                     masterPlaylist.getProbFun().add(audioURIFromURIMap);
                                 }
@@ -356,7 +440,7 @@ public class ServiceMain extends Service {
                         }
                     } else {
                         masterPlaylist = new RandomPlaylist(
-                                (List<AudioURI>) uriMap.values(), MAX_PERCENT, MASTER_PLAYLIST_NAME);
+                                new ArrayList<>(uriMap.values()), MAX_PERCENT, MASTER_PLAYLIST_NAME);
                     }
                     currentPlaylist = masterPlaylist;
                     songQueueIterator = songQueue.listIterator();
@@ -364,9 +448,13 @@ public class ServiceMain extends Service {
             }
         }
         audioFilesLoaded = true;
+        string = "Done getting audio files";
+        Log.v(TAG, string);
     }
 
     private List<Uri> getURIs(Cursor cursor) {
+        String string = "Getting uris";
+        Log.v(TAG, string);
         ArrayList<Uri> newURIs = new ArrayList<>();
         int idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
         int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
@@ -386,40 +474,51 @@ public class ServiceMain extends Service {
             }
             newURIs.add(uri);
         }
+        string = "Done getting uris";
+        Log.v(TAG, string);
         return newURIs;
     }
 
     // region mediaControls
 
     public void pauseOrPlay() {
-        Log.v(TAG, "pauseOrPlay");
+        Log.v(TAG, "pauseOrPlay started");
         MediaPlayerWURI mediaPlayerWURI = songsMap.get(currentSong.getUri());
         if (mediaPlayerWURI != null) {
             if (mediaPlayerWURI.isPrepared && mediaPlayerWURI.isPlaying()) {
                 mediaPlayerWURI.pause();
                 isPlaying = false;
             } else {
-                play(mediaPlayerWURI);
-            }
+                if (haveAudioFocus) {
+                    mediaPlayerWURI.shouldStart(true);
+                    isPlaying = true;
+                } else {
+                    if (requestAudioFocus()) {
+                        mediaPlayerWURI.shouldStart(true);
+                        isPlaying = true;
+                    }
+                }            }
         }
+        Log.v(TAG, "pauseOrPlay ended");
     }
 
     void playNext() {
-        Log.v(TAG, "playNext");
+        Log.v(TAG, "playNext started");
         if (currentSong != null) {
             currentPlaylist.getProbFun().bad(getCurrentSong(), PERCENT_CHANGE);
         }
-        stopAndPreparePrevious();
         if (songQueueIterator.hasNext()) {
+            stopAndPreparePrevious();
             playNextInQueue();
         } else {
             addToQueueAndPlay(currentPlaylist.getProbFun().fun(random));
         }
         saveFile();
+        Log.v(TAG, "playNext ended");
     }
 
     public void playPrevious() {
-        Log.v(TAG, "playPrevious");
+        Log.v(TAG, "playPrevious started");
         stopAndPreparePrevious();
         Uri uri = null;
         if (songQueueIterator.hasPrevious()) {
@@ -436,10 +535,11 @@ public class ServiceMain extends Service {
                 songQueueIterator.next();
             }
         }
+        Log.v(TAG, "playPrevious ended");
     }
 
     void addToQueueAndPlay(AudioURI audioURI) {
-        Log.v(TAG, "addToQueueAndPlay");
+        Log.v(TAG, "addToQueueAndPlay started");
         stopAndPreparePrevious();
         MediaPlayerWURI mediaPlayerWURI = songsMap.get(audioURI.getUri());
         if (mediaPlayerWURI == null) {
@@ -451,28 +551,33 @@ public class ServiceMain extends Service {
         songQueue.add(mediaPlayerWURI.audioURI.getUri());
         songQueueIterator = songQueue.listIterator(songQueue.lastIndexOf(mediaPlayerWURI.audioURI.getUri()));
         songQueueIterator.next();
+        Log.v(TAG, "addToQueueAndPlay ended");
     }
 
     private void stopAndPreparePrevious() {
-        Log.v(TAG, "stopPreviousAndPrepare");
+        Log.v(TAG, "stopPreviousAndPrepare started");
         if (songQueueIterator.hasPrevious()) {
             final MediaPlayerWURI mediaPlayerWURI = songsMap.get(songQueueIterator.previous());
             if (mediaPlayerWURI != null) {
                 if (mediaPlayerWURI.isPrepared && mediaPlayerWURI.isPlaying()) {
                     mediaPlayerWURI.stop();
                     mediaPlayerWURI.prepareAsync();
-                    isPlaying = false;
                 }
+            } else {
+                releaseMediaPlayers();
             }
+            isPlaying = false;
             songQueueIterator.next();
         }
+        Log.v(TAG, "stopPreviousAndPrepare ended");
     }
 
     private MediaPlayerWURI makeMediaPlayerWURIAndPlay(AudioURI audioURI) {
-        Log.v(TAG, "makeMediaPlayerWURI");
+        Log.v(TAG, "makeMediaPlayerWURIAndPlay started");
         MediaPlayerWURI mediaPlayerWURI = new CreateMediaPlayerWURIThread(this, audioURI).call();
         songsMap.put(mediaPlayerWURI.audioURI.getUri(), mediaPlayerWURI);
         play(mediaPlayerWURI);
+        Log.v(TAG, "makeMediaPlayerWURIAndPlay ended");
         return mediaPlayerWURI;
     }
 
@@ -489,16 +594,19 @@ public class ServiceMain extends Service {
 
         @Override
         public MediaPlayerWURI call() {
+            Log.v(TAG, "makeMediaPlayerWURI being made");
             MediaPlayerWURI mediaPlayerWURI = new MediaPlayerWURI(
                     serviceMain, MediaPlayer.create(getApplicationContext(), audioURI.getUri()), audioURI);
             mediaPlayerWURI.setOnCompletionListener(null);
             mediaPlayerWURI.setOnCompletionListener(onCompletionListener);
+            Log.v(TAG, "makeMediaPlayerWURI made");
             return mediaPlayerWURI;
         }
 
     }
 
     private boolean requestAudioFocus() {
+        Log.v(TAG, "Requesting audio focus");
         if (haveAudioFocus) {
             return true;
         }
@@ -509,30 +617,38 @@ public class ServiceMain extends Service {
 
             }
         }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-        if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-            haveAudioFocus = true;
-        } else {
-            haveAudioFocus = false;
-        }
+        haveAudioFocus = result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
+        Log.v(TAG, "Done requesting audio focus");
         return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
     }
 
     private void playNextInQueue() {
-        MediaPlayerWURI mediaPlayerWURI = songsMap.get(songQueueIterator.next());
+        Log.v(TAG, "playNextInQueue started");
+        Uri uri = songQueueIterator.next();
+        MediaPlayerWURI mediaPlayerWURI = songsMap.get(uri);
         if (mediaPlayerWURI != null) {
             play(mediaPlayerWURI);
+        } else{
+            makeMediaPlayerWURIAndPlay(uriMap.get(uri));
         }
+        Log.v(TAG, "playNextInQueue ended");
     }
 
     private void playPrevousInQueue(){
-        MediaPlayerWURI mediaPlayerWURI = songsMap.get(songQueueIterator.previous());
+        Log.v(TAG, "playPreviousInQueue started");
+        Uri uri = songQueueIterator.previous();
+        MediaPlayerWURI mediaPlayerWURI = songsMap.get(uri);
         if (mediaPlayerWURI != null) {
             play(mediaPlayerWURI);
+        } else{
+            makeMediaPlayerWURIAndPlay(uriMap.get(uri));
         }
         songQueueIterator.next();
+        Log.v(TAG, "playPreviousInQueue ended");
     }
 
     private void play(MediaPlayerWURI mediaPlayerWURI) {
+        Log.v(TAG, "play started");
         if (haveAudioFocus) {
             mediaPlayerWURI.shouldStart(true);
             isPlaying = true;
@@ -542,17 +658,21 @@ public class ServiceMain extends Service {
                 isPlaying = true;
             }
         }
+        updateNotification();
         currentSong = mediaPlayerWURI.audioURI;
+        Log.v(TAG, "play ended");
     }
 
     // endregion mediaControls
 
     void saveFile() {
+        Log.v(TAG, "saveFile started");
         File file = new File(getBaseContext().getFilesDir(), FILE_SAVE);
         //noinspection ResultOfMethodCallIgnored
         file.delete();
         try (FileOutputStream fos = getApplicationContext().openFileOutput("playlists", Context.MODE_PRIVATE);
              ObjectOutputStream objectOutputStream = new ObjectOutputStream(fos)) {
+            Log.v(TAG, "Creating save file");
             objectOutputStream.writeDouble(MAX_PERCENT);
             objectOutputStream.writeDouble(PERCENT_CHANGE);
             objectOutputStream.writeObject(masterPlaylist);
@@ -561,9 +681,12 @@ public class ServiceMain extends Service {
                 objectOutputStream.writeObject(randomPlaylist);
             }
             objectOutputStream.flush();
+            Log.v(TAG, "Save file created");
         } catch (IOException e) {
             e.printStackTrace();
+            Log.v(TAG, "Problem whuile trying to save file");
         }
+        Log.v(TAG, "saveFile ended");
     }
 
 }

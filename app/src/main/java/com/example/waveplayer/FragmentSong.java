@@ -49,7 +49,6 @@ public class FragmentSong extends Fragment {
             activityMain.showFab(false);
             if(activityMain.serviceMain!=null) {
                 activityMain.updateSongUI();
-                activityMain.serviceMain.updateNotification();
                 setUpButtons(view);
             }
         }

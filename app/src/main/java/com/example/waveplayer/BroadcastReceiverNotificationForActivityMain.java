@@ -8,49 +8,22 @@ public class BroadcastReceiverNotificationForActivityMain extends BroadcastRecei
 
     ActivityMain activityMain;
 
-    BroadcastReceiverNotificationForActivityMain(ActivityMain activityMain){
+    BroadcastReceiverNotificationForActivityMain(ActivityMain activityMain) {
         this.activityMain = activityMain;
     }
 
     public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (action != null && activityMain != null) {
-                switch (action) {
-                    case "Next":
-                            activityMain.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    activityMain.playNext();
-                                    activityMain.updateSongPaneUI();
-                                    activityMain.updateSongUI();
-                                }
-                            });
-                        break;
-                    case "PlayPause":
-                        if(activityMain.serviceMain.currentSong != null) {
-                            activityMain.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    activityMain.pauseOrPlay();
-                                    activityMain.updateSongPaneUI();
-                                    activityMain.updateSongUI();
-                                }
-                            });
-                        }
-                        break;
-                    case "Previous":
-                        if(activityMain.serviceMain.currentSong != null) {
-                            activityMain.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    activityMain.playPrevious();
-                                    activityMain.updateSongPaneUI();
-                                    activityMain.updateSongUI();
-                                }
-                            });
-                        }
-                }
+        String action = intent.getAction();
+        if (action != null && activityMain != null) {
+            switch (action) {
+                case "Next":
+                case "PlayPause":
+                case "Previous":
+                    activityMain.updateSongPaneUI();
+                    activityMain.updateSongUI();
+                    break;
             }
+        }
     }
 
 }

@@ -38,6 +38,7 @@ public final class AudioURI implements Comparable<AudioURI>, Serializable {
     private boolean isSelected = false;
 
     public AudioURI(Uri uri, String data, String displayName, String artist, String title, long id) {
+        this.uri = uri;
         this.displayName = displayName;
         this.artist = artist;
         this.title = title;

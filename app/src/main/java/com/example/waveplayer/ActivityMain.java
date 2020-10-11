@@ -92,35 +92,46 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     private void setUpActionBar() {
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        toolbar.setTitleTextColor(getResources().getColor(R.color.colorOnPrimary));
-        Drawable overflowIcon = toolbar.getOverflowIcon();
-        if (overflowIcon != null) {
-            overflowIcon.setColorFilter(getResources().getColor(R.color.colorOnPrimary), PorterDuff.Mode.SRC_ATOP);
-        }
-        setSupportActionBar(toolbar);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toolbar toolbar = findViewById(R.id.toolbar);
+                toolbar.setTitleTextColor(getResources().getColor(R.color.colorOnPrimary));
+                Drawable overflowIcon = toolbar.getOverflowIcon();
+                if (overflowIcon != null) {
+                    overflowIcon.setColorFilter(getResources().getColor(R.color.colorOnPrimary), PorterDuff.Mode.SRC_ATOP);
+                }
+                setSupportActionBar(toolbar);
+            }
+        });
         centerActionBarTitle();
     }
 
     private void centerActionBarTitle() {
-        ArrayList<View> textViews = new ArrayList<>();
-        getWindow().getDecorView().findViewsWithText(textViews, getTitle(), View.FIND_VIEWS_WITH_TEXT);
-        if (!textViews.isEmpty()) {
-            AppCompatTextView appCompatTextView = null;
-            for (View v : textViews) {
-                if (v.getParent() instanceof Toolbar) {
-                    appCompatTextView = (AppCompatTextView) v;
-                    break;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ArrayList<View> textViews = new ArrayList<>();
+                getWindow().getDecorView().findViewsWithText(textViews, getTitle(), View.FIND_VIEWS_WITH_TEXT);
+                if (!textViews.isEmpty()) {
+                    AppCompatTextView appCompatTextView = null;
+                    for (View v : textViews) {
+                        if (v.getParent() instanceof Toolbar) {
+                            appCompatTextView = (AppCompatTextView) v;
+                            break;
+                        }
+                    }
+                    if (appCompatTextView != null) {
+                        ViewGroup.LayoutParams params = appCompatTextView.getLayoutParams();
+                        params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                        appCompatTextView.setLayoutParams(params);
+                        appCompatTextView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                    }
                 }
             }
-            if (appCompatTextView != null) {
-                ViewGroup.LayoutParams params = appCompatTextView.getLayoutParams();
-                params.width = ViewGroup.LayoutParams.MATCH_PARENT;
-                appCompatTextView.setLayoutParams(params);
-                appCompatTextView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-            }
-        }
+        });
     }
+
 
     private void startAndBindServiceMain() {
         Intent intentServiceMain = new Intent(ActivityMain.this, ServiceMain.class);
@@ -138,12 +149,12 @@ public class ActivityMain extends AppCompatActivity {
                     != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
             } else {
-                if(!serviceMain.audioFilesLoaded) {
+                if (!serviceMain.audioFilesLoaded) {
                     serviceMain.getAudioFiles();
                 }
             }
         } else {
-            if(!serviceMain.audioFilesLoaded) {
+            if (!serviceMain.audioFilesLoaded) {
                 serviceMain.getAudioFiles();
             }
         }
@@ -175,82 +186,102 @@ public class ActivityMain extends AppCompatActivity {
                     new NavController.OnDestinationChangedListener() {
                         @Override
                         public void onDestinationChanged(@NonNull NavController controller,
-                                                         @NonNull NavDestination destination,
+                                                         @NonNull final NavDestination destination,
                                                          @Nullable Bundle arguments) {
                             if (destination.getId() != R.id.fragmentSong && serviceMain.isPlaying()) {
                                 showSongPane();
                             } else {
                                 hideSongPane();
                             }
-                            Toolbar toolbar = findViewById(R.id.toolbar);
-                            Menu menu = toolbar.getMenu();
-                            if (menu.size() > 0) {
-                                if (destination.getId() == R.id.fragmentPlaylist || destination.getId() == R.id.fragmentSongs) {
-                                    menu.getItem(MENU_ACTION_RESET_PROBS_INDEX).setVisible(true);
-                                } else {
-                                    menu.getItem(MENU_ACTION_RESET_PROBS_INDEX).setVisible(false);
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toolbar toolbar = findViewById(R.id.toolbar);
+                                    Menu menu = toolbar.getMenu();
+                                    if (menu.size() > 0) {
+                                        if (destination.getId() == R.id.fragmentPlaylist || destination.getId() == R.id.fragmentSongs) {
+                                            menu.getItem(MENU_ACTION_RESET_PROBS_INDEX).setVisible(true);
+                                        } else {
+                                            menu.getItem(MENU_ACTION_RESET_PROBS_INDEX).setVisible(false);
+                                        }
+                                    }
                                 }
-                            }
+                            });
                         }
                     });
         }
     }
 
     private void hideSongPane() {
-        findViewById(R.id.fragmentSongPane).setVisibility(View.INVISIBLE);
-        ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
-        ConstraintSet constraintSet = new ConstraintSet();
-        constraintSet.clone(constraintLayout);
-        constraintSet.connect(R.id.fab, ConstraintSet.BOTTOM, R.id.constraintMain, ConstraintSet.BOTTOM);
-        constraintSet.applyTo(constraintLayout);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                findViewById(R.id.fragmentSongPane).setVisibility(View.INVISIBLE);
+                ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
+                ConstraintSet constraintSet = new ConstraintSet();
+                constraintSet.clone(constraintLayout);
+                constraintSet.connect(R.id.fab, ConstraintSet.BOTTOM, R.id.constraintMain, ConstraintSet.BOTTOM);
+                constraintSet.applyTo(constraintLayout);
+            }
+        });
     }
 
     private void showSongPane() {
-        findViewById(R.id.fragmentSongPane).setVisibility(View.VISIBLE);
-        ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
-        ConstraintSet constraintSet = new ConstraintSet();
-        constraintSet.clone(constraintLayout);
-        constraintSet.connect(R.id.fab, ConstraintSet.BOTTOM, R.id.fragmentSongPane, ConstraintSet.TOP);
-        constraintSet.applyTo(constraintLayout);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                findViewById(R.id.fragmentSongPane).setVisibility(View.VISIBLE);
+                ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
+                ConstraintSet constraintSet = new ConstraintSet();
+                constraintSet.clone(constraintLayout);
+                constraintSet.connect(R.id.fab, ConstraintSet.BOTTOM, R.id.fragmentSongPane, ConstraintSet.TOP);
+                constraintSet.applyTo(constraintLayout);
+            }
+        });
     }
 
     private void linkSongPaneButtons() {
-        findViewById(R.id.imageButtonSongPaneNext).setOnClickListener(new View.OnClickListener() {
+        runOnUiThread(new Runnable() {
             @Override
-            public void onClick(View view) {
-                playNext();
-            }
-        });
-        findViewById(R.id.imageButtonSongPanePlayPause).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                pauseOrPlay();
-            }
-        });
-        findViewById(R.id.imageButtonSongPanePrev).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                playPrevious();
-            }
-        });
-        findViewById(R.id.textViewSongPaneSongName).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
-                if (fragment != null) {
-                    NavHostFragment.findNavController(fragment).navigate(R.id.fragmentSong);
-                }
-            }
-        });
-        findViewById(R.id.imageViewSongPaneSongArt).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
-                if (fragment != null) {
-                    NavHostFragment.findNavController(fragment).navigate(R.id.fragmentSong);
-                }
+            public void run() {
+                findViewById(R.id.imageButtonSongPaneNext).setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        playNext();
+                    }
+                });
+                findViewById(R.id.imageButtonSongPanePlayPause).setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        pauseOrPlay();
+                    }
+                });
+                findViewById(R.id.imageButtonSongPanePrev).setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        playPrevious();
+                    }
+                });
+                findViewById(R.id.textViewSongPaneSongName).setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        FragmentManager fragmentManager = getSupportFragmentManager();
+                        Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
+                        if (fragment != null) {
+                            NavHostFragment.findNavController(fragment).navigate(R.id.fragmentSong);
+                        }
+                    }
+                });
+                findViewById(R.id.imageViewSongPaneSongArt).setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        FragmentManager fragmentManager = getSupportFragmentManager();
+                        Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
+                        if (fragment != null) {
+                            NavHostFragment.findNavController(fragment).navigate(R.id.fragmentSong);
+                        }
+                    }
+                });
             }
         });
     }
@@ -282,7 +313,7 @@ public class ActivityMain extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        if(serviceMain != null) {
+        if (serviceMain != null) {
             serviceMain.saveFile();
         }
     }
@@ -335,7 +366,8 @@ public class ActivityMain extends AppCompatActivity {
         });
     }
 
-    public void setFabOnClickListener(final View.OnClickListener onClickListener) {
+    public void setFabOnClickListener(
+            final View.OnClickListener onClickListener) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -435,20 +467,13 @@ public class ActivityMain extends AppCompatActivity {
                         @SuppressWarnings("SuspiciousNameCombination") int songArtWidth = songArtHeight;
                         Bitmap bitmapSongArt = serviceMain.currentSong.getThumbnail(getApplicationContext());
                         if (bitmapSongArt != null) {
-                            Bitmap bitmapSongArtResized = FragmentSongPane.getResizedBitmap(bitmapSongArt, songArtWidth, songArtHeight);
+                            Bitmap bitmapSongArtResized = FragmentSongPane.getResizedBitmap(
+                                    bitmapSongArt, songArtWidth, songArtHeight);
                             imageViewSongPaneSongArt.setImageBitmap(bitmapSongArtResized);
                         } else {
-                            songArtHeight = imageViewSongPaneSongArt.getMeasuredHeight();
-                            if (songArtHeight != 0) {
-                                serviceMain.songPaneArtHeight = songArtHeight;
-                            } else {
-                                songArtHeight = serviceMain.songPaneArtHeight;
-                            }
-                            //noinspection SuspiciousNameCombination
-                            songArtWidth = songArtHeight;
                             Drawable drawableSongArt = ResourcesCompat.getDrawable(
                                     getResources(), R.drawable.music_note_black_48dp, null);
-                            if(drawableSongArt != null) {
+                            if (drawableSongArt != null) {
                                 drawableSongArt.setBounds(0, 0, songArtWidth, songArtHeight);
                                 bitmapSongArt = Bitmap.createBitmap(songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888);
                                 Canvas canvas = new Canvas(bitmapSongArt);
@@ -470,21 +495,20 @@ public class ActivityMain extends AppCompatActivity {
 
     public void addToQueueAndPlay(AudioURI audioURI) {
         serviceMain.addToQueueAndPlay(audioURI);
-        serviceMain.updateNotification();
         updateSongUI();
         updateSongPaneUI();
     }
 
     public void playNext() {
         serviceMain.playNext();
-        serviceMain.updateNotification();
+        updatePlayButtons();
         updateSongUI();
         updateSongPaneUI();
     }
 
     public void playPrevious() {
         serviceMain.playPrevious();
-        serviceMain.updateNotification();
+        updatePlayButtons();
         updateSongUI();
         updateSongPaneUI();
     }
@@ -496,28 +520,32 @@ public class ActivityMain extends AppCompatActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                final ImageButton imageButtonPlayPause = findViewById(R.id.imageButtonPlayPause);
-                final ImageButton imageButtonSongPanePlayPause = findViewById(R.id.imageButtonSongPanePlayPause);
-                if (imageButtonPlayPause != null) {
-                    if (serviceMain.isPlaying()) {
-                        imageButtonPlayPause.setImageDrawable(ResourcesCompat.getDrawable(
-                                getResources(), R.drawable.play_arrow_black_24dp, null));
-                    } else {
-                        imageButtonPlayPause.setImageDrawable(ResourcesCompat.getDrawable(
-                                getResources(), R.drawable.pause_black_24dp, null));
-                    }
-                }
-                if (imageButtonSongPanePlayPause != null) {
-                    if (serviceMain.isPlaying()) {
-                        imageButtonSongPanePlayPause.setImageDrawable(ResourcesCompat.getDrawable(
-                                getResources(), R.drawable.play_arrow_black_24dp, null));
-                    } else {
-                        imageButtonSongPanePlayPause.setImageDrawable(ResourcesCompat.getDrawable(
-                                getResources(), R.drawable.pause_black_24dp, null));
-                    }
-                }
+                updatePlayButtons();
             }
         });
+    }
+
+    private void updatePlayButtons() {
+        final ImageButton imageButtonPlayPause = findViewById(R.id.imageButtonPlayPause);
+        final ImageButton imageButtonSongPanePlayPause = findViewById(R.id.imageButtonSongPanePlayPause);
+        if (imageButtonPlayPause != null) {
+            if (serviceMain.isPlaying()) {
+                imageButtonPlayPause.setImageDrawable(ResourcesCompat.getDrawable(
+                        getResources(), R.drawable.pause_black_24dp, null));
+            } else {
+                imageButtonPlayPause.setImageDrawable(ResourcesCompat.getDrawable(
+                        getResources(), R.drawable.play_arrow_black_24dp, null));
+            }
+        }
+        if (imageButtonSongPanePlayPause != null) {
+            if (serviceMain.isPlaying()) {
+                imageButtonSongPanePlayPause.setImageDrawable(ResourcesCompat.getDrawable(
+                        getResources(), R.drawable.pause_black_24dp, null));
+            } else {
+                imageButtonSongPanePlayPause.setImageDrawable(ResourcesCompat.getDrawable(
+                        getResources(), R.drawable.play_arrow_black_24dp, null));
+            }
+        }
     }
 
     // endregion playbackControls
@@ -532,7 +560,7 @@ public class ActivityMain extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_reset_probs:
-                serviceMain.userPickedPlaylist.getProbFun().clearProbs();
+                serviceMain.currentPlaylist.getProbFun().clearProbs();
                 return true;
         }
         return super.onOptionsItemSelected(item);

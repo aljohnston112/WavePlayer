@@ -19,9 +19,6 @@ public class BroadcastReceiverOnCompletion extends BroadcastReceiver {
             if (activityMain != null) {
                 activityMain.updateSongUI();
                 activityMain.updateSongPaneUI();
-                if (activityMain.serviceMain != null) {
-                    activityMain.serviceMain.updateNotification();
-                }
             }
         }
     }
