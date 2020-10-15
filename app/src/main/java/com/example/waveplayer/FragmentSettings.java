@@ -31,15 +31,8 @@ public class FragmentSettings extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         activityMain = ((ActivityMain) getActivity());
-        if(activityMain != null) {
-            activityMain.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    updateMainContent();
-                    loadSettings();
-                }
-            });
-        }
+        updateMainContent();
+        loadSettings();
     }
 
     private void updateMainContent() {
@@ -56,9 +49,13 @@ public class FragmentSettings extends Fragment {
             @Override
             public void onClick(View view) {
                 int nSongs = getNSongs();
-                if(nSongs == -1){return;}
+                if (nSongs == -1) {
+                    return;
+                }
                 int percentChange = getPercentChange();
-                if(percentChange == -1){return;}
+                if (percentChange == -1) {
+                    return;
+                }
                 updateSettings(nSongs, percentChange);
                 NavController navController = NavHostFragment.findNavController(FragmentSettings.this);
                 navController.popBackStack();
@@ -68,7 +65,9 @@ public class FragmentSettings extends Fragment {
                 int nSongs = -1;
                 try {
                     nSongs = Integer.parseInt(editTextNSongs.getText().toString());
-                } catch (NumberFormatException e) {e.printStackTrace();}
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                }
                 if (nSongs < 1) {
                     Toast toast = Toast.makeText(getContext(), R.string.max_percent_error, Toast.LENGTH_LONG);
                     toast.show();
@@ -80,7 +79,9 @@ public class FragmentSettings extends Fragment {
                 int percentChange = -1;
                 try {
                     percentChange = Integer.parseInt(editTextPercentChange.getText().toString());
-                } catch (NumberFormatException e) {e.printStackTrace();}
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                }
                 if (percentChange < 1 || percentChange > 100) {
                     Toast toast = Toast.makeText(getContext(), R.string.percent_change_error, Toast.LENGTH_LONG);
                     toast.show();
@@ -89,7 +90,7 @@ public class FragmentSettings extends Fragment {
             }
 
             private void updateSettings(int nSongs, int percentChange) {
-                ServiceMain.MAX_PERCENT = (1.0 / (double)nSongs);
+                ServiceMain.MAX_PERCENT = (1.0 / (double) nSongs);
                 for (RandomPlaylist randomPlaylist : activityMain.serviceMain.playlists) {
                     randomPlaylist.setMaxPercent(ServiceMain.MAX_PERCENT);
                 }
@@ -103,8 +104,8 @@ public class FragmentSettings extends Fragment {
     private void loadSettings() {
         EditText editTextNSongs = activityMain.findViewById(R.id.editTextNSongs);
         EditText editTextPercentChange = activityMain.findViewById(R.id.editTextPercentChange);
-        editTextNSongs.setText(String.valueOf((int)Math.round(1.0/ServiceMain.MAX_PERCENT)));
-        editTextPercentChange.setText(String.valueOf((int)Math.round(ServiceMain.PERCENT_CHANGE*100.0)));
+        editTextNSongs.setText(String.valueOf((int) Math.round(1.0 / ServiceMain.MAX_PERCENT)));
+        editTextPercentChange.setText(String.valueOf((int) Math.round(ServiceMain.PERCENT_CHANGE * 100.0)));
     }
 
     @Override

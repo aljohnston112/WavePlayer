@@ -106,7 +106,7 @@ public class ServiceMain extends Service {
                     " onCompletion started";
             Log.v(TAG, string);
             scheduledExecutorService.shutdown();
-            if(fragmentSongVisible) {
+            if (fragmentSongVisible) {
                 scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
             }
             if (!songQueueIterator.hasNext()) {
@@ -159,8 +159,8 @@ public class ServiceMain extends Service {
             string = "onCreate is loading";
             Log.v(TAG, string);
             setUpBroadCastReceivers();
-           // setUpExceptionSaver();
-           // logLastThrownException();
+            // setUpExceptionSaver();
+            // logLastThrownException();
             loadSaveFile();
             string = "onCreate done loading";
             Log.v(TAG, string);
@@ -482,7 +482,7 @@ public class ServiceMain extends Service {
             String artist = cursor.getString(artistCol);
             String data = cursor.getString(dataCol);
             Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
-            if(!uriMap.containsKey(uri)) {
+            if (!uriMap.containsKey(uri)) {
                 AudioURI audioURI = new AudioURI(uri, data, displayName, artist, title, id);
                 uriMap.put(uri, audioURI);
             }
@@ -528,12 +528,7 @@ public class ServiceMain extends Service {
         } else {
             addToQueueAndPlay(currentPlaylist.getProbFun().fun(random));
         }
-        executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                saveFile();
-            }
-        });
+        saveFile();
         Log.v(TAG, "playNext ended");
     }
 
@@ -648,19 +643,19 @@ public class ServiceMain extends Service {
         MediaPlayerWURI mediaPlayerWURI = songsMap.get(uri);
         if (mediaPlayerWURI != null) {
             play(mediaPlayerWURI);
-        } else{
+        } else {
             makeMediaPlayerWURIAndPlay(uriMap.get(uri));
         }
         Log.v(TAG, "playNextInQueue ended");
     }
 
-    private void playPrevousInQueue(){
+    private void playPrevousInQueue() {
         Log.v(TAG, "playPreviousInQueue started");
         Uri uri = songQueueIterator.previous();
         MediaPlayerWURI mediaPlayerWURI = songsMap.get(uri);
         if (mediaPlayerWURI != null) {
             play(mediaPlayerWURI);
-        } else{
+        } else {
             makeMediaPlayerWURIAndPlay(uriMap.get(uri));
         }
         songQueueIterator.next();
@@ -686,27 +681,32 @@ public class ServiceMain extends Service {
     // endregion mediaControls
 
     void saveFile() {
-        Log.v(TAG, "saveFile started");
-        File file = new File(getBaseContext().getFilesDir(), FILE_SAVE);
-        //noinspection ResultOfMethodCallIgnored
-        file.delete();
-        try (FileOutputStream fos = getApplicationContext().openFileOutput("playlists", Context.MODE_PRIVATE);
-             ObjectOutputStream objectOutputStream = new ObjectOutputStream(fos)) {
-            Log.v(TAG, "Creating save file");
-            objectOutputStream.writeDouble(MAX_PERCENT);
-            objectOutputStream.writeDouble(PERCENT_CHANGE);
-            objectOutputStream.writeObject(masterPlaylist);
-            objectOutputStream.writeInt(playlists.size());
-            for (RandomPlaylist randomPlaylist : playlists) {
-                objectOutputStream.writeObject(randomPlaylist);
+        executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                Log.v(TAG, "saveFile started");
+                File file = new File(getBaseContext().getFilesDir(), FILE_SAVE);
+                //noinspection ResultOfMethodCallIgnored
+                file.delete();
+                try (FileOutputStream fos = getApplicationContext().openFileOutput("playlists", Context.MODE_PRIVATE);
+                     ObjectOutputStream objectOutputStream = new ObjectOutputStream(fos)) {
+                    Log.v(TAG, "Creating save file");
+                    objectOutputStream.writeDouble(MAX_PERCENT);
+                    objectOutputStream.writeDouble(PERCENT_CHANGE);
+                    objectOutputStream.writeObject(masterPlaylist);
+                    objectOutputStream.writeInt(playlists.size());
+                    for (RandomPlaylist randomPlaylist : playlists) {
+                        objectOutputStream.writeObject(randomPlaylist);
+                    }
+                    objectOutputStream.flush();
+                    Log.v(TAG, "Save file created");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Log.v(TAG, "Problem whuile trying to save file");
+                }
+                Log.v(TAG, "saveFile ended");
             }
-            objectOutputStream.flush();
-            Log.v(TAG, "Save file created");
-        } catch (IOException e) {
-            e.printStackTrace();
-            Log.v(TAG, "Problem whuile trying to save file");
-        }
-        Log.v(TAG, "saveFile ended");
+        });
     }
 
 }

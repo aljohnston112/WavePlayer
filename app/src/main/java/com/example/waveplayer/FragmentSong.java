@@ -4,28 +4,22 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.media.AudioFocusRequest;
-import android.media.AudioManager;
-import android.os.Build;
 import android.os.Bundle;
-
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-
 import android.widget.ImageButton;
-import android.widget.SeekBar;
-import android.widget.VideoView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import androidx.fragment.app.Fragment;
 
 public class FragmentSong extends Fragment {
 
     ActivityMain activityMain;
+
+    BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -42,29 +36,31 @@ public class FragmentSong extends Fragment {
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         activityMain = ((ActivityMain) getActivity());
-        if (activityMain != null) {
+        if(activityMain != null) {
             activityMain.setActionBarTitle(getResources().getString(R.string.now_playing));
             activityMain.showFab(false);
-            if(activityMain.serviceMain!=null) {
-                // TODO Not needed if play updates
-                activityMain.updateSongUI();
-                setUpButtons(view);
-            }
+            activityMain.updateSongUI();
         }
+        setUpButtons(view);
+        setUpBroadcastReceiver(view);
+    }
+
+    private void setUpBroadcastReceiver(final View view) {
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
-        filterComplete.addAction("ServiceConnected");
-        activityMain.registerReceiver(new BroadcastReceiverOnServiceConnected() {
+        filterComplete.addAction(activityMain.getResources().getString(
+                R.string.broadcast_receiver_action_service_connected));
+        broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 notifyServiceConnected(view);
             }
-        }, filterComplete);
+        };
+        activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
     }
 
-    public void notifyServiceConnected(View view){
+    public void notifyServiceConnected(View view) {
         activityMain.updateSongUI();
-        activityMain.serviceMain.updateNotification();
         setUpButtons(view);
     }
 
@@ -73,10 +69,10 @@ public class FragmentSong extends Fragment {
         final ImageButton buttonBad = view.findViewById(R.id.button_thumb_down);
         final ImageButton buttonGood = view.findViewById(R.id.button_thumb_up);
         final ImageButton buttonShuffle = view.findViewById(R.id.imageButtonShuffle);
-        final  ImageButton buttonPrev = view.findViewById(R.id.imageButtonPrev);
+        final ImageButton buttonPrev = view.findViewById(R.id.imageButtonPrev);
         final ImageButton buttonPause = view.findViewById(R.id.imageButtonPlayPause);
         final ImageButton buttonNext = view.findViewById(R.id.imageButtonNext);
-        final  ImageButton buttonLoop = view.findViewById(R.id.imageButtonRepeat);
+        final ImageButton buttonLoop = view.findViewById(R.id.imageButtonRepeat);
         OnClickListenerFragmentSong onClickListenerFragmentSong = new OnClickListenerFragmentSong(activityMain);
         buttonBad.setOnClickListener(onClickListenerFragmentSong);
         buttonGood.setOnClickListener(onClickListenerFragmentSong);
@@ -89,7 +85,7 @@ public class FragmentSong extends Fragment {
         buttonBad.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch(motionEvent.getAction()) {
+                switch (motionEvent.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         buttonBad.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
                         return true;
@@ -105,7 +101,7 @@ public class FragmentSong extends Fragment {
         buttonGood.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch(motionEvent.getAction()) {
+                switch (motionEvent.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         buttonGood.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
                         return true;
@@ -121,7 +117,7 @@ public class FragmentSong extends Fragment {
         buttonShuffle.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch(motionEvent.getAction()) {
+                switch (motionEvent.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         buttonShuffle.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
                         return true;
@@ -137,7 +133,7 @@ public class FragmentSong extends Fragment {
         buttonPrev.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch(motionEvent.getAction()) {
+                switch (motionEvent.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         buttonPrev.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
                         return true;
@@ -153,7 +149,7 @@ public class FragmentSong extends Fragment {
         buttonPause.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch(motionEvent.getAction()) {
+                switch (motionEvent.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         buttonPause.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
                         return true;
@@ -166,11 +162,10 @@ public class FragmentSong extends Fragment {
             }
         });
 
-
         buttonNext.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch(motionEvent.getAction()) {
+                switch (motionEvent.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         buttonNext.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
                         return true;
@@ -187,7 +182,7 @@ public class FragmentSong extends Fragment {
         buttonLoop.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch(motionEvent.getAction()) {
+                switch (motionEvent.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         buttonLoop.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
                         return true;
@@ -205,6 +200,7 @@ public class FragmentSong extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
         activityMain = null;
     }
 

@@ -123,5 +123,4 @@ public class FragmentSongPane extends Fragment {
                 bm, 0, 0, width, height, matrix, false);
     }
 
-
 }

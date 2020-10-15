@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -16,11 +15,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class FragmentSongs extends Fragment {
 
     ActivityMain activityMain;
+
+    BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -37,23 +37,27 @@ public class FragmentSongs extends Fragment {
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         activityMain = ((ActivityMain) getActivity());
-        if(activityMain.serviceMain != null) {
+        if(activityMain != null && activityMain.serviceMain != null) {
             activityMain.serviceMain.userPickedPlaylist = activityMain.serviceMain.masterPlaylist;
         }
         updateMainContent();
-        if(activityMain.serviceMain != null) {
-            setUpRecyclerView(view);
-        }
+        setUpRecyclerView(view);
+        setUpBroadcastReceiver(view);
+    }
+
+    private void setUpBroadcastReceiver(final View view) {
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
-        filterComplete.addAction("ServiceConnected");
-        activityMain.registerReceiver(new BroadcastReceiverOnServiceConnected() {
+        filterComplete.addAction(activityMain.getResources().getString(
+                R.string.broadcast_receiver_action_service_connected));
+        broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                setUpRecyclerView(view);
-                activityMain.updateSongPaneUI();
+                    setUpRecyclerView(view);
+                    activityMain.updateSongPaneUI();
             }
-        }, filterComplete);
+        };
+        activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
     }
 
     private void updateMainContent() {
@@ -62,16 +66,19 @@ public class FragmentSongs extends Fragment {
     }
 
     private void setUpRecyclerView(View view) {
-        RecyclerView recyclerViewSongs = view.findViewById(R.id.recycler_view_song_list);
-        RecyclerViewAdapterSongs recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(
-                this,  new ArrayList<>(activityMain.serviceMain.uriMap.values()));
-        recyclerViewSongs.setLayoutManager(new LinearLayoutManager(recyclerViewSongs.getContext()));
-        recyclerViewSongs.setAdapter(recyclerViewAdapterSongs);
+        if(activityMain.serviceMain != null) {
+            RecyclerView recyclerViewSongs = view.findViewById(R.id.recycler_view_song_list);
+            RecyclerViewAdapterSongs recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(
+                    this, new ArrayList<>(activityMain.serviceMain.uriMap.values()));
+            recyclerViewSongs.setLayoutManager(new LinearLayoutManager(recyclerViewSongs.getContext()));
+            recyclerViewSongs.setAdapter(recyclerViewAdapterSongs);
+        }
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
         activityMain = null;
     }
 

@@ -25,7 +25,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatTextView;
@@ -35,8 +34,6 @@ import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.navigation.NavController;
-import androidx.navigation.NavDestination;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -46,7 +43,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class ActivityMain extends AppCompatActivity {
-
 
     // TODO update fab with exteded FAB
 
@@ -382,56 +378,58 @@ public class ActivityMain extends AppCompatActivity {
 
     public void updateSongUI() {
         Log.v(TAG, "getting ready to update the song UI");
-        if (serviceMain.fragmentSongVisible && serviceMain.currentSong != null) {
-            final int millis = serviceMain.currentSong.getDuration(getApplicationContext());
-            final String stringEndTime = String.format(getResources().getConfiguration().locale,
-                    "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(millis),
-                    TimeUnit.MILLISECONDS.toMinutes(millis) -
-                            TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
-                    TimeUnit.MILLISECONDS.toSeconds(millis) -
-                            TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
-            SeekBar seekBar = findViewById(R.id.seekBar);
-            final TextView textViewCurrent = findViewById(R.id.editTextCurrentTime);
-            seekBar.setMax(millis);
-            seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener(this));
-            serviceMain.scheduledExecutorService.shutdown();
-            serviceMain.scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-            serviceMain.scheduledExecutorService.scheduleAtFixedRate(
-                    new RunnableSeekBarUpdater(
-                            serviceMain.songsMap.get(serviceMain.currentSong.getUri()),
-                            seekBar, textViewCurrent, millis, getResources().getConfiguration().locale),
-                    0L, 1L, TimeUnit.SECONDS);
-            Log.v(TAG, "sending Runnable to update the song UI");
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Log.v(TAG, "updating the song UI");
-                    ImageView imageViewSongArt = findViewById(R.id.image_view_song_art);
-                    if (imageViewSongArt != null) {
-                        if (serviceMain.currentSong.getThumbnail(getApplicationContext()) == null) {
-                            imageViewSongArt.setImageDrawable(ResourcesCompat.getDrawable(
-                                    getResources(), R.drawable.music_note_black_48dp, null));
-                        } else {
-                            imageViewSongArt.setImageBitmap(serviceMain.currentSong.getThumbnail(getApplicationContext()));
+        if(serviceMain != null) {
+            if (serviceMain.fragmentSongVisible && serviceMain.currentSong != null) {
+                final int millis = serviceMain.currentSong.getDuration(getApplicationContext());
+                final String stringEndTime = String.format(getResources().getConfiguration().locale,
+                        "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(millis),
+                        TimeUnit.MILLISECONDS.toMinutes(millis) -
+                                TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
+                        TimeUnit.MILLISECONDS.toSeconds(millis) -
+                                TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
+                SeekBar seekBar = findViewById(R.id.seekBar);
+                final TextView textViewCurrent = findViewById(R.id.editTextCurrentTime);
+                seekBar.setMax(millis);
+                seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener(this));
+                serviceMain.scheduledExecutorService.shutdown();
+                serviceMain.scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+                serviceMain.scheduledExecutorService.scheduleAtFixedRate(
+                        new RunnableSeekBarUpdater(
+                                serviceMain.songsMap.get(serviceMain.currentSong.getUri()),
+                                seekBar, textViewCurrent, millis, getResources().getConfiguration().locale),
+                        0L, 1L, TimeUnit.SECONDS);
+                Log.v(TAG, "sending Runnable to update the song UI");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.v(TAG, "updating the song UI");
+                        ImageView imageViewSongArt = findViewById(R.id.image_view_song_art);
+                        if (imageViewSongArt != null) {
+                            if (serviceMain.currentSong.getThumbnail(getApplicationContext()) == null) {
+                                imageViewSongArt.setImageDrawable(ResourcesCompat.getDrawable(
+                                        getResources(), R.drawable.music_note_black_48dp, null));
+                            } else {
+                                imageViewSongArt.setImageBitmap(serviceMain.currentSong.getThumbnail(getApplicationContext()));
+                            }
                         }
+                        TextView textViewSongName = findViewById(R.id.text_view_song_name);
+                        if (textViewSongName != null) {
+                            textViewSongName.setText(serviceMain.currentSong.title);
+                        }
+                        if (textViewCurrent != null) {
+                            textViewCurrent.setText(R.string.start_time);
+                        }
+                        TextView textViewEnd = findViewById(R.id.editTextEndTime);
+                        if (textViewEnd != null) {
+                            textViewEnd.setText(stringEndTime);
+                        }
+                        Log.v(TAG, "done updating the song UI");
                     }
-                    TextView textViewSongName = findViewById(R.id.text_view_song_name);
-                    if (textViewSongName != null) {
-                        textViewSongName.setText(serviceMain.currentSong.title);
-                    }
-                    if (textViewCurrent != null) {
-                        textViewCurrent.setText(R.string.start_time);
-                    }
-                    TextView textViewEnd = findViewById(R.id.editTextEndTime);
-                    if (textViewEnd != null) {
-                        textViewEnd.setText(stringEndTime);
-                    }
-                    Log.v(TAG, "done updating the song UI");
-                }
-            });
-            Log.v(TAG, "done sending Runnable to update the song UI");
-        } else {
-            Log.v(TAG, "song UI not updated due to not being visible");
+                });
+                Log.v(TAG, "done sending Runnable to update the song UI");
+            } else {
+                Log.v(TAG, "song UI not updated due to not being visible");
+            }
         }
         Log.v(TAG, "done getting ready to update the song UI");
     }

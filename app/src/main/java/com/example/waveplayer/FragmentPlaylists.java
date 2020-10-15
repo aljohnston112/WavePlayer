@@ -25,9 +25,7 @@ public class FragmentPlaylists extends Fragment {
 
     ActivityMain activityMain;
 
-    RecyclerView recyclerView;
-
-    RecyclerViewAdapterPlaylists recyclerViewAdapter;
+    BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -50,27 +48,34 @@ public class FragmentPlaylists extends Fragment {
     private void updateMainContent(final View view) {
         updateFAB();
         activityMain.setActionBarTitle(getResources().getString(R.string.playlists));
-        if(activityMain.serviceMain != null) {
-            setUpRecyclerView(view);
-        }
+        setUpRecyclerView(view);
+        setUpBroadcastReceiver(view);
+    }
+
+    private void setUpBroadcastReceiver(final View view) {
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
-        filterComplete.addAction("ServiceConnected");
-        activityMain.registerReceiver(new BroadcastReceiverOnServiceConnected() {
+        filterComplete.addAction(activityMain.getResources().getString(
+                R.string.broadcast_receiver_action_service_connected));
+        broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 setUpRecyclerView(view);
             }
-        }, filterComplete);
+        };
+        activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
     }
 
     private void setUpRecyclerView(View view) {
-        recyclerView = view.findViewById(R.id.recycler_view_playlist_list);
-        recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
-        recyclerViewAdapter = new RecyclerViewAdapterPlaylists(this, activityMain.serviceMain.playlists);
-        recyclerView.setAdapter(recyclerViewAdapter);
-        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new PlaylistItemTouchListener());
-        itemTouchHelper.attachToRecyclerView(recyclerView);
+        if(activityMain.serviceMain != null) {
+            RecyclerView recyclerView = view.findViewById(R.id.recycler_view_playlist_list);
+            recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
+            RecyclerViewAdapterPlaylists recyclerViewAdapter =
+                    new RecyclerViewAdapterPlaylists(this, activityMain.serviceMain.playlists);
+            recyclerView.setAdapter(recyclerViewAdapter);
+            ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new PlaylistItemTouchListener());
+            itemTouchHelper.attachToRecyclerView(recyclerView);
+        }
     }
 
     private void updateFAB() {
@@ -90,14 +95,20 @@ public class FragmentPlaylists extends Fragment {
 
     @Override
     public boolean onContextItemSelected(@NonNull MenuItem item) {
-        switch (item.getGroupId()) {
-            case RecyclerViewAdapterPlaylists.MENU_DELETE_PLAYLIST_GROUP_ID:
-                activityMain.serviceMain.playlists.remove(item.getItemId());
-                recyclerViewAdapter.notifyItemRemoved(item.getItemId());
-                return true;
-            default:
-                return super.onContextItemSelected(item);
+        RecyclerView recyclerView = activityMain.findViewById(R.id.recycler_view_playlist_list);
+        RecyclerViewAdapterPlaylists recyclerViewAdapter = (RecyclerViewAdapterPlaylists) recyclerView.getAdapter();
+        if (recyclerViewAdapter != null) {
+            switch (item.getGroupId()) {
+                case RecyclerViewAdapterPlaylists.MENU_DELETE_PLAYLIST_GROUP_ID:
+                    activityMain.serviceMain.playlists.remove(item.getItemId());
+                    recyclerViewAdapter.notifyItemRemoved(item.getItemId());
+                    activityMain.serviceMain.saveFile();
+                    return true;
+                default:
+                    return super.onContextItemSelected(item);
+            }
         }
+        return super.onContextItemSelected(item);
     }
 
     class PlaylistItemTouchListener extends ItemTouchHelper.Callback {
@@ -111,9 +122,12 @@ public class FragmentPlaylists extends Fragment {
 
         @Override
         public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
-            Collections.swap(recyclerViewAdapter.randomPlaylists, viewHolder.getAdapterPosition(), target.getAdapterPosition());
-            Collections.swap(activityMain.serviceMain.playlists, viewHolder.getAdapterPosition(), target.getAdapterPosition());
-            recyclerViewAdapter.notifyItemMoved(viewHolder.getAdapterPosition(), target.getAdapterPosition());
+            RecyclerViewAdapterPlaylists recyclerViewAdapter = (RecyclerViewAdapterPlaylists) recyclerView.getAdapter();
+            if (recyclerViewAdapter != null) {
+                Collections.swap(recyclerViewAdapter.randomPlaylists, viewHolder.getAdapterPosition(), target.getAdapterPosition());
+                Collections.swap(activityMain.serviceMain.playlists, viewHolder.getAdapterPosition(), target.getAdapterPosition());
+                recyclerViewAdapter.notifyItemMoved(viewHolder.getAdapterPosition(), target.getAdapterPosition());
+            }
             return true;
         }
 
@@ -126,9 +140,10 @@ public class FragmentPlaylists extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
         activityMain = null;
-        recyclerViewAdapter = null;
-        recyclerView = null;
     }
+
+    // TODO add swiping and reordering
 
 }

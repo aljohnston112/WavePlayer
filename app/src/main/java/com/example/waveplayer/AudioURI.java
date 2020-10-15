@@ -18,7 +18,6 @@ import java.io.Serializable;
 
 public final class AudioURI implements Comparable<AudioURI>, Serializable {
 
-
     transient private Uri uri;
 
     private Bitmap thumbnail;
