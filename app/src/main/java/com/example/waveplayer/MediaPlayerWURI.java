@@ -54,16 +54,6 @@ public class MediaPlayerWURI {
         shouldPlay = false;
         mediaPlayer.reset();
         mediaPlayer.release();
-        /*
-        mediaPlayer = MediaPlayer.create(serviceMain.getApplicationContext(), audioURI.getUri());
-        setOnCompletionListener(null);
-        setOnCompletionListener(serviceMain.onCompletionListener);
-        mediaPlayer.setOnPreparedListener(null);
-        mediaPlayer.setOnErrorListener(null);
-        mediaPlayer.setOnPreparedListener(new MOnPreparedListener(this));
-        mediaPlayer.setOnErrorListener(onErrorListener);
-
-         */
     }
 
     synchronized public void prepareAsync(){

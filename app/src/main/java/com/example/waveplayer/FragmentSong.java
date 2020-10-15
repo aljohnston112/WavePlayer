@@ -16,6 +16,7 @@ import android.view.ViewGroup;
 
 import android.widget.ImageButton;
 import android.widget.SeekBar;
+import android.widget.VideoView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -25,8 +26,6 @@ import androidx.fragment.app.Fragment;
 public class FragmentSong extends Fragment {
 
     ActivityMain activityMain;
-
-    View view;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -40,14 +39,14 @@ public class FragmentSong extends Fragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        this.view = view;
         activityMain = ((ActivityMain) getActivity());
         if (activityMain != null) {
             activityMain.setActionBarTitle(getResources().getString(R.string.now_playing));
             activityMain.showFab(false);
             if(activityMain.serviceMain!=null) {
+                // TODO Not needed if play updates
                 activityMain.updateSongUI();
                 setUpButtons(view);
             }
@@ -58,12 +57,12 @@ public class FragmentSong extends Fragment {
         activityMain.registerReceiver(new BroadcastReceiverOnServiceConnected() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                notifyServiceConnected();
+                notifyServiceConnected(view);
             }
         }, filterComplete);
     }
 
-    public void notifyServiceConnected(){
+    public void notifyServiceConnected(View view){
         activityMain.updateSongUI();
         activityMain.serviceMain.updateNotification();
         setUpButtons(view);
@@ -78,15 +77,14 @@ public class FragmentSong extends Fragment {
         final ImageButton buttonPause = view.findViewById(R.id.imageButtonPlayPause);
         final ImageButton buttonNext = view.findViewById(R.id.imageButtonNext);
         final  ImageButton buttonLoop = view.findViewById(R.id.imageButtonRepeat);
-
-        buttonBad.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                activityMain.serviceMain.currentPlaylist.getProbFun().bad(
-                        activityMain.serviceMain.getCurrentSong(), ServiceMain.PERCENT_CHANGE);
-                activityMain.serviceMain.saveFile();
-            }
-        });
+        OnClickListenerFragmentSong onClickListenerFragmentSong = new OnClickListenerFragmentSong(activityMain);
+        buttonBad.setOnClickListener(onClickListenerFragmentSong);
+        buttonGood.setOnClickListener(onClickListenerFragmentSong);
+        buttonShuffle.setOnClickListener(onClickListenerFragmentSong);
+        buttonPrev.setOnClickListener(onClickListenerFragmentSong);
+        buttonPause.setOnClickListener(onClickListenerFragmentSong);
+        buttonNext.setOnClickListener(onClickListenerFragmentSong);
+        buttonLoop.setOnClickListener(onClickListenerFragmentSong);
 
         buttonBad.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -101,16 +99,6 @@ public class FragmentSong extends Fragment {
                         return true;
                 }
                 return false;
-            }
-        });
-
-
-        buttonGood.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                activityMain.serviceMain.currentPlaylist.getProbFun().good(
-                        activityMain.serviceMain.getCurrentSong(), ServiceMain.PERCENT_CHANGE);
-                activityMain.serviceMain.saveFile();
             }
         });
 
@@ -130,13 +118,6 @@ public class FragmentSong extends Fragment {
             }
         });
 
-        buttonShuffle.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //TODO
-            }
-        });
-
         buttonShuffle.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -150,13 +131,6 @@ public class FragmentSong extends Fragment {
                         return true;
                 }
                 return false;
-            }
-        });
-
-        buttonPrev.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                activityMain.playPrevious();
             }
         });
 
@@ -176,14 +150,6 @@ public class FragmentSong extends Fragment {
             }
         });
 
-        buttonPause.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                activityMain.pauseOrPlay();
-            }
-        });
-
         buttonPause.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -200,12 +166,6 @@ public class FragmentSong extends Fragment {
             }
         });
 
-        buttonNext.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                activityMain.playNext();
-            }
-        });
 
         buttonNext.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -223,12 +183,6 @@ public class FragmentSong extends Fragment {
             }
         });
 
-        buttonLoop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //TODO
-            }
-        });
 
         buttonLoop.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -246,6 +200,12 @@ public class FragmentSong extends Fragment {
             }
         });
 
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        activityMain = null;
     }
 
 }

@@ -107,4 +107,10 @@ public class FragmentSettings extends Fragment {
         editTextPercentChange.setText(String.valueOf((int)Math.round(ServiceMain.PERCENT_CHANGE*100.0)));
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        activityMain = null;
+    }
+
 }

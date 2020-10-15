@@ -127,4 +127,12 @@ public class FragmentPlaylist extends Fragment {
 
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        activityMain = null;
+        recyclerViewSongList = null;
+        recyclerViewAdapterSongsList = null;
+    }
+
 }

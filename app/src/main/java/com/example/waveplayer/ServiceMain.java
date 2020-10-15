@@ -50,7 +50,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 public class ServiceMain extends Service {
 
-    private static final String TAG = "mainService";
+    private static final String TAG = "ServiceMain";
     private static final String FILE_ERROR_LOG = "error";
     private static final String FILE_SAVE = "playlists";
     private final static String CHANNEL_ID = "PinkyPlayer";
@@ -65,6 +65,7 @@ public class ServiceMain extends Service {
     // Settings
     static double MAX_PERCENT = 0.1;
     static double PERCENT_CHANGE = 0.5;
+    // TODO add percent change up and down
 
     final HashMap<Uri, MediaPlayerWURI> songsMap = new HashMap<>();
     final public HashMap<Uri, AudioURI> uriMap = new HashMap<>();
@@ -88,6 +89,7 @@ public class ServiceMain extends Service {
         return isPlaying;
     }
 
+    boolean fragmentSongVisible = false;
 
     // For updating the SeekBar
     ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -104,7 +106,9 @@ public class ServiceMain extends Service {
                     " onCompletion started";
             Log.v(TAG, string);
             scheduledExecutorService.shutdown();
-            scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+            if(fragmentSongVisible) {
+                scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+            }
             if (!songQueueIterator.hasNext()) {
                 addToQueueAndPlay(currentPlaylist.getProbFun().fun(random));
             } else {
@@ -325,6 +329,10 @@ public class ServiceMain extends Service {
         Log.v(TAG, string);
     }
 
+    void updateNotificationPlayButton() {
+        // TODO
+    }
+
     private void setUpBroadCasts() {
         String string = "Setting up broadcasts";
         Log.v(TAG, string);
@@ -372,22 +380,28 @@ public class ServiceMain extends Service {
 
     @Override
     public void onDestroy() {
+        Log.v(TAG, "onDestroy started");
         Toast.makeText(this, "PinkyPlayer done", Toast.LENGTH_SHORT).show();
+        unregisterReceiver(broadcastReceiverNotificationForServiceMainButtons);
+        Log.v(TAG, "onDestroy ended");
     }
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
+        Log.v(TAG, "onTaskRemoved started");
         super.onTaskRemoved(rootIntent);
         destroy();
+        Log.v(TAG, "onTaskRemoved ended");
     }
 
     public void destroy() {
+        Log.v(TAG, "destroy started");
         if (isPlaying) {
             pauseOrPlay();
         }
         releaseMediaPlayers();
         stopSelf();
-        unregisterReceiver(broadcastReceiverNotificationForServiceMainButtons);
+        Log.v(TAG, "destroy ended");
     }
 
     public void releaseMediaPlayers() {
@@ -497,7 +511,8 @@ public class ServiceMain extends Service {
                         mediaPlayerWURI.shouldStart(true);
                         isPlaying = true;
                     }
-                }            }
+                }
+            }
         }
         Log.v(TAG, "pauseOrPlay ended");
     }
@@ -513,7 +528,12 @@ public class ServiceMain extends Service {
         } else {
             addToQueueAndPlay(currentPlaylist.getProbFun().fun(random));
         }
-        saveFile();
+        executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                saveFile();
+            }
+        });
         Log.v(TAG, "playNext ended");
     }
 
@@ -658,8 +678,8 @@ public class ServiceMain extends Service {
                 isPlaying = true;
             }
         }
-        updateNotification();
         currentSong = mediaPlayerWURI.audioURI;
+        updateNotification();
         Log.v(TAG, "play ended");
     }
 

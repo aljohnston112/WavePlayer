@@ -69,4 +69,10 @@ public class FragmentSongs extends Fragment {
         recyclerViewSongs.setAdapter(recyclerViewAdapterSongs);
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        activityMain = null;
+    }
+
 }

@@ -14,11 +14,13 @@ public class BroadcastReceiverOnCompletion extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        String action = intent.getAction();
-        if (action.equals(activityMain.getResources().getString(R.string.broadcast_receiver_action_on_completion))) {
-            if (activityMain != null) {
-                activityMain.updateSongUI();
-                activityMain.updateSongPaneUI();
+        synchronized (activityMain.lock) {
+            String action = intent.getAction();
+            if (action.equals(activityMain.getResources().getString(R.string.broadcast_receiver_action_on_completion))) {
+                if (activityMain != null) {
+                    activityMain.updateSongUI();
+                    activityMain.updateSongPaneUI();
+                }
             }
         }
     }

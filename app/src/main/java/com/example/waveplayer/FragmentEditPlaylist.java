@@ -143,4 +143,10 @@ public class FragmentEditPlaylist extends Fragment {
 
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        activityMain = null;
+    }
+
 }

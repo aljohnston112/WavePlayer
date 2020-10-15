@@ -36,14 +36,9 @@ public class FragmentTitle extends Fragment {
     }
 
     private void updateMainContent() {
-        if(activityMain != null) {
-            activityMain.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    activityMain.setActionBarTitle(getResources().getString(R.string.app_name));
-                    activityMain.showFab(false);
-                }
-            });
+        if (activityMain != null) {
+            activityMain.setActionBarTitle(getResources().getString(R.string.app_name));
+            activityMain.showFab(false);
         }
     }
 
@@ -69,6 +64,12 @@ public class FragmentTitle extends Fragment {
                         .navigate(actionFragmentTitleToFragmentSettings());
             }
         });
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        activityMain = null;
     }
 
 }

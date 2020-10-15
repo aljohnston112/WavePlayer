@@ -13,6 +13,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -46,19 +47,26 @@ import java.util.concurrent.TimeUnit;
 
 public class ActivityMain extends AppCompatActivity {
 
+
     // TODO update fab with exteded FAB
+
+    private static final String TAG = "ActivityMain";
+
     private static final int REQUEST_PERMISSION = 245083964;
 
-    private static final int MENU_ACTION_RESET_PROBS_INDEX = 0;
+    public static final int MENU_ACTION_RESET_PROBS_INDEX = 0;
 
     ServiceMain serviceMain;
+
+    final Object lock = new Object();
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName className, IBinder service) {
+            Log.v(TAG, "onServiceConnected started");
             ServiceMain.ServiceMainBinder binder = (ServiceMain.ServiceMainBinder) service;
             serviceMain = binder.getService();
-            getExternalStoragePermissionAndFetchMediaFiles();
+            askForExternalStoragePermissionAndFetchMediaFiles();
             setUpSongPane();
             if (serviceMain.currentSong != null) {
                 updateSongUI();
@@ -68,11 +76,12 @@ public class ActivityMain extends AppCompatActivity {
             intent.addCategory(Intent.CATEGORY_DEFAULT);
             intent.setAction(getResources().getString(R.string.broadcast_receiver_action_service_connected));
             sendBroadcast(intent);
+            Log.v(TAG, "onServiceConnected ended");
         }
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
-
+            Log.v(TAG, "onServiceDisconnected start and end");
         }
     };
 
@@ -84,14 +93,18 @@ public class ActivityMain extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.v(TAG, "onCreate started");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setUpActionBar();
         startAndBindServiceMain();
         setUpBroadcastReceivers();
+        Log.v(TAG, "onCreate ended");
     }
 
+
     private void setUpActionBar() {
+        Log.v(TAG, "setting up ActionBar");
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -105,12 +118,21 @@ public class ActivityMain extends AppCompatActivity {
             }
         });
         centerActionBarTitle();
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
+        if (fragment != null) {
+            NavHostFragment.findNavController(fragment).addOnDestinationChangedListener(
+                    new OnDestinationChangedListenerToolbar(this));
+        }
+        Log.v(TAG, "ActionBar set up");
     }
 
     private void centerActionBarTitle() {
+        Log.v(TAG, "sending runnable to center the ActionBar title");
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                Log.v(TAG, "centering the ActionBar title");
                 ArrayList<View> textViews = new ArrayList<>();
                 getWindow().getDecorView().findViewsWithText(textViews, getTitle(), View.FIND_VIEWS_WITH_TEXT);
                 if (!textViews.isEmpty()) {
@@ -128,12 +150,15 @@ public class ActivityMain extends AppCompatActivity {
                         appCompatTextView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
                     }
                 }
+                Log.v(TAG, "done centering the ActionBar title");
             }
         });
+        Log.v(TAG, "done sending runnable to center the ActionBar title");
     }
 
 
     private void startAndBindServiceMain() {
+        Log.v(TAG, "starting and binding ServiceMain");
         Intent intentServiceMain = new Intent(ActivityMain.this, ServiceMain.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(intentServiceMain);
@@ -141,9 +166,11 @@ public class ActivityMain extends AppCompatActivity {
             startService(intentServiceMain);
         }
         getApplicationContext().bindService(intentServiceMain, connection, BIND_AUTO_CREATE | BIND_IMPORTANT);
+        Log.v(TAG, "started and bound ServiceMain");
     }
 
-    private void getExternalStoragePermissionAndFetchMediaFiles() {
+    private void askForExternalStoragePermissionAndFetchMediaFiles() {
+        Log.v(TAG, "asking for external storage permission");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
                     != PackageManager.PERMISSION_GRANTED) {
@@ -158,11 +185,13 @@ public class ActivityMain extends AppCompatActivity {
                 serviceMain.getAudioFiles();
             }
         }
+        Log.v(TAG, "asked for external storage permission");
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
+        Log.v(TAG, "onRequestPermissionsResult start");
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_PERMISSION && grantResults.length > 0 &&
                 grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -174,187 +203,154 @@ public class ActivityMain extends AppCompatActivity {
                 requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
             }
         }
+        Log.v(TAG, "onRequestPermissionsResult end");
     }
 
     private void setUpSongPane() {
+        Log.v(TAG, "setting up song pane");
         hideSongPane();
         linkSongPaneButtons();
         FragmentManager fragmentManager = getSupportFragmentManager();
         Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
         if (fragment != null) {
             NavHostFragment.findNavController(fragment).addOnDestinationChangedListener(
-                    new NavController.OnDestinationChangedListener() {
-                        @Override
-                        public void onDestinationChanged(@NonNull NavController controller,
-                                                         @NonNull final NavDestination destination,
-                                                         @Nullable Bundle arguments) {
-                            if (destination.getId() != R.id.fragmentSong && serviceMain.isPlaying()) {
-                                showSongPane();
-                            } else {
-                                hideSongPane();
-                            }
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Toolbar toolbar = findViewById(R.id.toolbar);
-                                    Menu menu = toolbar.getMenu();
-                                    if (menu.size() > 0) {
-                                        if (destination.getId() == R.id.fragmentPlaylist || destination.getId() == R.id.fragmentSongs) {
-                                            menu.getItem(MENU_ACTION_RESET_PROBS_INDEX).setVisible(true);
-                                        } else {
-                                            menu.getItem(MENU_ACTION_RESET_PROBS_INDEX).setVisible(false);
-                                        }
-                                    }
-                                }
-                            });
-                        }
-                    });
+                    new OnDestinationChangedListenerSongPane(this));
         }
+        Log.v(TAG, "done setting up song pane");
     }
 
-    private void hideSongPane() {
+    void hideSongPane() {
+        Log.v(TAG, "sending runnable to hide song pane");
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                Log.v(TAG, "hiding song pane");
                 findViewById(R.id.fragmentSongPane).setVisibility(View.INVISIBLE);
                 ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
                 ConstraintSet constraintSet = new ConstraintSet();
                 constraintSet.clone(constraintLayout);
                 constraintSet.connect(R.id.fab, ConstraintSet.BOTTOM, R.id.constraintMain, ConstraintSet.BOTTOM);
                 constraintSet.applyTo(constraintLayout);
+                Log.v(TAG, "done hiding song pane");
             }
         });
+        Log.v(TAG, "done sending runnable to hide song pane");
     }
 
-    private void showSongPane() {
+    void showSongPane() {
+        Log.v(TAG, "sending runnable to show song pane");
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                Log.v(TAG, "showing song pane");
                 findViewById(R.id.fragmentSongPane).setVisibility(View.VISIBLE);
                 ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
                 ConstraintSet constraintSet = new ConstraintSet();
                 constraintSet.clone(constraintLayout);
                 constraintSet.connect(R.id.fab, ConstraintSet.BOTTOM, R.id.fragmentSongPane, ConstraintSet.TOP);
                 constraintSet.applyTo(constraintLayout);
+                Log.v(TAG, "done showing song pane");
             }
         });
+        Log.v(TAG, "done sending runnable to show song pane");
     }
 
     private void linkSongPaneButtons() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                findViewById(R.id.imageButtonSongPaneNext).setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        playNext();
-                    }
-                });
-                findViewById(R.id.imageButtonSongPanePlayPause).setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        pauseOrPlay();
-                    }
-                });
-                findViewById(R.id.imageButtonSongPanePrev).setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        playPrevious();
-                    }
-                });
-                findViewById(R.id.textViewSongPaneSongName).setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        FragmentManager fragmentManager = getSupportFragmentManager();
-                        Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
-                        if (fragment != null) {
-                            NavHostFragment.findNavController(fragment).navigate(R.id.fragmentSong);
-                        }
-                    }
-                });
-                findViewById(R.id.imageViewSongPaneSongArt).setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        FragmentManager fragmentManager = getSupportFragmentManager();
-                        Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
-                        if (fragment != null) {
-                            NavHostFragment.findNavController(fragment).navigate(R.id.fragmentSong);
-                        }
-                    }
-                });
-            }
-        });
+        Log.v(TAG, "linking song pane buttons");
+        OnClickListenerSongPane onClickListenerSongPane = new OnClickListenerSongPane(this);
+        findViewById(R.id.imageButtonSongPaneNext).setOnClickListener(onClickListenerSongPane);
+        findViewById(R.id.imageButtonSongPanePlayPause).setOnClickListener(onClickListenerSongPane);
+        findViewById(R.id.imageButtonSongPanePrev).setOnClickListener(onClickListenerSongPane);
+        findViewById(R.id.textViewSongPaneSongName).setOnClickListener(onClickListenerSongPane);
+        findViewById(R.id.imageViewSongPaneSongArt).setOnClickListener(onClickListenerSongPane);
+        Log.v(TAG, "done linking song pane buttons");
     }
 
     private void setUpBroadcastReceivers() {
+        Log.v(TAG, "setting up BroadcastReceivers");
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(getResources().getString(R.string.broadcast_receiver_action_on_completion));
         registerReceiver(broadcastReceiverOnCompletion, filterComplete);
-
         IntentFilter filterNext = new IntentFilter();
         filterNext.addAction(getResources().getString(R.string.broadcast_receiver_action_next));
         filterNext.addCategory(Intent.CATEGORY_DEFAULT);
         registerReceiver(broadcastReceiverNotificationForActivityMainButtons, filterNext);
-
         IntentFilter filterPrevious = new IntentFilter();
         filterPrevious.addAction(getResources().getString(R.string.broadcast_receiver_action_previous));
         filterPrevious.addCategory(Intent.CATEGORY_DEFAULT);
         registerReceiver(broadcastReceiverNotificationForActivityMainButtons, filterPrevious);
-
         IntentFilter filterPlayPause = new IntentFilter();
         filterPlayPause.addAction(getResources().getString(R.string.broadcast_receiver_action_play_pause));
         filterPlayPause.addCategory(Intent.CATEGORY_DEFAULT);
         registerReceiver(broadcastReceiverNotificationForActivityMainButtons, filterPlayPause);
+        Log.v(TAG, "done setting up BroadcastReceivers");
+
     }
 
     // endregion onCreate
 
     @Override
     protected void onPause() {
+        Log.v(TAG, "onPause started");
         super.onPause();
         if (serviceMain != null) {
             serviceMain.saveFile();
+            serviceMain.fragmentSongVisible = false;
+            serviceMain.scheduledExecutorService.shutdown();
         }
+        Log.v(TAG, "onPause ended");
     }
 
     @Override
     protected void onDestroy() {
+        Log.v(TAG, "onDestroy started");
         super.onDestroy();
         this.unregisterReceiver(broadcastReceiverOnCompletion);
         this.unregisterReceiver(broadcastReceiverNotificationForActivityMainButtons);
         getApplicationContext().unbindService(connection);
+        Log.v(TAG, "onDestroy ended");
     }
 
     // region publicUI
 
-    public void setActionBarTitle(final String string) {
+    public void setActionBarTitle(final String title) {
+        Log.v(TAG, "sending Runnable to set ActionBar title");
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                Log.v(TAG, "setting ActionBar title");
                 ActionBar actionBar = getSupportActionBar();
                 if (actionBar != null) {
-                    actionBar.setTitle(string);
+                    actionBar.setTitle(title);
                 }
+                Log.v(TAG, "done setting ActionBar title");
             }
         });
+        Log.v(TAG, "done sending Runnable to set ActionBar title");
     }
 
     public void setFabImage(final int id) {
+        Log.v(TAG, "sending Runnable to set FAB image");
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                Log.v(TAG, "setting FAB image");
                 FloatingActionButton fab;
                 fab = findViewById(R.id.fab);
                 fab.setImageDrawable(ResourcesCompat.getDrawable(getResources(), id, null));
+                Log.v(TAG, "done setting FAB image");
             }
         });
+        Log.v(TAG, "done sending Runnable to set FAB image");
     }
 
     public void showFab(final boolean show) {
+        Log.v(TAG, "sending Runnable to show or hide FAB");
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                Log.v(TAG, "showing or hiding FAB");
                 FloatingActionButton fab;
                 fab = findViewById(R.id.fab);
                 if (show) {
@@ -362,25 +358,31 @@ public class ActivityMain extends AppCompatActivity {
                 } else {
                     fab.hide();
                 }
+                Log.v(TAG, "done showing or hiding FAB");
             }
         });
+        Log.v(TAG, "done sending Runnable to show or hide FAB");
     }
 
-    public void setFabOnClickListener(
-            final View.OnClickListener onClickListener) {
+    public void setFabOnClickListener(final View.OnClickListener onClickListener) {
+        Log.v(TAG, "sending Runnable to set FAB OnClickListener");
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                Log.v(TAG, "setting FAB OnClickListener");
                 FloatingActionButton fab;
                 fab = findViewById(R.id.fab);
                 fab.setOnClickListener(null);
                 fab.setOnClickListener(onClickListener);
+                Log.v(TAG, "done setting FAB OnClickListener");
             }
         });
+        Log.v(TAG, "done sending Runnable to set FAB OnClickListener");
     }
 
     public void updateSongUI() {
-        if (serviceMain.currentSong != null) {
+        Log.v(TAG, "getting ready to update the song UI");
+        if (serviceMain.fragmentSongVisible && serviceMain.currentSong != null) {
             final int millis = serviceMain.currentSong.getDuration(getApplicationContext());
             final String stringEndTime = String.format(getResources().getConfiguration().locale,
                     "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(millis),
@@ -388,11 +390,22 @@ public class ActivityMain extends AppCompatActivity {
                             TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
                     TimeUnit.MILLISECONDS.toSeconds(millis) -
                             TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
-            //-------------------------------------------------------
-
+            SeekBar seekBar = findViewById(R.id.seekBar);
+            final TextView textViewCurrent = findViewById(R.id.editTextCurrentTime);
+            seekBar.setMax(millis);
+            seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener(this));
+            serviceMain.scheduledExecutorService.shutdown();
+            serviceMain.scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+            serviceMain.scheduledExecutorService.scheduleAtFixedRate(
+                    new RunnableSeekBarUpdater(
+                            serviceMain.songsMap.get(serviceMain.currentSong.getUri()),
+                            seekBar, textViewCurrent, millis, getResources().getConfiguration().locale),
+                    0L, 1L, TimeUnit.SECONDS);
+            Log.v(TAG, "sending Runnable to update the song UI");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    Log.v(TAG, "updating the song UI");
                     ImageView imageViewSongArt = findViewById(R.id.image_view_song_art);
                     if (imageViewSongArt != null) {
                         if (serviceMain.currentSong.getThumbnail(getApplicationContext()) == null) {
@@ -406,7 +419,6 @@ public class ActivityMain extends AppCompatActivity {
                     if (textViewSongName != null) {
                         textViewSongName.setText(serviceMain.currentSong.title);
                     }
-                    TextView textViewCurrent = findViewById(R.id.editTextCurrentTime);
                     if (textViewCurrent != null) {
                         textViewCurrent.setText(R.string.start_time);
                     }
@@ -414,44 +426,24 @@ public class ActivityMain extends AppCompatActivity {
                     if (textViewEnd != null) {
                         textViewEnd.setText(stringEndTime);
                     }
-                    SeekBar seekBar = findViewById(R.id.seekBar);
-                    if (seekBar != null) {
-                        seekBar.setMax(millis);
-                        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                            @Override
-                            public void onProgressChanged(SeekBar seekBar, int i, boolean fromUser) {
-                            }
-
-                            @Override
-                            public void onStartTrackingTouch(SeekBar seekBar) {
-                            }
-
-                            @Override
-                            public void onStopTrackingTouch(SeekBar seekBar) {
-                                MediaPlayerWURI mediaPlayerWURI = serviceMain.songsMap.get(serviceMain.currentSong.getUri());
-                                if (mediaPlayerWURI != null) {
-                                    mediaPlayerWURI.seekTo(seekBar.getProgress());
-                                }
-                            }
-                        });
-                        serviceMain.scheduledExecutorService.shutdown();
-                        serviceMain.scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-                        serviceMain.scheduledExecutorService.scheduleAtFixedRate(
-                                new RunnableSeekBarUpdater(
-                                        serviceMain.songsMap.get(serviceMain.currentSong.getUri()),
-                                        seekBar, textViewCurrent, millis, getResources().getConfiguration().locale),
-                                0L, 1L, TimeUnit.SECONDS);
-                    }
+                    Log.v(TAG, "done updating the song UI");
                 }
             });
+            Log.v(TAG, "done sending Runnable to update the song UI");
+        } else {
+            Log.v(TAG, "song UI not updated due to not being visible");
         }
+        Log.v(TAG, "done getting ready to update the song UI");
     }
 
     public void updateSongPaneUI() {
-        if (serviceMain.currentSong != null) {
+        Log.v(TAG, "getting ready to update the song pane UI");
+        if (!serviceMain.fragmentSongVisible && serviceMain.currentSong != null) {
+            Log.v(TAG, "sending Runnable to update the song pane UI");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    Log.v(TAG, "updating the song pane UI");
                     if (serviceMain.isPlaying()) {
                         TextView textViewSongPaneSongName = findViewById(R.id.textViewSongPaneSongName);
                         if (textViewSongPaneSongName != null) {
@@ -484,9 +476,14 @@ public class ActivityMain extends AppCompatActivity {
                             }
                         }
                     }
+                    Log.v(TAG, "done updating the song pane UI");
                 }
             });
-        }
+            Log.v(TAG,"done sending Runnable to update the song pane UI");
+        } else {
+                Log.v(TAG, "song pane UI not updated due to not being visible");
+            }
+        Log.v(TAG, "done getting ready to update the song pane UI");
     }
 
     // endregion publicUI
@@ -494,40 +491,45 @@ public class ActivityMain extends AppCompatActivity {
     // region playbackControls
 
     public void addToQueueAndPlay(AudioURI audioURI) {
+        Log.v(TAG, "addToQueueAndPlay start");
         serviceMain.addToQueueAndPlay(audioURI);
         updateSongUI();
         updateSongPaneUI();
+        Log.v(TAG, "addToQueueAndPlay end");
     }
 
     public void playNext() {
+        Log.v(TAG, "playNext start");
         serviceMain.playNext();
         updatePlayButtons();
         updateSongUI();
         updateSongPaneUI();
+        Log.v(TAG, "playNext end");
     }
 
     public void playPrevious() {
+        Log.v(TAG, "playPrevious start");
         serviceMain.playPrevious();
         updatePlayButtons();
         updateSongUI();
         updateSongPaneUI();
+        Log.v(TAG, "playPrevious end");
     }
 
     public void pauseOrPlay() {
+        Log.v(TAG, "pauseOrPlay start");
         if (serviceMain.currentSong != null) {
             serviceMain.pauseOrPlay();
         }
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                updatePlayButtons();
-            }
-        });
+        updatePlayButtons();
+        Log.v(TAG, "pauseOrPlay end");
     }
 
     private void updatePlayButtons() {
-        final ImageButton imageButtonPlayPause = findViewById(R.id.imageButtonPlayPause);
-        final ImageButton imageButtonSongPanePlayPause = findViewById(R.id.imageButtonSongPanePlayPause);
+        Log.v(TAG, "updatePlayButtons start");
+        serviceMain.updateNotificationPlayButton();
+        ImageButton imageButtonPlayPause = findViewById(R.id.imageButtonPlayPause);
+        ImageButton imageButtonSongPanePlayPause = findViewById(R.id.imageButtonSongPanePlayPause);
         if (imageButtonPlayPause != null) {
             if (serviceMain.isPlaying()) {
                 imageButtonPlayPause.setImageDrawable(ResourcesCompat.getDrawable(
@@ -546,23 +548,29 @@ public class ActivityMain extends AppCompatActivity {
                         getResources(), R.drawable.play_arrow_black_24dp, null));
             }
         }
+        Log.v(TAG, "updatePlayButtons end");
     }
 
     // endregion playbackControls
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        Log.v(TAG, "onCreateOptionsMenu start");
         getMenuInflater().inflate(R.menu.reset_probs, menu);
+        Log.v(TAG, "onCreateOptionsMenu end");
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        Log.v(TAG, "onOptionsItemSelected start");
         switch (item.getItemId()) {
             case R.id.action_reset_probs:
                 serviceMain.currentPlaylist.getProbFun().clearProbs();
+                Log.v(TAG, "onOptionsItemSelected action_reset_probs end");
                 return true;
         }
+        Log.v(TAG, "onOptionsItemSelected action_unknown end");
         return super.onOptionsItemSelected(item);
     }
 

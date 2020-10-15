@@ -91,4 +91,10 @@ public class FragmentSelectSongs extends Fragment {
         });
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        activityMain = null;
+    }
+
 }
