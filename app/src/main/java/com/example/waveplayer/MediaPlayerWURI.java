@@ -63,7 +63,7 @@ public class MediaPlayerWURI {
     }
 
     synchronized public int getCurrentPosition(){
-        if(isPrepared && isPlaying()) {
+        if(isPrepared && serviceMain.songInProgress()) {
             return mediaPlayer.getCurrentPosition();
         } else{
             return -1;

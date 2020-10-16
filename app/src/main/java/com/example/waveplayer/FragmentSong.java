@@ -4,16 +4,23 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
+
+import static com.example.waveplayer.FragmentSongPane.getResizedBitmap;
 
 public class FragmentSong extends Fragment {
 
@@ -65,7 +72,7 @@ public class FragmentSong extends Fragment {
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private void setUpButtons(View view) {
+    private void setUpButtons(final View view) {
         final ImageButton buttonBad = view.findViewById(R.id.button_thumb_down);
         final ImageButton buttonGood = view.findViewById(R.id.button_thumb_up);
         final ImageButton buttonShuffle = view.findViewById(R.id.imageButtonShuffle);
@@ -81,7 +88,6 @@ public class FragmentSong extends Fragment {
         buttonPause.setOnClickListener(onClickListenerFragmentSong);
         buttonNext.setOnClickListener(onClickListenerFragmentSong);
         buttonLoop.setOnClickListener(onClickListenerFragmentSong);
-
         buttonBad.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -97,7 +103,6 @@ public class FragmentSong extends Fragment {
                 return false;
             }
         });
-
         buttonGood.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -113,7 +118,6 @@ public class FragmentSong extends Fragment {
                 return false;
             }
         });
-
         buttonShuffle.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -129,7 +133,6 @@ public class FragmentSong extends Fragment {
                 return false;
             }
         });
-
         buttonPrev.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -145,7 +148,6 @@ public class FragmentSong extends Fragment {
                 return false;
             }
         });
-
         buttonPause.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -161,7 +163,6 @@ public class FragmentSong extends Fragment {
                 return false;
             }
         });
-
         buttonNext.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -177,8 +178,6 @@ public class FragmentSong extends Fragment {
                 return false;
             }
         });
-
-
         buttonLoop.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -195,6 +194,76 @@ public class FragmentSong extends Fragment {
             }
         });
 
+        view.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override
+            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                // TODO
+                //setUpGood();
+                //setUpBad();
+                //setUpShuffle();
+                setUpPrev();
+                setUpPlay();
+                setUpNext();
+                //setUpLoop();
+            }
+
+            private void setUpNext() {
+                ImageView imageView = view.findViewById(R.id.imageButtonNext);
+                int width = imageView.getMeasuredWidth();
+                //noinspection SuspiciousNameCombination
+                int height = width;
+                Drawable drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.skip_next_black_24dp, null);
+                if (drawable != null) {
+                    drawable.setBounds(0, 0, width, height);
+                    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                    Canvas canvas = new Canvas(bitmap);
+                    drawable.draw(canvas);
+                    Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
+                    bitmap.recycle();
+                    imageView.setImageBitmap(bitmapResized);
+                }
+            }
+
+            private void setUpPlay() {
+                ImageView imageView = view.findViewById(R.id.imageButtonPlayPause);
+                int width = imageView.getMeasuredWidth();
+                //noinspection SuspiciousNameCombination
+                int height = width;
+                Drawable drawable;
+                ActivityMain activityMain = ((ActivityMain) getActivity());
+                if (activityMain != null && activityMain.serviceMain != null && activityMain.serviceMain.isPlaying()) {
+                    drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.pause_black_24dp, null);
+                } else {
+                    drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.play_arrow_black_24dp, null);
+                }
+                if (drawable != null) {
+                    drawable.setBounds(0, 0, width, height);
+                    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                    Canvas canvas = new Canvas(bitmap);
+                    drawable.draw(canvas);
+                    Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
+                    bitmap.recycle();
+                    imageView.setImageBitmap(bitmapResized);
+                }
+            }
+
+            private void setUpPrev() {
+                ImageView imageView = view.findViewById(R.id.imageButtonPrev);
+                int width = imageView.getMeasuredWidth();
+                //noinspection SuspiciousNameCombination
+                int height = width;
+                Drawable drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.skip_previous_black_24dp, null);
+                if (drawable != null) {
+                    drawable.setBounds(0, 0, width, height);
+                    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                    Canvas canvas = new Canvas(bitmap);
+                    drawable.draw(canvas);
+                    Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
+                    bitmap.recycle();
+                    imageView.setImageBitmap(bitmapResized);
+                }
+            }
+        });
     }
 
     @Override

@@ -20,13 +20,14 @@ public class OnDestinationChangedListenerSongPane implements NavController.OnDes
                                      @NonNull final NavDestination destination,
                                      @Nullable Bundle arguments) {
         if (destination.getId() != R.id.fragmentSong) {
-            if(activityMain.serviceMain.isPlaying()) {
+            if(activityMain.serviceMain.songInProgress()) {
+                activityMain.serviceMain.fragmentSongVisible = false;
+                activityMain.updateSongPaneUI();
                 activityMain.showSongPane();
             }
-            activityMain.serviceMain.fragmentSongVisible = false;
         } else {
-            activityMain.hideSongPane();
             activityMain.serviceMain.fragmentSongVisible = true;
+            activityMain.hideSongPane();
         }
 
     }

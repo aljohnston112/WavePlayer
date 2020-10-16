@@ -90,6 +90,12 @@ public class ServiceMain extends Service {
         return isPlaying;
     }
 
+    private boolean songInProgress = false;
+
+    public boolean songInProgress() {
+        return songInProgress;
+    }
+
     boolean fragmentSongVisible = false;
 
     // For updating the SeekBar
@@ -496,6 +502,12 @@ public class ServiceMain extends Service {
 
     // region mediaControls
 
+    public void clearQueue(){
+        songQueueIterator = null;
+        songQueue.clear();
+        songQueueIterator = songQueue.listIterator();
+    }
+
     public void pauseOrPlay() {
         Log.v(TAG, "pauseOrPlay started");
         MediaPlayerWURI mediaPlayerWURI = songsMap.get(currentSong.getUri());
@@ -582,6 +594,7 @@ public class ServiceMain extends Service {
             } else {
                 releaseMediaPlayers();
             }
+            songInProgress = false;
             isPlaying = false;
             songQueueIterator.next();
         }
@@ -668,10 +681,12 @@ public class ServiceMain extends Service {
         if (haveAudioFocus) {
             mediaPlayerWURI.shouldStart(true);
             isPlaying = true;
+            songInProgress = true;
         } else {
             if (requestAudioFocus()) {
                 mediaPlayerWURI.shouldStart(true);
                 isPlaying = true;
+                songInProgress = true;
             }
         }
         currentSong = mediaPlayerWURI.audioURI;

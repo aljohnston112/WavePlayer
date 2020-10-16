@@ -24,6 +24,9 @@ public class OnSeekBarChangeListener implements SeekBar.OnSeekBarChangeListener 
                 activityMain.serviceMain.songsMap.get(activityMain.serviceMain.currentSong.getUri());
         if (mediaPlayerWURI != null) {
             mediaPlayerWURI.seekTo(seekBar.getProgress());
+            if(!activityMain.serviceMain.isPlaying()){
+                activityMain.pauseOrPlay();
+            }
         }
     }
 

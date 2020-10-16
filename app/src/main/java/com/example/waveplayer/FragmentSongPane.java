@@ -2,8 +2,12 @@ package com.example.waveplayer;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
@@ -15,6 +19,10 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 
 public class FragmentSongPane extends Fragment {
+
+    ActivityMain activityMain;
+
+    BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -32,6 +40,36 @@ public class FragmentSongPane extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         setupSongPane(view);
+        activityMain = ((ActivityMain)getActivity());
+        if(view.getHeight() > 0 && activityMain.serviceMain != null){
+            activityMain.serviceMain.fragmentSongVisible = false;
+        }
+        if(activityMain != null) {
+            activityMain.updateSongPaneUI();
+        }
+        setUpBroadcastReceiver(view);
+    }
+
+    private void setUpBroadcastReceiver(final View view) {
+        IntentFilter filterComplete = new IntentFilter();
+        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
+        filterComplete.addAction(activityMain.getResources().getString(
+                R.string.broadcast_receiver_action_service_connected));
+        broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                notifyServiceConnected(view);
+            }
+        };
+        activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
+    }
+
+    public void notifyServiceConnected(View view) {
+        setupSongPane(view);
+        if(view.getHeight() > 0 && activityMain.serviceMain != null){
+            activityMain.serviceMain.fragmentSongVisible = false;
+        }
+        activityMain.updateSongPaneUI();
     }
 
     private void setupSongPane(final View view) {
@@ -49,14 +87,16 @@ public class FragmentSongPane extends Fragment {
                 int height = imageView.getMeasuredHeight();
                 //noinspection SuspiciousNameCombination
                 int width = height;
-                Drawable drawable = getResources().getDrawable(R.drawable.skip_next_black_24dp);
-                drawable.setBounds(0, 0, width, height);
-                Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-                Canvas canvas = new Canvas(bitmap);
-                drawable.draw(canvas);
-                Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
-                bitmap.recycle();
-                imageView.setImageBitmap(bitmapResized);
+                Drawable drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.skip_next_black_24dp, null);
+                if(drawable != null) {
+                    drawable.setBounds(0, 0, width, height);
+                    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                    Canvas canvas = new Canvas(bitmap);
+                    drawable.draw(canvas);
+                    Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
+                    bitmap.recycle();
+                    imageView.setImageBitmap(bitmapResized);
+                }
             }
 
             private void setUpPlay() {
@@ -67,17 +107,19 @@ public class FragmentSongPane extends Fragment {
                 Drawable drawable;
                 ActivityMain activityMain = ((ActivityMain)getActivity());
                 if(activityMain != null && activityMain.serviceMain != null && activityMain.serviceMain.isPlaying()) {
-                    drawable = getResources().getDrawable(R.drawable.pause_black_24dp);
+                    drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.pause_black_24dp, null);
                 } else{
-                    drawable = getResources().getDrawable(R.drawable.play_arrow_black_24dp);
+                    drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.play_arrow_black_24dp, null);
                 }
-                drawable.setBounds(0, 0, width, height);
-                Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-                Canvas canvas = new Canvas(bitmap);
-                drawable.draw(canvas);
-                Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
-                bitmap.recycle();
-                imageView.setImageBitmap(bitmapResized);
+                if(drawable != null) {
+                    drawable.setBounds(0, 0, width, height);
+                    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                    Canvas canvas = new Canvas(bitmap);
+                    drawable.draw(canvas);
+                    Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
+                    bitmap.recycle();
+                    imageView.setImageBitmap(bitmapResized);
+                }
             }
 
             private void setUpPrev() {
@@ -85,14 +127,16 @@ public class FragmentSongPane extends Fragment {
                 int height = imageView.getMeasuredHeight();
                 //noinspection SuspiciousNameCombination
                 int width = height;
-                Drawable drawable = getResources().getDrawable(R.drawable.skip_previous_black_24dp);
-                drawable.setBounds(0, 0, width, height);
-                Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-                Canvas canvas = new Canvas(bitmap);
-                drawable.draw(canvas);
-                Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
-                bitmap.recycle();
-                imageView.setImageBitmap(bitmapResized);
+                Drawable drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.skip_previous_black_24dp, null);
+                if(drawable != null) {
+                    drawable.setBounds(0, 0, width, height);
+                    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                    Canvas canvas = new Canvas(bitmap);
+                    drawable.draw(canvas);
+                    Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
+                    bitmap.recycle();
+                    imageView.setImageBitmap(bitmapResized);
+                }
             }
 
             private void setUpSongArt() {
@@ -100,14 +144,16 @@ public class FragmentSongPane extends Fragment {
                 int height = imageViewSongArt.getMeasuredHeight();
                 //noinspection SuspiciousNameCombination
                 int width = height;
-                Drawable drawableSongArt = getResources().getDrawable(R.drawable.music_note_black_48dp);
-                drawableSongArt.setBounds(0, 0, width, height);
-                Bitmap bitmapSongArt = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-                Canvas canvas = new Canvas(bitmapSongArt);
-                drawableSongArt.draw(canvas);
-                Bitmap bitmapSongArtResized = getResizedBitmap(bitmapSongArt, width, height);
-                bitmapSongArt.recycle();
-                imageViewSongArt.setImageBitmap(bitmapSongArtResized);
+                Drawable drawableSongArt = ResourcesCompat.getDrawable(getResources(), R.drawable.music_note_black_48dp, null);
+                if(drawableSongArt != null) {
+                    drawableSongArt.setBounds(0, 0, width, height);
+                    Bitmap bitmapSongArt = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                    Canvas canvas = new Canvas(bitmapSongArt);
+                    drawableSongArt.draw(canvas);
+                    Bitmap bitmapSongArtResized = getResizedBitmap(bitmapSongArt, width, height);
+                    bitmapSongArt.recycle();
+                    imageViewSongArt.setImageBitmap(bitmapSongArtResized);
+                }
             }
         });
     }
@@ -121,6 +167,13 @@ public class FragmentSongPane extends Fragment {
         matrix.postScale(scaleWidth, scaleHeight);
         return Bitmap.createBitmap(
                 bm, 0, 0, width, height, matrix, false);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
+        activityMain = null;
     }
 
 }

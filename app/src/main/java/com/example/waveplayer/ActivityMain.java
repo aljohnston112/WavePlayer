@@ -362,49 +362,66 @@ public class ActivityMain extends AppCompatActivity {
                                 TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
                         TimeUnit.MILLISECONDS.toSeconds(millis) -
                                 TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
+                String stringCurrentTime = "00:00:00";
                 SeekBar seekBar = findViewById(R.id.seekBar);
-                final TextView textViewCurrent = findViewById(R.id.editTextCurrentTime);
-                seekBar.setMax(millis);
-                seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener(this));
-                serviceMain.scheduledExecutorService.shutdown();
-                serviceMain.scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-                serviceMain.scheduledExecutorService.scheduleAtFixedRate(
-                        new RunnableSeekBarUpdater(
-                                serviceMain.songsMap.get(serviceMain.currentSong.getUri()),
-                                seekBar, textViewCurrent, millis, getResources().getConfiguration().locale),
-                        0L, 1L, TimeUnit.SECONDS);
-                Log.v(TAG, "sending Runnable to update the song UI");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Log.v(TAG, "updating the song UI");
-                        ImageView imageViewSongArt = findViewById(R.id.image_view_song_art);
-                        if (imageViewSongArt != null) {
-                            if (AudioURI.getThumbnail(serviceMain.currentSong, getApplicationContext()) == null) {
-                                imageViewSongArt.setImageDrawable(ResourcesCompat.getDrawable(
-                                        getResources(), R.drawable.music_note_black_48dp, null));
-                            } else {
-                                imageViewSongArt.setImageBitmap(AudioURI.getThumbnail(
-                                        serviceMain.currentSong, getApplicationContext()));
-                            }
-                        }
-                        TextView textViewSongName = findViewById(R.id.text_view_song_name);
-                        if (textViewSongName != null) {
-                            textViewSongName.setText(serviceMain.currentSong.title);
-                        }
-                        if (textViewCurrent != null) {
-                            textViewCurrent.setText(R.string.start_time);
-                        }
-                        TextView textViewEnd = findViewById(R.id.editTextEndTime);
-                        if (textViewEnd != null) {
-                            textViewEnd.setText(stringEndTime);
-                        }
-                        Log.v(TAG, "done updating the song UI");
+                if (seekBar != null) {
+                    final TextView textViewCurrent = findViewById(R.id.editTextCurrentTime);
+                    seekBar.setMax(millis);
+                    MediaPlayerWURI mediaPlayerWURI =
+                            serviceMain.songsMap.get(serviceMain.currentSong.getUri());
+                    if(mediaPlayerWURI != null) {
+                        seekBar.setProgress(mediaPlayerWURI.getCurrentPosition());
+                        final int currentMillis = mediaPlayerWURI.getCurrentPosition();
+                        stringCurrentTime = String.format(getResources().getConfiguration().locale,
+                                "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(currentMillis),
+                                TimeUnit.MILLISECONDS.toMinutes(currentMillis) -
+                                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(currentMillis)),
+                                TimeUnit.MILLISECONDS.toSeconds(currentMillis) -
+                                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(currentMillis)));
                     }
-                });
-                Log.v(TAG, "done sending Runnable to update the song UI");
-            } else {
-                Log.v(TAG, "song UI not updated due to not being visible");
+                    final String finalStringCurrentTime = stringCurrentTime;
+                    seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener(this));
+                    serviceMain.scheduledExecutorService.shutdown();
+                    serviceMain.scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+                    serviceMain.scheduledExecutorService.scheduleAtFixedRate(
+                            new RunnableSeekBarUpdater(
+                                    serviceMain.songsMap.get(serviceMain.currentSong.getUri()),
+                                    seekBar, textViewCurrent, millis, getResources().getConfiguration().locale),
+                            0L, 1L, TimeUnit.SECONDS);
+                    Log.v(TAG, "sending Runnable to update the song UI");
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Log.v(TAG, "updating the song UI");
+                            ImageView imageViewSongArt = findViewById(R.id.image_view_song_art);
+                            if (imageViewSongArt != null) {
+                                if (AudioURI.getThumbnail(serviceMain.currentSong, getApplicationContext()) == null) {
+                                    imageViewSongArt.setImageDrawable(ResourcesCompat.getDrawable(
+                                            getResources(), R.drawable.music_note_black_48dp, null));
+                                } else {
+                                    imageViewSongArt.setImageBitmap(AudioURI.getThumbnail(
+                                            serviceMain.currentSong, getApplicationContext()));
+                                }
+                            }
+                            TextView textViewSongName = findViewById(R.id.text_view_song_name);
+                            if (textViewSongName != null) {
+                                textViewSongName.setText(serviceMain.currentSong.title);
+                            }
+                            if (textViewCurrent != null) {
+                                textViewCurrent.setText(finalStringCurrentTime);
+                            }
+                            TextView textViewEnd = findViewById(R.id.editTextEndTime);
+                            if (textViewEnd != null) {
+                                textViewEnd.setText(stringEndTime);
+                            }
+                            updatePlayButtons();
+                            Log.v(TAG, "done updating the song UI");
+                        }
+                    });
+                    Log.v(TAG, "done sending Runnable to update the song UI");
+                } else {
+                    Log.v(TAG, "song UI not updated due to not being visible");
+                }
             }
         }
         Log.v(TAG, "done getting ready to update the song UI");
@@ -412,13 +429,13 @@ public class ActivityMain extends AppCompatActivity {
 
     public void updateSongPaneUI() {
         Log.v(TAG, "getting ready to update the song pane UI");
-        if (!serviceMain.fragmentSongVisible && serviceMain.currentSong != null) {
+        if (serviceMain != null && !serviceMain.fragmentSongVisible && serviceMain.currentSong != null) {
             Log.v(TAG, "sending Runnable to update the song pane UI");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     Log.v(TAG, "updating the song pane UI");
-                    if (serviceMain.isPlaying()) {
+                    if (serviceMain.songInProgress()) {
                         TextView textViewSongPaneSongName = findViewById(R.id.textViewSongPaneSongName);
                         if (textViewSongPaneSongName != null) {
                             textViewSongPaneSongName.setText(serviceMain.currentSong.title);

@@ -16,7 +16,7 @@
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
         android:layout_weight="14"
-        android:src="@drawable/music_note_black_48dp"
+        app:srcCompat="@drawable/music_note_black_48dp"
         android:background="@color/colorPrimary"/>
 
     <LinearLayout
@@ -29,12 +29,13 @@
         android:orientation="horizontal">
 
         <ImageButton
+            android:scaleType="fitXY"
             android:id="@+id/button_thumb_down"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:background="@color/colorPrimary"
-            android:src="@drawable/thumb_down_alt_black_24dp" />
+            app:srcCompat="@drawable/thumb_down_alt_black_24dp" />
 
         <TextView
             android:id="@+id/text_view_song_name"
@@ -46,12 +47,13 @@
             android:textAlignment="center" />
 
         <ImageButton
+            android:scaleType="fitXY"
             android:id="@+id/button_thumb_up"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:background="@color/colorPrimary"
-            android:src="@drawable/thumb_up_alt_black_24dp" />
+            app:srcCompat="@drawable/thumb_up_alt_black_24dp" />
 
     </LinearLayout>
 
@@ -98,52 +100,57 @@
         android:orientation="horizontal">
 
         <ImageButton
+            android:scaleType="fitXY"
             android:id="@+id/imageButtonShuffle"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginEnd="4dp"
             android:layout_weight="1"
             android:background="@color/colorPrimary"
-            android:src="@drawable/ic_shuffle_black_24dp" />
+            app:srcCompat="@drawable/ic_shuffle_black_24dp" />
 
         <ImageButton
+            android:scaleType="fitXY"
             android:id="@+id/imageButtonPrev"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp"
             android:layout_weight="1"
             android:background="@color/colorPrimary"
-            android:src="@drawable/skip_previous_black_24dp" />
+            app:srcCompat="@drawable/skip_previous_black_24dp" />
 
         <ImageButton
+            android:scaleType="fitXY"
             android:id="@+id/imageButtonPlayPause"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp"
             android:layout_weight="1"
             android:background="@color/colorPrimary"
-            android:src="@drawable/pause_black_24dp" />
+            app:srcCompat="@drawable/pause_black_24dp" />
 
         <ImageButton
+            android:scaleType="fitXY"
             android:id="@+id/imageButtonNext"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp"
             android:layout_weight="1"
             android:background="@color/colorPrimary"
-            android:src="@drawable/skip_next_black_24dp" />
+            app:srcCompat="@drawable/skip_next_black_24dp" />
 
         <ImageButton
+            android:scaleType="fitXY"
             android:id="@+id/imageButtonRepeat"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginStart="4dp"
             android:layout_weight="1"
             android:background="@color/colorPrimary"
-            android:src="@drawable/repeat_black_24dp" />
+            app:srcCompat="@drawable/repeat_black_24dp" />
     </LinearLayout>
 
 </LinearLayout>

@@ -62,9 +62,11 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                     if (position != RecyclerView.NO_POSITION) {
                         ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
                         if(activityMain != null) {
-                            if(activityMain.serviceMain.isPlaying()){
-                                activityMain.serviceMain.pauseOrPlay();
+                            if (audioURI.equals(activityMain.serviceMain.currentSong)) {
+                                activityMain.serviceMain.songsMap.get(
+                                        activityMain.serviceMain.currentSong.getUri()).seekTo(0);
                             }
+                            activityMain.serviceMain.clearQueue();
                             activityMain.addToQueueAndPlay(audioURI);
                             if (fragment instanceof FragmentSongs) {
                                 activityMain.serviceMain.currentPlaylist = activityMain.serviceMain.masterPlaylist;
