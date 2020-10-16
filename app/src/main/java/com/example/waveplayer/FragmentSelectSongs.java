@@ -19,6 +19,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 public class FragmentSelectSongs extends Fragment {
 
@@ -41,11 +43,15 @@ public class FragmentSelectSongs extends Fragment {
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         activityMain = ((ActivityMain) getActivity());
-        setupFAB();
         activityMain.setActionBarTitle(getResources().getString(R.string.select_songs));
         InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(Activity.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        setupFAB();
         setUpRecyclerView(view);
+        setUpBroadcastReceiver(view);
+    }
+
+    private void setUpBroadcastReceiver(final View view) {
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -62,10 +68,13 @@ public class FragmentSelectSongs extends Fragment {
     private void setUpRecyclerView(View view) {
         if(activityMain.serviceMain != null) {
             RecyclerView recyclerViewSongList = view.findViewById(R.id.recycler_view_song_list);
-            recyclerViewSongList.setLayoutManager(new LinearLayoutManager(recyclerViewSongList.getContext()));
-            RecyclerViewAdapterSelectSongs recyclerViewAdapterSelectSongs = new RecyclerViewAdapterSelectSongs(
-                    this, new ArrayList<>(
-                    activityMain.serviceMain.uriMap.values()), activityMain.serviceMain.userPickedSongs);
+            recyclerViewSongList.setLayoutManager(
+                    new LinearLayoutManager(recyclerViewSongList.getContext()));
+            for(AudioURI audioURI : activityMain.serviceMain.userPickedSongs){
+                audioURI.setSelected(true);
+            }
+            RecyclerViewAdapterSelectSongs recyclerViewAdapterSelectSongs =
+                    new RecyclerViewAdapterSelectSongs(this);
             recyclerViewSongList.setAdapter(recyclerViewAdapterSelectSongs);
         }
     }
@@ -77,19 +86,8 @@ public class FragmentSelectSongs extends Fragment {
             @Override
             public void onClick(View view) {
                 if(activityMain.serviceMain != null) {
-                    activityMain.serviceMain.userPickedSongs.clear();
-                    int nAllSongs = activityMain.serviceMain.uriMap.values().size();
-                    for (int i = 0; i < nAllSongs; i++) {
-                        if (new ArrayList<>(activityMain.serviceMain.uriMap.values()).get(i).isSelected()) {
-                            activityMain.serviceMain.userPickedSongs.add(
-                                    new ArrayList<>(activityMain.serviceMain.uriMap.values()).get(i));
-                            new ArrayList<>(activityMain.serviceMain.uriMap.values()).get(i).setSelected(false);
-                        } else {
-                            activityMain.serviceMain.userPickedSongs.remove(
-                                    new ArrayList<>(activityMain.serviceMain.uriMap.values()).get(i));
-                        }
-                    }
-                    NavController navController = NavHostFragment.findNavController(FragmentSelectSongs.this);
+                    NavController navController =
+                            NavHostFragment.findNavController(FragmentSelectSongs.this);
                     navController.popBackStack();
                 }
             }

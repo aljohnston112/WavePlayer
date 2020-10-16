@@ -14,10 +14,10 @@ public class RandomPlaylist implements Serializable {
 
     private static final long serialVersionUID = 2323326608918863420L;
 
-    private String name;
+    private final String name;
 
     // The ProbFun that randomly picks the media to play
-    private ProbFunTree<AudioURI> probabilityFunction;
+    private final ProbFunTree<AudioURI> probabilityFunction;
 
     /**
      * Creates a random playlist.

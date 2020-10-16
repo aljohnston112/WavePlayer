@@ -44,17 +44,11 @@ public class FragmentEditPlaylist extends Fragment {
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        view.findViewById(R.id.buttonEditSongs).setOnClickListener(new OnClickListenerFragmentEditPlaylist(this));
         activityMain = ((ActivityMain) getActivity());
-        updateFAB(view);
         activityMain.setActionBarTitle(getResources().getString(R.string.edit_playlist));
-        view.findViewById(R.id.buttonEditSongs).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                NavHostFragment.findNavController(FragmentEditPlaylist.this).navigate(
-                        FragmentEditPlaylistDirections.actionFragmentEditPlaylistToFragmentSelectSongs());
-            }
-        });
-       setUpBroadcastReceiver(view);
+        updateFAB(view);
+        setUpBroadcastReceiver(view);
     }
 
     private void setUpBroadcastReceiver(final View view) {
@@ -74,10 +68,12 @@ public class FragmentEditPlaylist extends Fragment {
     private void updateFAB(View view) {
         activityMain.showFab(true);
         activityMain.setFabImage(R.drawable.ic_check_black_24dp);
-        if(activityMain.serviceMain != null) {
+        if (activityMain.serviceMain != null) {
             final EditText finalEditTextPlaylistName = view.findViewById(R.id.editTextPlaylistName);
             ArrayList<AudioURI> playlistSongs = new ArrayList<>();
             if (activityMain.serviceMain.userPickedPlaylist != null) {
+                // activityMain.serviceMain.userPickedSongs.isEmpty()
+                // when the user is making a new playlist or editing one
                 if (activityMain.serviceMain.userPickedSongs.isEmpty()) {
                     activityMain.serviceMain.userPickedSongs.addAll(
                             activityMain.serviceMain.userPickedPlaylist.getProbFun().getProbMap().keySet());

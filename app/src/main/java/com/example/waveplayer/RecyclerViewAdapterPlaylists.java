@@ -1,6 +1,5 @@
 package com.example.waveplayer;
 
-import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,8 +13,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerViewAdapterPlaylists.ViewHolder> {
-
-    public static final int MENU_DELETE_PLAYLIST_GROUP_ID = 3357909;
 
     private final Fragment fragment;
 
@@ -44,7 +41,7 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
         return randomPlaylists.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnCreateContextMenuListener {
+    public class ViewHolder extends RecyclerView.ViewHolder {
 
         public final View playlistView;
         public final TextView textViewPlaylistName;
@@ -54,21 +51,20 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
             super(view);
             playlistView = view;
             textViewPlaylistName = view.findViewById(R.id.text_view_playlist_name);
-            if(randomPlaylist!= null){
-            textViewPlaylistName.setText(randomPlaylist.getName());
+            if (randomPlaylist != null) {
+                textViewPlaylistName.setText(randomPlaylist.getName());
             }
-            view.setOnCreateContextMenuListener(this);
-            view.setOnClickListener(new View.OnClickListener(){
+            view.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     int position = getAdapterPosition();
-                    if(position != RecyclerView.NO_POSITION){
-                            ActivityMain activityMain = ((ActivityMain)fragment.getActivity());
-                            if(activityMain != null) {
-                                activityMain.serviceMain.userPickedPlaylist = randomPlaylist;
-                            }
-                            NavHostFragment.findNavController(fragment).navigate(
-                                    FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentPlaylist());
+                    if (position != RecyclerView.NO_POSITION) {
+                        ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
+                        if (activityMain != null) {
+                            activityMain.serviceMain.userPickedPlaylist = randomPlaylist;
+                        }
+                        NavHostFragment.findNavController(fragment).navigate(
+                                FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentPlaylist());
                     }
                 }
             });
@@ -80,12 +76,6 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
             return randomPlaylist.getName();
         }
 
-        @Override
-        public void onCreateContextMenu(ContextMenu contextMenu, View view,
-                                        ContextMenu.ContextMenuInfo contextMenuInfo) {
-            //groupId, itemId, order, title
-            contextMenu.add(MENU_DELETE_PLAYLIST_GROUP_ID, getAdapterPosition(), 0, "Delete playlist");
-        }
-
     }
+
 }

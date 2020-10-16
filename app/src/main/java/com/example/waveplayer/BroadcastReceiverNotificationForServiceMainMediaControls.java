@@ -3,16 +3,18 @@ package com.example.waveplayer;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
-public class BroadcastReceiverNotificationForServiceMain extends BroadcastReceiver {
+public class BroadcastReceiverNotificationForServiceMainMediaControls extends BroadcastReceiver {
 
     ServiceMain serviceMain;
 
-    BroadcastReceiverNotificationForServiceMain(ServiceMain serviceMain) {
+    BroadcastReceiverNotificationForServiceMainMediaControls(ServiceMain serviceMain) {
         this.serviceMain = serviceMain;
     }
 
     public void onReceive(Context context, Intent intent) {
+        Log.v(ActivityMain.TAG, "BroadcastReceiverNotificationForServiceMainMediaControls start");
         String action = intent.getAction();
         if (action != null && serviceMain != null) {
             switch (action) {
@@ -26,6 +28,7 @@ public class BroadcastReceiverNotificationForServiceMain extends BroadcastReceiv
                     serviceMain.playPrevious();
             }
         }
+        Log.v(ActivityMain.TAG, "BroadcastReceiverNotificationForServiceMainMediaControls end");
     }
 
 }

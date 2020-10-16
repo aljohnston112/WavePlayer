@@ -39,6 +39,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -68,7 +69,7 @@ public class ServiceMain extends Service {
     // TODO add percent change up and down
 
     final HashMap<Uri, MediaPlayerWURI> songsMap = new HashMap<>();
-    final public HashMap<Uri, AudioURI> uriMap = new HashMap<>();
+    final public LinkedHashMap<Uri, AudioURI> uriMap = new LinkedHashMap<>();
 
     final ArrayList<RandomPlaylist> playlists = new ArrayList<>();
     RandomPlaylist masterPlaylist;
@@ -96,7 +97,7 @@ public class ServiceMain extends Service {
 
     ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-    BroadcastReceiverNotificationForServiceMain broadcastReceiverNotificationForServiceMainButtons = new BroadcastReceiverNotificationForServiceMain(this);
+    BroadcastReceiverNotificationForServiceMainMediaControls broadcastReceiverNotificationForServiceMainMediaControlsButtons = new BroadcastReceiverNotificationForServiceMainMediaControls(this);
 
     public final MediaPlayer.OnCompletionListener onCompletionListener = new MediaPlayer.OnCompletionListener() {
         @Override
@@ -178,17 +179,17 @@ public class ServiceMain extends Service {
         IntentFilter filterNext = new IntentFilter();
         filterNext.addAction(getResources().getString(R.string.broadcast_receiver_action_next));
         filterNext.addCategory(Intent.CATEGORY_DEFAULT);
-        registerReceiver(broadcastReceiverNotificationForServiceMainButtons, filterNext);
+        registerReceiver(broadcastReceiverNotificationForServiceMainMediaControlsButtons, filterNext);
 
         IntentFilter filterPrevious = new IntentFilter();
         filterPrevious.addAction(getResources().getString(R.string.broadcast_receiver_action_previous));
         filterPrevious.addCategory(Intent.CATEGORY_DEFAULT);
-        registerReceiver(broadcastReceiverNotificationForServiceMainButtons, filterPrevious);
+        registerReceiver(broadcastReceiverNotificationForServiceMainMediaControlsButtons, filterPrevious);
 
         IntentFilter filterPlayPause = new IntentFilter();
         filterPlayPause.addAction(getResources().getString(R.string.broadcast_receiver_action_play_pause));
         filterPlayPause.addCategory(Intent.CATEGORY_DEFAULT);
-        registerReceiver(broadcastReceiverNotificationForServiceMainButtons, filterPlayPause);
+        registerReceiver(broadcastReceiverNotificationForServiceMainMediaControlsButtons, filterPlayPause);
         string = "Done setting up Broadcast receivers for notification buttons";
         Log.v(TAG, string);
     }
@@ -263,9 +264,9 @@ public class ServiceMain extends Service {
             Log.v(TAG, string);
             Toast.makeText(getApplicationContext(), "PinkyPlayer starting", Toast.LENGTH_SHORT).show();
             setUpNotificationBuilder();
-            setUpBroadCasts();
             notification = builder.build();
             startForeground(CHANNEL_ID.hashCode(), notification);
+            setUpBroadCasts();
             string = "onStartCommand done setting up service";
             Log.v(TAG, string);
         } else {
@@ -382,7 +383,7 @@ public class ServiceMain extends Service {
     public void onDestroy() {
         Log.v(TAG, "onDestroy started");
         Toast.makeText(this, "PinkyPlayer done", Toast.LENGTH_SHORT).show();
-        unregisterReceiver(broadcastReceiverNotificationForServiceMainButtons);
+        unregisterReceiver(broadcastReceiverNotificationForServiceMainMediaControlsButtons);
         Log.v(TAG, "onDestroy ended");
     }
 

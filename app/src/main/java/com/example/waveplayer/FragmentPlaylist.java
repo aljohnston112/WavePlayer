@@ -43,25 +43,27 @@ public class FragmentPlaylist extends Fragment {
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         activityMain = ((ActivityMain) getActivity());
-        if (activityMain != null) {
-            IntentFilter filterComplete = new IntentFilter();
-            filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
-            filterComplete.addAction(activityMain.getResources().getString(
-                    R.string.broadcast_receiver_action_service_connected));
-            broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
-                @Override
-                public void onReceive(Context context, Intent intent) {
-                    setUpUI(view);
-                }
-            };
-            activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
-        }
+        setUpBroadCastReceiver(view);
         updateFAB();
         setUpUI(view);
     }
 
+    private void setUpBroadCastReceiver(final View view) {
+        IntentFilter filterComplete = new IntentFilter();
+        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
+        filterComplete.addAction(activityMain.getResources().getString(
+                R.string.broadcast_receiver_action_service_connected));
+        broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                setUpUI(view);
+            }
+        };
+        activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
+    }
+
     private void setUpUI(View view) {
-        if(activityMain.serviceMain != null) {
+        if (activityMain.serviceMain != null) {
             RecyclerView recyclerViewSongList = view.findViewById(R.id.recycler_view_song_list);
             activityMain.setActionBarTitle(activityMain.serviceMain.userPickedPlaylist.getName());
             recyclerViewSongList.setLayoutManager(new LinearLayoutManager(recyclerViewSongList.getContext()));
@@ -104,13 +106,19 @@ public class FragmentPlaylist extends Fragment {
         }
 
         @Override
-        public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
-            RecyclerViewAdapterSongs recyclerViewAdapterSongsList = (RecyclerViewAdapterSongs) recyclerView.getAdapter();
+        public boolean onMove(@NonNull RecyclerView recyclerView,
+                              @NonNull RecyclerView.ViewHolder viewHolder,
+                              @NonNull RecyclerView.ViewHolder target) {
+            RecyclerViewAdapterSongs recyclerViewAdapterSongsList =
+                    (RecyclerViewAdapterSongs) recyclerView.getAdapter();
             if (recyclerViewAdapterSongsList != null) {
-                Collections.swap(recyclerViewAdapterSongsList.audioURIS, viewHolder.getAdapterPosition(), target.getAdapterPosition());
-                LinkedHashMap<AudioURI, Double> oldMap = activityMain.serviceMain.userPickedPlaylist.getProbFun().getProbMap();
+                Collections.swap(recyclerViewAdapterSongsList.audioURIS,
+                        viewHolder.getAdapterPosition(), target.getAdapterPosition());
+                LinkedHashMap<AudioURI, Double> oldMap =
+                        activityMain.serviceMain.userPickedPlaylist.getProbFun().getProbMap();
                 ArrayList<AudioURI> keySetList = new ArrayList<>(oldMap.keySet());
-                Collections.swap(keySetList, viewHolder.getAdapterPosition(), target.getAdapterPosition());
+                Collections.swap(keySetList,
+                        viewHolder.getAdapterPosition(), target.getAdapterPosition());
                 LinkedHashMap<AudioURI, Double> swappedMap = new LinkedHashMap<>();
                 for (AudioURI oldSwappedKey : keySetList) {
                     swappedMap.put(oldSwappedKey, oldMap.get(oldSwappedKey));
@@ -124,7 +132,8 @@ public class FragmentPlaylist extends Fragment {
 
         @Override
         public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-            RecyclerViewAdapterSongs recyclerViewAdapterSongsList = (RecyclerViewAdapterSongs) recyclerView.getAdapter();
+            RecyclerViewAdapterSongs recyclerViewAdapterSongsList =
+                    (RecyclerViewAdapterSongs) recyclerView.getAdapter();
             if (recyclerViewAdapterSongsList != null) {
                 int position = viewHolder.getAdapterPosition();
                 activityMain.serviceMain.userPickedPlaylist.getProbFun().remove(

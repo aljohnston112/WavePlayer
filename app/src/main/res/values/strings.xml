@@ -12,6 +12,8 @@
     <string name="thumbnail_error">There was a problem getting a thumbnail</string>
     <string name="start_time">00:00:00</string>
     <string name="reset_probs">Reset Probabilities</string>
+    <string name="playlist_deleted">Playlist deleted</string>
+    <string name="undo">Undo</string>
 
     <!--Toolbar titles-->
     <string name="app_name">AI Playlist</string>
@@ -28,7 +30,6 @@
     <string name="not_enough_songs_for_playlist">Pick at least one song</string>
     <string name="no_name_playlist">Enter a name for the new playlist</string>
     <string name="duplicate_name_playlist">There is already a playlist with that name</string>
-
 
     <!--For FragmentSettings-->
     <string name="max_percent"><b>Min Grain Number:</b></string>

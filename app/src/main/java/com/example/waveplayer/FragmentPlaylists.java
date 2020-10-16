@@ -6,7 +6,6 @@ import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -18,6 +17,9 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.snackbar.BaseTransientBottomBar;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.Collections;
 
@@ -33,8 +35,8 @@ public class FragmentPlaylists extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(
+            LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_playlist_list, container, false);
     }
 
@@ -46,10 +48,10 @@ public class FragmentPlaylists extends Fragment {
     }
 
     private void updateMainContent(final View view) {
-        updateFAB();
         activityMain.setActionBarTitle(getResources().getString(R.string.playlists));
         setUpRecyclerView(view);
         setUpBroadcastReceiver(view);
+        updateFAB();
     }
 
     private void setUpBroadcastReceiver(final View view) {
@@ -67,11 +69,12 @@ public class FragmentPlaylists extends Fragment {
     }
 
     private void setUpRecyclerView(View view) {
-        if(activityMain.serviceMain != null) {
+        if (activityMain.serviceMain != null) {
             RecyclerView recyclerView = view.findViewById(R.id.recycler_view_playlist_list);
             recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
             RecyclerViewAdapterPlaylists recyclerViewAdapter =
-                    new RecyclerViewAdapterPlaylists(this, activityMain.serviceMain.playlists);
+                    new RecyclerViewAdapterPlaylists(
+                            this, activityMain.serviceMain.playlists);
             recyclerView.setAdapter(recyclerViewAdapter);
             ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new PlaylistItemTouchListener());
             itemTouchHelper.attachToRecyclerView(recyclerView);
@@ -93,22 +96,23 @@ public class FragmentPlaylists extends Fragment {
         });
     }
 
-    @Override
-    public boolean onContextItemSelected(@NonNull MenuItem item) {
-        RecyclerView recyclerView = activityMain.findViewById(R.id.recycler_view_playlist_list);
-        RecyclerViewAdapterPlaylists recyclerViewAdapter = (RecyclerViewAdapterPlaylists) recyclerView.getAdapter();
-        if (recyclerViewAdapter != null) {
-            switch (item.getGroupId()) {
-                case RecyclerViewAdapterPlaylists.MENU_DELETE_PLAYLIST_GROUP_ID:
-                    activityMain.serviceMain.playlists.remove(item.getItemId());
-                    recyclerViewAdapter.notifyItemRemoved(item.getItemId());
-                    activityMain.serviceMain.saveFile();
-                    return true;
-                default:
-                    return super.onContextItemSelected(item);
-            }
+    public class UndoListener implements View.OnClickListener {
+
+        RecyclerViewAdapterPlaylists recyclerViewAdapter;
+
+        RandomPlaylist randomPlaylist;
+
+        UndoListener(RecyclerViewAdapterPlaylists recyclerViewAdapter, RandomPlaylist randomPlaylist) {
+            this.recyclerViewAdapter = recyclerViewAdapter;
+            this.randomPlaylist = randomPlaylist;
         }
-        return super.onContextItemSelected(item);
+
+        @Override
+        public void onClick(View v) {
+            activityMain.serviceMain.playlists.add(randomPlaylist);
+            recyclerViewAdapter.notifyDataSetChanged();
+            activityMain.serviceMain.saveFile();
+        }
     }
 
     class PlaylistItemTouchListener extends ItemTouchHelper.Callback {
@@ -116,23 +120,45 @@ public class FragmentPlaylists extends Fragment {
         @Override
         public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
             int dragFlags = ItemTouchHelper.UP | ItemTouchHelper.DOWN;
-            int swipeFlags = 0;
+            int swipeFlags = ItemTouchHelper.START | ItemTouchHelper.END;
             return makeMovementFlags(dragFlags, swipeFlags);
         }
 
         @Override
-        public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
-            RecyclerViewAdapterPlaylists recyclerViewAdapter = (RecyclerViewAdapterPlaylists) recyclerView.getAdapter();
+        public boolean onMove(@NonNull RecyclerView recyclerView,
+                              @NonNull RecyclerView.ViewHolder viewHolder,
+                              @NonNull RecyclerView.ViewHolder target) {
+            RecyclerViewAdapterPlaylists recyclerViewAdapter =
+                    (RecyclerViewAdapterPlaylists) recyclerView.getAdapter();
             if (recyclerViewAdapter != null) {
-                Collections.swap(recyclerViewAdapter.randomPlaylists, viewHolder.getAdapterPosition(), target.getAdapterPosition());
-                Collections.swap(activityMain.serviceMain.playlists, viewHolder.getAdapterPosition(), target.getAdapterPosition());
-                recyclerViewAdapter.notifyItemMoved(viewHolder.getAdapterPosition(), target.getAdapterPosition());
+                Collections.swap(recyclerViewAdapter.randomPlaylists,
+                        viewHolder.getAdapterPosition(), target.getAdapterPosition());
+                Collections.swap(activityMain.serviceMain.playlists,
+                        viewHolder.getAdapterPosition(), target.getAdapterPosition());
+                recyclerViewAdapter.notifyItemMoved(
+                        viewHolder.getAdapterPosition(), target.getAdapterPosition());
             }
             return true;
         }
 
         @Override
         public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+            RecyclerView recyclerView = activityMain.findViewById(R.id.recycler_view_playlist_list);
+            RecyclerViewAdapterPlaylists recyclerViewAdapter =
+                    (RecyclerViewAdapterPlaylists) recyclerView.getAdapter();
+            if (recyclerViewAdapter != null) {
+                int position = viewHolder.getAdapterPosition();
+                RandomPlaylist randomPlaylist = activityMain.serviceMain.playlists.get(position);
+                activityMain.serviceMain.playlists.remove(position);
+                recyclerViewAdapter.notifyItemRemoved(position);
+                activityMain.serviceMain.saveFile();
+                Snackbar snackbar = Snackbar.make(
+                        activityMain.findViewById(R.id.coordinatorLayoutActivityMain),
+                        R.string.playlist_deleted, BaseTransientBottomBar.LENGTH_LONG);
+                snackbar.setAction(R.string.undo,
+                        new UndoListener(recyclerViewAdapter, randomPlaylist));
+                snackbar.show();
+            }
         }
 
     }
@@ -143,7 +169,5 @@ public class FragmentPlaylists extends Fragment {
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
         activityMain = null;
     }
-
-    // TODO add swiping and reordering
 
 }

@@ -1,7 +1,6 @@
 package com.example.waveplayer;
 
 import android.Manifest;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -12,7 +11,6 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -46,7 +44,7 @@ public class ActivityMain extends AppCompatActivity {
 
     // TODO update fab with exteded FAB
 
-    private static final String TAG = "ActivityMain";
+    static final String TAG = "ActivityMain";
 
     private static final int REQUEST_PERMISSION = 245083964;
 
@@ -56,34 +54,11 @@ public class ActivityMain extends AppCompatActivity {
 
     final Object lock = new Object();
 
-    private ServiceConnection connection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            Log.v(TAG, "onServiceConnected started");
-            ServiceMain.ServiceMainBinder binder = (ServiceMain.ServiceMainBinder) service;
-            serviceMain = binder.getService();
-            askForExternalStoragePermissionAndFetchMediaFiles();
-            setUpSongPane();
-            if (serviceMain.currentSong != null) {
-                updateSongUI();
-                updateSongPaneUI();
-            }
-            Intent intent = new Intent();
-            intent.addCategory(Intent.CATEGORY_DEFAULT);
-            intent.setAction(getResources().getString(R.string.broadcast_receiver_action_service_connected));
-            sendBroadcast(intent);
-            Log.v(TAG, "onServiceConnected ended");
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            Log.v(TAG, "onServiceDisconnected start and end");
-        }
-    };
+    final private ServiceConnection connection = new ConnectionServiceMain(this);
 
     BroadcastReceiverOnCompletion broadcastReceiverOnCompletion = new BroadcastReceiverOnCompletion(this);
 
-    BroadcastReceiverNotificationForActivityMain broadcastReceiverNotificationForActivityMainButtons = new BroadcastReceiverNotificationForActivityMain(this);
+    BroadcastReceiverNotificationForActivityMainMediaControls broadcastReceiverNotificationForActivityMainButtons = new BroadcastReceiverNotificationForActivityMainMediaControls(this);
 
     // region onCreate
 
@@ -165,7 +140,7 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "started and bound ServiceMain");
     }
 
-    private void askForExternalStoragePermissionAndFetchMediaFiles() {
+    void askForExternalStoragePermissionAndFetchMediaFiles() {
         Log.v(TAG, "asking for external storage permission");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -202,7 +177,7 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "onRequestPermissionsResult end");
     }
 
-    private void setUpSongPane() {
+    void setUpSongPane() {
         Log.v(TAG, "setting up song pane");
         hideSongPane();
         linkSongPaneButtons();
@@ -405,11 +380,12 @@ public class ActivityMain extends AppCompatActivity {
                         Log.v(TAG, "updating the song UI");
                         ImageView imageViewSongArt = findViewById(R.id.image_view_song_art);
                         if (imageViewSongArt != null) {
-                            if (serviceMain.currentSong.getThumbnail(getApplicationContext()) == null) {
+                            if (AudioURI.getThumbnail(serviceMain.currentSong, getApplicationContext()) == null) {
                                 imageViewSongArt.setImageDrawable(ResourcesCompat.getDrawable(
                                         getResources(), R.drawable.music_note_black_48dp, null));
                             } else {
-                                imageViewSongArt.setImageBitmap(serviceMain.currentSong.getThumbnail(getApplicationContext()));
+                                imageViewSongArt.setImageBitmap(AudioURI.getThumbnail(
+                                        serviceMain.currentSong, getApplicationContext()));
                             }
                         }
                         TextView textViewSongName = findViewById(R.id.text_view_song_name);
@@ -455,7 +431,8 @@ public class ActivityMain extends AppCompatActivity {
                             songArtHeight = serviceMain.songPaneArtHeight;
                         }
                         @SuppressWarnings("SuspiciousNameCombination") int songArtWidth = songArtHeight;
-                        Bitmap bitmapSongArt = serviceMain.currentSong.getThumbnail(getApplicationContext());
+                        Bitmap bitmapSongArt = AudioURI.getThumbnail(
+                                serviceMain.currentSong, getApplicationContext());
                         if (bitmapSongArt != null) {
                             Bitmap bitmapSongArtResized = FragmentSongPane.getResizedBitmap(
                                     bitmapSongArt, songArtWidth, songArtHeight);
