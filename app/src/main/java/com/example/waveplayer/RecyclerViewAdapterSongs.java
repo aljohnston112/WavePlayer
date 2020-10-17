@@ -66,6 +66,8 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                             if (audioURI.equals(activityMain.serviceMain.currentSong)) {
                                 activityMain.serviceMain.songsMap.get(
                                         activityMain.serviceMain.currentSong.getUri()).seekTo(0);
+                            } else{
+                                activityMain.serviceMain.stopAndPreparePrevious();
                             }
                             activityMain.serviceMain.clearQueue();
                             activityMain.addToQueueAndPlay(audioURI);
@@ -81,8 +83,9 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                             activityMain.serviceMain.currentPlaylistArray =
                                     new ArrayList<>(activityMain.serviceMain.currentPlaylist
                                             .getProbFun().getProbMap().keySet());
+                            int i = activityMain.serviceMain.currentPlaylistArray.indexOf(audioURI);
                             activityMain.serviceMain.currentPlaylistIterator =
-                                    activityMain.serviceMain.currentPlaylistArray.listIterator();
+                                    activityMain.serviceMain.currentPlaylistArray.listIterator(i+1);
                         }
                         if (action != null) {
                             NavHostFragment.findNavController(fragment).navigate(action);
