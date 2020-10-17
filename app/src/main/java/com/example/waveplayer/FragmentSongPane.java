@@ -41,7 +41,7 @@ public class FragmentSongPane extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         setupSongPane(view);
         activityMain = ((ActivityMain)getActivity());
-        if(view.getHeight() > 0 && activityMain.serviceMain != null){
+        if(view.getVisibility() == View.VISIBLE && activityMain.serviceMain != null){
             activityMain.serviceMain.fragmentSongVisible = false;
         }
         if(activityMain != null) {
@@ -66,7 +66,7 @@ public class FragmentSongPane extends Fragment {
 
     public void notifyServiceConnected(View view) {
         setupSongPane(view);
-        if(view.getHeight() > 0 && activityMain.serviceMain != null){
+        if(view.getVisibility() == View.VISIBLE && activityMain.serviceMain != null){
             activityMain.serviceMain.fragmentSongVisible = false;
         }
         activityMain.updateSongPaneUI();

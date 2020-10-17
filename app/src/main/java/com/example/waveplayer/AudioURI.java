@@ -60,7 +60,6 @@ public final class AudioURI implements Comparable<AudioURI>, Serializable {
         return duration;
     }
 
-    // TODO find a more efficient way to find songs the user picked
     // Used for determining if the user picked a song when making a playlist.
     private boolean isSelected = false;
 

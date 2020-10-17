@@ -11,6 +11,7 @@ import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewAdapterSongs.ViewHolder> {
@@ -51,7 +52,7 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
             super(view);
             songView = view;
             textViewSongName = view.findViewById(R.id.text_view_songs_name);
-            if(fragment instanceof FragmentSongs){
+            if (fragment instanceof FragmentSongs) {
                 view.findViewById(R.id.handle).setVisibility(View.INVISIBLE);
             }
             view.setOnClickListener(new View.OnClickListener() {
@@ -61,7 +62,7 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                     NavDirections action = null;
                     if (position != RecyclerView.NO_POSITION) {
                         ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
-                        if(activityMain != null) {
+                        if (activityMain != null) {
                             if (audioURI.equals(activityMain.serviceMain.currentSong)) {
                                 activityMain.serviceMain.songsMap.get(
                                         activityMain.serviceMain.currentSong.getUri()).seekTo(0);
@@ -69,12 +70,19 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                             activityMain.serviceMain.clearQueue();
                             activityMain.addToQueueAndPlay(audioURI);
                             if (fragment instanceof FragmentSongs) {
-                                activityMain.serviceMain.currentPlaylist = activityMain.serviceMain.masterPlaylist;
+                                activityMain.serviceMain.currentPlaylist =
+                                        activityMain.serviceMain.masterPlaylist;
                                 action = FragmentSongsDirections.actionFragmentSongsToFragmentSong();
                             } else if (fragment instanceof FragmentPlaylist) {
-                                activityMain.serviceMain.currentPlaylist = activityMain.serviceMain.userPickedPlaylist;
+                                activityMain.serviceMain.currentPlaylist =
+                                        activityMain.serviceMain.userPickedPlaylist;
                                 action = FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong();
                             }
+                            activityMain.serviceMain.currentPlaylistArray =
+                                    new ArrayList<>(activityMain.serviceMain.currentPlaylist
+                                            .getProbFun().getProbMap().keySet());
+                            activityMain.serviceMain.currentPlaylistIterator =
+                                    activityMain.serviceMain.currentPlaylistArray.listIterator();
                         }
                         if (action != null) {
                             NavHostFragment.findNavController(fragment).navigate(action);

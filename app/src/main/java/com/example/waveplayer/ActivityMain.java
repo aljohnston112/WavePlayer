@@ -267,9 +267,12 @@ public class ActivityMain extends AppCompatActivity {
         super.onPause();
         if (serviceMain != null) {
             serviceMain.saveFile();
-            serviceMain.fragmentSongVisible = false;
+            //serviceMain.fragmentSongVisible = false;
             serviceMain.scheduledExecutorService.shutdown();
         }
+        unregisterReceiver(broadcastReceiverOnCompletion);
+        unregisterReceiver(broadcastReceiverNotificationForActivityMainButtons);
+        getApplicationContext().unbindService(connection);
         Log.v(TAG, "onPause ended");
     }
 
@@ -277,9 +280,6 @@ public class ActivityMain extends AppCompatActivity {
     protected void onDestroy() {
         Log.v(TAG, "onDestroy started");
         super.onDestroy();
-        this.unregisterReceiver(broadcastReceiverOnCompletion);
-        this.unregisterReceiver(broadcastReceiverNotificationForActivityMainButtons);
-        getApplicationContext().unbindService(connection);
         Log.v(TAG, "onDestroy ended");
     }
 
