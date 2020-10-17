@@ -2,6 +2,7 @@ package com.example.waveplayer;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -29,7 +30,7 @@ public class RandomPlaylist implements Serializable {
     public RandomPlaylist(List<AudioURI> music, double maxPercent, String name) {
         if (music.isEmpty())
             throw new IllegalArgumentException("List music must contain at least one AudioURI");
-        Set<AudioURI> files = new HashSet<>(music);
+        Set<AudioURI> files = new LinkedHashSet<>(music);
         probabilityFunction = new ProbFunTree<>(files, maxPercent);
         this.name = name;
     }

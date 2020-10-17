@@ -194,6 +194,19 @@ public class FragmentSong extends Fragment {
                 return false;
             }
         });
+        if(activityMain.serviceMain.shuffling) {
+            buttonShuffle.setImageResource(R.drawable.ic_shuffle_black_24dp);
+        } else{
+            buttonShuffle.setImageResource(R.drawable.ic_shuffle_white_24dp);
+        }
+
+        if(activityMain.serviceMain.loopingOne) {
+            buttonLoop.setImageResource(R.drawable.repeat_one_black_24dp);
+        } else if(activityMain.serviceMain.looping){
+            buttonLoop.setImageResource(R.drawable.repeat_black_24dp);
+        } else{
+            buttonLoop.setImageResource(R.drawable.repeat_white_24dp);
+        }
 
         view.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
             @Override

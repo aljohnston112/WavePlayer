@@ -133,9 +133,11 @@ public class ServiceMain extends Service {
                     return;
                 }
             }
-            scheduledExecutorService.shutdown();
-            if (fragmentSongVisible) {
-                scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+            if((!shuffling && !currentPlaylistIterator.hasNext() && !looping)) {
+                scheduledExecutorService.shutdown();
+                if (fragmentSongVisible) {
+                    scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+                }
             }
             stopAndPreparePrevious();
             if (!shuffling) {
@@ -147,7 +149,6 @@ public class ServiceMain extends Service {
                 } else {
                     isPlaying = false;
                     songInProgress = false;
-                    currentSong = null;
                 }
             } else {
                 if (songQueueIterator.hasNext()) {
@@ -491,7 +492,7 @@ public class ServiceMain extends Service {
         };
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != ?";
         String[] selectionArgs = new String[]{"0"};
-        String sortOrder = MediaStore.Video.Media.DISPLAY_NAME + " ASC";
+        String sortOrder = MediaStore.Video.Media.TITLE + " ASC";
         try (Cursor cursor = getApplicationContext().getContentResolver().query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, projection, selection, selectionArgs, sortOrder)) {
             if (cursor != null) {
@@ -574,10 +575,12 @@ public class ServiceMain extends Service {
                 if (haveAudioFocus) {
                     mediaPlayerWURI.shouldStart(true);
                     isPlaying = true;
+                    songInProgress = true;
                 } else {
                     if (requestAudioFocus()) {
                         mediaPlayerWURI.shouldStart(true);
                         isPlaying = true;
+                        songInProgress = true;
                     }
                 }
             }
@@ -608,7 +611,6 @@ public class ServiceMain extends Service {
             } else {
                 isPlaying = false;
                 songInProgress = false;
-                currentSong = null;
             }
         } else {
             if (songQueueIterator.hasNext()) {
@@ -646,11 +648,11 @@ public class ServiceMain extends Service {
                     currentPlaylistIterator = currentPlaylistArray.listIterator(currentPlaylistArray.size() - 1);
                     addToQueueAndPlay(currentPlaylistIterator.next().getUri());
                     return;
-                } else {
-                    MediaPlayerWURI mediaPlayerWURI = songsMap.get(currentSong.getUri());
-                    if (mediaPlayerWURI != null) {
-                        mediaPlayerWURI.seekTo(0);
-                    }
+                }
+            } else {
+                MediaPlayerWURI mediaPlayerWURI = songsMap.get(currentSong.getUri());
+                if (mediaPlayerWURI != null) {
+                    mediaPlayerWURI.seekTo(0);
                 }
             }
             currentPlaylistIterator.next();
@@ -803,6 +805,7 @@ public class ServiceMain extends Service {
                 File file = new File(getBaseContext().getFilesDir(), FILE_SAVE);
                 //noinspection ResultOfMethodCallIgnored
                 file.delete();
+                /*
                 try (FileOutputStream fos = getApplicationContext().openFileOutput("playlists", Context.MODE_PRIVATE);
                      ObjectOutputStream objectOutputStream = new ObjectOutputStream(fos)) {
                     Log.v(TAG, "Creating save file");
@@ -817,8 +820,10 @@ public class ServiceMain extends Service {
                     Log.v(TAG, "Save file created");
                 } catch (IOException e) {
                     e.printStackTrace();
-                    Log.v(TAG, "Problem whuile trying to save file");
+                    Log.v(TAG, "Problem while trying to save file");
                 }
+
+                 */
                 Log.v(TAG, "saveFile ended");
             }
         });

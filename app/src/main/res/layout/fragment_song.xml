@@ -150,7 +150,7 @@
             android:layout_marginStart="4dp"
             android:layout_weight="1"
             android:background="@color/colorPrimary"
-            app:srcCompat="@drawable/repeat_black_24dp" />
+            app:srcCompat="@drawable/repeat_white_24dp" />
     </LinearLayout>
 
 </LinearLayout>
