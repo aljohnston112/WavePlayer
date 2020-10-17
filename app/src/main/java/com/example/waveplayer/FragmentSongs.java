@@ -69,7 +69,8 @@ public class FragmentSongs extends Fragment {
         if(activityMain.serviceMain != null) {
             RecyclerView recyclerViewSongs = view.findViewById(R.id.recycler_view_song_list);
             RecyclerViewAdapterSongs recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(
-                    this, new ArrayList<>(activityMain.serviceMain.uriMap.values()));
+                    this, new ArrayList<>(
+                    activityMain.serviceMain.masterPlaylist.getProbFun().getProbMap().keySet()));
             recyclerViewSongs.setLayoutManager(new LinearLayoutManager(recyclerViewSongs.getContext()));
             recyclerViewSongs.setAdapter(recyclerViewAdapterSongs);
         }

@@ -661,15 +661,16 @@ public class ServiceMain extends Service {
             uri = songQueueIterator.previous();
             if (songQueueIterator.hasPrevious()) {
                 playPrevousInQueue();
+                return;
             } else if (looping) {
                 songQueueIterator = songQueue.listIterator(songQueue.size() - 1);
                 songQueueIterator.next();
                 play(songQueueIterator.previous());
+                songQueueIterator.next();
             } else if (uri != null) {
                 play(uri);
                 songQueueIterator.next();
             }
-            songQueueIterator.next();
         }
         Log.v(TAG, "playPrevious ended");
     }
