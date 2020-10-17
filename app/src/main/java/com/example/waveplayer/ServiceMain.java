@@ -805,7 +805,6 @@ public class ServiceMain extends Service {
                 File file = new File(getBaseContext().getFilesDir(), FILE_SAVE);
                 //noinspection ResultOfMethodCallIgnored
                 file.delete();
-                /*
                 try (FileOutputStream fos = getApplicationContext().openFileOutput("playlists", Context.MODE_PRIVATE);
                      ObjectOutputStream objectOutputStream = new ObjectOutputStream(fos)) {
                     Log.v(TAG, "Creating save file");
@@ -822,8 +821,6 @@ public class ServiceMain extends Service {
                     e.printStackTrace();
                     Log.v(TAG, "Problem while trying to save file");
                 }
-
-                 */
                 Log.v(TAG, "saveFile ended");
             }
         });
