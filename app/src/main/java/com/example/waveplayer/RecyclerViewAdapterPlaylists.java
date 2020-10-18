@@ -27,7 +27,7 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
     @NonNull
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         return new ViewHolder(LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.fragment_playlists, parent, false));
+                .inflate(R.layout.item_playlist, parent, false));
     }
 
     @Override

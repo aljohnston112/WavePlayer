@@ -18,10 +18,6 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-
 public class FragmentSelectSongs extends Fragment {
 
     ActivityMain activityMain;
@@ -36,7 +32,7 @@ public class FragmentSelectSongs extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_song_list, container, false);
+        return inflater.inflate(R.layout.recycler_view_song_list, container, false);
     }
 
     @Override

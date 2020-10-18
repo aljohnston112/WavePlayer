@@ -14,8 +14,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<RecyclerViewAdapterSelectSongs.ViewHolder> {
 
@@ -29,7 +27,7 @@ public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<Recycle
     @Override
     public RecyclerViewAdapterSelectSongs.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         return new RecyclerViewAdapterSelectSongs.ViewHolder(LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.fragment_songs, parent, false));
+                .inflate(R.layout.item_song, parent, false));
     }
 
     @Override

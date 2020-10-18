@@ -13,8 +13,9 @@
         android:layout_height="wrap_content"
         android:text="@string/playlists"
         app:layout_constraintBottom_toTopOf="@+id/button_songs"
-        app:layout_constraintEnd_toEndOf="@+id/button_songs"
-        app:layout_constraintStart_toStartOf="@+id/button_songs"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
@@ -22,9 +23,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/songs"
-        app:layout_constraintBottom_toTopOf="@+id/button_settings"
-        app:layout_constraintEnd_toEndOf="@+id/button_settings"
-        app:layout_constraintStart_toStartOf="@+id/button_settings"
+        app:layout_constraintBottom_toTopOf="@+id/button_folder_search"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/button_playlists" />
 
     <Button
@@ -33,6 +35,17 @@
         android:layout_height="wrap_content"
         android:text="@string/settings"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button_folder_search" />
+
+    <Button
+        android:id="@+id/button_folder_search"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/folder_search"
+        app:layout_constraintBottom_toTopOf="@+id/button_settings"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"

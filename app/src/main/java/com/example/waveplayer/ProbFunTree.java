@@ -6,10 +6,12 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * A tree node where a set of elements are picked from a probability function to decide which child node
@@ -24,7 +26,7 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
     private static final long serialVersionUID = -6556634307811294014L;
 
     // The set of elements to be picked from, mapped to the probabilities of getting picked
-    private LinkedHashMap<T, Double> probMap = new LinkedHashMap<>();
+    private TreeMap<T, Double> probMap = new TreeMap<>();
 
     // The unique id of this ProbFunTree
     private int id = 0;
@@ -60,11 +62,11 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
      * @return the Map of element-probability pairs that make up this ProbFunTree.
      * Any changes in the returned Map will be reflected in this ProbFunTree.
      */
-    public LinkedHashMap<T, Double> getProbMap() {
+    public TreeMap<T, Double> getProbMap() {
         return this.probMap;
     }
 
-    public void setProbMap(LinkedHashMap<T, Double> probMap) {
+    public void setProbMap(TreeMap<T, Double> probMap) {
         this.probMap = probMap;
     }
 
@@ -99,6 +101,16 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
     private void fixProbSum() {
         Entry<T, Double> firstProb = this.probMap.entrySet().iterator().next();
         this.roundingError = 1.0 - probSum();
+        while((firstProb.getValue()*2.0) < roundingError){
+            double p;
+            for(Entry<T, Double> e : this.probMap.entrySet()){
+                p = e.getValue();
+                p+=roundingError/this.probMap.size();
+                e.setValue(p);
+            }
+            firstProb = this.probMap.entrySet().iterator().next();
+            this.roundingError = 1.0 - probSum();
+        }
         firstProb.setValue(firstProb.getValue() + this.roundingError);
     }
 

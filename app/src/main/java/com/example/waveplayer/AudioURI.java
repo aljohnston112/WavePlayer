@@ -104,15 +104,7 @@ public final class AudioURI implements Comparable<AudioURI>, Serializable {
     @Override
     public int compareTo(AudioURI o) {
         Log.v(TAG, "compareTo start");
-        int h = uri.compareTo(o.uri);
-        if (h != 0) {
-            return h;
-        }
-        h = artist.compareTo(o.artist);
-        if (h != 0) {
-            return h;
-        }
-        h = title.compareTo(o.title);
+        int h = title.compareTo(o.title);
         Log.v(TAG, "compareTo end");
         return h;
     }

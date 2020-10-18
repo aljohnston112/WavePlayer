@@ -20,6 +20,9 @@
         <action
             android:id="@+id/action_FragmentTitle_to_fragmentSongs"
             app:destination="@id/fragmentSongs" />
+        <action
+            android:id="@+id/action_FragmentTitle_to_fragmentFiles"
+            app:destination="@id/fragmentFiles" />
     </fragment>
     <fragment
         android:id="@+id/FragmentSettings"
@@ -30,7 +33,7 @@
         android:id="@+id/FragmentPlaylists"
         android:name="com.example.waveplayer.FragmentPlaylists"
         android:label="fragment_playlist_list"
-        tools:layout="@layout/fragment_playlist_list">
+        tools:layout="@layout/recycler_view_playlist_list">
         <action
             android:id="@+id/action_FragmentPlaylists_to_fragmentPlaylist"
             app:destination="@id/fragmentPlaylist" />
@@ -42,7 +45,7 @@
         android:id="@+id/fragmentSongs"
         android:name="com.example.waveplayer.FragmentSongs"
         android:label="fragment_songs_list"
-        tools:layout="@layout/fragment_song_list" >
+        tools:layout="@layout/recycler_view_song_list" >
         <action
             android:id="@+id/action_fragmentSongs_to_fragmentSong"
             app:destination="@id/fragmentSong" />
@@ -77,4 +80,9 @@
             android:id="@+id/action_fragmentEditPlaylist_to_FragmentSelectSongs"
             app:destination="@id/FragmentSelectSongs" />
     </fragment>
+    <fragment
+        android:id="@+id/fragmentFiles"
+        android:name="com.example.waveplayer.FragmentFiles"
+        android:label="fragment_files"
+        tools:layout="@layout/recycler_view_files" />
 </navigation>

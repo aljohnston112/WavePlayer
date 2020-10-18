@@ -122,7 +122,6 @@ public class ServiceMain extends Service {
                     " onCompletion started";
             Log.v(TAG, string);
             if (currentSong != null) {
-                currentPlaylist.getProbFun().bad(getCurrentSong(), PERCENT_CHANGE);
                 if (loopingOne) {
                     MediaPlayerWURI mediaPlayerWURI = songsMap.get(currentSong.getUri());
                     if (mediaPlayerWURI != null) {
@@ -217,6 +216,11 @@ public class ServiceMain extends Service {
     public void onCreate() {
         super.onCreate();
         String string = "onCreate started";
+
+        File file = new File(getBaseContext().getFilesDir(), FILE_SAVE);
+        //noinspection ResultOfMethodCallIgnored
+        file.delete();
+
         Log.v(TAG, string);
         if (!loaded) {
             string = "onCreate is loading";

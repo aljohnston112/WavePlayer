@@ -40,9 +40,17 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import tellh.com.recyclertreeview_lib.TreeViewAdapter;
+
 public class ActivityMain extends AppCompatActivity {
 
-    // TODO update fab with exteded FAB
+    // TODO update fab with extended FAB
+
+    // TODO help page
+
+    // TODO file structure
+
+    TreeViewAdapter treeViewAdapter;
 
     static final String TAG = "ActivityMain";
 
