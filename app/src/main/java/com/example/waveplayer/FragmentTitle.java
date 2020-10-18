@@ -22,8 +22,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import tellh.com.recyclertreeview_lib.TreeNode;
-import tellh.com.recyclertreeview_lib.TreeViewAdapter;
+import recyclertreeview_lib.TreeViewAdapter;
+import recyclertreeview_lib.TreeViewNode;
 
 import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentFiles;
 import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentPlaylists;
@@ -103,28 +103,27 @@ public class FragmentTitle extends Fragment {
             Uri uri = null;
             if (resultData != null) {
                 uri = resultData.getData();
-                List<TreeNode> nodes = new ArrayList<>();
-                TreeNode<LayoutItemTypeDirectory> treeNode = new TreeNode<>(new LayoutItemTypeDirectory(uri.getLastPathSegment()));
-                traverseDirectoryEntries(treeNode, uri);
-                nodes.add(treeNode);
+                List<TreeViewNode> nodes = new ArrayList<>();
+                TreeViewNode<LayoutItemTypeDirectory> TreeViewNode = new TreeViewNode<>(new LayoutItemTypeDirectory(uri.getLastPathSegment()));
+                traverseDirectoryEntries(TreeViewNode, uri);
+                nodes.add(TreeViewNode);
                 activityMain.treeViewAdapter = new TreeViewAdapter(nodes,
-                        Arrays.asList(new TreeViewBinderFile(), new TreeViewBinderDirectory()));
+                        Arrays.asList(new TreeViewHolderFile(), new TreeViewHolderDirectory()));
                 activityMain.treeViewAdapter.setOnTreeNodeListener(new TreeViewAdapter.OnTreeNodeListener() {
                     @Override
-                    public boolean onClick(TreeNode node, RecyclerView.ViewHolder holder) {
+                    public boolean onClick(TreeViewNode node, RecyclerView.ViewHolder holder) {
                         if (!node.isLeaf()) {
-                            //Update and toggle the node.
-                            onToggle(!node.isExpand(), holder);
+                            toggle(!node.isExpanded(), holder);
                         }
                         return false;
                     }
 
                     @Override
-                    public void onToggle(boolean isExpand, RecyclerView.ViewHolder holder) {
-                        TreeViewBinderDirectory.ViewHolder
-                                dirViewHolder = (TreeViewBinderDirectory.ViewHolder) holder;
+                    public void toggle(boolean isExpanded, RecyclerView.ViewHolder holder) {
+                        TreeViewHolderDirectory.ViewHolder
+                                dirViewHolder = (TreeViewHolderDirectory.ViewHolder) holder;
                         final ImageView ivArrow = dirViewHolder.getIvArrow();
-                        int rotateDegree = isExpand ? 90 : -90;
+                        int rotateDegree = isExpanded ? 90 : -90;
                         ivArrow.animate().rotationBy(rotateDegree).start();
                     }
                 });
@@ -135,14 +134,14 @@ public class FragmentTitle extends Fragment {
                 .navigate(actionFragmentTitleToFragmentFiles());
     }
 
-    void traverseDirectoryEntries(TreeNode<LayoutItemTypeDirectory> app, Uri rootUri) {
+    void traverseDirectoryEntries(TreeViewNode<LayoutItemTypeDirectory> app, Uri rootUri) {
         Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
                 rootUri, DocumentsContract.getTreeDocumentId(rootUri));
 
         getFiles(app, childrenUri, rootUri);
     }
 
-    private void getFiles(TreeNode<LayoutItemTypeDirectory> treeNode, Uri childrenUri, Uri rootUri) {
+    private void getFiles(TreeViewNode<LayoutItemTypeDirectory> TreeViewNode, Uri childrenUri, Uri rootUri) {
         ContentResolver contentResolver = activityMain.getContentResolver();
             try (Cursor cursor = contentResolver.query(childrenUri, new String[]{
                             DocumentsContract.Document.COLUMN_DOCUMENT_ID,
@@ -155,14 +154,14 @@ public class FragmentTitle extends Fragment {
                         String name = cursor.getString(1);
                         String mime = cursor.getString(2);
                         if (isDirectory(mime)) {
-                            TreeNode treeNodeChild = new TreeNode(new LayoutItemTypeDirectory(name));
+                            TreeViewNode TreeViewNodeChild = new TreeViewNode(new LayoutItemTypeDirectory(name));
                             Uri newNode = DocumentsContract.buildChildDocumentsUriUsingTree(
                                     rootUri, docId);
-                            getFiles(treeNodeChild, newNode, rootUri);
-                            treeNode.addChild(treeNodeChild);
+                            getFiles(TreeViewNodeChild, newNode, rootUri);
+                            TreeViewNode.addChild(TreeViewNodeChild);
                         } else {
-                            TreeNode treeNodeChild = new TreeNode(new LayoutItemTypeFile(name));
-                            treeNode.addChild(treeNodeChild);
+                            TreeViewNode TreeViewNodeChild = new TreeViewNode(new LayoutItemTypeFile(name));
+                            TreeViewNode.addChild(TreeViewNodeChild);
                         }
                     }
                 }

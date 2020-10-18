@@ -40,7 +40,7 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import tellh.com.recyclertreeview_lib.TreeViewAdapter;
+import recyclertreeview_lib.TreeViewAdapter;
 
 public class ActivityMain extends AppCompatActivity {
 

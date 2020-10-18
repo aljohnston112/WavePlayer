@@ -1,35 +1,32 @@
 package com.example.waveplayer;
 
-import android.net.Uri;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import java.io.File;
+import recyclertreeview_lib.TreeViewHolder;
+import recyclertreeview_lib.TreeViewNode;
 
-import tellh.com.recyclertreeview_lib.TreeNode;
-import tellh.com.recyclertreeview_lib.TreeViewBinder;
 
-public class TreeViewBinderDirectory extends TreeViewBinder<TreeViewBinderDirectory.ViewHolder> {
+public class TreeViewHolderDirectory extends TreeViewHolder<TreeViewHolderDirectory.ViewHolder> {
 
     @Override
-    public ViewHolder provideViewHolder(View itemView) {
+    public ViewHolder getViewHolder(View itemView) {
         return new ViewHolder(itemView);
     }
 
     @Override
-    public void bindView(ViewHolder viewHolder, int i, TreeNode treeNode) {
-        LayoutItemTypeDirectory fileNode = (LayoutItemTypeDirectory) treeNode.getContent();
+    public void bindView(ViewHolder viewHolder, int i, TreeViewNode treeNode) {
+        LayoutItemTypeDirectory fileNode = (LayoutItemTypeDirectory) treeNode.getItem();
         viewHolder.tvName.setText(fileNode.dirName);
     }
 
-
     @Override
-    public int getLayoutId() {
+    public int getItemViewType() {
         return R.layout.item_directory;
     }
 
-    public class ViewHolder extends TreeViewBinder.ViewHolder {
+    public class ViewHolder extends TreeViewHolder.ViewHolder {
 
         public TextView tvName;
 

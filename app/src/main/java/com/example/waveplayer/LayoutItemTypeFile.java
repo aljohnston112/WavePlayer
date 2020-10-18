@@ -1,6 +1,6 @@
 package com.example.waveplayer;
 
-import tellh.com.recyclertreeview_lib.LayoutItemType;
+import recyclertreeview_lib.LayoutItemType;
 
 public class LayoutItemTypeFile implements LayoutItemType {
 
@@ -11,7 +11,7 @@ public class LayoutItemTypeFile implements LayoutItemType {
     }
 
     @Override
-    public int getLayoutId() {
+    public int getItemViewType() {
         return R.layout.item_file;
     }
 
