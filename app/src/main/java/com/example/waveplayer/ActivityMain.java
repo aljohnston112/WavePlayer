@@ -40,7 +40,7 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import recyclertreeview_lib.TreeViewAdapter;
+import recyclertreeview.TreeViewAdapter;
 
 public class ActivityMain extends AppCompatActivity {
 
@@ -77,7 +77,6 @@ public class ActivityMain extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         setUpActionBar();
         startAndBindServiceMain();
-        setUpBroadcastReceivers();
         Log.v(TAG, "onCreate ended");
     }
 
@@ -268,6 +267,13 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     // endregion onCreate
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        setUpBroadcastReceivers();
+    }
 
     @Override
     protected void onPause() {

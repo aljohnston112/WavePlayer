@@ -1,7 +1,9 @@
-package com.example.waveplayer;
+package recyclertreeview;
 
 
-import recyclertreeview_lib.LayoutItemType;
+import com.example.waveplayer.R;
+
+import recyclertreeview.LayoutItemType;
 
 public class LayoutItemTypeDirectory implements LayoutItemType {
 

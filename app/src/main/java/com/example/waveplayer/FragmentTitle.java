@@ -20,10 +20,16 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
-import recyclertreeview_lib.TreeViewAdapter;
-import recyclertreeview_lib.TreeViewNode;
+import recyclertreeview.LayoutItemTypeDirectory;
+import recyclertreeview.LayoutItemTypeFile;
+import recyclertreeview.TreeViewAdapter;
+import recyclertreeview.TreeViewHolder;
+import recyclertreeview.TreeViewHolderDirectory;
+import recyclertreeview.TreeViewHolderFile;
+import recyclertreeview.TreeViewNode;
 
 import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentFiles;
 import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentPlaylists;
@@ -123,7 +129,13 @@ public class FragmentTitle extends Fragment {
                         TreeViewHolderDirectory.ViewHolder
                                 dirViewHolder = (TreeViewHolderDirectory.ViewHolder) holder;
                         final ImageView ivArrow = dirViewHolder.getIvArrow();
-                        int rotateDegree = isExpanded ? 90 : -90;
+                        int rotateDegree;
+                        dirViewHolder.setExpanded(isExpanded);
+                        if (isExpanded) {
+                            rotateDegree = 90;
+                        } else {
+                            rotateDegree = -90;
+                        }
                         ivArrow.animate().rotationBy(rotateDegree).start();
                     }
                 });
@@ -141,32 +153,36 @@ public class FragmentTitle extends Fragment {
         getFiles(app, childrenUri, rootUri);
     }
 
-    private void getFiles(TreeViewNode<LayoutItemTypeDirectory> TreeViewNode, Uri childrenUri, Uri rootUri) {
+    private void getFiles(TreeViewNode<LayoutItemTypeDirectory> treeViewNode, Uri childrenUri, Uri rootUri) {
         ContentResolver contentResolver = activityMain.getContentResolver();
-            try (Cursor cursor = contentResolver.query(childrenUri, new String[]{
-                            DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-                            DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-                            DocumentsContract.Document.COLUMN_MIME_TYPE},
-                    null, null, null)) {
-                if (cursor != null) {
-                    while (cursor.moveToNext()) {
-                        String docId = cursor.getString(0);
-                        String name = cursor.getString(1);
-                        String mime = cursor.getString(2);
-                        if (isDirectory(mime)) {
-                            TreeViewNode TreeViewNodeChild = new TreeViewNode(new LayoutItemTypeDirectory(name));
-                            Uri newNode = DocumentsContract.buildChildDocumentsUriUsingTree(
-                                    rootUri, docId);
-                            getFiles(TreeViewNodeChild, newNode, rootUri);
-                            TreeViewNode.addChild(TreeViewNodeChild);
-                        } else {
-                            TreeViewNode TreeViewNodeChild = new TreeViewNode(new LayoutItemTypeFile(name));
-                            TreeViewNode.addChild(TreeViewNodeChild);
-                        }
+        List<TreeViewNode> treeViewNodes = new LinkedList<>();
+        try (Cursor cursor = contentResolver.query(childrenUri, new String[]{
+                        DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                        DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                        DocumentsContract.Document.COLUMN_MIME_TYPE},
+                null, null, null)) {
+            if (cursor != null) {
+                while (cursor.moveToNext()) {
+                    String docId = cursor.getString(0);
+                    String name = cursor.getString(1);
+                    String mime = cursor.getString(2);
+                    if (isDirectory(mime)) {
+                        TreeViewNode treeViewNodeChild = new TreeViewNode(new LayoutItemTypeDirectory(name));
+                        Uri newNode = DocumentsContract.buildChildDocumentsUriUsingTree(
+                                rootUri, docId);
+                        getFiles(treeViewNodeChild, newNode, rootUri);
+                        treeViewNode.addChild(treeViewNodeChild);
+                    } else {
+                        TreeViewNode treeViewNodeChild = new TreeViewNode(new LayoutItemTypeFile(name));
+                        treeViewNodes.add(treeViewNodeChild);
                     }
+                }
+                for(TreeViewNode treeViewNodeChild: treeViewNodes){
+                    treeViewNode.addChild(treeViewNodeChild);
                 }
             }
         }
+    }
 
 
     // Util method to check if the mime type is a directory

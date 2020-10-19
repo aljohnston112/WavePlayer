@@ -1,14 +1,25 @@
-package com.example.waveplayer;
+package recyclertreeview;
 
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import recyclertreeview_lib.TreeViewHolder;
-import recyclertreeview_lib.TreeViewNode;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.waveplayer.R;
 
 
 public class TreeViewHolderDirectory extends TreeViewHolder<TreeViewHolderDirectory.ViewHolder> {
+
+    boolean isExpanded = false;
+
+    public boolean isExpanded() {
+        return isExpanded;
+    }
+
+    public void setExpanded(boolean isExpanded){
+        this.isExpanded = isExpanded;
+    }
 
     @Override
     public ViewHolder getViewHolder(View itemView) {
@@ -26,7 +37,17 @@ public class TreeViewHolderDirectory extends TreeViewHolder<TreeViewHolderDirect
         return R.layout.item_directory;
     }
 
-    public class ViewHolder extends TreeViewHolder.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder {
+
+        boolean isExpanded = false;
+
+        public boolean isExpanded() {
+            return isExpanded;
+        }
+
+        public void setExpanded(boolean isExpanded){
+            this.isExpanded = isExpanded;
+        }
 
         public TextView tvName;
 

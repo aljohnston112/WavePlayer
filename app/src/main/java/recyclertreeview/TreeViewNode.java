@@ -1,4 +1,4 @@
-package recyclertreeview_lib;
+package recyclertreeview;
 
 import androidx.annotation.NonNull;
 

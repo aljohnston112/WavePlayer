@@ -1,11 +1,12 @@
-package com.example.waveplayer;
+package recyclertreeview;
 
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import recyclertreeview_lib.TreeViewHolder;
-import recyclertreeview_lib.TreeViewNode;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.waveplayer.R;
 
 public class TreeViewHolderFile extends TreeViewHolder<TreeViewHolderFile.ViewHolder> {
 
@@ -25,7 +26,7 @@ public class TreeViewHolderFile extends TreeViewHolder<TreeViewHolderFile.ViewHo
         return R.layout.item_file;
     }
 
-    public class ViewHolder extends TreeViewHolder.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder {
 
         public TextView tvName;
 

@@ -1,4 +1,4 @@
-package recyclertreeview_lib;
+package recyclertreeview;
 
 /**
  * Created by tlh on 2016/10/1 :)
