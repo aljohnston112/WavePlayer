@@ -110,8 +110,6 @@ public class ServiceMain extends Service {
     ArrayList<AudioURI> currentPlaylistArray;
     ListIterator<AudioURI> currentPlaylistIterator;
 
-    public List<Uri> userPickedDirectories = new ArrayList<>();
-    public Uri userPickedDirectory;
     public TreeMap<Long, RandomPlaylist> directoryPlaylists = new TreeMap<>(new MComparable());
     static class MComparable implements Serializable, Comparator<Long> {
         @Override
@@ -119,8 +117,6 @@ public class ServiceMain extends Service {
             return o1.compareTo(o2);
         }
     }
-
-    public boolean isDirectory;
 
     // For updating the SeekBar
     ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -320,10 +316,6 @@ public class ServiceMain extends Service {
                 int playlistSize = objectInputStream.readInt();
                 for (int i = 0; i < playlistSize; i++) {
                     playlists.add((RandomPlaylist) objectInputStream.readObject());
-                }
-                int nUserPickedFiles = objectInputStream.readInt();
-                for (int i = 0; i < nUserPickedFiles; i++) {
-                    userPickedDirectories.add((Uri) objectInputStream.readObject());
                 }
                 directoryPlaylists = (TreeMap<Long, RandomPlaylist>)objectInputStream.readObject();
             } catch (ClassNotFoundException | IOException e) {
@@ -815,6 +807,8 @@ public class ServiceMain extends Service {
             }
         }
         currentSong = mediaPlayerWURI.audioURI;
+        int i = currentPlaylistArray.indexOf(mediaPlayerWURI.audioURI);
+        currentPlaylistIterator = currentPlaylistArray.listIterator(i+1);
         updateNotification();
         Log.v(TAG, "play ended");
     }
@@ -839,8 +833,6 @@ public class ServiceMain extends Service {
                     for (RandomPlaylist randomPlaylist : playlists) {
                         objectOutputStream.writeObject(randomPlaylist);
                     }
-                    objectOutputStream.writeInt(userPickedDirectories.size());
-                    objectOutputStream.writeObject(userPickedDirectories);
                     objectOutputStream.writeObject(directoryPlaylists);
                     objectOutputStream.flush();
                     Log.v(TAG, "Save file created");

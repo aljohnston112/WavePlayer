@@ -69,8 +69,6 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                             } else{
                                 activityMain.serviceMain.stopAndPreparePrevious();
                             }
-                            activityMain.serviceMain.clearQueue();
-                            activityMain.addToQueueAndPlay(audioURI);
                             if (fragment instanceof FragmentSongs) {
                                 activityMain.serviceMain.currentPlaylist =
                                         activityMain.serviceMain.masterPlaylist;
@@ -83,9 +81,8 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                             activityMain.serviceMain.currentPlaylistArray =
                                     new ArrayList<>(activityMain.serviceMain.currentPlaylist
                                             .getProbFun().getProbMap().keySet());
-                            int i = activityMain.serviceMain.currentPlaylistArray.indexOf(audioURI);
-                            activityMain.serviceMain.currentPlaylistIterator =
-                                    activityMain.serviceMain.currentPlaylistArray.listIterator(i+1);
+                            activityMain.serviceMain.clearQueue();
+                            activityMain.addToQueueAndPlay(audioURI);
                         }
                         if (action != null) {
                             NavHostFragment.findNavController(fragment).navigate(action);

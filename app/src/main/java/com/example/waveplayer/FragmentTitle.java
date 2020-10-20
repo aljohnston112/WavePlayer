@@ -28,14 +28,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import recyclertreeview.LayoutItemTypeDirectory;
-import recyclertreeview.LayoutItemTypeFile;
-import recyclertreeview.TreeViewAdapter;
-import recyclertreeview.TreeViewHolderDirectory;
-import recyclertreeview.TreeViewHolderFile;
-import recyclertreeview.TreeViewNode;
-
-import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentFiles;
+import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentPlaylist;
 import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentPlaylists;
 import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentSettings;
 import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentSongs;
@@ -75,14 +68,18 @@ public class FragmentTitle extends Fragment {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (uri != null) {
-                    activityMain.serviceMain.userPickedDirectories.add(uri);
-                    activityMain.serviceMain.userPickedDirectory = uri;
                     if (!audioURIs.isEmpty()) {
-                        activityMain.serviceMain.directoryPlaylists.put(
-                                mediaStoreUriID, new RandomPlaylist(audioURIs, ServiceMain.MAX_PERCENT, uri.getPath()));
+                        if(activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID) == null) {
+                            activityMain.serviceMain.directoryPlaylists.put(
+                                    mediaStoreUriID, new RandomPlaylist(audioURIs, ServiceMain.MAX_PERCENT, uri.getPath()));
+                        } else{
+                            //TODO
+                        }
+                        activityMain.serviceMain.userPickedPlaylist =
+                                activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID);
                     }
                     NavHostFragment.findNavController(FragmentTitle.this)
-                            .navigate(actionFragmentTitleToFragmentFiles());
+                            .navigate(actionFragmentTitleToFragmentPlaylist());
                 }
             }
         };
@@ -153,49 +150,18 @@ public class FragmentTitle extends Fragment {
                 ContentResolver contentResolver = activityMain.getContentResolver();
                 contentResolver.takePersistableUriPermission(uri, takeFlags);
                 this.uri = uri;
-                List<TreeViewNode> nodes = new ArrayList<>();
-                TreeViewNode<LayoutItemTypeDirectory> TreeViewNode = new TreeViewNode<>(
-                        new LayoutItemTypeDirectory(uri, uri.getLastPathSegment()));
-                traverseDirectoryEntries(TreeViewNode, uri);
-                nodes.add(TreeViewNode);
-                activityMain.treeViewAdapter = new TreeViewAdapter(nodes,
-                        Arrays.asList(new TreeViewHolderFile(), new TreeViewHolderDirectory()), activityMain);
-                activityMain.treeViewAdapter.setOnTreeNodeListener(new TreeViewAdapter.OnTreeNodeListener() {
-                    @Override
-                    public boolean onClick(TreeViewNode node, RecyclerView.ViewHolder holder) {
-                        if (!node.isLeaf()) {
-                            toggle(!node.isExpanded(), holder);
-                        }
-                        return false;
-                    }
-
-                    @Override
-                    public void toggle(boolean isExpanded, RecyclerView.ViewHolder holder) {
-                        TreeViewHolderDirectory.ViewHolder
-                                dirViewHolder = (TreeViewHolderDirectory.ViewHolder) holder;
-                        final ImageView ivArrow = dirViewHolder.getIvArrow();
-                        int rotateDegree;
-                        dirViewHolder.setExpanded(isExpanded);
-                        if (isExpanded) {
-                            rotateDegree = 90;
-                        } else {
-                            rotateDegree = -90;
-                        }
-                        ivArrow.animate().rotationBy(rotateDegree).start();
-                    }
-                });
-
+                traverseDirectoryEntries(uri);
             }
         }
     }
 
-    void traverseDirectoryEntries(TreeViewNode<LayoutItemTypeDirectory> app, Uri rootUri) {
+    void traverseDirectoryEntries(Uri rootUri) {
         Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
                 rootUri, DocumentsContract.getTreeDocumentId(rootUri));
-        getFiles(app, childrenUri, rootUri);
+        getFiles(childrenUri, rootUri);
     }
 
-    private void getFiles(TreeViewNode<LayoutItemTypeDirectory> treeViewNode, Uri childrenUri, Uri rootUri) {
+    private void getFiles(Uri childrenUri, Uri rootUri) {
 /*
         MediaMetadataRetriever mediaMetadataRetriever;
         mediaMetadataRetriever = new MediaMetadataRetriever();
@@ -209,7 +175,6 @@ public class FragmentTitle extends Fragment {
 */
 
         ContentResolver contentResolver = activityMain.getContentResolver();
-        List<TreeViewNode> treeViewNodes = new LinkedList<>();
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != ? OR" +
                 DocumentsContract.Document.COLUMN_MIME_TYPE + " == ?";
         String[] selectionArgs = new String[]{"0", DocumentsContract.Document.MIME_TYPE_DIR};
@@ -224,31 +189,20 @@ public class FragmentTitle extends Fragment {
                         MediaStore.Audio.Media.DATA},
                 selection, selectionArgs, null)) {
             if (cursor != null) {
-                int idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
                 int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
-                int titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE);
-                int artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST);
-                int dataCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
                 while (cursor.moveToNext()) {
                     String docId = cursor.getString(0);
                     String name = cursor.getString(1);
                     String mime = cursor.getString(2);
                     String displayName = cursor.getString(nameCol);
                     if (isDirectory(mime)) {
-                        TreeViewNode treeViewNodeChild = new TreeViewNode(new LayoutItemTypeDirectory(childrenUri, name));
                         Uri newNode = DocumentsContract.buildChildDocumentsUriUsingTree(
                                 rootUri, docId);
-                        getFiles(treeViewNodeChild, newNode, rootUri);
-                        treeViewNode.addChild(treeViewNodeChild);
+                        getFiles( newNode, rootUri);
                     } else {
-                        TreeViewNode treeViewNodeChild = new TreeViewNode(new LayoutItemTypeFile(name));
-                        treeViewNodes.add(treeViewNodeChild);
                         audioFiles.add(childrenUri);
                         audioURIs.add(getAudioUri(displayName));
                     }
-                }
-                for (TreeViewNode treeViewNodeChild : treeViewNodes) {
-                    treeViewNode.addChild(treeViewNodeChild);
                 }
             }
         }
