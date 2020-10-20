@@ -6,12 +6,13 @@ import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.waveplayer.ActivityMain;
 import com.example.waveplayer.R;
 
 public class TreeViewHolderFile extends TreeViewHolder<TreeViewHolderFile.ViewHolder> {
 
     @Override
-    public TreeViewHolderFile.ViewHolder getViewHolder(View itemView) {
+    public TreeViewHolderFile.ViewHolder getViewHolder(View itemView, ActivityMain activityMain) {
         return new TreeViewHolderFile.ViewHolder(itemView);
     }
 

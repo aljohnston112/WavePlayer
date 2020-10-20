@@ -10,6 +10,9 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.waveplayer.ActivityMain;
+import com.example.waveplayer.R;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -21,6 +24,7 @@ import java.util.List;
 public class TreeViewAdapter<VH extends RecyclerView.ViewHolder>
         extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
+    ActivityMain activityMain;
     private final List<? extends TreeViewHolder<VH>> treeViewHolders;
     private final List<TreeViewNode> treeViewNodes;
     private OnTreeNodeListener onTreeNodeListener;
@@ -32,7 +36,8 @@ public class TreeViewAdapter<VH extends RecyclerView.ViewHolder>
     }
 
     public TreeViewAdapter(List<TreeViewNode> nodes,
-                           List<? extends TreeViewHolder<VH>> treeViewHolders) {
+                           List<? extends TreeViewHolder<VH>> treeViewHolders, ActivityMain activityMain) {
+        this.activityMain = activityMain;
         treeViewNodes = new ArrayList<>();
         if (nodes != null) {
             findDisplayNodes(nodes);
@@ -57,11 +62,11 @@ public class TreeViewAdapter<VH extends RecyclerView.ViewHolder>
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(viewType, parent, false);
         if (treeViewHolders.size() == 1) {
-            return treeViewHolders.get(0).getViewHolder(view);
+            return treeViewHolders.get(0).getViewHolder(view, activityMain);
         }
         for (TreeViewHolder<VH> viewBinder : treeViewHolders) {
             if (viewBinder.getItemViewType() == viewType)
-                return viewBinder.getViewHolder(view);
+                return viewBinder.getViewHolder(view, activityMain);
         }
         throw new IllegalArgumentException("viewType passed to onCreateViewHolder was not found");
     }

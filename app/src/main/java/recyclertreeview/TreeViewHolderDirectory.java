@@ -6,10 +6,13 @@ import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.waveplayer.ActivityMain;
 import com.example.waveplayer.R;
 
 
 public class TreeViewHolderDirectory extends TreeViewHolder<TreeViewHolderDirectory.ViewHolder> {
+
+    LayoutItemTypeDirectory fileNode;
 
     boolean isExpanded = false;
 
@@ -22,13 +25,13 @@ public class TreeViewHolderDirectory extends TreeViewHolder<TreeViewHolderDirect
     }
 
     @Override
-    public ViewHolder getViewHolder(View itemView) {
-        return new ViewHolder(itemView);
+    public ViewHolder getViewHolder(View itemView, ActivityMain activityMain) {
+        return new ViewHolder(itemView, activityMain);
     }
 
     @Override
     public void bindView(ViewHolder viewHolder, int i, TreeViewNode treeNode) {
-        LayoutItemTypeDirectory fileNode = (LayoutItemTypeDirectory) treeNode.getItem();
+        fileNode = (LayoutItemTypeDirectory) treeNode.getItem();
         viewHolder.tvName.setText(fileNode.dirName);
     }
 
@@ -38,6 +41,8 @@ public class TreeViewHolderDirectory extends TreeViewHolder<TreeViewHolderDirect
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
+
+        ActivityMain activityMain;
 
         boolean isExpanded = false;
 
@@ -53,8 +58,15 @@ public class TreeViewHolderDirectory extends TreeViewHolder<TreeViewHolderDirect
 
         public ImageView arrow;
 
-        public ViewHolder(View rootView) {
+        public ViewHolder(final View rootView, final ActivityMain activityMain) {
             super(rootView);
+            this.activityMain = activityMain;
+            rootView.findViewById(R.id.text_view_directory_name).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                }
+            });
             this.tvName = rootView.findViewById(R.id.text_view_directory_name);
             this.arrow = rootView.findViewById(R.id.handle_directory);
         }

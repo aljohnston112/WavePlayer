@@ -54,11 +54,13 @@ public class ActivityMain extends AppCompatActivity {
 
     static final String TAG = "ActivityMain";
 
-    private static final int REQUEST_PERMISSION = 245083964;
+    private static final int REQUEST_PERMISSION_READ = 245083964;
+
+    private static final int REQUEST_PERMISSION_WRITE = 245083965;
 
     public static final int MENU_ACTION_RESET_PROBS_INDEX = 0;
 
-    ServiceMain serviceMain;
+    public ServiceMain serviceMain;
 
     final Object lock = new Object();
 
@@ -152,7 +154,7 @@ public class ActivityMain extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
                     != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
+                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSION_READ);
             } else {
                 if (!serviceMain.audioFilesLoaded) {
                     serviceMain.getAudioFiles();
@@ -171,14 +173,14 @@ public class ActivityMain extends AppCompatActivity {
                                            @NonNull int[] grantResults) {
         Log.v(TAG, "onRequestPermissionsResult start");
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_PERMISSION && grantResults.length > 0 &&
+        if (requestCode == REQUEST_PERMISSION_READ && grantResults.length > 0 &&
                 grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             serviceMain.getAudioFiles();
-        } else {
+        } else if(requestCode == REQUEST_PERMISSION_READ) {
             Toast toast = Toast.makeText(getApplicationContext(), R.string.permission_needed, Toast.LENGTH_LONG);
             toast.show();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSION);
+                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSION_READ);
             }
         }
         Log.v(TAG, "onRequestPermissionsResult end");
@@ -286,7 +288,6 @@ public class ActivityMain extends AppCompatActivity {
         }
         unregisterReceiver(broadcastReceiverOnCompletion);
         unregisterReceiver(broadcastReceiverNotificationForActivityMainButtons);
-        getApplicationContext().unbindService(connection);
         Log.v(TAG, "onPause ended");
     }
 
@@ -294,6 +295,7 @@ public class ActivityMain extends AppCompatActivity {
     protected void onDestroy() {
         Log.v(TAG, "onDestroy started");
         super.onDestroy();
+        getApplicationContext().unbindService(connection);
         Log.v(TAG, "onDestroy ended");
     }
 

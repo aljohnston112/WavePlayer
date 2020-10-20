@@ -36,14 +36,18 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Random;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -107,6 +111,18 @@ public class ServiceMain extends Service {
     ArrayList<AudioURI> currentPlaylistArray;
     ListIterator<AudioURI> currentPlaylistIterator;
 
+    public List<Uri> userPickedFiles = new ArrayList<>();
+    public Uri userPickedDirectory;
+    public TreeMap<Uri, RandomPlaylist> directoryPlaylists = new TreeMap<>(new MComparable());
+    class MComparable implements Serializable, Comparator<Uri> {
+        @Override
+        public int compare(Uri o1, Uri o2) {
+            return o1.compareTo(o2);
+        }
+    }
+
+    public boolean isDirectory;
+
     // For updating the SeekBar
     ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
@@ -132,7 +148,7 @@ public class ServiceMain extends Service {
                     return;
                 }
             }
-            if((!shuffling && !currentPlaylistIterator.hasNext() && !looping)) {
+            if ((!shuffling && !currentPlaylistIterator.hasNext() && !looping)) {
                 scheduledExecutorService.shutdown();
                 if (fragmentSongVisible) {
                     scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -306,6 +322,11 @@ public class ServiceMain extends Service {
                 for (int i = 0; i < playlistSize; i++) {
                     playlists.add((RandomPlaylist) objectInputStream.readObject());
                 }
+                int nUserPickedFiles = objectInputStream.readInt();
+                for (int i = 0; i < nUserPickedFiles; i++) {
+                    userPickedFiles.add((Uri) objectInputStream.readObject());
+                }
+                directoryPlaylists = (TreeMap<Uri, RandomPlaylist>)objectInputStream.readObject();
             } catch (ClassNotFoundException | IOException e) {
                 e.printStackTrace();
                 string = "Error encountered while loading the save file";
@@ -819,6 +840,9 @@ public class ServiceMain extends Service {
                     for (RandomPlaylist randomPlaylist : playlists) {
                         objectOutputStream.writeObject(randomPlaylist);
                     }
+                    objectOutputStream.writeInt(userPickedFiles.size());
+                    objectOutputStream.writeObject(userPickedFiles);
+                    objectOutputStream.writeObject(directoryPlaylists);
                     objectOutputStream.flush();
                     Log.v(TAG, "Save file created");
                 } catch (IOException e) {
