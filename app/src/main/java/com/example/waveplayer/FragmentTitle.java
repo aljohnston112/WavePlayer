@@ -7,11 +7,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,6 +48,8 @@ public class FragmentTitle extends Fragment {
 
     Uri uri;
 
+    long mediaStoreUriID;
+
     List<Uri> audioFiles = new ArrayList<>();
 
     List<AudioURI> audioURIs = new ArrayList<>();
@@ -72,12 +74,12 @@ public class FragmentTitle extends Fragment {
         broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if(uri != null) {
-                    activityMain.serviceMain.userPickedFiles.add(uri);
+                if (uri != null) {
+                    activityMain.serviceMain.userPickedDirectories.add(uri);
                     activityMain.serviceMain.userPickedDirectory = uri;
-                    if(!audioURIs.isEmpty()) {
+                    if (!audioURIs.isEmpty()) {
                         activityMain.serviceMain.directoryPlaylists.put(
-                                uri, new RandomPlaylist(audioURIs, ServiceMain.MAX_PERCENT,  uri.getPath()));
+                                mediaStoreUriID, new RandomPlaylist(audioURIs, ServiceMain.MAX_PERCENT, uri.getPath()));
                     }
                     NavHostFragment.findNavController(FragmentTitle.this)
                             .navigate(actionFragmentTitleToFragmentFiles());
@@ -190,11 +192,22 @@ public class FragmentTitle extends Fragment {
     void traverseDirectoryEntries(TreeViewNode<LayoutItemTypeDirectory> app, Uri rootUri) {
         Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
                 rootUri, DocumentsContract.getTreeDocumentId(rootUri));
-        ContentResolver contentResolver = activityMain.getContentResolver();
         getFiles(app, childrenUri, rootUri);
     }
 
     private void getFiles(TreeViewNode<LayoutItemTypeDirectory> treeViewNode, Uri childrenUri, Uri rootUri) {
+/*
+        MediaMetadataRetriever mediaMetadataRetriever;
+        mediaMetadataRetriever = new MediaMetadataRetriever();
+        mediaMetadataRetriever.setDataSource(activityMain.getApplicationContext(), MediaStore.getMediaUri(childrenUri));
+        try {
+            mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+            mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
+        } catch (Exception e) {
+            // TO-DO Exception
+        }
+*/
+
         ContentResolver contentResolver = activityMain.getContentResolver();
         List<TreeViewNode> treeViewNodes = new LinkedList<>();
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != ? OR" +
@@ -204,8 +217,11 @@ public class FragmentTitle extends Fragment {
                         DocumentsContract.Document.COLUMN_DOCUMENT_ID,
                         DocumentsContract.Document.COLUMN_DISPLAY_NAME,
                         DocumentsContract.Document.COLUMN_MIME_TYPE,
-                MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DISPLAY_NAME, MediaStore.Audio.Media.IS_MUSIC,
-                MediaStore.Audio.Media.ARTIST, MediaStore.Audio.Media.TITLE, MediaStore.Images.Media.DATA},
+                        MediaStore.Audio.Media._ID,
+                        MediaStore.Audio.Media.DISPLAY_NAME,
+                        MediaStore.Audio.Media.TITLE,
+                        MediaStore.Audio.Media.ARTIST,
+                        MediaStore.Audio.Media.DATA},
                 selection, selectionArgs, null)) {
             if (cursor != null) {
                 int idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
@@ -217,12 +233,7 @@ public class FragmentTitle extends Fragment {
                     String docId = cursor.getString(0);
                     String name = cursor.getString(1);
                     String mime = cursor.getString(2);
-                    long id = cursor.getLong(idCol);
                     String displayName = cursor.getString(nameCol);
-                    String title = cursor.getString(titleCol);
-                    String artist = cursor.getString(artistCol);
-                    String data = cursor.getString(dataCol);
-                    Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
                     if (isDirectory(mime)) {
                         TreeViewNode treeViewNodeChild = new TreeViewNode(new LayoutItemTypeDirectory(childrenUri, name));
                         Uri newNode = DocumentsContract.buildChildDocumentsUriUsingTree(
@@ -233,10 +244,10 @@ public class FragmentTitle extends Fragment {
                         TreeViewNode treeViewNodeChild = new TreeViewNode(new LayoutItemTypeFile(name));
                         treeViewNodes.add(treeViewNodeChild);
                         audioFiles.add(childrenUri);
-                        audioURIs.add(new AudioURI(uri, data, displayName, artist, title, id));
+                        audioURIs.add(getAudioUri(displayName));
                     }
                 }
-                for(TreeViewNode treeViewNodeChild: treeViewNodes){
+                for (TreeViewNode treeViewNodeChild : treeViewNodes) {
                     treeViewNode.addChild(treeViewNodeChild);
                 }
             }
@@ -247,6 +258,41 @@ public class FragmentTitle extends Fragment {
     private static boolean isDirectory(String mimeType) {
         return DocumentsContract.Document.MIME_TYPE_DIR.equals(mimeType);
     }
+
+    private AudioURI getAudioUri(String displayName) {
+        ContentResolver contentResolver = activityMain.getContentResolver();
+        String selection =  MediaStore.Audio.Media.DISPLAY_NAME + " == ?";
+        String[] selectionArgs = new String[]{displayName};
+        try (Cursor cursor = contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                new String[]{
+                        MediaStore.Audio.Media._ID,
+                        MediaStore.Audio.Media.DISPLAY_NAME,
+                        MediaStore.Audio.Media.TITLE,
+                        MediaStore.Audio.Media.ARTIST,
+                        MediaStore.Audio.Media.DATA
+                },
+                selection, selectionArgs, null)) {
+            if (cursor != null) {
+                while (cursor.moveToNext()) {
+                    int idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
+                    int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
+                    int titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE);
+                    int artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST);
+                    int dataCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
+                    long id = cursor.getLong(idCol);
+                    this.mediaStoreUriID = id;
+                    String displayName2 = cursor.getString(nameCol);
+                    String title = cursor.getString(titleCol);
+                    String artist = cursor.getString(artistCol);
+                    String data = cursor.getString(dataCol);
+                    Uri uri1 = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
+                    return new AudioURI(uri1, data, displayName2, artist, title, id);
+                }
+            }
+        }
+        return null;
+    }
+
 
     @Override
     public void onDestroyView() {

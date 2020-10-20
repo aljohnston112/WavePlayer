@@ -45,7 +45,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
@@ -111,12 +110,12 @@ public class ServiceMain extends Service {
     ArrayList<AudioURI> currentPlaylistArray;
     ListIterator<AudioURI> currentPlaylistIterator;
 
-    public List<Uri> userPickedFiles = new ArrayList<>();
+    public List<Uri> userPickedDirectories = new ArrayList<>();
     public Uri userPickedDirectory;
-    public TreeMap<Uri, RandomPlaylist> directoryPlaylists = new TreeMap<>(new MComparable());
-    class MComparable implements Serializable, Comparator<Uri> {
+    public TreeMap<Long, RandomPlaylist> directoryPlaylists = new TreeMap<>(new MComparable());
+    static class MComparable implements Serializable, Comparator<Long> {
         @Override
-        public int compare(Uri o1, Uri o2) {
+        public int compare(Long o1, Long o2) {
             return o1.compareTo(o2);
         }
     }
@@ -324,9 +323,9 @@ public class ServiceMain extends Service {
                 }
                 int nUserPickedFiles = objectInputStream.readInt();
                 for (int i = 0; i < nUserPickedFiles; i++) {
-                    userPickedFiles.add((Uri) objectInputStream.readObject());
+                    userPickedDirectories.add((Uri) objectInputStream.readObject());
                 }
-                directoryPlaylists = (TreeMap<Uri, RandomPlaylist>)objectInputStream.readObject();
+                directoryPlaylists = (TreeMap<Long, RandomPlaylist>)objectInputStream.readObject();
             } catch (ClassNotFoundException | IOException e) {
                 e.printStackTrace();
                 string = "Error encountered while loading the save file";
@@ -840,8 +839,8 @@ public class ServiceMain extends Service {
                     for (RandomPlaylist randomPlaylist : playlists) {
                         objectOutputStream.writeObject(randomPlaylist);
                     }
-                    objectOutputStream.writeInt(userPickedFiles.size());
-                    objectOutputStream.writeObject(userPickedFiles);
+                    objectOutputStream.writeInt(userPickedDirectories.size());
+                    objectOutputStream.writeObject(userPickedDirectories);
                     objectOutputStream.writeObject(directoryPlaylists);
                     objectOutputStream.flush();
                     Log.v(TAG, "Save file created");
