@@ -100,16 +100,16 @@ public class FragmentPlaylists extends Fragment {
 
         RecyclerViewAdapterPlaylists recyclerViewAdapter;
 
-        RandomPlaylistTreeMap randomPlaylistTreeMap;
+        RandomPlaylist randomPlaylist;
 
-        UndoListener(RecyclerViewAdapterPlaylists recyclerViewAdapter, RandomPlaylistTreeMap randomPlaylistTreeMap) {
+        UndoListener(RecyclerViewAdapterPlaylists recyclerViewAdapter, RandomPlaylist randomPlaylist) {
             this.recyclerViewAdapter = recyclerViewAdapter;
-            this.randomPlaylistTreeMap = randomPlaylistTreeMap;
+            this.randomPlaylist = randomPlaylist;
         }
 
         @Override
         public void onClick(View v) {
-            activityMain.serviceMain.playlists.add(randomPlaylistTreeMap);
+            activityMain.serviceMain.playlists.add(randomPlaylist);
             recyclerViewAdapter.notifyDataSetChanged();
             activityMain.serviceMain.saveFile();
         }
@@ -131,7 +131,7 @@ public class FragmentPlaylists extends Fragment {
             RecyclerViewAdapterPlaylists recyclerViewAdapter =
                     (RecyclerViewAdapterPlaylists) recyclerView.getAdapter();
             if (recyclerViewAdapter != null) {
-                Collections.swap(recyclerViewAdapter.randomPlaylistTreeMaps,
+                Collections.swap(recyclerViewAdapter.randomPlaylists,
                         viewHolder.getAdapterPosition(), target.getAdapterPosition());
                 Collections.swap(activityMain.serviceMain.playlists,
                         viewHolder.getAdapterPosition(), target.getAdapterPosition());
@@ -148,7 +148,7 @@ public class FragmentPlaylists extends Fragment {
                     (RecyclerViewAdapterPlaylists) recyclerView.getAdapter();
             if (recyclerViewAdapter != null) {
                 int position = viewHolder.getAdapterPosition();
-                RandomPlaylistTreeMap randomPlaylistTreeMap = activityMain.serviceMain.playlists.get(position);
+                RandomPlaylist randomPlaylist = activityMain.serviceMain.playlists.get(position);
                 activityMain.serviceMain.playlists.remove(position);
                 recyclerViewAdapter.notifyItemRemoved(position);
                 activityMain.serviceMain.saveFile();
@@ -156,7 +156,7 @@ public class FragmentPlaylists extends Fragment {
                         activityMain.findViewById(R.id.coordinatorLayoutActivityMain),
                         R.string.playlist_deleted, BaseTransientBottomBar.LENGTH_LONG);
                 snackbar.setAction(R.string.undo,
-                        new UndoListener(recyclerViewAdapter, randomPlaylistTreeMap));
+                        new UndoListener(recyclerViewAdapter, randomPlaylist));
                 snackbar.show();
             }
         }

@@ -74,9 +74,9 @@ public class ServiceMain extends Service {
     final HashMap<Uri, MediaPlayerWURI> songsMap = new HashMap<>();
     final public LinkedHashMap<Uri, AudioURI> uriMap = new LinkedHashMap<>();
 
-    final ArrayList<RandomPlaylistHashMap> playlists = new ArrayList<>();
-    RandomPlaylistTreeMap masterPlaylist;
-    RandomPlaylistTreeMap currentPlaylist;
+    final ArrayList<RandomPlaylist> playlists = new ArrayList<>();
+    RandomPlaylist masterPlaylist;
+    RandomPlaylist currentPlaylist;
 
     final LinkedList<Uri> songQueue = new LinkedList<>();
     ListIterator<Uri> songQueueIterator;
@@ -111,6 +111,7 @@ public class ServiceMain extends Service {
     ListIterator<AudioURI> currentPlaylistIterator;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     public TreeMap<Long, RandomPlaylistHashMap> directoryPlaylists = new TreeMap<>(new MComparable());
 
 =======
@@ -118,6 +119,9 @@ public class ServiceMain extends Service {
     public Uri userPickedDirectory;
     public TreeMap<Long, RandomPlaylist> directoryPlaylists = new TreeMap<>(new MComparable());
 >>>>>>> parent of 3acbf65... Removed RecyclerTreeView
+=======
+    public TreeMap<Long, RandomPlaylist> directoryPlaylists = new TreeMap<>(new MComparable());
+>>>>>>> parent of be266ca... Mistake
     static class MComparable implements Serializable, Comparator<Long> {
         @Override
         public int compare(Long o1, Long o2) {
@@ -321,11 +325,12 @@ public class ServiceMain extends Service {
                  ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
                 MAX_PERCENT = objectInputStream.readDouble();
                 PERCENT_CHANGE = objectInputStream.readDouble();
-                masterPlaylist = (RandomPlaylistTreeMap) objectInputStream.readObject();
+                masterPlaylist = (RandomPlaylist) objectInputStream.readObject();
                 int playlistSize = objectInputStream.readInt();
                 for (int i = 0; i < playlistSize; i++) {
-                    playlists.add((RandomPlaylistHashMap) objectInputStream.readObject());
+                    playlists.add((RandomPlaylist) objectInputStream.readObject());
                 }
+<<<<<<< HEAD
 <<<<<<< HEAD
                 directoryPlaylists = (TreeMap<Long, RandomPlaylistHashMap>)objectInputStream.readObject();
 =======
@@ -335,6 +340,9 @@ public class ServiceMain extends Service {
                 }
                 directoryPlaylists = (TreeMap<Long, RandomPlaylist>)objectInputStream.readObject();
 >>>>>>> parent of 3acbf65... Removed RecyclerTreeView
+=======
+                directoryPlaylists = (TreeMap<Long, RandomPlaylist>)objectInputStream.readObject();
+>>>>>>> parent of be266ca... Mistake
             } catch (ClassNotFoundException | IOException e) {
                 e.printStackTrace();
                 string = "Error encountered while loading the save file";
@@ -549,7 +557,7 @@ public class ServiceMain extends Service {
                             }
                         }
                     } else {
-                        masterPlaylist = new RandomPlaylistTreeMap(
+                        masterPlaylist = new RandomPlaylist(
                                 new ArrayList<>(uriMap.values()), MAX_PERCENT, MASTER_PLAYLIST_NAME);
                     }
                     currentPlaylist = masterPlaylist;
@@ -845,8 +853,8 @@ public class ServiceMain extends Service {
                     objectOutputStream.writeDouble(PERCENT_CHANGE);
                     objectOutputStream.writeObject(masterPlaylist);
                     objectOutputStream.writeInt(playlists.size());
-                    for (RandomPlaylistHashMap randomPlaylistTreeMap : playlists) {
-                        objectOutputStream.writeObject(randomPlaylistTreeMap);
+                    for (RandomPlaylist randomPlaylist : playlists) {
+                        objectOutputStream.writeObject(randomPlaylist);
                     }
                     objectOutputStream.writeInt(userPickedDirectories.size());
                     objectOutputStream.writeObject(userPickedDirectories);

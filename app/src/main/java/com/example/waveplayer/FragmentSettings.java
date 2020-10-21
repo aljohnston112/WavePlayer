@@ -91,12 +91,17 @@ public class FragmentSettings extends Fragment {
 
             private void updateSettings(int nSongs, int percentChange) {
                 ServiceMain.MAX_PERCENT = (1.0 / (double) nSongs);
-                for (RandomPlaylistTreeMap randomPlaylistTreeMap : activityMain.serviceMain.playlists) {
-                    randomPlaylistTreeMap.setMaxPercent(ServiceMain.MAX_PERCENT);
+                for (RandomPlaylist randomPlaylist : activityMain.serviceMain.playlists) {
+                    randomPlaylist.setMaxPercent(ServiceMain.MAX_PERCENT);
                 }
+<<<<<<< HEAD
 <<<<<<< HEAD
                 for (RandomPlaylistTreeMap randomPlaylistTreeMap : activityMain.serviceMain.directoryPlaylists.values()) {
                     randomPlaylistTreeMap.setMaxPercent(ServiceMain.MAX_PERCENT);
+=======
+                for (RandomPlaylist randomPlaylist : activityMain.serviceMain.directoryPlaylists.values()) {
+                    randomPlaylist.setMaxPercent(ServiceMain.MAX_PERCENT);
+>>>>>>> parent of be266ca... Mistake
                 }
 =======
 >>>>>>> parent of 3acbf65... Removed RecyclerTreeView

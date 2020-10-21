@@ -99,7 +99,7 @@ public class FragmentEditPlaylist extends Fragment {
                         Toast toast = Toast.makeText(getContext(), R.string.duplicate_name_playlist, Toast.LENGTH_LONG);
                         toast.show();
                     } else if (activityMain.serviceMain.userPickedPlaylist == null) {
-                        activityMain.serviceMain.playlists.add(new RandomPlaylistHashMap(
+                        activityMain.serviceMain.playlists.add(new RandomPlaylist(
                                 activityMain.serviceMain.userPickedSongs,
                                 ServiceMain.MAX_PERCENT,
                                 finalEditTextPlaylistName.getText().toString()));
@@ -127,8 +127,8 @@ public class FragmentEditPlaylist extends Fragment {
                 private int indexOfPlaylistWName(String playlistName) {
                     int playlistIndex = -1;
                     int i = 0;
-                    for (RandomPlaylistHashMap randomPlaylistHashMap : activityMain.serviceMain.playlists) {
-                        if (randomPlaylistHashMap.getName().equals(playlistName)) {
+                    for (RandomPlaylist randomPlaylist : activityMain.serviceMain.playlists) {
+                        if (randomPlaylist.getName().equals(playlistName)) {
                             playlistIndex = i;
                         }
                         i++;

@@ -16,11 +16,11 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
 
     private final Fragment fragment;
 
-    public final List<RandomPlaylistHashMap> randomPlaylistTreeMaps;
+    public final List<RandomPlaylist> randomPlaylists;
 
-    public RecyclerViewAdapterPlaylists(Fragment fragment, List<RandomPlaylistHashMap> items) {
+    public RecyclerViewAdapterPlaylists(Fragment fragment, List<RandomPlaylist> items) {
         this.fragment = fragment;
-        randomPlaylistTreeMaps = items;
+        randomPlaylists = items;
     }
 
     @Override
@@ -32,27 +32,27 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        holder.randomPlaylistTreeMap = randomPlaylistTreeMaps.get(position);
-        holder.textViewPlaylistName.setText(randomPlaylistTreeMaps.get(position).getName());
+        holder.randomPlaylist = randomPlaylists.get(position);
+        holder.textViewPlaylistName.setText(randomPlaylists.get(position).getName());
     }
 
     @Override
     public int getItemCount() {
-        return randomPlaylistTreeMaps.size();
+        return randomPlaylists.size();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         public final View playlistView;
         public final TextView textViewPlaylistName;
-        public RandomPlaylistHashMap randomPlaylistTreeMap;
+        public RandomPlaylist randomPlaylist;
 
         public ViewHolder(View view) {
             super(view);
             playlistView = view;
             textViewPlaylistName = view.findViewById(R.id.text_view_playlist_name);
-            if (randomPlaylistTreeMap != null) {
-                textViewPlaylistName.setText(randomPlaylistTreeMap.getName());
+            if (randomPlaylist != null) {
+                textViewPlaylistName.setText(randomPlaylist.getName());
             }
             view.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -61,7 +61,7 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
                     if (position != RecyclerView.NO_POSITION) {
                         ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
                         if (activityMain != null) {
-                            activityMain.serviceMain.userPickedPlaylist = randomPlaylistTreeMap;
+                            activityMain.serviceMain.userPickedPlaylist = randomPlaylist;
                         }
                         NavHostFragment.findNavController(fragment).navigate(
                                 FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentPlaylist());
@@ -73,7 +73,7 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
         @Override
         @NonNull
         public String toString() {
-            return randomPlaylistTreeMap.getName();
+            return randomPlaylist.getName();
         }
 
     }

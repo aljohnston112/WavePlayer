@@ -101,6 +101,16 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
     private void fixProbSum() {
         Entry<T, Double> firstProb = this.probMap.entrySet().iterator().next();
         this.roundingError = 1.0 - probSum();
+        while((firstProb.getValue()*2.0) < roundingError){
+            double p;
+            for(Entry<T, Double> e : this.probMap.entrySet()){
+                p = e.getValue();
+                p+=roundingError/this.probMap.size();
+                e.setValue(p);
+            }
+            firstProb = this.probMap.entrySet().iterator().next();
+            this.roundingError = 1.0 - probSum();
+        }
         firstProb.setValue(firstProb.getValue() + this.roundingError);
     }
 

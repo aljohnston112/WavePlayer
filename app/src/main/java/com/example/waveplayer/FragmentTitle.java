@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
@@ -14,13 +15,17 @@ import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 import recyclertreeview.LayoutItemTypeDirectory;
@@ -70,6 +75,7 @@ public class FragmentTitle extends Fragment {
             @Override
             public void onReceive(Context context, Intent intent) {
 <<<<<<< HEAD
+<<<<<<< HEAD
                 putDataIntoServiceMain();
 =======
                 if (uri != null) {
@@ -83,26 +89,25 @@ public class FragmentTitle extends Fragment {
                             .navigate(actionFragmentTitleToFragmentFiles());
                 }
 >>>>>>> parent of 3acbf65... Removed RecyclerTreeView
+=======
+                if (uri != null) {
+                    if (!audioURIs.isEmpty()) {
+                        if(activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID) == null) {
+                            activityMain.serviceMain.directoryPlaylists.put(
+                                    mediaStoreUriID, new RandomPlaylist(audioURIs, ServiceMain.MAX_PERCENT, uri.getPath()));
+                        } else{
+                            //TODO
+                        }
+                        activityMain.serviceMain.userPickedPlaylist =
+                                activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID);
+                    }
+                    NavHostFragment.findNavController(FragmentTitle.this)
+                            .navigate(actionFragmentTitleToFragmentPlaylist());
+                }
+>>>>>>> parent of be266ca... Mistake
             }
         };
         activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
-    }
-
-    private void putDataIntoServiceMain() {
-        if (uri != null) {
-            if (!audioURIs.isEmpty()) {
-                if(activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID) == null) {
-                    activityMain.serviceMain.directoryPlaylists.put(
-                            mediaStoreUriID, new RandomPlaylistTreeMap(audioURIs, ServiceMain.MAX_PERCENT, uri.getPath()));
-                } else{
-                    //TODO
-                }
-                activityMain.serviceMain.userPickedPlaylist =
-                        activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID);
-            }
-            NavHostFragment.findNavController(FragmentTitle.this)
-                    .navigate(actionFragmentTitleToFragmentPlaylist());
-        }
     }
 
 
@@ -171,6 +176,7 @@ public class FragmentTitle extends Fragment {
                 this.uri = uri;
 <<<<<<< HEAD
                 traverseDirectoryEntries(uri);
+<<<<<<< HEAD
                 if(activityMain.serviceMain != null){
                     putDataIntoServiceMain();
                 }
@@ -208,6 +214,8 @@ public class FragmentTitle extends Fragment {
                 });
 
 >>>>>>> parent of 3acbf65... Removed RecyclerTreeView
+=======
+>>>>>>> parent of be266ca... Mistake
             }
         }
     }
@@ -233,11 +241,15 @@ public class FragmentTitle extends Fragment {
 
         ContentResolver contentResolver = activityMain.getContentResolver();
 <<<<<<< HEAD
+<<<<<<< HEAD
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != ? OR " +
 =======
         List<TreeViewNode> treeViewNodes = new LinkedList<>();
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != ? OR" +
 >>>>>>> parent of 3acbf65... Removed RecyclerTreeView
+=======
+        String selection = MediaStore.Audio.Media.IS_MUSIC + " != ? OR" +
+>>>>>>> parent of be266ca... Mistake
                 DocumentsContract.Document.COLUMN_MIME_TYPE + " == ?";
         String[] selectionArgs = new String[]{"0", DocumentsContract.Document.MIME_TYPE_DIR};
         try (Cursor cursor = contentResolver.query(childrenUri, new String[]{
@@ -271,10 +283,7 @@ public class FragmentTitle extends Fragment {
                         TreeViewNode treeViewNodeChild = new TreeViewNode(new LayoutItemTypeFile(name));
                         treeViewNodes.add(treeViewNodeChild);
                         audioFiles.add(childrenUri);
-                        AudioURI audioURI = getAudioUri(displayName);
-                        if(audioURI != null) {
-                            audioURIs.add(audioURI);
-                        }
+                        audioURIs.add(getAudioUri(displayName));
                     }
                 }
                 for (TreeViewNode treeViewNodeChild : treeViewNodes) {
