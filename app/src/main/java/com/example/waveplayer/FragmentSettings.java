@@ -91,11 +91,11 @@ public class FragmentSettings extends Fragment {
 
             private void updateSettings(int nSongs, int percentChange) {
                 ServiceMain.MAX_PERCENT = (1.0 / (double) nSongs);
-                for (RandomPlaylist randomPlaylist : activityMain.serviceMain.playlists) {
-                    randomPlaylist.setMaxPercent(ServiceMain.MAX_PERCENT);
+                for (RandomPlaylistTreeMap randomPlaylistTreeMap : activityMain.serviceMain.playlists) {
+                    randomPlaylistTreeMap.setMaxPercent(ServiceMain.MAX_PERCENT);
                 }
-                for (RandomPlaylist randomPlaylist : activityMain.serviceMain.directoryPlaylists.values()) {
-                    randomPlaylist.setMaxPercent(ServiceMain.MAX_PERCENT);
+                for (RandomPlaylistTreeMap randomPlaylistTreeMap : activityMain.serviceMain.directoryPlaylists.values()) {
+                    randomPlaylistTreeMap.setMaxPercent(ServiceMain.MAX_PERCENT);
                 }
                 activityMain.serviceMain.masterPlaylist.setMaxPercent(ServiceMain.MAX_PERCENT);
                 ServiceMain.PERCENT_CHANGE = ((double) percentChange) / 100.0;

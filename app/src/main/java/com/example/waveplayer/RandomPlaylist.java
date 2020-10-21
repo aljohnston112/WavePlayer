@@ -1,39 +1,11 @@
 package com.example.waveplayer;
 
-import java.io.Serializable;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-
-/**
- * @author Alexander Johnston
- * @since Copyright 2019
- * A playlist where a group of media files are picked from randomly.
- */
-public class RandomPlaylist implements Serializable {
-
-    private static final long serialVersionUID = 2323326608918863420L;
-
-    private final String name;
+public abstract class RandomPlaylist {
 
     // The ProbFun that randomly picks the media to play
-    private final ProbFunTree<AudioURI> probabilityFunction;
+    ProbFunTree<AudioURI> probabilityFunction;
 
-    /**
-     * Creates a random playlist.
-     *
-     * @param music as the List of AudioURIs to add to this playlist.
-     * @throws IllegalArgumentException if there is not at least one AudioURI in music.
-     * @throws IllegalArgumentException if folder is not a directory.
-     */
-    public RandomPlaylist(List<AudioURI> music, double maxPercent, String name) {
-        if (music.isEmpty())
-            throw new IllegalArgumentException("List music must contain at least one AudioURI");
-        Set<AudioURI> files = new LinkedHashSet<>(music);
-        probabilityFunction = new ProbFunTree<>(files, maxPercent);
-        this.name = name;
-    }
+    String name;
 
     public void setMaxPercent(double maxPercent) {
         probabilityFunction.setMaxPercent(maxPercent);

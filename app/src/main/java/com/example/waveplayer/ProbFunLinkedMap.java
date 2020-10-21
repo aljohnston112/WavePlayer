@@ -21,26 +21,17 @@ import java.util.TreeMap;
  * @author Alexander Johnston
  * @since Copyright 2020
  */
-public class ProbFunTree<T extends Comparable<T>> implements Serializable, Comparable<T> {
+public class ProbFunLinkedMap<T extends Comparable<T>> extends ProbFunTree<T> implements Serializable, Comparable<T> {
 
     private static final long serialVersionUID = -6556634307811294014L;
-
-    // The set of elements to be picked from, mapped to the probabilities of getting picked
-    private TreeMap<T, Double> probMap = new TreeMap<>();
 
     // The unique id of this ProbFunTree
     private int id = 0;
 
-    private double maxPercent;
-
-    public void setMaxPercent(double maxPercent) {
-        this.maxPercent = maxPercent;
-    }
-
     // The rounding error to prevent over and under flow
     private double roundingError = 0;
 
-    public ProbFunTree(Set<T> choices, double maxPercent) {
+    public ProbFunLinkedMap(Set<T> choices, double maxPercent) {
         Objects.requireNonNull(choices);
         if (choices.size() < 1)
             throw new IllegalArgumentException("Must have at least 1 element in the choices passed to the ProbFunTree constructor\n");
@@ -55,60 +46,8 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
         fixProbSum();
     }
 
-    /**
-     * returns the Map of element-probability pairs that make up this ProbFunTree.
-     * Any changes in the returned Map will be reflected in this ProbFunTree.
-     *
-     * @return the Map of element-probability pairs that make up this ProbFunTree.
-     * Any changes in the returned Map will be reflected in this ProbFunTree.
-     */
-    public TreeMap<T, Double> getProbMap() {
-        return this.probMap;
-    }
-
-    public void setProbMap(TreeMap<T, Double> probMap) {
+    public void setProbMap(LinkedHashMap<T, Double> probMap) {
         this.probMap = probMap;
-    }
-
-    /**
-     * Scales the probabilities so they add up to 1.0.
-     */
-    private void scaleProbs() {
-        double scale = 1.0 / probSum();
-        Set<Entry<T, Double>> probabilities = this.probMap.entrySet();
-        for (Entry<T, Double> e : probabilities) {
-            e.setValue(e.getValue() * scale);
-        }
-        fixProbSum();
-    }
-
-    /**
-     * @return the sum of all the probabilities in order to fix rounding error.
-     */
-    private double probSum() {
-        Collection<Double> probabilities = this.probMap.values();
-        double sum = 0;
-        for (Double d : probabilities) {
-            sum += d;
-        }
-        return sum;
-    }
-
-    /**
-     * Fixes rounding error in the probabilities by adding up the probabilities
-     * and changing the first probability so all probabilities add up to 1.0.
-     */
-    private void fixProbSum() {
-        Entry<T, Double> firstProb = this.probMap.entrySet().iterator().next();
-        this.roundingError = 1.0 - probSum();
-        firstProb.setValue(firstProb.getValue() + this.roundingError);
-    }
-
-    /**
-     * Sets the probabilities to there being an equal chance of getting any element from this ProbFunTree.
-     */
-    public void clearProbs() {
-        this.probMap = (new ProbFunTree<>(this.probMap.keySet(), 1)).probMap;
     }
 
     /**
@@ -123,46 +62,6 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
                 bad(t, 0.1);
             }
         }
-    }
-
-    /**
-     * Adds element to this ProbFunTree, making the probability equal to 1.0/n
-     * where n is the number of elements contained in this ProbFunTree,
-     * and appends elements as a child ProbFunTree, where elements are the choices.
-     *
-     * @param element as the element to add to this ProbFunTree.
-     * @throws NullPointerException if element is null.
-     */
-    public void add(T element) {
-        Objects.requireNonNull(element);
-        // Invariants secured
-        double probability = 1.0 / (this.probMap.size());
-        if (!this.probMap.containsKey(element)) {
-            this.probMap.put(element, probability);
-        } else {
-            return;
-        }
-        scaleProbs();
-    }
-
-    /**
-     * Removes an element from this ProbFunTree unless there is only one element.
-     *
-     * @param element as the element to remove from this ProbFunTree.
-     * @return True if this ProbFunTree's parent contained the element and it was removed, else false.
-     * @throws NullPointerException if element is null.
-     */
-    public boolean remove(T element) {
-        Objects.requireNonNull(element);
-        if (size() == 1) {
-            return false;
-        }
-        // Invariants secured
-        if (this.probMap.remove(element) == null) {
-            return false;
-        }
-        scaleProbs();
-        return true;
     }
 
     /**
@@ -283,18 +182,18 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
     /**
      * Private copy constructor for clone
      *
-     * @param probFunTree as the ProbFunTree to copy
+     * @param probFunTreeMap as the ProbFunTree to copy
      */
-    private ProbFunTree(ProbFunTree<T> probFunTree) {
-        for (Entry<T, Double> s : probFunTree.probMap.entrySet()) {
+    private ProbFunLinkedMap(ProbFunLinkedMap<T> probFunTreeMap) {
+        for (Entry<T, Double> s : probFunTreeMap.probMap.entrySet()) {
             this.probMap.put(s.getKey(), s.getValue());
         }
     }
 
     @NonNull
     @Override
-    public ProbFunTree<T> clone() {
-        return new ProbFunTree<>(this);
+    public ProbFunLinkedMap<T> clone() {
+        return new ProbFunLinkedMap<>(this);
     }
 
     @NonNull
@@ -332,7 +231,11 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
         if (this.id == 0) {
             this.id = System.identityHashCode(this);
         }
-        return this.id - ((ProbFunTree<T>) o).id;
+        return this.id - ((ProbFunLinkedMap<T>) o).id;
     }
 
+    @Override
+    public void clearProbs() {
+        this.probMap = (new ProbFunLinkedMap<>(this.probMap.keySet(), 1)).probMap;
+    }
 }

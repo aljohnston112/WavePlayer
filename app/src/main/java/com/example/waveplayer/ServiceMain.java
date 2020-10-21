@@ -74,9 +74,9 @@ public class ServiceMain extends Service {
     final HashMap<Uri, MediaPlayerWURI> songsMap = new HashMap<>();
     final public LinkedHashMap<Uri, AudioURI> uriMap = new LinkedHashMap<>();
 
-    final ArrayList<RandomPlaylist> playlists = new ArrayList<>();
-    RandomPlaylist masterPlaylist;
-    RandomPlaylist currentPlaylist;
+    final ArrayList<RandomPlaylistHashMap> playlists = new ArrayList<>();
+    RandomPlaylistTreeMap masterPlaylist;
+    RandomPlaylistTreeMap currentPlaylist;
 
     final LinkedList<Uri> songQueue = new LinkedList<>();
     ListIterator<Uri> songQueueIterator;
@@ -110,7 +110,8 @@ public class ServiceMain extends Service {
     ArrayList<AudioURI> currentPlaylistArray;
     ListIterator<AudioURI> currentPlaylistIterator;
 
-    public TreeMap<Long, RandomPlaylist> directoryPlaylists = new TreeMap<>(new MComparable());
+    public TreeMap<Long, RandomPlaylistHashMap> directoryPlaylists = new TreeMap<>(new MComparable());
+
     static class MComparable implements Serializable, Comparator<Long> {
         @Override
         public int compare(Long o1, Long o2) {
@@ -312,12 +313,12 @@ public class ServiceMain extends Service {
                  ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
                 MAX_PERCENT = objectInputStream.readDouble();
                 PERCENT_CHANGE = objectInputStream.readDouble();
-                masterPlaylist = (RandomPlaylist) objectInputStream.readObject();
+                masterPlaylist = (RandomPlaylistTreeMap) objectInputStream.readObject();
                 int playlistSize = objectInputStream.readInt();
                 for (int i = 0; i < playlistSize; i++) {
-                    playlists.add((RandomPlaylist) objectInputStream.readObject());
+                    playlists.add((RandomPlaylistHashMap) objectInputStream.readObject());
                 }
-                directoryPlaylists = (TreeMap<Long, RandomPlaylist>)objectInputStream.readObject();
+                directoryPlaylists = (TreeMap<Long, RandomPlaylistHashMap>)objectInputStream.readObject();
             } catch (ClassNotFoundException | IOException e) {
                 e.printStackTrace();
                 string = "Error encountered while loading the save file";
@@ -532,7 +533,7 @@ public class ServiceMain extends Service {
                             }
                         }
                     } else {
-                        masterPlaylist = new RandomPlaylist(
+                        masterPlaylist = new RandomPlaylistTreeMap(
                                 new ArrayList<>(uriMap.values()), MAX_PERCENT, MASTER_PLAYLIST_NAME);
                     }
                     currentPlaylist = masterPlaylist;
@@ -830,8 +831,8 @@ public class ServiceMain extends Service {
                     objectOutputStream.writeDouble(PERCENT_CHANGE);
                     objectOutputStream.writeObject(masterPlaylist);
                     objectOutputStream.writeInt(playlists.size());
-                    for (RandomPlaylist randomPlaylist : playlists) {
-                        objectOutputStream.writeObject(randomPlaylist);
+                    for (RandomPlaylistHashMap randomPlaylistTreeMap : playlists) {
+                        objectOutputStream.writeObject(randomPlaylistTreeMap);
                     }
                     objectOutputStream.writeObject(directoryPlaylists);
                     objectOutputStream.flush();

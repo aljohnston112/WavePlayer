@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
-import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
@@ -15,17 +14,13 @@ import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
-import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 
 import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentPlaylist;
@@ -67,23 +62,27 @@ public class FragmentTitle extends Fragment {
         broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if (uri != null) {
-                    if (!audioURIs.isEmpty()) {
-                        if(activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID) == null) {
-                            activityMain.serviceMain.directoryPlaylists.put(
-                                    mediaStoreUriID, new RandomPlaylist(audioURIs, ServiceMain.MAX_PERCENT, uri.getPath()));
-                        } else{
-                            //TODO
-                        }
-                        activityMain.serviceMain.userPickedPlaylist =
-                                activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID);
-                    }
-                    NavHostFragment.findNavController(FragmentTitle.this)
-                            .navigate(actionFragmentTitleToFragmentPlaylist());
-                }
+                putDataIntoServiceMain();
             }
         };
         activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
+    }
+
+    private void putDataIntoServiceMain() {
+        if (uri != null) {
+            if (!audioURIs.isEmpty()) {
+                if(activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID) == null) {
+                    activityMain.serviceMain.directoryPlaylists.put(
+                            mediaStoreUriID, new RandomPlaylistTreeMap(audioURIs, ServiceMain.MAX_PERCENT, uri.getPath()));
+                } else{
+                    //TODO
+                }
+                activityMain.serviceMain.userPickedPlaylist =
+                        activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID);
+            }
+            NavHostFragment.findNavController(FragmentTitle.this)
+                    .navigate(actionFragmentTitleToFragmentPlaylist());
+        }
     }
 
 
@@ -151,6 +150,9 @@ public class FragmentTitle extends Fragment {
                 contentResolver.takePersistableUriPermission(uri, takeFlags);
                 this.uri = uri;
                 traverseDirectoryEntries(uri);
+                if(activityMain.serviceMain != null){
+                    putDataIntoServiceMain();
+                }
             }
         }
     }
@@ -175,7 +177,7 @@ public class FragmentTitle extends Fragment {
 */
 
         ContentResolver contentResolver = activityMain.getContentResolver();
-        String selection = MediaStore.Audio.Media.IS_MUSIC + " != ? OR" +
+        String selection = MediaStore.Audio.Media.IS_MUSIC + " != ? OR " +
                 DocumentsContract.Document.COLUMN_MIME_TYPE + " == ?";
         String[] selectionArgs = new String[]{"0", DocumentsContract.Document.MIME_TYPE_DIR};
         try (Cursor cursor = contentResolver.query(childrenUri, new String[]{
@@ -201,7 +203,10 @@ public class FragmentTitle extends Fragment {
                         getFiles( newNode, rootUri);
                     } else {
                         audioFiles.add(childrenUri);
-                        audioURIs.add(getAudioUri(displayName));
+                        AudioURI audioURI = getAudioUri(displayName);
+                        if(audioURI != null) {
+                            audioURIs.add(audioURI);
+                        }
                     }
                 }
             }
