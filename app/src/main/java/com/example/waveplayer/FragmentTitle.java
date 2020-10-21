@@ -76,6 +76,7 @@ public class FragmentTitle extends Fragment {
             public void onReceive(Context context, Intent intent) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                 putDataIntoServiceMain();
 =======
                 if (uri != null) {
@@ -90,6 +91,8 @@ public class FragmentTitle extends Fragment {
                 }
 >>>>>>> parent of 3acbf65... Removed RecyclerTreeView
 =======
+=======
+>>>>>>> parent of be266ca... Mistake
                 if (uri != null) {
                     if (!audioURIs.isEmpty()) {
                         if(activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID) == null) {
@@ -104,6 +107,9 @@ public class FragmentTitle extends Fragment {
                     NavHostFragment.findNavController(FragmentTitle.this)
                             .navigate(actionFragmentTitleToFragmentPlaylist());
                 }
+<<<<<<< HEAD
+>>>>>>> parent of be266ca... Mistake
+=======
 >>>>>>> parent of be266ca... Mistake
             }
         };
@@ -177,6 +183,7 @@ public class FragmentTitle extends Fragment {
 <<<<<<< HEAD
                 traverseDirectoryEntries(uri);
 <<<<<<< HEAD
+<<<<<<< HEAD
                 if(activityMain.serviceMain != null){
                     putDataIntoServiceMain();
                 }
@@ -216,6 +223,8 @@ public class FragmentTitle extends Fragment {
 >>>>>>> parent of 3acbf65... Removed RecyclerTreeView
 =======
 >>>>>>> parent of be266ca... Mistake
+=======
+>>>>>>> parent of be266ca... Mistake
             }
         }
     }
@@ -242,11 +251,15 @@ public class FragmentTitle extends Fragment {
         ContentResolver contentResolver = activityMain.getContentResolver();
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != ? OR " +
 =======
         List<TreeViewNode> treeViewNodes = new LinkedList<>();
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != ? OR" +
 >>>>>>> parent of 3acbf65... Removed RecyclerTreeView
+=======
+        String selection = MediaStore.Audio.Media.IS_MUSIC + " != ? OR" +
+>>>>>>> parent of be266ca... Mistake
 =======
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != ? OR" +
 >>>>>>> parent of be266ca... Mistake
