@@ -110,14 +110,22 @@ public class ServiceMain extends Service {
     ArrayList<AudioURI> currentPlaylistArray;
     ListIterator<AudioURI> currentPlaylistIterator;
 
+<<<<<<< HEAD
     public TreeMap<Long, RandomPlaylistHashMap> directoryPlaylists = new TreeMap<>(new MComparable());
 
+=======
+    public List<Uri> userPickedDirectories = new ArrayList<>();
+    public Uri userPickedDirectory;
+    public TreeMap<Long, RandomPlaylist> directoryPlaylists = new TreeMap<>(new MComparable());
+>>>>>>> parent of 3acbf65... Removed RecyclerTreeView
     static class MComparable implements Serializable, Comparator<Long> {
         @Override
         public int compare(Long o1, Long o2) {
             return o1.compareTo(o2);
         }
     }
+
+    public boolean isDirectory;
 
     // For updating the SeekBar
     ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -318,7 +326,15 @@ public class ServiceMain extends Service {
                 for (int i = 0; i < playlistSize; i++) {
                     playlists.add((RandomPlaylistHashMap) objectInputStream.readObject());
                 }
+<<<<<<< HEAD
                 directoryPlaylists = (TreeMap<Long, RandomPlaylistHashMap>)objectInputStream.readObject();
+=======
+                int nUserPickedFiles = objectInputStream.readInt();
+                for (int i = 0; i < nUserPickedFiles; i++) {
+                    userPickedDirectories.add((Uri) objectInputStream.readObject());
+                }
+                directoryPlaylists = (TreeMap<Long, RandomPlaylist>)objectInputStream.readObject();
+>>>>>>> parent of 3acbf65... Removed RecyclerTreeView
             } catch (ClassNotFoundException | IOException e) {
                 e.printStackTrace();
                 string = "Error encountered while loading the save file";
@@ -808,8 +824,6 @@ public class ServiceMain extends Service {
             }
         }
         currentSong = mediaPlayerWURI.audioURI;
-        int i = currentPlaylistArray.indexOf(mediaPlayerWURI.audioURI);
-        currentPlaylistIterator = currentPlaylistArray.listIterator(i+1);
         updateNotification();
         Log.v(TAG, "play ended");
     }
@@ -834,6 +848,8 @@ public class ServiceMain extends Service {
                     for (RandomPlaylistHashMap randomPlaylistTreeMap : playlists) {
                         objectOutputStream.writeObject(randomPlaylistTreeMap);
                     }
+                    objectOutputStream.writeInt(userPickedDirectories.size());
+                    objectOutputStream.writeObject(userPickedDirectories);
                     objectOutputStream.writeObject(directoryPlaylists);
                     objectOutputStream.flush();
                     Log.v(TAG, "Save file created");

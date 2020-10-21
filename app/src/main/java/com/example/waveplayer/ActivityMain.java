@@ -40,6 +40,8 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import recyclertreeview.TreeViewAdapter;
+
 public class ActivityMain extends AppCompatActivity {
 
     // TODO update fab with extended FAB
@@ -47,6 +49,8 @@ public class ActivityMain extends AppCompatActivity {
     // TODO help page
 
     // TODO file structure
+
+    TreeViewAdapter treeViewAdapter;
 
     static final String TAG = "ActivityMain";
 
