@@ -97,8 +97,13 @@ public class FragmentSettings extends Fragment {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                 for (RandomPlaylistTreeMap randomPlaylistTreeMap : activityMain.serviceMain.directoryPlaylists.values()) {
                     randomPlaylistTreeMap.setMaxPercent(ServiceMain.MAX_PERCENT);
+=======
+                for (RandomPlaylist randomPlaylist : activityMain.serviceMain.directoryPlaylists.values()) {
+                    randomPlaylist.setMaxPercent(ServiceMain.MAX_PERCENT);
+>>>>>>> parent of be266ca... Mistake
 =======
                 for (RandomPlaylist randomPlaylist : activityMain.serviceMain.directoryPlaylists.values()) {
                     randomPlaylist.setMaxPercent(ServiceMain.MAX_PERCENT);

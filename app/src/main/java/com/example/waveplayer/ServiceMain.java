@@ -113,6 +113,7 @@ public class ServiceMain extends Service {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     public TreeMap<Long, RandomPlaylistHashMap> directoryPlaylists = new TreeMap<>(new MComparable());
 
 =======
@@ -120,6 +121,9 @@ public class ServiceMain extends Service {
     public Uri userPickedDirectory;
     public TreeMap<Long, RandomPlaylist> directoryPlaylists = new TreeMap<>(new MComparable());
 >>>>>>> parent of 3acbf65... Removed RecyclerTreeView
+=======
+    public TreeMap<Long, RandomPlaylist> directoryPlaylists = new TreeMap<>(new MComparable());
+>>>>>>> parent of be266ca... Mistake
 =======
     public TreeMap<Long, RandomPlaylist> directoryPlaylists = new TreeMap<>(new MComparable());
 >>>>>>> parent of be266ca... Mistake
@@ -337,6 +341,7 @@ public class ServiceMain extends Service {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                 directoryPlaylists = (TreeMap<Long, RandomPlaylistHashMap>)objectInputStream.readObject();
 =======
                 int nUserPickedFiles = objectInputStream.readInt();
@@ -345,6 +350,9 @@ public class ServiceMain extends Service {
                 }
                 directoryPlaylists = (TreeMap<Long, RandomPlaylist>)objectInputStream.readObject();
 >>>>>>> parent of 3acbf65... Removed RecyclerTreeView
+=======
+                directoryPlaylists = (TreeMap<Long, RandomPlaylist>)objectInputStream.readObject();
+>>>>>>> parent of be266ca... Mistake
 =======
                 directoryPlaylists = (TreeMap<Long, RandomPlaylist>)objectInputStream.readObject();
 >>>>>>> parent of be266ca... Mistake

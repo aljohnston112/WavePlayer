@@ -77,6 +77,7 @@ public class FragmentTitle extends Fragment {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                 putDataIntoServiceMain();
 =======
                 if (uri != null) {
@@ -91,6 +92,8 @@ public class FragmentTitle extends Fragment {
                 }
 >>>>>>> parent of 3acbf65... Removed RecyclerTreeView
 =======
+=======
+>>>>>>> parent of be266ca... Mistake
 =======
 >>>>>>> parent of be266ca... Mistake
                 if (uri != null) {
@@ -108,6 +111,9 @@ public class FragmentTitle extends Fragment {
                             .navigate(actionFragmentTitleToFragmentPlaylist());
                 }
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> parent of be266ca... Mistake
+=======
 >>>>>>> parent of be266ca... Mistake
 =======
 >>>>>>> parent of be266ca... Mistake
@@ -184,6 +190,7 @@ public class FragmentTitle extends Fragment {
                 traverseDirectoryEntries(uri);
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                 if(activityMain.serviceMain != null){
                     putDataIntoServiceMain();
                 }
@@ -225,6 +232,8 @@ public class FragmentTitle extends Fragment {
 >>>>>>> parent of be266ca... Mistake
 =======
 >>>>>>> parent of be266ca... Mistake
+=======
+>>>>>>> parent of be266ca... Mistake
             }
         }
     }
@@ -252,11 +261,15 @@ public class FragmentTitle extends Fragment {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != ? OR " +
 =======
         List<TreeViewNode> treeViewNodes = new LinkedList<>();
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != ? OR" +
 >>>>>>> parent of 3acbf65... Removed RecyclerTreeView
+=======
+        String selection = MediaStore.Audio.Media.IS_MUSIC + " != ? OR" +
+>>>>>>> parent of be266ca... Mistake
 =======
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != ? OR" +
 >>>>>>> parent of be266ca... Mistake
