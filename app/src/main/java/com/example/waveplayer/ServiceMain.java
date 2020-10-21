@@ -533,7 +533,7 @@ public class ServiceMain extends Service {
                         }
                     } else {
                         masterPlaylist = new RandomPlaylist(
-                                new ArrayList<>(uriMap.values()), MAX_PERCENT, MASTER_PLAYLIST_NAME);
+                                new ArrayList<>(uriMap.values()), MAX_PERCENT, MASTER_PLAYLIST_NAME, true);
                     }
                     currentPlaylist = masterPlaylist;
                     songQueueIterator = songQueue.listIterator();
