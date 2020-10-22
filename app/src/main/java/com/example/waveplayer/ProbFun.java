@@ -21,12 +21,12 @@ import java.util.TreeMap;
  * @author Alexander Johnston
  * @since Copyright 2020
  */
-public class ProbFunTree<T extends Comparable<T>> implements Serializable, Comparable<T> {
+class ProbFun<T extends Comparable<T>> implements Serializable {
 
     private static final long serialVersionUID = -6556634307811294014L;
 
     // The set of elements to be picked from, mapped to the probabilities of getting picked
-    private TreeMap<T, Double> probMap = new TreeMap<>();
+    Map<T, Double> probMap;
 
     // The unique id of this ProbFunTree
     private int id = 0;
@@ -40,7 +40,9 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
     // The rounding error to prevent over and under flow
     private double roundingError = 0;
 
-    public ProbFunTree(Set<T> choices, double maxPercent) {
+    private boolean compareable;
+
+    protected ProbFun(Set<T> choices, double maxPercent, boolean comparable) {
         Objects.requireNonNull(choices);
         if (choices.size() < 1)
             throw new IllegalArgumentException("Must have at least 1 element in the choices passed to the ProbFunTree constructor\n");
@@ -48,6 +50,12 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
             throw new IllegalArgumentException("maxPercent passed into the ProbFunTree constructor must be above 0 and 1.0 or under");
         }
         // Invariants secured
+        this.compareable = comparable;
+        if(comparable){
+            this.probMap = new TreeMap<T, Double>();
+        } else{
+            this.probMap = new LinkedHashMap<T, Double>();
+        }
         this.maxPercent = maxPercent;
         for (T choice : choices) {
             this.probMap.put(choice, 1.0 / choices.size());
@@ -62,7 +70,7 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
      * @return the Map of element-probability pairs that make up this ProbFunTree.
      * Any changes in the returned Map will be reflected in this ProbFunTree.
      */
-    public TreeMap<T, Double> getProbMap() {
+    public Map<T, Double> getProbMap() {
         return this.probMap;
     }
 
@@ -118,7 +126,11 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
      * Sets the probabilities to there being an equal chance of getting any element from this ProbFunTree.
      */
     public void clearProbs() {
-        this.probMap = (new ProbFunTree<>(this.probMap.keySet(), 1)).probMap;
+        if(compareable) {
+            this.probMap = (new ProbFunTreeMap<>(this.probMap.keySet(), 1)).probMap;
+        } else {
+            this.probMap = (new ProbFunLinkedMap<>(this.probMap.keySet(), 1)).probMap;
+        }
     }
 
     /**
@@ -293,18 +305,18 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
     /**
      * Private copy constructor for clone
      *
-     * @param probFunTree as the ProbFunTree to copy
+     * @param probFun as the ProbFunTree to copy
      */
-    private ProbFunTree(ProbFunTree<T> probFunTree) {
-        for (Entry<T, Double> s : probFunTree.probMap.entrySet()) {
+    private ProbFun(ProbFun<T> probFun) {
+        for (Entry<T, Double> s : probFun.probMap.entrySet()) {
             this.probMap.put(s.getKey(), s.getValue());
         }
     }
 
     @NonNull
     @Override
-    public ProbFunTree<T> clone() {
-        return new ProbFunTree<>(this);
+    public ProbFun<T> clone() {
+        return new ProbFun<>(this);
     }
 
     @NonNull
@@ -334,15 +346,6 @@ public class ProbFunTree<T extends Comparable<T>> implements Serializable, Compa
             this.id = System.identityHashCode(this);
         }
         return this.id;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public int compareTo(T o) {
-        if (this.id == 0) {
-            this.id = System.identityHashCode(this);
-        }
-        return this.id - ((ProbFunTree<T>) o).id;
     }
 
 }

@@ -102,7 +102,7 @@ public class FragmentEditPlaylist extends Fragment {
                         activityMain.serviceMain.playlists.add(new RandomPlaylist(
                                 activityMain.serviceMain.userPickedSongs,
                                 ServiceMain.MAX_PERCENT,
-                                finalEditTextPlaylistName.getText().toString()));
+                                finalEditTextPlaylistName.getText().toString(), false));
                         for (AudioURI audioURI : activityMain.serviceMain.userPickedSongs) {
                             audioURI.setSelected(false);
                         }
