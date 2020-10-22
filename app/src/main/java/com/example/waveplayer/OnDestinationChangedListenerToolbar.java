@@ -30,8 +30,13 @@ public class OnDestinationChangedListenerToolbar implements NavController.OnDest
                 if (menu.size() > 0) {
                     if (destination.getId() == R.id.fragmentPlaylist || destination.getId() == R.id.fragmentSongs) {
                         menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(true);
-                    } else {
+                    } else{
                         menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(false);
+                    }
+                    if(destination.getId() == R.id.fragmentSong){
+                        menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).setVisible(true);
+                    } else{
+                        menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).setVisible(false);
                     }
                 }
             }

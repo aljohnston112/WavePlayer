@@ -40,6 +40,8 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static com.example.waveplayer.RecyclerViewAdapterSongs.PLAYLISTS;
+
 public class ActivityMain extends AppCompatActivity {
 
     // TODO update fab with extended FAB
@@ -51,6 +53,8 @@ public class ActivityMain extends AppCompatActivity {
     private static final int REQUEST_PERMISSION_READ = 245083964;
 
     public static final int MENU_ACTION_RESET_PROBS_INDEX = 0;
+
+    public static final int MENU_ACTION_ADD_TO_PLAYLIST_INDEX = 1;
 
     public ServiceMain serviceMain;
 
@@ -569,6 +573,16 @@ public class ActivityMain extends AppCompatActivity {
             case R.id.action_reset_probs:
                 serviceMain.currentPlaylist.getProbFun().clearProbs();
                 Log.v(TAG, "onOptionsItemSelected action_reset_probs end");
+                return true;
+            case R.id.action_add_to_playlist:
+                Bundle bundle = new Bundle();
+                bundle.putSerializable(RecyclerViewAdapterSongs.ADD_TO_PLAYLIST_SONG, serviceMain.currentSong);
+                bundle.putSerializable(PLAYLISTS, serviceMain.playlists);
+                AddToPlaylistDialog addToPlaylistDialog = new AddToPlaylistDialog();
+                addToPlaylistDialog.setArguments(bundle);
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
+                addToPlaylistDialog.show(fragmentManager, fragment.getTag());
                 return true;
         }
         Log.v(TAG, "onOptionsItemSelected action_unknown end");
