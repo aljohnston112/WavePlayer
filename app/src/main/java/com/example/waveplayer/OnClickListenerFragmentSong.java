@@ -16,11 +16,11 @@ public class OnClickListenerFragmentSong implements View.OnClickListener {
         synchronized (activityMain.lock) {
             if (v.getId() == R.id.button_thumb_down) {
                 activityMain.serviceMain.currentPlaylist.getProbFun().bad(
-                        activityMain.serviceMain.getCurrentSong(), ServiceMain.PERCENT_CHANGE);
+                        activityMain.serviceMain.getCurrentSong(), ServiceMain.PERCENT_CHANGE_DOWN);
                 activityMain.serviceMain.saveFile();
             } else if (v.getId() == R.id.button_thumb_up) {
                 activityMain.serviceMain.currentPlaylist.getProbFun().good(
-                        activityMain.serviceMain.getCurrentSong(), ServiceMain.PERCENT_CHANGE);
+                        activityMain.serviceMain.getCurrentSong(), ServiceMain.PERCENT_CHANGE_UP);
                 activityMain.serviceMain.saveFile();
             } else if (v.getId() == R.id.imageButtonShuffle) {
                 // TODO

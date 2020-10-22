@@ -68,7 +68,8 @@ public class ServiceMain extends Service {
 
     // Settings
     static double MAX_PERCENT = 0.1;
-    static double PERCENT_CHANGE = 0.5;
+    static double PERCENT_CHANGE_UP = 0.1;
+    static double PERCENT_CHANGE_DOWN = 0.5;
     // TODO add percent change up and down
 
     final HashMap<Uri, MediaPlayerWURI> songsMap = new HashMap<>();
@@ -311,7 +312,8 @@ public class ServiceMain extends Service {
             try (FileInputStream fileInputStream = getApplicationContext().openFileInput(FILE_SAVE);
                  ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
                 MAX_PERCENT = objectInputStream.readDouble();
-                PERCENT_CHANGE = objectInputStream.readDouble();
+                PERCENT_CHANGE_UP = objectInputStream.readDouble();
+                PERCENT_CHANGE_DOWN = objectInputStream.readDouble();
                 masterPlaylist = (RandomPlaylist) objectInputStream.readObject();
                 int playlistSize = objectInputStream.readInt();
                 for (int i = 0; i < playlistSize; i++) {
@@ -607,7 +609,7 @@ public class ServiceMain extends Service {
     void playNext() {
         Log.v(TAG, "playNext started");
         if (currentSong != null) {
-            currentPlaylist.getProbFun().bad(getCurrentSong(), PERCENT_CHANGE);
+            currentPlaylist.getProbFun().bad(getCurrentSong(), PERCENT_CHANGE_DOWN);
             if (loopingOne) {
                 MediaPlayerWURI mediaPlayerWURI = songsMap.get(currentSong.getUri());
                 if (mediaPlayerWURI != null) {
@@ -836,7 +838,8 @@ public class ServiceMain extends Service {
                      ObjectOutputStream objectOutputStream = new ObjectOutputStream(fos)) {
                     Log.v(TAG, "Creating save file");
                     objectOutputStream.writeDouble(MAX_PERCENT);
-                    objectOutputStream.writeDouble(PERCENT_CHANGE);
+                    objectOutputStream.writeDouble(PERCENT_CHANGE_UP);
+                    objectOutputStream.writeDouble(PERCENT_CHANGE_DOWN);
                     objectOutputStream.writeObject(masterPlaylist);
                     objectOutputStream.writeInt(playlists.size());
                     for (RandomPlaylist randomPlaylist : playlists) {

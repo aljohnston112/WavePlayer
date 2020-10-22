@@ -42,7 +42,8 @@ public class FragmentSettings extends Fragment {
 
     private void updateFAB() {
         final EditText editTextNSongs = activityMain.findViewById(R.id.editTextNSongs);
-        final EditText editTextPercentChange = activityMain.findViewById(R.id.editTextPercentChange);
+        final EditText editTextPercentChangeUp = activityMain.findViewById(R.id.editTextPercentChangeUp);
+        final EditText editTextPercentChangeDown = activityMain.findViewById(R.id.editTextPercentChangeDown);
         activityMain.setFabImage(R.drawable.ic_check_black_24dp);
         activityMain.showFab(true);
         activityMain.setFabOnClickListener(new View.OnClickListener() {
@@ -52,11 +53,15 @@ public class FragmentSettings extends Fragment {
                 if (nSongs == -1) {
                     return;
                 }
-                int percentChange = getPercentChange();
-                if (percentChange == -1) {
+                int percentChangeUp = getPercentChangeUp();
+                if (percentChangeUp == -1) {
                     return;
                 }
-                updateSettings(nSongs, percentChange);
+                int percentChangeDown = getPercentChangeDown();
+                if (percentChangeDown == -1) {
+                    return;
+                }
+                updateSettings(nSongs, percentChangeUp, percentChangeDown);
                 NavController navController = NavHostFragment.findNavController(FragmentSettings.this);
                 navController.popBackStack();
             }
@@ -75,21 +80,35 @@ public class FragmentSettings extends Fragment {
                 return nSongs;
             }
 
-            private int getPercentChange() {
-                int percentChange = -1;
+            private int getPercentChangeUp() {
+                int percentChangeUp = -1;
                 try {
-                    percentChange = Integer.parseInt(editTextPercentChange.getText().toString());
+                    percentChangeUp = Integer.parseInt(editTextPercentChangeUp.getText().toString());
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
                 }
-                if (percentChange < 1 || percentChange > 100) {
+                if (percentChangeUp < 1 || percentChangeUp > 100) {
                     Toast toast = Toast.makeText(getContext(), R.string.percent_change_error, Toast.LENGTH_LONG);
                     toast.show();
                 }
-                return percentChange;
+                return percentChangeUp;
             }
 
-            private void updateSettings(int nSongs, int percentChange) {
+            private int getPercentChangeDown() {
+                int percentChangeDown = -1;
+                try {
+                    percentChangeDown = Integer.parseInt(editTextPercentChangeDown.getText().toString());
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                }
+                if (percentChangeDown < 1 || percentChangeDown > 100) {
+                    Toast toast = Toast.makeText(getContext(), R.string.percent_change_error, Toast.LENGTH_LONG);
+                    toast.show();
+                }
+                return percentChangeDown;
+            }
+
+            private void updateSettings(int nSongs, int percentChangeUp, int percentChangeDown) {
                 ServiceMain.MAX_PERCENT = (1.0 / (double) nSongs);
                 for (RandomPlaylist randomPlaylist : activityMain.serviceMain.playlists) {
                     randomPlaylist.setMaxPercent(ServiceMain.MAX_PERCENT);
@@ -98,7 +117,8 @@ public class FragmentSettings extends Fragment {
                     randomPlaylist.setMaxPercent(ServiceMain.MAX_PERCENT);
                 }
                 activityMain.serviceMain.masterPlaylist.setMaxPercent(ServiceMain.MAX_PERCENT);
-                ServiceMain.PERCENT_CHANGE = ((double) percentChange) / 100.0;
+                ServiceMain.PERCENT_CHANGE_UP = ((double) percentChangeUp) / 100.0;
+                ServiceMain.PERCENT_CHANGE_DOWN = ((double) percentChangeDown) / 100.0;
             }
 
         });
@@ -106,9 +126,11 @@ public class FragmentSettings extends Fragment {
 
     private void loadSettings() {
         EditText editTextNSongs = activityMain.findViewById(R.id.editTextNSongs);
-        EditText editTextPercentChange = activityMain.findViewById(R.id.editTextPercentChange);
+        EditText editTextPercentChangeUp = activityMain.findViewById(R.id.editTextPercentChangeUp);
+        EditText editTextPercentChangeDown = activityMain.findViewById(R.id.editTextPercentChangeDown);
         editTextNSongs.setText(String.valueOf((int) Math.round(1.0 / ServiceMain.MAX_PERCENT)));
-        editTextPercentChange.setText(String.valueOf((int) Math.round(ServiceMain.PERCENT_CHANGE * 100.0)));
+        editTextPercentChangeUp.setText(String.valueOf((int) Math.round(ServiceMain.PERCENT_CHANGE_UP * 100.0)));
+        editTextPercentChangeDown.setText(String.valueOf((int) Math.round(ServiceMain.PERCENT_CHANGE_DOWN * 100.0)));
     }
 
     @Override

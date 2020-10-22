@@ -38,15 +38,14 @@
     <string name="max_percent_desc">The min grain number determines how many songs play when you hit thumbs up on a lot of songs.
     When set to 1, 1 song may repeat after hitting thumbs up a lot.</string>
     <string name="max_percent_error">Enter a positive number for Max Grain Number</string>
-    <string name="percent_change"><b>Mod Magnitude:</b></string>
+    <string name="percent_change_up"><b>Mod Magnitude Up:</b></string>
+    <string name="percent_change_down"><b>Mod Magnitude Down:</b></string>
     <string name="percent_change_desc">The mod magnitude (1-100) determines how much a grain size changes
         when the thumb up, thumb down, or skip button is tapped. 1 makes the smallest change and 100 makes the largest change.
     When min grain size is 1 and mod magnitude is 100, a song will take the least number of taps to repeat often.
      When min grain size is 1 and mod magnitude is 1, a song will take the most number of taps to repeat often.</string>
     <string name="percent_change_error">Enter a number between 1 and 100 for Mod Magnitude</string>
     <string name="action_settings">Settings</string>
-    <string name="hello_world">Hello world!</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+
 
 </resources>
