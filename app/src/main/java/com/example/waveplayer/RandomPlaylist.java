@@ -1,6 +1,7 @@
 package com.example.waveplayer;
 
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -17,7 +18,7 @@ public class RandomPlaylist implements Serializable {
     private final String name;
 
     // The ProbFun that randomly picks the media to play
-    private final ProbFun<AudioURI> probabilityFunction;
+    private final ProbFunTree<AudioURI> probabilityFunction;
 
     /**
      * Creates a random playlist.
@@ -26,15 +27,11 @@ public class RandomPlaylist implements Serializable {
      * @throws IllegalArgumentException if there is not at least one AudioURI in music.
      * @throws IllegalArgumentException if folder is not a directory.
      */
-    public RandomPlaylist(List<AudioURI> music, double maxPercent, String name, boolean comparable) {
+    public RandomPlaylist(List<AudioURI> music, double maxPercent, String name) {
         if (music.isEmpty())
             throw new IllegalArgumentException("List music must contain at least one AudioURI");
         Set<AudioURI> files = new LinkedHashSet<>(music);
-        if(comparable){
-            probabilityFunction = new ProbFunTreeMap<>(files, maxPercent);
-        } else {
-            probabilityFunction = new ProbFunLinkedMap<>(files, maxPercent);
-        }
+        probabilityFunction = new ProbFunTree<>(files, maxPercent);
         this.name = name;
     }
 
@@ -45,7 +42,7 @@ public class RandomPlaylist implements Serializable {
     /**
      * @return the ProbFunTree that controls the probability of which media gets played.
      */
-    public ProbFun<AudioURI> getProbFun() {
+    public ProbFunTree<AudioURI> getProbFun() {
         return probabilityFunction;
     }
 

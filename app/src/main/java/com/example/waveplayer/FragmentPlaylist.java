@@ -20,7 +20,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Map;
 import java.util.TreeMap;
 
 public class FragmentPlaylist extends Fragment {
@@ -115,7 +114,7 @@ public class FragmentPlaylist extends Fragment {
             if (recyclerViewAdapterSongsList != null) {
                 Collections.swap(recyclerViewAdapterSongsList.audioURIS,
                         viewHolder.getAdapterPosition(), target.getAdapterPosition());
-                Map<AudioURI, Double> oldMap =
+                TreeMap<AudioURI, Double> oldMap =
                         activityMain.serviceMain.userPickedPlaylist.getProbFun().getProbMap();
                 ArrayList<AudioURI> keySetList = new ArrayList<>(oldMap.keySet());
                 Collections.swap(keySetList,

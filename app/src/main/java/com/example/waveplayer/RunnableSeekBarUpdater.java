@@ -34,7 +34,7 @@ public class RunnableSeekBarUpdater implements Runnable {
             public void run() {
                 if (mediaPlayerWURI.isPlaying()) {
                     int currentMilliseconds = mediaPlayerWURI.getCurrentPosition();
-                    seekBar.setProgress(currentMilliseconds+2);
+                    seekBar.setProgress(currentMilliseconds);
                     final String currentTime = String.format(locale,
                             "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(currentMilliseconds),
                             TimeUnit.MILLISECONDS.toMinutes(currentMilliseconds) -
