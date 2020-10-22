@@ -100,7 +100,8 @@ public class FragmentTitle extends Fragment {
                     if (!audioURIs.isEmpty()) {
                         if(activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID) == null) {
                             activityMain.serviceMain.directoryPlaylists.put(
-                                    mediaStoreUriID, new RandomPlaylist(audioURIs, ServiceMain.MAX_PERCENT, uri.getPath()));
+                                    mediaStoreUriID, new RandomPlaylist(
+                                            audioURIs, ServiceMain.MAX_PERCENT, uri.getPath(), false));
                         } else{
                             //TODO
                         }
