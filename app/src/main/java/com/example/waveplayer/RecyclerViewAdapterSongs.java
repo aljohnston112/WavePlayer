@@ -1,11 +1,14 @@
 package com.example.waveplayer;
 
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
@@ -16,12 +19,19 @@ import java.util.List;
 
 public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewAdapterSongs.ViewHolder> {
 
+    public static final String ADD_TO_PLAYLIST_SONG = "ADD_TO_PLAYLIST_SONG";
+    public static final String PLAYLISTS = "PLAYLISTS";
+
     final private Fragment fragment;
-    final public List<AudioURI> audioURIS;
+    public List<AudioURI> audioURIS;
 
     public RecyclerViewAdapterSongs(Fragment fragment, List<AudioURI> items) {
         this.fragment = fragment;
         audioURIS = items;
+    }
+
+    public void updateList(List<AudioURI> audioURIS){
+        this.audioURIS = audioURIS;
     }
 
     @NonNull
@@ -52,9 +62,18 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
             super(view);
             songView = view;
             textViewSongName = view.findViewById(R.id.text_view_songs_name);
-            if (fragment instanceof FragmentSongs) {
-                view.findViewById(R.id.handle).setVisibility(View.INVISIBLE);
-            }
+            ImageView handle = view.findViewById(R.id.handle);
+            handle.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Bundle bundle = new Bundle();
+                    bundle.putSerializable(ADD_TO_PLAYLIST_SONG, audioURI);
+                    bundle.putSerializable(PLAYLISTS, ((ActivityMain)fragment.getActivity()).serviceMain.playlists);
+                    AddToPlaylistDialog addToPlaylistDialog = new AddToPlaylistDialog();
+                    addToPlaylistDialog.setArguments(bundle);
+                    addToPlaylistDialog.show(fragment.getParentFragmentManager(), fragment.getTag());
+                }
+            });
             view.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {

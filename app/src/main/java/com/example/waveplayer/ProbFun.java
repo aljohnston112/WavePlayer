@@ -167,6 +167,28 @@ class ProbFun<T extends Comparable<T>> implements Serializable {
         scaleProbs();
     }
 
+    /**        Adds an element to this ProbFunTree with the specified probability.
+     *         If the element exists in this ProbFunTree then it's probability will be overwritten with percent.
+     * @param  element as the element to add to this ProbFunTree.
+     * @param  percent between 0 and 1 exclusive, as the chance of this ProbFunTree returning element.
+     * @throws NullPointerException if element is null.
+     * @throws IllegalArgumentException if percent is not between 0.0 and 1.0 (exclusive).
+     */
+    public void add(T element, double percent) {
+        Objects.requireNonNull(element);
+        if(percent >= 1.0 || percent <= 0.0) {
+            throw new IllegalArgumentException("percent passed to add() is not between 0.0 and 1.0 (exclusive)");
+        }
+        // Invariants secured
+        double scale = (1.0-percent);
+        Set<Entry<T, Double>> probabilities = this.probMap.entrySet();
+        for(Entry<T, Double> e : probabilities) {
+            e.setValue(e.getValue()*scale);
+        }
+        this.probMap.put(element, percent);
+        scaleProbs();
+    }
+
     /**
      * Removes an element from this ProbFunTree unless there is only one element.
      *

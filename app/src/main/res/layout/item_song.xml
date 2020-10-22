@@ -5,21 +5,20 @@
     android:id="@+id/linear_layout_song_name"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/colorOnPrimary">
+    android:background="@color/colorOnPrimary"
+    android:layout_marginTop="4dp"
+    android:layout_marginBottom="4dp">
 
     <ImageView
         android:id="@+id/handle"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
         android:foregroundGravity="center"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/text_view_songs_name"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_drag_handle_white_24dp" />
+        app:srcCompat="@drawable/ic_playlist_add_white_48dp" />
 
     <TextView
         android:id="@+id/text_view_songs_name"

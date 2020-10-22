@@ -19,14 +19,17 @@ public class RandomPlaylist implements Serializable {
     // The ProbFun that randomly picks the media to play
     private final ProbFun<AudioURI> probabilityFunction;
 
+    public final long mediaStoreUriID;
+
     /**
      * Creates a random playlist.
      *
      * @param music as the List of AudioURIs to add to this playlist.
+     * @param mediaStoreUriID
      * @throws IllegalArgumentException if there is not at least one AudioURI in music.
      * @throws IllegalArgumentException if folder is not a directory.
      */
-    public RandomPlaylist(List<AudioURI> music, double maxPercent, String name, boolean comparable) {
+    public RandomPlaylist(List<AudioURI> music, double maxPercent, String name, boolean comparable, long mediaStoreUriID) {
         if (music.isEmpty())
             throw new IllegalArgumentException("List music must contain at least one AudioURI");
         Set<AudioURI> files = new LinkedHashSet<>(music);
@@ -36,6 +39,7 @@ public class RandomPlaylist implements Serializable {
             probabilityFunction = new ProbFunLinkedMap<>(files, maxPercent);
         }
         this.name = name;
+        this.mediaStoreUriID = mediaStoreUriID;
     }
 
     public void setMaxPercent(double maxPercent) {

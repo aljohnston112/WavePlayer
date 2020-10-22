@@ -71,7 +71,7 @@ public class FragmentTitle extends Fragment {
                     if (!audioURIs.isEmpty()) {
                         if(activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID) == null) {
                             RandomPlaylist randomPlaylist = new RandomPlaylist(
-                                    audioURIs, ServiceMain.MAX_PERCENT, uri.getPath(), false);
+                                    audioURIs, ServiceMain.MAX_PERCENT, uri.getPath(), false, mediaStoreUriID);
                             activityMain.serviceMain.directoryPlaylists.put(
                                     mediaStoreUriID, randomPlaylist);
                             activityMain.serviceMain.playlists.add(randomPlaylist);
@@ -93,6 +93,7 @@ public class FragmentTitle extends Fragment {
                                     audioURIs.remove(audioURI);
                                 }
                             }
+                            activityMain.serviceMain.playlists.add(randomPlaylist);
                         }
                         activityMain.serviceMain.userPickedPlaylist =
                                 activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID);

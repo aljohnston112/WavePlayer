@@ -96,20 +96,33 @@ public class FragmentPlaylists extends Fragment {
         });
     }
 
-    public class UndoListener implements View.OnClickListener {
+    public class UndoListenerPlaylistRemoved implements View.OnClickListener {
 
         RecyclerViewAdapterPlaylists recyclerViewAdapter;
 
         RandomPlaylist randomPlaylist;
 
-        UndoListener(RecyclerViewAdapterPlaylists recyclerViewAdapter, RandomPlaylist randomPlaylist) {
+        int position;
+
+        boolean isDirectoryPlaylist;
+
+        long uriID;
+
+        UndoListenerPlaylistRemoved(RecyclerViewAdapterPlaylists recyclerViewAdapter, RandomPlaylist randomPlaylist,
+                                    int position, boolean isDirectoryPlaylist, long uriId) {
             this.recyclerViewAdapter = recyclerViewAdapter;
             this.randomPlaylist = randomPlaylist;
+            this.position = position;
+            this.isDirectoryPlaylist = isDirectoryPlaylist;
+            this.uriID = uriId;
         }
 
         @Override
         public void onClick(View v) {
-            activityMain.serviceMain.playlists.add(randomPlaylist);
+            activityMain.serviceMain.playlists.add(position, randomPlaylist);
+            if(isDirectoryPlaylist){
+                activityMain.serviceMain.directoryPlaylists.put(uriID, randomPlaylist);
+            }
             recyclerViewAdapter.notifyDataSetChanged();
             activityMain.serviceMain.saveFile();
         }
@@ -149,14 +162,21 @@ public class FragmentPlaylists extends Fragment {
             if (recyclerViewAdapter != null) {
                 int position = viewHolder.getAdapterPosition();
                 RandomPlaylist randomPlaylist = activityMain.serviceMain.playlists.get(position);
+                long uriId = randomPlaylist.mediaStoreUriID;
                 activityMain.serviceMain.playlists.remove(position);
+                boolean isDirectoryPlaylist = false;
+                if(activityMain.serviceMain.directoryPlaylists.containsValue(randomPlaylist)){
+                    isDirectoryPlaylist = true;
+                }
+
                 recyclerViewAdapter.notifyItemRemoved(position);
                 activityMain.serviceMain.saveFile();
                 Snackbar snackbar = Snackbar.make(
                         activityMain.findViewById(R.id.coordinatorLayoutActivityMain),
                         R.string.playlist_deleted, BaseTransientBottomBar.LENGTH_LONG);
                 snackbar.setAction(R.string.undo,
-                        new UndoListener(recyclerViewAdapter, randomPlaylist));
+                        new UndoListenerPlaylistRemoved(
+                                recyclerViewAdapter, randomPlaylist, position, isDirectoryPlaylist, uriId));
                 snackbar.show();
             }
         }

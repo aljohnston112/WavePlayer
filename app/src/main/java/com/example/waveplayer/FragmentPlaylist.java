@@ -18,11 +18,13 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.snackbar.BaseTransientBottomBar;
+import com.google.android.material.snackbar.Snackbar;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class FragmentPlaylist extends Fragment {
 
@@ -116,16 +118,7 @@ public class FragmentPlaylist extends Fragment {
             if (recyclerViewAdapterSongsList != null) {
                 Collections.swap(recyclerViewAdapterSongsList.audioURIS,
                         viewHolder.getAdapterPosition(), target.getAdapterPosition());
-                Map<AudioURI, Double> oldMap =
-                        activityMain.serviceMain.userPickedPlaylist.getProbFun().getProbMap();
-                ArrayList<AudioURI> keySetList = new ArrayList<>(oldMap.keySet());
-                Collections.swap(keySetList,
-                        viewHolder.getAdapterPosition(), target.getAdapterPosition());
-                LinkedHashMap<AudioURI, Double> swappedMap = new LinkedHashMap<>();
-                for (AudioURI oldSwappedKey : keySetList) {
-                    swappedMap.put(oldSwappedKey, oldMap.get(oldSwappedKey));
-                }
-                activityMain.serviceMain.userPickedPlaylist.getProbFun().setProbMap(swappedMap);
+                swapSongPositions(viewHolder.getAdapterPosition(), target.getAdapterPosition());
                 recyclerViewAdapterSongsList.notifyItemMoved(viewHolder.getAdapterPosition(), target.getAdapterPosition());
                 return true;
             }
@@ -138,11 +131,77 @@ public class FragmentPlaylist extends Fragment {
                     (RecyclerViewAdapterSongs) recyclerView.getAdapter();
             if (recyclerViewAdapterSongsList != null) {
                 int position = viewHolder.getAdapterPosition();
-                activityMain.serviceMain.userPickedPlaylist.getProbFun().remove(
-                        recyclerViewAdapterSongsList.audioURIS.get(position));
+                ProbFun<AudioURI> probFun = activityMain.serviceMain.userPickedPlaylist.getProbFun();
+                AudioURI audioURI = recyclerViewAdapterSongsList.audioURIS.get(position);
+                double prob = probFun.getProbMap().get(audioURI);
+                probFun.remove(audioURI);
                 recyclerViewAdapterSongsList.audioURIS.remove(position);
                 recyclerViewAdapterSongsList.notifyItemRemoved(position);
+                activityMain.serviceMain.saveFile();
+                Snackbar snackbar = Snackbar.make(
+                        activityMain.findViewById(R.id.coordinatorLayoutActivityMain),
+                        R.string.song_removed, BaseTransientBottomBar.LENGTH_LONG);
+                snackbar.setAction(R.string.undo,
+                        new FragmentPlaylist.UndoListenerSongRemoved(recyclerViewAdapterSongsList,
+                                audioURI, prob, position));
+                snackbar.show();
             }
+        }
+    }
+
+    private void switchSongPosition(int oldPosition, int newPosition) {
+        Map<AudioURI, Double> oldMap =
+                activityMain.serviceMain.userPickedPlaylist.getProbFun().getProbMap();
+        ArrayList<AudioURI> keySetList = new ArrayList<>(oldMap.keySet());
+        keySetList.add(newPosition, keySetList.get(oldPosition));
+        keySetList.remove(oldPosition+1);
+        LinkedHashMap<AudioURI, Double> swappedMap = new LinkedHashMap<>();
+        for (AudioURI oldSwappedKey : keySetList) {
+            swappedMap.put(oldSwappedKey, oldMap.get(oldSwappedKey));
+        }
+        activityMain.serviceMain.userPickedPlaylist.getProbFun().setProbMap(swappedMap);
+    }
+
+    private void swapSongPositions(int oldPosition, int newPosition) {
+        Map<AudioURI, Double> oldMap =
+                activityMain.serviceMain.userPickedPlaylist.getProbFun().getProbMap();
+        ArrayList<AudioURI> keySetList = new ArrayList<>(oldMap.keySet());
+        Collections.swap(keySetList, oldPosition, newPosition);
+        LinkedHashMap<AudioURI, Double> swappedMap = new LinkedHashMap<>();
+        for (AudioURI oldSwappedKey : keySetList) {
+            swappedMap.put(oldSwappedKey, oldMap.get(oldSwappedKey));
+        }
+        activityMain.serviceMain.userPickedPlaylist.getProbFun().setProbMap(swappedMap);
+    }
+
+    public class UndoListenerSongRemoved implements View.OnClickListener {
+
+        RecyclerViewAdapterSongs recyclerViewAdapter;
+
+        AudioURI audioURI;
+
+        double probability;
+
+        int position;
+
+        UndoListenerSongRemoved(RecyclerViewAdapterSongs recyclerViewAdapter, AudioURI audioURI,
+                                double probability, int position) {
+            this.recyclerViewAdapter = recyclerViewAdapter;
+            this.audioURI = audioURI;
+            this.probability = probability;
+            this.position = position;
+        }
+
+        @Override
+        public void onClick(View v) {
+            activityMain.serviceMain.userPickedPlaylist.getProbFun().add(audioURI, probability);
+            switchSongPosition(
+                    activityMain.serviceMain.userPickedPlaylist.getProbFun().probMap.keySet().size()-1,
+                    position);
+            recyclerViewAdapter.updateList(new ArrayList<>(
+                    activityMain.serviceMain.userPickedPlaylist.getProbFun().probMap.keySet()));
+            recyclerViewAdapter.notifyDataSetChanged();
+            activityMain.serviceMain.saveFile();
         }
     }
 

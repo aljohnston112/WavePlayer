@@ -111,6 +111,7 @@ public class ServiceMain extends Service {
     ListIterator<AudioURI> currentPlaylistIterator;
 
     public TreeMap<Long, RandomPlaylist> directoryPlaylists = new TreeMap<>(new MComparable());
+
     static class MComparable implements Serializable, Comparator<Long> {
         @Override
         public int compare(Long o1, Long o2) {
@@ -318,7 +319,7 @@ public class ServiceMain extends Service {
                 for (int i = 0; i < playlistSize; i++) {
                     playlists.add((RandomPlaylist) objectInputStream.readObject());
                 }
-                directoryPlaylists = (TreeMap<Long, RandomPlaylist>)objectInputStream.readObject();
+                directoryPlaylists = (TreeMap<Long, RandomPlaylist>) objectInputStream.readObject();
             } catch (ClassNotFoundException | IOException e) {
                 e.printStackTrace();
                 string = "Error encountered while loading the save file";
@@ -343,9 +344,9 @@ public class ServiceMain extends Service {
             Log.v(TAG, string);
             Toast.makeText(getApplicationContext(), "PinkyPlayer starting", Toast.LENGTH_SHORT).show();
             setUpNotificationBuilder();
+            setUpBroadCasts();
             notification = builder.build();
             startForeground(CHANNEL_ID.hashCode(), notification);
-            setUpBroadCasts();
             string = "onStartCommand done setting up service";
             Log.v(TAG, string);
         } else {
@@ -405,13 +406,19 @@ public class ServiceMain extends Service {
         builder.setContent(remoteViewNotificationLayout);
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(CHANNEL_ID.hashCode(), builder.build());
+        updateNotificationPlayButton();
         string = "Done updating the notification";
         Log.v(TAG, string);
     }
 
     void updateNotificationPlayButton() {
-        remoteViewNotificationLayout.setImageViewResource(
-                R.id.imageButtonNotificationSongPanePlayPause, R.drawable.play_arrow_black_24dp);
+        if (isPlaying) {
+            remoteViewNotificationLayout.setImageViewResource(
+                    R.id.imageButtonNotificationSongPanePlayPause, R.drawable.pause_black_24dp);
+        } else {
+            remoteViewNotificationLayout.setImageViewResource(
+                    R.id.imageButtonNotificationSongPanePlayPause, R.drawable.play_arrow_black_24dp);
+        }
         notification.contentView = remoteViewNotificationLayout;
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -540,7 +547,8 @@ public class ServiceMain extends Service {
                         }
                     } else {
                         masterPlaylist = new RandomPlaylist(
-                                new ArrayList<>(uriMap.values()), MAX_PERCENT, MASTER_PLAYLIST_NAME, true);
+                                new ArrayList<>(uriMap.values()), MAX_PERCENT, MASTER_PLAYLIST_NAME,
+                                true, -1);
                     }
                     currentPlaylist = masterPlaylist;
                     songQueueIterator = songQueue.listIterator();
@@ -589,24 +597,28 @@ public class ServiceMain extends Service {
 
     public void pauseOrPlay() {
         Log.v(TAG, "pauseOrPlay started");
-        MediaPlayerWURI mediaPlayerWURI = songsMap.get(currentSong.getUri());
-        if (mediaPlayerWURI != null) {
-            if (mediaPlayerWURI.isPrepared && mediaPlayerWURI.isPlaying()) {
-                mediaPlayerWURI.pause();
-                isPlaying = false;
-            } else {
-                if (haveAudioFocus) {
-                    mediaPlayerWURI.shouldStart(true);
-                    isPlaying = true;
-                    songInProgress = true;
+        if (currentSong != null) {
+            MediaPlayerWURI mediaPlayerWURI = songsMap.get(currentSong.getUri());
+            if (mediaPlayerWURI != null) {
+                if (mediaPlayerWURI.isPrepared && mediaPlayerWURI.isPlaying()) {
+                    mediaPlayerWURI.pause();
+                    isPlaying = false;
                 } else {
-                    if (requestAudioFocus()) {
+                    if (haveAudioFocus) {
                         mediaPlayerWURI.shouldStart(true);
                         isPlaying = true;
                         songInProgress = true;
+                    } else {
+                        if (requestAudioFocus()) {
+                            mediaPlayerWURI.shouldStart(true);
+                            isPlaying = true;
+                            songInProgress = true;
+                        }
                     }
                 }
             }
+        } else {
+            playNext();
         }
         Log.v(TAG, "pauseOrPlay ended");
     }
@@ -823,8 +835,10 @@ public class ServiceMain extends Service {
             }
         }
         currentSong = mediaPlayerWURI.audioURI;
-        int i = currentPlaylistArray.indexOf(mediaPlayerWURI.audioURI);
-        currentPlaylistIterator = currentPlaylistArray.listIterator(i+1);
+        if(currentPlaylistArray != null) {
+            int i = currentPlaylistArray.indexOf(mediaPlayerWURI.audioURI);
+            currentPlaylistIterator = currentPlaylistArray.listIterator(i + 1);
+        }
         updateNotification();
         Log.v(TAG, "play ended");
     }
