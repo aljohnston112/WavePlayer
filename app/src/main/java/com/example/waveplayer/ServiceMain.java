@@ -69,6 +69,7 @@ public class ServiceMain extends Service {
     // Settings
     static double MAX_PERCENT = 0.1;
     static double PERCENT_CHANGE = 0.5;
+
     // TODO add percent change up and down
 
     final HashMap<Uri, MediaPlayerWURI> songsMap = new HashMap<>();
