@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -120,7 +121,7 @@ public class FragmentPlaylist extends Fragment {
                 ArrayList<AudioURI> keySetList = new ArrayList<>(oldMap.keySet());
                 Collections.swap(keySetList,
                         viewHolder.getAdapterPosition(), target.getAdapterPosition());
-                TreeMap<AudioURI, Double> swappedMap = new TreeMap<>();
+                LinkedHashMap<AudioURI, Double> swappedMap = new LinkedHashMap<>();
                 for (AudioURI oldSwappedKey : keySetList) {
                     swappedMap.put(oldSwappedKey, oldMap.get(oldSwappedKey));
                 }

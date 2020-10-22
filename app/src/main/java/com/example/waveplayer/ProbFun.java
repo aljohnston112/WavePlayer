@@ -40,7 +40,7 @@ class ProbFun<T extends Comparable<T>> implements Serializable {
     // The rounding error to prevent over and under flow
     private double roundingError = 0;
 
-    private boolean compareable;
+    private boolean comparable;
 
     protected ProbFun(Set<T> choices, double maxPercent, boolean comparable) {
         Objects.requireNonNull(choices);
@@ -50,7 +50,7 @@ class ProbFun<T extends Comparable<T>> implements Serializable {
             throw new IllegalArgumentException("maxPercent passed into the ProbFunTree constructor must be above 0 and 1.0 or under");
         }
         // Invariants secured
-        this.compareable = comparable;
+        this.comparable = comparable;
         if(comparable){
             this.probMap = new TreeMap<T, Double>();
         } else{
@@ -74,7 +74,7 @@ class ProbFun<T extends Comparable<T>> implements Serializable {
         return this.probMap;
     }
 
-    public void setProbMap(TreeMap<T, Double> probMap) {
+    public void setProbMap(Map<T, Double> probMap) {
         this.probMap = probMap;
     }
 
@@ -126,7 +126,7 @@ class ProbFun<T extends Comparable<T>> implements Serializable {
      * Sets the probabilities to there being an equal chance of getting any element from this ProbFunTree.
      */
     public void clearProbs() {
-        if(compareable) {
+        if(comparable) {
             this.probMap = (new ProbFunTreeMap<>(this.probMap.keySet(), 1)).probMap;
         } else {
             this.probMap = (new ProbFunLinkedMap<>(this.probMap.keySet(), 1)).probMap;

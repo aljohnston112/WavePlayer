@@ -266,7 +266,6 @@ public class ActivityMain extends AppCompatActivity {
 
     // endregion onCreate
 
-
     @Override
     protected void onResume() {
         super.onResume();

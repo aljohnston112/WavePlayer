@@ -138,6 +138,7 @@ public class ServiceMain extends Service {
                     if (mediaPlayerWURI != null) {
                         mediaPlayerWURI.seekTo(0);
                         mediaPlayerWURI.shouldStart(true);
+                        addToQueueAtCurrentIndex(mediaPlayerWURI.audioURI.getUri());
                     }
                     saveFile();
                     return;
@@ -193,6 +194,10 @@ public class ServiceMain extends Service {
     private void addToQueueAndPlay(Uri uri) {
         stopAndPreparePrevious();
         play(uri);
+        addToQueue(uri);
+    }
+
+    private void addToQueue(Uri uri) {
         songQueueIterator = null;
         songQueue.add(uri);
         songQueueIterator = songQueue.listIterator(songQueue.lastIndexOf(uri));
@@ -227,11 +232,6 @@ public class ServiceMain extends Service {
     public void onCreate() {
         super.onCreate();
         String string = "onCreate started";
-
-        File file = new File(getBaseContext().getFilesDir(), FILE_SAVE);
-        //noinspection ResultOfMethodCallIgnored
-        file.delete();
-
         Log.v(TAG, string);
         if (!loaded) {
             string = "onCreate is loading";
@@ -612,6 +612,8 @@ public class ServiceMain extends Service {
                 MediaPlayerWURI mediaPlayerWURI = songsMap.get(currentSong.getUri());
                 if (mediaPlayerWURI != null) {
                     mediaPlayerWURI.seekTo(0);
+                    addToQueueAtCurrentIndex(currentSong.getUri());
+
                 }
                 saveFile();
                 return;
@@ -643,6 +645,10 @@ public class ServiceMain extends Service {
         Log.v(TAG, "playNext ended");
     }
 
+    private void addToQueueAtCurrentIndex(Uri uri) {
+        songQueueIterator.add(uri);
+    }
+
     public void playPrevious() {
         Log.v(TAG, "playPrevious started");
         if (currentSong != null) {
@@ -650,6 +656,7 @@ public class ServiceMain extends Service {
                 MediaPlayerWURI mediaPlayerWURI = songsMap.get(currentSong.getUri());
                 if (mediaPlayerWURI != null) {
                     mediaPlayerWURI.seekTo(0);
+                    addToQueueAtCurrentIndex(currentSong.getUri());
                 }
                 return;
             }
@@ -657,9 +664,11 @@ public class ServiceMain extends Service {
         stopAndPreparePrevious();
         if (!shuffling) {
             if (currentPlaylistIterator.hasPrevious()) {
-                currentPlaylistIterator.previous();
+                AudioURI audioURI2 = currentPlaylistIterator.previous();
                 if (currentPlaylistIterator.hasPrevious()) {
-                    addToQueueAndPlay(currentPlaylistIterator.previous().getUri());
+                    AudioURI audioURI = currentPlaylistIterator.previous();
+                    addToQueueAndPlay(audioURI.getUri());
+                    currentPlaylistIterator.previous();
                 } else if (looping) {
                     currentPlaylistIterator = currentPlaylistArray.listIterator(currentPlaylistArray.size() - 1);
                     addToQueueAndPlay(currentPlaylistIterator.next().getUri());
@@ -823,7 +832,7 @@ public class ServiceMain extends Service {
                 File file = new File(getBaseContext().getFilesDir(), FILE_SAVE);
                 //noinspection ResultOfMethodCallIgnored
                 file.delete();
-                try (FileOutputStream fos = getApplicationContext().openFileOutput("playlists", Context.MODE_PRIVATE);
+                try (FileOutputStream fos = getApplicationContext().openFileOutput(FILE_SAVE, Context.MODE_PRIVATE);
                      ObjectOutputStream objectOutputStream = new ObjectOutputStream(fos)) {
                     Log.v(TAG, "Creating save file");
                     objectOutputStream.writeDouble(MAX_PERCENT);
