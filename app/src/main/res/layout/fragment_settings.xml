@@ -54,7 +54,7 @@
 
     <TextView
         android:id="@+id/textViewMaxPercent"
-        android:layout_width="wr"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/max_percent"
         android:textSize="18sp"
@@ -65,7 +65,7 @@
 
     <TextView
         android:id="@+id/textViewPercentChangedDesc"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
@@ -79,7 +79,7 @@
 
     <TextView
         android:id="@+id/textViewPercentChangeUp"
-        android:layout_width="wr"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/percent_change_up"
         android:textSize="18sp"
@@ -90,7 +90,7 @@
 
     <TextView
         android:id="@+id/textViewPercentChangeDown"
-        android:layout_width="wr"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/percent_change_down"
         android:textSize="18sp"

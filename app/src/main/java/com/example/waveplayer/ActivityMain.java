@@ -46,13 +46,9 @@ public class ActivityMain extends AppCompatActivity {
 
     // TODO help page
 
-    // TODO file structure
-
     static final String TAG = "ActivityMain";
 
     private static final int REQUEST_PERMISSION_READ = 245083964;
-
-    private static final int REQUEST_PERMISSION_WRITE = 245083965;
 
     public static final int MENU_ACTION_RESET_PROBS_INDEX = 0;
 

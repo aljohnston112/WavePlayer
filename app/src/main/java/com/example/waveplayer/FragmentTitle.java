@@ -70,11 +70,29 @@ public class FragmentTitle extends Fragment {
                 if (uri != null) {
                     if (!audioURIs.isEmpty()) {
                         if(activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID) == null) {
+                            RandomPlaylist randomPlaylist = new RandomPlaylist(
+                                    audioURIs, ServiceMain.MAX_PERCENT, uri.getPath(), false);
                             activityMain.serviceMain.directoryPlaylists.put(
-                                    mediaStoreUriID, new RandomPlaylist(
-                                            audioURIs, ServiceMain.MAX_PERCENT, uri.getPath(), false));
+                                    mediaStoreUriID, randomPlaylist);
+                            activityMain.serviceMain.playlists.add(randomPlaylist);
                         } else{
-                            //TODO
+                            RandomPlaylist randomPlaylist =
+                                    activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID);
+                            // Add new songs to the masterPlaylist
+                            for (AudioURI audioURIFromURIMap : audioURIs) {
+                                if (audioURIFromURIMap != null) {
+                                    if (!randomPlaylist.getProbFun().getProbMap().containsKey(audioURIFromURIMap)) {
+                                        randomPlaylist.getProbFun().add(audioURIFromURIMap);
+                                    }
+                                }
+                            }
+                            // Remove missing songs
+                            for (AudioURI audioURI : randomPlaylist.getProbFun().getProbMap().keySet()) {
+                                if (!audioURIs.contains(audioURI)) {
+                                    randomPlaylist.getProbFun().remove(audioURI);
+                                    audioURIs.remove(audioURI);
+                                }
+                            }
                         }
                         activityMain.serviceMain.userPickedPlaylist =
                                 activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID);

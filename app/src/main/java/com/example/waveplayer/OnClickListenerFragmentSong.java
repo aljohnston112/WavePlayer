@@ -23,7 +23,6 @@ public class OnClickListenerFragmentSong implements View.OnClickListener {
                         activityMain.serviceMain.getCurrentSong(), ServiceMain.PERCENT_CHANGE_UP);
                 activityMain.serviceMain.saveFile();
             } else if (v.getId() == R.id.imageButtonShuffle) {
-                // TODO
                 ImageButton imageButton = (ImageButton)v;
                 if(activityMain.serviceMain.shuffling){
                     activityMain.serviceMain.shuffling = false;

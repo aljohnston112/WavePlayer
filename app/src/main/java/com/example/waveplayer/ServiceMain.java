@@ -70,7 +70,6 @@ public class ServiceMain extends Service {
     static double MAX_PERCENT = 0.1;
     static double PERCENT_CHANGE_UP = 0.1;
     static double PERCENT_CHANGE_DOWN = 0.5;
-    // TODO add percent change up and down
 
     final HashMap<Uri, MediaPlayerWURI> songsMap = new HashMap<>();
     final public LinkedHashMap<Uri, AudioURI> uriMap = new LinkedHashMap<>();
@@ -411,6 +410,12 @@ public class ServiceMain extends Service {
     }
 
     void updateNotificationPlayButton() {
+        remoteViewNotificationLayout.setImageViewResource(
+                R.id.imageButtonNotificationSongPanePlayPause, R.drawable.play_arrow_black_24dp);
+        notification.contentView = remoteViewNotificationLayout;
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(CHANNEL_ID.hashCode(), notification);
         // TODO
     }
 
