@@ -1,19 +1,19 @@
 package com.example.waveplayer;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.SearchView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -27,6 +27,8 @@ public class FragmentSongs extends Fragment {
     ActivityMain activityMain;
 
     BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
+
+    BroadcastReceiver broadcastReceiver;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -48,8 +50,26 @@ public class FragmentSongs extends Fragment {
         }
         updateMainContent();
         setUpRecyclerView(view);
-        setUpBroadcastReceiver(view);
+        setUpBroadcastReceiverOnCompletion(view);
         setUpSearchPane();
+        setUpBroadcastReceiverServiceOnOptionsMenuCreated();
+    }
+
+    private void setUpBroadcastReceiverServiceOnOptionsMenuCreated() {
+        IntentFilter filterComplete = new IntentFilter();
+        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
+        filterComplete.addAction(activityMain.getResources().getString(
+                R.string.broadcast_receiver_on_create_options_menu));
+        broadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
+                Menu menu = toolbar.getMenu();
+                menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(true);
+                menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(true);
+            }
+        };
+        activityMain.registerReceiver(broadcastReceiver, filterComplete);
     }
 
     private void setUpSearchPane(){
@@ -125,7 +145,7 @@ public class FragmentSongs extends Fragment {
 
     }
 
-    private void setUpBroadcastReceiver(final View view) {
+    private void setUpBroadcastReceiverOnCompletion(final View view) {
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -160,6 +180,7 @@ public class FragmentSongs extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
+        activityMain.unregisterReceiver(broadcastReceiver);
         activityMain = null;
     }
 

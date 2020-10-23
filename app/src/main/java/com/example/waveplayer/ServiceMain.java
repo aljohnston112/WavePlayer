@@ -196,13 +196,13 @@ public class ServiceMain extends Service {
         stopAndPreparePrevious();
         play(uri);
         addToQueue(uri);
+        songQueueIterator.next();
     }
 
-    private void addToQueue(Uri uri) {
+    public void addToQueue(Uri uri) {
         songQueueIterator = null;
         songQueue.add(uri);
         songQueueIterator = songQueue.listIterator(songQueue.lastIndexOf(uri));
-        songQueueIterator.next();
     }
 
     private void play(Uri uri) {
@@ -475,7 +475,6 @@ public class ServiceMain extends Service {
     public void onDestroy() {
         Log.v(TAG, "onDestroy started");
         Toast.makeText(this, "PinkyPlayer done", Toast.LENGTH_SHORT).show();
-        unregisterReceiver(broadcastReceiverNotificationForServiceMainMediaControlsButtons);
         Log.v(TAG, "onDestroy ended");
     }
 

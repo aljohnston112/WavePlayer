@@ -7,6 +7,8 @@
     <string name="broadcast_receiver_action_next">Next</string>
     <string name="broadcast_receiver_action_previous">Previous</string>
     <string name="broadcast_receiver_action_play_pause">PlayPause</string>
+    <string name="broadcast_receiver_on_create_options_menu">OptionsMenuCreated</string>
+
 
     <string name="permission_needed">Please allow permission to scan for media</string>
     <string name="thumbnail_error">There was a problem getting a thumbnail</string>
@@ -20,7 +22,7 @@
     <string name="add">Add</string>
     <string name="cancel">Cancel</string>
     <string name="search">Search</string>
-
+    <string name="add_to_queue">Add to queue</string>
 
     <!--Toolbar titles-->
     <string name="app_name">AI Playlist</string>

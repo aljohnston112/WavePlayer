@@ -1,17 +1,20 @@
 package com.example.waveplayer;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -32,6 +35,8 @@ public class FragmentPlaylist extends Fragment {
 
     BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
+    BroadcastReceiver broadcastReceiver;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,12 +52,29 @@ public class FragmentPlaylist extends Fragment {
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         activityMain = ((ActivityMain) getActivity());
-        setUpBroadCastReceiver(view);
+        setUpBroadCastReceiverOnCompletion(view);
+        setUpBroadcastReceiverServiceOnOptionsMenuCreated();
         updateFAB();
         setUpUI(view);
     }
 
-    private void setUpBroadCastReceiver(final View view) {
+    private void setUpBroadcastReceiverServiceOnOptionsMenuCreated() {
+        IntentFilter filterComplete = new IntentFilter();
+        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
+        filterComplete.addAction(activityMain.getResources().getString(
+                R.string.broadcast_receiver_on_create_options_menu));
+        broadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
+                Menu menu = toolbar.getMenu();
+                menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(true);
+            }
+        };
+        activityMain.registerReceiver(broadcastReceiver, filterComplete);
+    }
+
+    private void setUpBroadCastReceiverOnCompletion(final View view) {
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -209,6 +231,7 @@ public class FragmentPlaylist extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
+        activityMain.unregisterReceiver(broadcastReceiver);
         activityMain = null;
     }
 

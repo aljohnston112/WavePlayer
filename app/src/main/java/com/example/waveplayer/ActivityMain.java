@@ -1,6 +1,7 @@
 package com.example.waveplayer;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -48,6 +49,8 @@ public class ActivityMain extends AppCompatActivity {
 
     // TODO help page
 
+    static final String DEBUG_TAG = "debug";
+
     static final String TAG = "ActivityMain";
 
     private static final int REQUEST_PERMISSION_READ = 245083964;
@@ -75,26 +78,22 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "onCreate started");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        setUpActionBar();
         startAndBindServiceMain();
+        setUpActionBar();
         Log.v(TAG, "onCreate ended");
     }
 
 
     private void setUpActionBar() {
         Log.v(TAG, "setting up ActionBar");
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toolbar toolbar = findViewById(R.id.toolbar);
-                toolbar.setTitleTextColor(getResources().getColor(R.color.colorOnPrimary));
-                Drawable overflowIcon = toolbar.getOverflowIcon();
-                if (overflowIcon != null) {
-                    overflowIcon.setColorFilter(getResources().getColor(R.color.colorOnPrimary), PorterDuff.Mode.SRC_ATOP);
-                }
-                setSupportActionBar(toolbar);
-            }
-        });
+        Log.v(DEBUG_TAG, "setting up ActionBar");
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        toolbar.setTitleTextColor(getResources().getColor(R.color.colorOnPrimary));
+        Drawable overflowIcon = toolbar.getOverflowIcon();
+        if (overflowIcon != null) {
+            overflowIcon.setColorFilter(getResources().getColor(R.color.colorOnPrimary), PorterDuff.Mode.SRC_ATOP);
+        }
+        setSupportActionBar(toolbar);
         centerActionBarTitle();
         FragmentManager fragmentManager = getSupportFragmentManager();
         Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
@@ -565,8 +564,17 @@ public class ActivityMain extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         Log.v(TAG, "onCreateOptionsMenu start");
         getMenuInflater().inflate(R.menu.menu_toolbar, menu);
+        sendBroadcastOnOptionsMenuCreated();
         Log.v(TAG, "onCreateOptionsMenu end");
         return true;
+    }
+
+    private void sendBroadcastOnOptionsMenuCreated() {
+        Intent intent = new Intent();
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.setAction(getResources().getString(
+                R.string.broadcast_receiver_on_create_options_menu));
+        sendBroadcast(intent);
     }
 
     @Override
