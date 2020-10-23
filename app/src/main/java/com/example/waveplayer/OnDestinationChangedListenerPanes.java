@@ -7,11 +7,11 @@ import androidx.annotation.Nullable;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDestination;
 
-public class OnDestinationChangedListenerSongPane implements NavController.OnDestinationChangedListener {
+public class OnDestinationChangedListenerPanes implements NavController.OnDestinationChangedListener {
 
     final ActivityMain activityMain;
 
-    public OnDestinationChangedListenerSongPane(ActivityMain activityMain){
+    public OnDestinationChangedListenerPanes(ActivityMain activityMain){
         this.activityMain = activityMain;
     }
 
@@ -24,6 +24,7 @@ public class OnDestinationChangedListenerSongPane implements NavController.OnDes
                 activityMain.serviceMain.fragmentSongVisible = false;
                 activityMain.updateSongPaneUI();
                 activityMain.showSongPane();
+                activityMain.hideSearchPane();
             }
         } else {
             activityMain.serviceMain.fragmentSongVisible = true;

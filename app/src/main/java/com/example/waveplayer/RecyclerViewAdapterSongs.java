@@ -30,8 +30,9 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
         audioURIS = items;
     }
 
-    public void updateList(List<AudioURI> audioURIS){
+    public void updateList(List<AudioURI> audioURIS) {
         this.audioURIS = audioURIS;
+        notifyDataSetChanged();
     }
 
     @NonNull

@@ -368,7 +368,7 @@ public class ServiceMain extends Service {
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setStyle(new NotificationCompat.DecoratedCustomViewStyle());
-        remoteViewNotificationLayout = new RemoteViews(getPackageName(), R.layout.notification_song_pane);
+        remoteViewNotificationLayout = new RemoteViews(getPackageName(), R.layout.pane_notification);
         if (currentSong != null) {
             remoteViewNotificationLayout.setTextViewText(R.id.textViewNotificationSongPaneSongName, currentSong.title);
         } else {

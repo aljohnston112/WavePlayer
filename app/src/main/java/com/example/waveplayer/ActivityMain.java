@@ -56,6 +56,8 @@ public class ActivityMain extends AppCompatActivity {
 
     public static final int MENU_ACTION_ADD_TO_PLAYLIST_INDEX = 1;
 
+    public static final int MENU_ACTION_SEARCH_INDEX = 2;
+
     public ServiceMain serviceMain;
 
     final Object lock = new Object();
@@ -124,6 +126,7 @@ public class ActivityMain extends AppCompatActivity {
                         params.width = ViewGroup.LayoutParams.MATCH_PARENT;
                         appCompatTextView.setLayoutParams(params);
                         appCompatTextView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                        //appCompatTextView.setTextSize(18, SP);
                     }
                 }
                 Log.v(TAG, "done centering the ActionBar title");
@@ -172,7 +175,7 @@ public class ActivityMain extends AppCompatActivity {
         if (requestCode == REQUEST_PERMISSION_READ && grantResults.length > 0 &&
                 grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             serviceMain.getAudioFiles();
-        } else if(requestCode == REQUEST_PERMISSION_READ) {
+        } else if (requestCode == REQUEST_PERMISSION_READ) {
             Toast toast = Toast.makeText(getApplicationContext(), R.string.permission_needed, Toast.LENGTH_LONG);
             toast.show();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -190,7 +193,7 @@ public class ActivityMain extends AppCompatActivity {
         Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
         if (fragment != null) {
             NavHostFragment.findNavController(fragment).addOnDestinationChangedListener(
-                    new OnDestinationChangedListenerSongPane(this));
+                    new OnDestinationChangedListenerPanes(this));
         }
         Log.v(TAG, "done setting up song pane");
     }
@@ -366,7 +369,7 @@ public class ActivityMain extends AppCompatActivity {
 
     public void updateSongUI() {
         Log.v(TAG, "getting ready to update the song UI");
-        if(serviceMain != null) {
+        if (serviceMain != null) {
             if (serviceMain.fragmentSongVisible && serviceMain.currentSong != null) {
                 final int millis = serviceMain.currentSong.getDuration(getApplicationContext());
                 final String stringEndTime = String.format(getResources().getConfiguration().locale,
@@ -382,7 +385,7 @@ public class ActivityMain extends AppCompatActivity {
                     seekBar.setMax(millis);
                     MediaPlayerWURI mediaPlayerWURI =
                             serviceMain.songsMap.get(serviceMain.currentSong.getUri());
-                    if(mediaPlayerWURI != null) {
+                    if (mediaPlayerWURI != null) {
                         seekBar.setProgress(mediaPlayerWURI.getCurrentPosition());
                         final int currentMillis = mediaPlayerWURI.getCurrentPosition();
                         stringCurrentTime = String.format(getResources().getConfiguration().locale,
@@ -464,7 +467,7 @@ public class ActivityMain extends AppCompatActivity {
                         Bitmap bitmapSongArt = AudioURI.getThumbnail(
                                 serviceMain.currentSong, getApplicationContext());
                         if (bitmapSongArt != null) {
-                            Bitmap bitmapSongArtResized = FragmentSongPane.getResizedBitmap(
+                            Bitmap bitmapSongArtResized = FragmentPaneSong.getResizedBitmap(
                                     bitmapSongArt, songArtWidth, songArtHeight);
                             imageViewSongPaneSongArt.setImageBitmap(bitmapSongArtResized);
                         } else {
@@ -475,7 +478,7 @@ public class ActivityMain extends AppCompatActivity {
                                 bitmapSongArt = Bitmap.createBitmap(songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888);
                                 Canvas canvas = new Canvas(bitmapSongArt);
                                 drawableSongArt.draw(canvas);
-                                Bitmap bitmapSongArtResized = FragmentSongPane.getResizedBitmap(bitmapSongArt, songArtWidth, songArtHeight);
+                                Bitmap bitmapSongArtResized = FragmentPaneSong.getResizedBitmap(bitmapSongArt, songArtWidth, songArtHeight);
                                 bitmapSongArt.recycle();
                                 imageViewSongPaneSongArt.setImageBitmap(bitmapSongArtResized);
                             }
@@ -484,10 +487,10 @@ public class ActivityMain extends AppCompatActivity {
                     Log.v(TAG, "done updating the song pane UI");
                 }
             });
-            Log.v(TAG,"done sending Runnable to update the song pane UI");
+            Log.v(TAG, "done sending Runnable to update the song pane UI");
         } else {
-                Log.v(TAG, "song pane UI not updated due to not being visible");
-            }
+            Log.v(TAG, "song pane UI not updated due to not being visible");
+        }
         Log.v(TAG, "done getting ready to update the song pane UI");
     }
 
@@ -561,7 +564,7 @@ public class ActivityMain extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         Log.v(TAG, "onCreateOptionsMenu start");
-        getMenuInflater().inflate(R.menu.reset_probs, menu);
+        getMenuInflater().inflate(R.menu.menu_toolbar, menu);
         Log.v(TAG, "onCreateOptionsMenu end");
         return true;
     }
@@ -569,24 +572,55 @@ public class ActivityMain extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         Log.v(TAG, "onOptionsItemSelected start");
-        switch (item.getItemId()) {
-            case R.id.action_reset_probs:
-                serviceMain.currentPlaylist.getProbFun().clearProbs();
-                Log.v(TAG, "onOptionsItemSelected action_reset_probs end");
-                return true;
-            case R.id.action_add_to_playlist:
-                Bundle bundle = new Bundle();
-                bundle.putSerializable(RecyclerViewAdapterSongs.ADD_TO_PLAYLIST_SONG, serviceMain.currentSong);
-                bundle.putSerializable(PLAYLISTS, serviceMain.playlists);
-                AddToPlaylistDialog addToPlaylistDialog = new AddToPlaylistDialog();
-                addToPlaylistDialog.setArguments(bundle);
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
-                addToPlaylistDialog.show(fragmentManager, fragment.getTag());
-                return true;
+        if (item.getItemId() == R.id.action_reset_probs) {
+            serviceMain.currentPlaylist.getProbFun().clearProbs();
+            Log.v(TAG, "onOptionsItemSelected action_reset_probs end");
+            return true;
+        } else if (item.getItemId() == R.id.action_add_to_playlist) {
+            Bundle bundle = new Bundle();
+            bundle.putSerializable(RecyclerViewAdapterSongs.ADD_TO_PLAYLIST_SONG, serviceMain.currentSong);
+            bundle.putSerializable(PLAYLISTS, serviceMain.playlists);
+            AddToPlaylistDialog addToPlaylistDialog = new AddToPlaylistDialog();
+            addToPlaylistDialog.setArguments(bundle);
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
+            addToPlaylistDialog.show(fragmentManager, fragment.getTag());
+            return true;
+        } else if (item.getItemId() == R.id.action_search) {
+            showSearchPane();
         }
         Log.v(TAG, "onOptionsItemSelected action_unknown end");
         return super.onOptionsItemSelected(item);
+    }
+
+    private void showSearchPane() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                findViewById(R.id.includeSearch).setVisibility(View.VISIBLE);
+                ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
+                ConstraintSet constraintSet = new ConstraintSet();
+                constraintSet.clone(constraintLayout);
+                constraintSet.connect(R.id.nav_host_fragment, ConstraintSet.TOP,
+                        R.id.includeSearch, ConstraintSet.BOTTOM);
+                constraintSet.applyTo(constraintLayout);
+            }
+        });
+    }
+
+    public void hideSearchPane() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                findViewById(R.id.includeSearch).setVisibility(View.GONE);
+                ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
+                ConstraintSet constraintSet = new ConstraintSet();
+                constraintSet.clone(constraintLayout);
+                constraintSet.connect(R.id.nav_host_fragment, ConstraintSet.TOP,
+                        R.id.constraintMain, ConstraintSet.TOP);
+                constraintSet.applyTo(constraintLayout);
+            }
+        });
     }
 
 }

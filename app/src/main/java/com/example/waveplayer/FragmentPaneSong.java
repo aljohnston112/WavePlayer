@@ -18,7 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-public class FragmentSongPane extends Fragment {
+public class FragmentPaneSong extends Fragment {
 
     ActivityMain activityMain;
 
@@ -33,7 +33,7 @@ public class FragmentSongPane extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_song_pane, container, false);
+        return inflater.inflate(R.layout.fragment_pane_song, container, false);
     }
 
     @Override

@@ -8,34 +8,37 @@
 
     <EditText
         android:id="@+id/editTextNSongs"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
         android:ems="10"
         android:inputType="number"
         app:layout_constraintBottom_toBottomOf="@+id/textViewMaxPercent"
-        app:layout_constraintEnd_toEndOf="@+id/textViewMaxPercentDesc"
-        app:layout_constraintStart_toEndOf="@+id/textViewMaxPercent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/editTextPercentChangeUp"
         app:layout_constraintTop_toTopOf="@+id/textViewMaxPercent" />
 
     <EditText
         android:id="@+id/editTextPercentChangeUp"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
         android:ems="5"
         android:inputType="number"
         app:layout_constraintBottom_toBottomOf="@+id/textViewPercentChangeUp"
-        app:layout_constraintEnd_toEndOf="@+id/editTextPercentChangeDown"
-        app:layout_constraintStart_toEndOf="@+id/textViewPercentChangeUp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/editTextPercentChangeDown"
         app:layout_constraintTop_toTopOf="@+id/textViewPercentChangeUp" />
 
     <EditText
         android:id="@+id/editTextPercentChangeDown"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
         android:ems="5"
         android:inputType="number"
         app:layout_constraintBottom_toBottomOf="@+id/textViewPercentChangeDown"
-        app:layout_constraintEnd_toEndOf="@+id/textViewPercentChangedDesc"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/textViewPercentChangeDown"
         app:layout_constraintTop_toTopOf="@+id/textViewPercentChangeDown" />
 
@@ -48,8 +51,8 @@
         android:text="@string/max_percent_desc"
         android:textSize="18sp"
         app:layout_constraintBottom_toTopOf="@+id/textViewPercentChangeUp"
-        app:layout_constraintEnd_toEndOf="@+id/editTextPercentChangeUp"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/textViewPercentChangeUp"
         app:layout_constraintTop_toBottomOf="@+id/textViewMaxPercent" />
 
     <TextView
@@ -59,13 +62,12 @@
         android:text="@string/max_percent"
         android:textSize="18sp"
         app:layout_constraintBottom_toTopOf="@+id/textViewMaxPercentDesc"
-        app:layout_constraintEnd_toStartOf="@+id/editTextNSongs"
         app:layout_constraintStart_toStartOf="@+id/textViewMaxPercentDesc"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/textViewPercentChangedDesc"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
@@ -84,7 +86,6 @@
         android:text="@string/percent_change_up"
         android:textSize="18sp"
         app:layout_constraintBottom_toTopOf="@+id/textViewPercentChangeDown"
-        app:layout_constraintEnd_toStartOf="@+id/editTextPercentChangeUp"
         app:layout_constraintStart_toStartOf="@+id/textViewPercentChangeDown"
         app:layout_constraintTop_toBottomOf="@+id/textViewMaxPercentDesc" />
 
@@ -95,7 +96,6 @@
         android:text="@string/percent_change_down"
         android:textSize="18sp"
         app:layout_constraintBottom_toTopOf="@+id/textViewPercentChangedDesc"
-        app:layout_constraintEnd_toStartOf="@+id/editTextPercentChangeDown"
         app:layout_constraintStart_toStartOf="@+id/textViewPercentChangedDesc"
         app:layout_constraintTop_toBottomOf="@+id/textViewPercentChangeUp" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -3,10 +3,20 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item android:id="@+id/action_reset_probs"
         android:title="@string/reset_probs"
-        app:showAsAction="never"/>
+        app:showAsAction="never"
+        android:visible="false"/>
     <item
         android:id="@+id/action_add_to_playlist"
         android:icon="@drawable/ic_playlist_add_black_48dp"
         android:title="@string/add_to_playlist"
-        app:showAsAction="ifRoom"/>
+        app:showAsAction="ifRoom"
+        android:visible="false"/>
+
+    <item
+        android:id="@+id/action_search"
+        android:icon="@drawable/ic_search_black_48dp"
+        android:title="@string/search"
+        app:showAsAction="ifRoom"
+        android:visible="false"/>
+
 </menu>

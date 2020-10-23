@@ -38,6 +38,11 @@ public class OnDestinationChangedListenerToolbar implements NavController.OnDest
                     } else{
                         menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).setVisible(false);
                     }
+                    if(destination.getId() == R.id.fragmentSongs){
+                        menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(true);
+                    } else {
+                        menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(false);
+                    }
                 }
             }
         });

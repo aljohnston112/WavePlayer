@@ -1,7 +1,6 @@
 package com.example.waveplayer;
 
 import android.annotation.SuppressLint;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -21,7 +20,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 
-import static com.example.waveplayer.FragmentSongPane.getResizedBitmap;
+import static com.example.waveplayer.FragmentPaneSong.getResizedBitmap;
 
 public class FragmentSong extends Fragment {
 
