@@ -28,21 +28,18 @@ public class OnDestinationChangedListenerToolbar implements NavController.OnDest
                 Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
                 Menu menu = toolbar.getMenu();
                 if (menu.size() > 0) {
-                    if (destination.getId() == R.id.fragmentPlaylist || destination.getId() == R.id.fragmentSongs) {
-                        menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(true);
-                    } else{
-                        menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(false);
-                    }
-                    if(destination.getId() == R.id.fragmentSong){
-                        menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).setVisible(true);
-                    } else{
-                        menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).setVisible(false);
-                    }
-                    if(destination.getId() == R.id.fragmentSongs){
-                        menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(true);
-                    } else {
-                        menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(false);
-                    }
+                    menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(
+                            destination.getId() == R.id.fragmentPlaylist ||
+                                    destination.getId() == R.id.fragmentSongs);
+                    menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).setVisible(
+                            destination.getId() == R.id.fragmentSong ||
+                                    destination.getId() == R.id.fragmentPlaylist);
+                    menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(
+                            destination.getId() == R.id.fragmentSongs);
+                    menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).setVisible(
+                            destination.getId() == R.id.fragmentSong ||
+                                    destination.getId() == R.id.fragmentPlaylist);
+
                 }
             }
         });

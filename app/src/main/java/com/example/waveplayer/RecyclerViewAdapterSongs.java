@@ -10,7 +10,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
@@ -65,7 +64,7 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
             super(view);
             songView = view;
             textViewSongName = view.findViewById(R.id.text_view_songs_name);
-            final ImageView handle = view.findViewById(R.id.handle);
+            final ImageView handle = view.findViewById(R.id.song_handle);
             handle.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
                 @Override
                 public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
@@ -135,9 +134,9 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
             Bundle bundle = new Bundle();
             bundle.putSerializable(ADD_TO_PLAYLIST_SONG, audioURI);
             bundle.putSerializable(PLAYLISTS, ((ActivityMain) fragment.getActivity()).serviceMain.playlists);
-            AddToPlaylistDialog addToPlaylistDialog = new AddToPlaylistDialog();
-            addToPlaylistDialog.setArguments(bundle);
-            addToPlaylistDialog.show(fragment.getParentFragmentManager(), fragment.getTag());
+            DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist = new DialogFragmentAddToPlaylist();
+            dialogFragmentAddToPlaylist.setArguments(bundle);
+            dialogFragmentAddToPlaylist.show(fragment.getParentFragmentManager(), fragment.getTag());
         }
 
         private void contextMenuAddToQueue() {

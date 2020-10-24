@@ -52,10 +52,10 @@ public class FragmentSongs extends Fragment {
         setUpRecyclerView(view);
         setUpBroadcastReceiverOnCompletion(view);
         setUpSearchPane();
-        setUpBroadcastReceiverServiceOnOptionsMenuCreated();
+        setUpBroadcastReceiverOnOptionsMenuCreated();
     }
 
-    private void setUpBroadcastReceiverServiceOnOptionsMenuCreated() {
+    private void setUpBroadcastReceiverOnOptionsMenuCreated() {
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(

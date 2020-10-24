@@ -93,7 +93,6 @@ public class FragmentTitle extends Fragment {
                                     audioURIs.remove(audioURI);
                                 }
                             }
-                            activityMain.serviceMain.playlists.add(randomPlaylist);
                         }
                         activityMain.serviceMain.userPickedPlaylist =
                                 activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID);

@@ -68,7 +68,7 @@ public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<Recycle
         public ViewHolder(final View view) {
             super(view);
             if (fragment instanceof FragmentSelectSongs) {
-                view.findViewById(R.id.handle).setVisibility(View.INVISIBLE);
+                view.findViewById(R.id.song_handle).setVisibility(View.INVISIBLE);
             }
             songView = view;
             textViewSongName = view.findViewById(R.id.text_view_songs_name);

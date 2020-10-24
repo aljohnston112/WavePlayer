@@ -1,8 +1,12 @@
 package com.example.waveplayer;
 
+import android.os.Bundle;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -13,6 +17,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerViewAdapterPlaylists.ViewHolder> {
+
+    public static final String ADD_TO_PLAYLIST_PLAYLIST = "ADD_TO_PLAYLIST_PLAYLIST";
+    public static final String PLAYLISTS = "PLAYLISTS";
 
     private final Fragment fragment;
 
@@ -54,6 +61,34 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
             if (randomPlaylist != null) {
                 textViewPlaylistName.setText(randomPlaylist.getName());
             }
+            final ImageView handle = view.findViewById(R.id.playlist_handle);
+            handle.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
+                @Override
+                public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+                    final MenuItem item = menu.add(R.string.add_to_playlist);
+                    item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(MenuItem item) {
+                            contextMenuAddToPlaylist();
+                            return true;
+                        }
+                    });
+                    final MenuItem anotherItem = menu.add(R.string.add_to_queue);
+                    anotherItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(MenuItem item) {
+                            contextMenuAddToQueue();
+                            return true;
+                        }
+                    });
+                }
+            });
+            handle.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    handle.performLongClick();
+                }
+            });
             view.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -68,6 +103,30 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
                     }
                 }
             });
+        }
+
+        private void contextMenuAddToPlaylist() {
+            Bundle bundle = new Bundle();
+            bundle.putSerializable(ADD_TO_PLAYLIST_PLAYLIST, randomPlaylist);
+            bundle.putSerializable(PLAYLISTS, ((ActivityMain) fragment.getActivity()).serviceMain.playlists);
+            DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist = new DialogFragmentAddToPlaylist();
+            dialogFragmentAddToPlaylist.setArguments(bundle);
+            dialogFragmentAddToPlaylist.show(fragment.getParentFragmentManager(), fragment.getTag());
+        }
+
+        private void contextMenuAddToQueue() {
+            if(((ActivityMain) fragment.getActivity()).serviceMain.songInProgress()) {
+                for(AudioURI audioURI : randomPlaylist.getProbFun().getProbMap().keySet()) {
+                    ((ActivityMain) fragment.getActivity()).serviceMain.addToQueue(audioURI.getUri());
+                }
+            } else{
+                for(AudioURI audioURI : randomPlaylist.getProbFun().getProbMap().keySet()) {
+                    ((ActivityMain) fragment.getActivity()).serviceMain.addToQueue(audioURI.getUri());
+                }
+                ((ActivityMain) fragment.getActivity()).serviceMain.playNextInQueue();
+                ((ActivityMain) fragment.getActivity()).showSongPane();
+                ((ActivityMain) fragment.getActivity()).updateSongPaneUI();
+            }
         }
 
         @Override

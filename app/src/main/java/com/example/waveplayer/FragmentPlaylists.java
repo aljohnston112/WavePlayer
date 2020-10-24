@@ -1,17 +1,20 @@
 package com.example.waveplayer;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -50,11 +53,11 @@ public class FragmentPlaylists extends Fragment {
     private void updateMainContent(final View view) {
         activityMain.setActionBarTitle(getResources().getString(R.string.playlists));
         setUpRecyclerView(view);
-        setUpBroadcastReceiver(view);
+        setUpBroadcastReceiverOnServiceConnected(view);
         updateFAB();
     }
 
-    private void setUpBroadcastReceiver(final View view) {
+    private void setUpBroadcastReceiverOnServiceConnected(final View view) {
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -164,6 +167,7 @@ public class FragmentPlaylists extends Fragment {
                 RandomPlaylist randomPlaylist = activityMain.serviceMain.playlists.get(position);
                 long uriId = randomPlaylist.mediaStoreUriID;
                 activityMain.serviceMain.playlists.remove(position);
+                activityMain.serviceMain.directoryPlaylists.remove(randomPlaylist.mediaStoreUriID);
                 boolean isDirectoryPlaylist = false;
                 if(activityMain.serviceMain.directoryPlaylists.containsValue(randomPlaylist)){
                     isDirectoryPlaylist = true;

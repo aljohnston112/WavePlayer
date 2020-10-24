@@ -10,7 +10,7 @@
     android:layout_marginBottom="4dp">
 
     <ImageView
-        android:id="@+id/handle"
+        android:id="@+id/song_handle"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
         android:foregroundGravity="center"
@@ -18,7 +18,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/text_view_songs_name"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_playlist_add_white_48dp" />
+        app:srcCompat="@drawable/ic_more_vert_white_18dp"
+        android:scaleType="centerInside"/>
 
     <TextView
         android:id="@+id/text_view_songs_name"
@@ -32,7 +33,7 @@
         android:gravity="center"
         android:textAppearance="?attr/textAppearanceListItem"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/handle"
+        app:layout_constraintEnd_toStartOf="@+id/song_handle"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 

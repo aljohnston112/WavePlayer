@@ -70,6 +70,7 @@ public class FragmentSong extends Fragment {
                 Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
                 Menu menu = toolbar.getMenu();
                 menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).setVisible(true);
+                menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).setVisible(true);
             }
         };
         activityMain.registerReceiver(broadcastReceiver, filterComplete);

@@ -200,9 +200,10 @@ public class ServiceMain extends Service {
     }
 
     public void addToQueue(Uri uri) {
+        int pos = songQueueIterator.nextIndex();
         songQueueIterator = null;
         songQueue.add(uri);
-        songQueueIterator = songQueue.listIterator(songQueue.lastIndexOf(uri));
+        songQueueIterator = songQueue.listIterator(pos);
     }
 
     private void play(Uri uri) {
@@ -800,7 +801,7 @@ public class ServiceMain extends Service {
         return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
     }
 
-    private void playNextInQueue() {
+    void playNextInQueue() {
         Log.v(TAG, "playNextInQueue started");
         Uri uri = songQueueIterator.next();
         MediaPlayerWURI mediaPlayerWURI = songsMap.get(uri);

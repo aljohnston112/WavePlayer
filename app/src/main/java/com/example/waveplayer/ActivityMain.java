@@ -1,7 +1,6 @@
 package com.example.waveplayer;
 
 import android.Manifest;
-import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -41,6 +40,7 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static androidx.annotation.Dimension.SP;
 import static com.example.waveplayer.RecyclerViewAdapterSongs.PLAYLISTS;
 
 public class ActivityMain extends AppCompatActivity {
@@ -56,10 +56,9 @@ public class ActivityMain extends AppCompatActivity {
     private static final int REQUEST_PERMISSION_READ = 245083964;
 
     public static final int MENU_ACTION_RESET_PROBS_INDEX = 0;
-
     public static final int MENU_ACTION_ADD_TO_PLAYLIST_INDEX = 1;
-
     public static final int MENU_ACTION_SEARCH_INDEX = 2;
+    public static final int MENU_ACTION_ADD_TO_QUEUE = 3;
 
     public ServiceMain serviceMain;
 
@@ -586,16 +585,22 @@ public class ActivityMain extends AppCompatActivity {
             return true;
         } else if (item.getItemId() == R.id.action_add_to_playlist) {
             Bundle bundle = new Bundle();
+
             bundle.putSerializable(RecyclerViewAdapterSongs.ADD_TO_PLAYLIST_SONG, serviceMain.currentSong);
             bundle.putSerializable(PLAYLISTS, serviceMain.playlists);
-            AddToPlaylistDialog addToPlaylistDialog = new AddToPlaylistDialog();
-            addToPlaylistDialog.setArguments(bundle);
+
+            bundle.putSerializable(RecyclerViewAdapterPlaylists.ADD_TO_PLAYLIST_PLAYLIST, serviceMain.userPickedPlaylist);
+            bundle.putSerializable(PLAYLISTS, serviceMain.playlists);
+
+            DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist = new DialogFragmentAddToPlaylist();
+            dialogFragmentAddToPlaylist.setArguments(bundle);
             FragmentManager fragmentManager = getSupportFragmentManager();
             Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
-            addToPlaylistDialog.show(fragmentManager, fragment.getTag());
+            dialogFragmentAddToPlaylist.show(fragmentManager, fragment.getTag());
             return true;
         } else if (item.getItemId() == R.id.action_search) {
             showSearchPane();
+        } else if(item.getItemId() == R.id.action_add_to_queue){
         }
         Log.v(TAG, "onOptionsItemSelected action_unknown end");
         return super.onOptionsItemSelected(item);

@@ -11,12 +11,18 @@
         android:title="@string/add_to_playlist"
         app:showAsAction="ifRoom"
         android:visible="false"/>
-
     <item
         android:id="@+id/action_search"
         android:icon="@drawable/ic_search_black_48dp"
         android:title="@string/search"
         app:showAsAction="ifRoom"
         android:visible="false"/>
+    <item
+        android:id="@+id/action_add_to_queue"
+        android:icon="@drawable/ic_queue_black_48dp"
+        android:title="@string/add_to_queue"
+        app:showAsAction="ifRoom"
+        android:visible="false"/>
+
 
 </menu>

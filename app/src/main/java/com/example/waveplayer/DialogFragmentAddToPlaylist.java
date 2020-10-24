@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class AddToPlaylistDialog extends DialogFragment {
+public class DialogFragmentAddToPlaylist extends DialogFragment {
 
     @NonNull
     @Override
@@ -52,8 +52,19 @@ public class AddToPlaylistDialog extends DialogFragment {
                         // TODO
                         AudioURI audioURI = (AudioURI) bundle.getSerializable(
                                 RecyclerViewAdapterSongs.ADD_TO_PLAYLIST_SONG);
-                        for(int index : selectedPlaylists){
-                            randomPlaylists.get(index).getProbFun().add(audioURI);
+                        if(audioURI != null) {
+                            for (int index : selectedPlaylists) {
+                                randomPlaylists.get(index).getProbFun().add(audioURI);
+                            }
+                        }
+                        RandomPlaylist randomPlaylist = (RandomPlaylist) bundle.getSerializable(
+                                RecyclerViewAdapterPlaylists.ADD_TO_PLAYLIST_PLAYLIST);
+                        if(randomPlaylist != null){
+                            for(AudioURI audioURI1 : randomPlaylist.getProbFun().getProbMap().keySet()){
+                                for (int index : selectedPlaylists) {
+                                    randomPlaylists.get(index).getProbFun().add(audioURI1);
+                                }
+                            }
                         }
                     }
                 })
