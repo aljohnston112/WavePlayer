@@ -44,25 +44,14 @@ public class FragmentEditPlaylist extends Fragment {
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        view.findViewById(R.id.buttonEditSongs).setOnClickListener(new OnClickListenerFragmentEditPlaylist(this));
         activityMain = ((ActivityMain) getActivity());
-        activityMain.setActionBarTitle(getResources().getString(R.string.edit_playlist));
+        if (activityMain != null) {
+            activityMain.setActionBarTitle(getResources().getString(R.string.edit_playlist));
+        }
         updateFAB(view);
-        setUpBroadcastReceiver(view);
-    }
-
-    private void setUpBroadcastReceiver(final View view) {
-        IntentFilter filterComplete = new IntentFilter();
-        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
-        filterComplete.addAction(activityMain.getResources().getString(
-                R.string.broadcast_receiver_action_service_connected));
-        broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                updateFAB(view);
-            }
-        };
-        activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
+        view.findViewById(R.id.buttonEditSongs).setOnClickListener(
+                new OnClickListenerFragmentEditPlaylist(this));
+        setUpBroadcastReceiverServiceConnected(view);
     }
 
     private void updateFAB(View view) {
@@ -71,9 +60,10 @@ public class FragmentEditPlaylist extends Fragment {
         if (activityMain.serviceMain != null) {
             final EditText finalEditTextPlaylistName = view.findViewById(R.id.editTextPlaylistName);
             ArrayList<AudioURI> playlistSongs = new ArrayList<>();
+            // userPickedPlaylist is null when user is making a new playlist
             if (activityMain.serviceMain.userPickedPlaylist != null) {
                 // activityMain.serviceMain.userPickedSongs.isEmpty()
-                // when the user is making a new playlist or editing one
+                // when the user is editing a playlist
                 if (activityMain.serviceMain.userPickedSongs.isEmpty()) {
                     activityMain.serviceMain.userPickedSongs.addAll(
                             activityMain.serviceMain.userPickedPlaylist.getProbFun().getProbMap().keySet());
@@ -90,19 +80,24 @@ public class FragmentEditPlaylist extends Fragment {
                     String playlistName = finalEditTextPlaylistName.getText().toString();
                     int playlistIndex = indexOfPlaylistWName(playlistName);
                     if (activityMain.serviceMain.userPickedSongs.size() == 0) {
-                        Toast toast = Toast.makeText(getContext(), R.string.not_enough_songs_for_playlist, Toast.LENGTH_LONG);
+                        Toast toast = Toast.makeText(getContext(),
+                                R.string.not_enough_songs_for_playlist, Toast.LENGTH_LONG);
                         toast.show();
                     } else if (playlistName.length() == 0) {
-                        Toast toast = Toast.makeText(getContext(), R.string.no_name_playlist, Toast.LENGTH_LONG);
+                        Toast toast = Toast.makeText(getContext(),
+                                R.string.no_name_playlist, Toast.LENGTH_LONG);
                         toast.show();
-                    } else if (playlistIndex != -1 && activityMain.serviceMain.userPickedPlaylist == null) {
-                        Toast toast = Toast.makeText(getContext(), R.string.duplicate_name_playlist, Toast.LENGTH_LONG);
+                    } else if (playlistIndex != -1 &&
+                            activityMain.serviceMain.userPickedPlaylist == null) {
+                        Toast toast = Toast.makeText(getContext(),
+                                R.string.duplicate_name_playlist, Toast.LENGTH_LONG);
                         toast.show();
                     } else if (activityMain.serviceMain.userPickedPlaylist == null) {
                         activityMain.serviceMain.playlists.add(new RandomPlaylist(
                                 activityMain.serviceMain.userPickedSongs,
                                 ServiceMain.MAX_PERCENT,
-                                finalEditTextPlaylistName.getText().toString(), false, -1));
+                                finalEditTextPlaylistName.getText().toString(),
+                                false, -1));
                         for (AudioURI audioURI : activityMain.serviceMain.userPickedSongs) {
                             audioURI.setSelected(false);
                         }
@@ -137,13 +132,29 @@ public class FragmentEditPlaylist extends Fragment {
                 }
 
                 private void popBackStackAndHideKeyboard(View view) {
-                    NavController navController = NavHostFragment.findNavController(FragmentEditPlaylist.this);
+                    NavController navController = NavHostFragment.findNavController(
+                            FragmentEditPlaylist.this);
                     navController.popBackStack();
-                    InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(Activity.INPUT_METHOD_SERVICE);
+                    InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(
+                            Activity.INPUT_METHOD_SERVICE);
                     imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
                 }
             });
         }
+    }
+
+    private void setUpBroadcastReceiverServiceConnected(final View view) {
+        IntentFilter filterComplete = new IntentFilter();
+        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
+        filterComplete.addAction(activityMain.getResources().getString(
+                R.string.broadcast_receiver_action_service_connected));
+        broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                updateFAB(view);
+            }
+        };
+        activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
     }
 
     @Override

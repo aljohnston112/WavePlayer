@@ -18,7 +18,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -35,6 +34,8 @@ public class FragmentSongs extends Fragment {
     BroadcastReceiver broadcastReceiverOptionsMenuCreated;
 
     private onQueryTextListenerSearch onQueryTextListenerSearch;
+
+    boolean setUp = false;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -120,13 +121,14 @@ public class FragmentSongs extends Fragment {
 
 
     private void setUpRecyclerView(View view) {
-        if(activityMain.serviceMain != null) {
+        if(activityMain.serviceMain != null && !setUp) {
             RecyclerView recyclerViewSongs = view.findViewById(R.id.recycler_view_song_list);
             RecyclerViewAdapterSongs recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(
                     this, new ArrayList<>(
                     activityMain.serviceMain.masterPlaylist.getProbFun().getProbMap().keySet()));
             recyclerViewSongs.setLayoutManager(new LinearLayoutManager(recyclerViewSongs.getContext()));
             recyclerViewSongs.setAdapter(recyclerViewAdapterSongs);
+            setUp = true;
         }
     }
 
@@ -138,6 +140,7 @@ public class FragmentSongs extends Fragment {
         activityMain.unregisterReceiver(broadcastReceiverOptionsMenuCreated);
         activityMain = null;
         onQueryTextListenerSearch = null;
+        setUp = false;
     }
 
 }

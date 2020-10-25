@@ -15,17 +15,19 @@ public class BroadcastReceiverNotificationButtonsForServiceMain extends Broadcas
 
     public void onReceive(Context context, Intent intent) {
         Log.v(ActivityMain.TAG, "BroadcastReceiverNotificationForServiceMainMediaControls start");
-        String action = intent.getAction();
-        if (action != null && serviceMain != null) {
-            switch (action) {
-                case "Next":
-                    serviceMain.playNext();
-                    break;
-                case "PlayPause":
-                    serviceMain.pauseOrPlay();
-                    break;
-                case "Previous":
-                    serviceMain.playPrevious();
+        synchronized (ServiceMain.lock) {
+            String action = intent.getAction();
+            if (action != null && serviceMain != null) {
+                switch (action) {
+                    case "Next":
+                        serviceMain.playNext();
+                        break;
+                    case "PlayPause":
+                        serviceMain.pauseOrPlay();
+                        break;
+                    case "Previous":
+                        serviceMain.playPrevious();
+                }
             }
         }
         Log.v(ActivityMain.TAG, "BroadcastReceiverNotificationForServiceMainMediaControls end");

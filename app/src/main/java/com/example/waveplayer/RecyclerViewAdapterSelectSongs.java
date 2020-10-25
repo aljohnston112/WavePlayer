@@ -32,11 +32,14 @@ public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<Recycle
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        final ConstraintLayout linearLayout = holder.songView.findViewById(R.id.linear_layout_song_name);
+        final ConstraintLayout linearLayout =
+                holder.songView.findViewById(R.id.linear_layout_song_name);
         ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
-        if (activityMain.serviceMain != null) {
-            ArrayList<AudioURI> allSongs = new ArrayList<>(activityMain.serviceMain.uriAudioURILinkedHashMap.values());
-            ArrayList<AudioURI> userPickedSongs = activityMain.serviceMain.userPickedSongs;
+        if (activityMain != null && activityMain.serviceMain != null) {
+            ArrayList<AudioURI> allSongs =
+                    new ArrayList<>(activityMain.serviceMain.uriAudioURILinkedHashMap.values());
+            ArrayList<AudioURI> userPickedSongs =
+                    activityMain.serviceMain.userPickedSongs;
             if (userPickedSongs.contains(allSongs.get(position))) {
                 allSongs.get(position).setSelected(true);
                 holder.textViewSongName.setBackgroundColor(Color.parseColor("#575757"));
@@ -52,11 +55,13 @@ public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<Recycle
 
     }
 
-
     @Override
     public int getItemCount() {
         ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
-        return activityMain.serviceMain.uriAudioURILinkedHashMap.size();
+        if(activityMain != null) {
+            return activityMain.serviceMain.uriAudioURILinkedHashMap.size();
+        }
+        return -1;
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -72,24 +77,26 @@ public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<Recycle
             }
             songView = view;
             textViewSongName = view.findViewById(R.id.text_view_songs_name);
-            final ConstraintLayout linearLayout = view.findViewById(R.id.linear_layout_song_name);
+            final ConstraintLayout constraintLayout = view.findViewById(R.id.linear_layout_song_name);
             final ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
-            view.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (audioURI.isSelected()) {
-                        audioURI.setSelected(false);
-                        textViewSongName.setBackgroundColor(Color.parseColor("#000000"));
-                        linearLayout.setBackgroundColor(Color.parseColor("#000000"));
-                        activityMain.serviceMain.userPickedSongs.remove(audioURI);
-                    } else {
-                        audioURI.setSelected(true);
-                        textViewSongName.setBackgroundColor(Color.parseColor("#575757"));
-                        linearLayout.setBackgroundColor(Color.parseColor("#575757"));
-                        activityMain.serviceMain.userPickedSongs.add(audioURI);
+            if(activityMain != null) {
+                view.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (audioURI.isSelected()) {
+                            audioURI.setSelected(false);
+                            textViewSongName.setBackgroundColor(Color.parseColor("#000000"));
+                            constraintLayout.setBackgroundColor(Color.parseColor("#000000"));
+                            activityMain.serviceMain.userPickedSongs.remove(audioURI);
+                        } else {
+                            audioURI.setSelected(true);
+                            textViewSongName.setBackgroundColor(Color.parseColor("#575757"));
+                            constraintLayout.setBackgroundColor(Color.parseColor("#575757"));
+                            activityMain.serviceMain.userPickedSongs.add(audioURI);
+                        }
                     }
-                }
-            });
+                });
+            }
         }
 
     }

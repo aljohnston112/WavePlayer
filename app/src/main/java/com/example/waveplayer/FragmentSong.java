@@ -115,7 +115,8 @@ public class FragmentSong extends Fragment {
         final ImageButton buttonPause = view.findViewById(R.id.imageButtonPlayPause);
         final ImageButton buttonNext = view.findViewById(R.id.imageButtonNext);
         final ImageButton buttonLoop = view.findViewById(R.id.imageButtonRepeat);
-        OnClickListenerFragmentSong onClickListenerFragmentSong = new OnClickListenerFragmentSong(activityMain);
+        OnClickListenerFragmentSong onClickListenerFragmentSong =
+                new OnClickListenerFragmentSong(activityMain);
         buttonBad.setOnClickListener(onClickListenerFragmentSong);
         buttonGood.setOnClickListener(onClickListenerFragmentSong);
         buttonShuffle.setOnClickListener(onClickListenerFragmentSong);
@@ -228,7 +229,6 @@ public class FragmentSong extends Fragment {
                 return false;
             }
         });
-
         if (activityMain.serviceMain != null) {
             if (activityMain.serviceMain.shuffling) {
                 buttonShuffle.setImageResource(R.drawable.ic_shuffle_black_24dp);
@@ -297,8 +297,14 @@ public class FragmentSong extends Fragment {
                 int width = imageView.getMeasuredWidth();
                 //noinspection SuspiciousNameCombination
                 int height = width;
-                Drawable drawable = ResourcesCompat.getDrawable(getResources(),
-                        R.drawable.ic_shuffle_black_24dp, null);
+                Drawable drawable;
+                if (activityMain.serviceMain.shuffling) {
+                    drawable = ResourcesCompat.getDrawable(getResources(),
+                            R.drawable.ic_shuffle_black_24dp, null);
+                } else {
+                    drawable = ResourcesCompat.getDrawable(getResources(),
+                            R.drawable.ic_shuffle_white_24dp, null);
+                }
                 if (drawable != null) {
                     drawable.setBounds(0, 0, width, height);
                     Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
@@ -372,8 +378,18 @@ public class FragmentSong extends Fragment {
                 int width = imageView.getMeasuredWidth();
                 //noinspection SuspiciousNameCombination
                 int height = width;
-                Drawable drawable = ResourcesCompat.getDrawable(getResources(),
-                        R.drawable.repeat_black_24dp, null);
+                Drawable drawable;
+
+                if (activityMain.serviceMain.loopingOne) {
+                    drawable = ResourcesCompat.getDrawable(getResources(),
+                            R.drawable.repeat_one_black_24dp, null);
+                } else if (activityMain.serviceMain.looping) {
+                    drawable = ResourcesCompat.getDrawable(getResources(),
+                            R.drawable.repeat_black_24dp, null);
+                } else {
+                    drawable = ResourcesCompat.getDrawable(getResources(),
+                            R.drawable.repeat_white_24dp, null);
+                }
                 if (drawable != null) {
                     drawable.setBounds(0, 0, width, height);
                     Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);

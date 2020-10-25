@@ -20,8 +20,8 @@ import java.util.List;
 
 public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewAdapterSongs.ViewHolder> {
 
-    public static final String ADD_TO_PLAYLIST_SONG = "ADD_TO_PLAYLIST_SONG";
-    public static final String PLAYLISTS = "PLAYLISTS";
+    public static final String BUNDLE_KEY_ADD_TO_PLAYLIST_SONG = "ADD_TO_PLAYLIST_SONG";
+    public static final String BUNDLE_KEY_PLAYLISTS = "PLAYLISTS";
 
     final private Fragment fragment;
     public List<AudioURI> audioURIS;
@@ -101,8 +101,12 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                         ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
                         if (activityMain != null) {
                             if (audioURI.equals(activityMain.serviceMain.currentSong)) {
-                                activityMain.serviceMain.uriMediaPlayerWURIHashMap.get(
-                                        activityMain.serviceMain.currentSong.getUri()).seekTo(0);
+                                MediaPlayerWURI mediaPlayerWURI =
+                                        activityMain.serviceMain.uriMediaPlayerWURIHashMap.get(
+                                        activityMain.serviceMain.currentSong.getUri());
+                                if(mediaPlayerWURI != null) {
+                                    mediaPlayerWURI.seekTo(0);
+                                }
                             } else {
                                 activityMain.serviceMain.stopAndPreparePrevious();
                             }
@@ -131,21 +135,27 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
         }
 
         private void contextMenuAddToPlaylist() {
-            Bundle bundle = new Bundle();
-            bundle.putSerializable(ADD_TO_PLAYLIST_SONG, audioURI);
-            bundle.putSerializable(PLAYLISTS, ((ActivityMain) fragment.getActivity()).serviceMain.playlists);
-            DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist = new DialogFragmentAddToPlaylist();
-            dialogFragmentAddToPlaylist.setArguments(bundle);
-            dialogFragmentAddToPlaylist.show(fragment.getParentFragmentManager(), fragment.getTag());
+            ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
+            if(activityMain != null) {
+                Bundle bundle = new Bundle();
+                bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, audioURI);
+                bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, activityMain.serviceMain.playlists);
+                DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist = new DialogFragmentAddToPlaylist();
+                dialogFragmentAddToPlaylist.setArguments(bundle);
+                dialogFragmentAddToPlaylist.show(fragment.getParentFragmentManager(), fragment.getTag());
+            }
         }
 
         private void contextMenuAddToQueue() {
-            if(((ActivityMain) fragment.getActivity()).serviceMain.songInProgress()) {
-                ((ActivityMain) fragment.getActivity()).serviceMain.addToQueue(audioURI.getUri());
-            } else{
-                ((ActivityMain) fragment.getActivity()).serviceMain.addToQueueAndPlay(audioURI);
-                ((ActivityMain) fragment.getActivity()).showSongPane();
-                ((ActivityMain) fragment.getActivity()).updateUI();
+            ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
+            if(activityMain != null) {
+                if (activityMain.serviceMain.songInProgress()) {
+                    ((ActivityMain) fragment.getActivity()).serviceMain.addToQueue(audioURI.getUri());
+                } else {
+                    ((ActivityMain) fragment.getActivity()).serviceMain.addToQueueAndPlay(audioURI);
+                    ((ActivityMain) fragment.getActivity()).showSongPane();
+                    ((ActivityMain) fragment.getActivity()).updateUI();
+                }
             }
         }
 

@@ -41,12 +41,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static androidx.annotation.Dimension.SP;
-import static com.example.waveplayer.RecyclerViewAdapterSongs.PLAYLISTS;
+import static com.example.waveplayer.RecyclerViewAdapterSongs.BUNDLE_KEY_PLAYLISTS;
 
 public class ActivityMain extends AppCompatActivity {
 
     // TODO update fab with extended FAB
     // TODO help page
+    // TODO stop Fragments from leaking FAB on click listeners and SearchView query listeners.
 
     static final String DEBUG_TAG = "debug";
     static final String TAG = "ActivityMain";
@@ -370,12 +371,17 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     public void updateUI() {
-        updateSongUI();
-        updateSongPaneUI();
-        updatePlayButtons();
-        if (serviceMain != null && serviceMain.fragmentSongVisible) {
-            hideSearchPane();
-        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                updateSongUI();
+                updateSongPaneUI();
+                updatePlayButtons();
+                if (serviceMain != null && serviceMain.fragmentSongVisible) {
+                    hideSearchPane();
+                }
+            }
+        });
     }
 
     private void showSearchPane() {
@@ -690,15 +696,24 @@ public class ActivityMain extends AppCompatActivity {
             showSearchPane();
         } else if (item.getItemId() == R.id.action_add_to_queue) {
             // TODO
-            if (serviceMain.songInProgress()) {
-                //serviceMain.addToQueue(audioURI.getUri());
-            } else {
-                /*
-                serviceMain.addToQueueAndPlay(audioURI);
-                showSongPane();
-                updateUI();
-                */
-            }
+                if (serviceMain.songInProgress()) {
+                    /*
+                    for (AudioURI audioURI : randomPlaylist.getProbFun().getProbMap().keySet()) {
+                        serviceMain.addToQueue(audioURI.getUri());
+                    }
+
+                     */
+                } else {
+                    /*
+                    for (AudioURI audioURI : randomPlaylist.getProbFun().getProbMap().keySet()) {
+                        serviceMain.addToQueue(audioURI.getUri());
+                    }
+
+                     */
+                    serviceMain.playNextInQueue();
+                    showSongPane();
+                    updateUI();
+                }
         }
         Log.v(TAG, "onOptionsItemSelected action_unknown end");
         return super.onOptionsItemSelected(item);
@@ -706,9 +721,9 @@ public class ActivityMain extends AppCompatActivity {
 
     private Bundle loadBundleForAddToPlaylist() {
         Bundle bundle = new Bundle();
-        bundle.putSerializable(RecyclerViewAdapterSongs.ADD_TO_PLAYLIST_SONG, serviceMain.currentSong);
-        bundle.putSerializable(PLAYLISTS, serviceMain.playlists);
-        bundle.putSerializable(RecyclerViewAdapterPlaylists.ADD_TO_PLAYLIST_PLAYLIST, serviceMain.userPickedPlaylist);
+        bundle.putSerializable(RecyclerViewAdapterSongs.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, serviceMain.currentSong);
+        bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, serviceMain.playlists);
+        bundle.putSerializable(RecyclerViewAdapterPlaylists.BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST, serviceMain.userPickedPlaylist);
         return bundle;
     }
 

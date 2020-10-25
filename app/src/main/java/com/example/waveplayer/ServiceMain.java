@@ -60,7 +60,7 @@ public class ServiceMain extends Service {
     private static final String MASTER_PLAYLIST_NAME = "MASTER_PLAYLIST_NAME";
 
     public static final Random random = new Random();
-
+    public static final Object lock = new Object();
     // TODO make fragments communicate
     RandomPlaylist userPickedPlaylist;
     final ArrayList<AudioURI> userPickedSongs = new ArrayList<>();
@@ -589,13 +589,13 @@ public class ServiceMain extends Service {
                 currentPlaylistIterator.previous();
                 if (currentPlaylistIterator.hasPrevious()) {
                     addToQueueAndPlay(currentPlaylistIterator.previous().getUri());
-                    currentPlaylistIterator.next();
-                    currentPlaylistIterator.next();
                 } else if (looping) {
                     currentPlaylistIterator = currentPlaylistArray.listIterator(
                             currentPlaylistArray.size() - 1);
                     addToQueueAndPlay(currentPlaylistIterator.next().getUri());
                     return;
+                } else {
+                    currentPlaylistIterator.next();
                 }
             } else {
                 MediaPlayerWURI mediaPlayerWURI = uriMediaPlayerWURIHashMap.get(currentSong.getUri());
@@ -625,8 +625,7 @@ public class ServiceMain extends Service {
 
     void addToQueueAndPlay(AudioURI audioURI) {
         Log.v(TAG, "addToQueueAndPlay started");
-        stopAndPreparePrevious();
-        play(audioURI.getUri());
+        addToQueueAndPlay(audioURI.getUri());
         Log.v(TAG, "addToQueueAndPlay ended");
     }
 

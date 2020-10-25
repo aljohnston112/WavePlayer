@@ -3,7 +3,6 @@ package com.example.waveplayer;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -11,7 +10,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class DialogFragmentAddToPlaylist extends DialogFragment {
@@ -23,7 +21,7 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
         final Bundle bundle = getArguments();
         final List<RandomPlaylist> randomPlaylists =
                 (List<RandomPlaylist>) bundle.getSerializable(
-                        RecyclerViewAdapterSongs.PLAYLISTS);
+                        RecyclerViewAdapterSongs.BUNDLE_KEY_PLAYLISTS);
         List<String> titles = new ArrayList<>(randomPlaylists.size());
         for (RandomPlaylist randomPlaylist : randomPlaylists) {
             titles.add(randomPlaylist.getName());
@@ -50,14 +48,14 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
                 .setPositiveButton(R.string.add, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         AudioURI audioURI = (AudioURI) bundle.getSerializable(
-                                RecyclerViewAdapterSongs.ADD_TO_PLAYLIST_SONG);
+                                RecyclerViewAdapterSongs.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG);
                         if(audioURI != null) {
                             for (int index : selectedPlaylists) {
                                 randomPlaylists.get(index).getProbFun().add(audioURI);
                             }
                         }
                         RandomPlaylist randomPlaylist = (RandomPlaylist) bundle.getSerializable(
-                                RecyclerViewAdapterPlaylists.ADD_TO_PLAYLIST_PLAYLIST);
+                                RecyclerViewAdapterPlaylists.BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST);
                         if(randomPlaylist != null){
                             for(AudioURI audioURI1 : randomPlaylist.getProbFun().getProbMap().keySet()){
                                 for (int index : selectedPlaylists) {
