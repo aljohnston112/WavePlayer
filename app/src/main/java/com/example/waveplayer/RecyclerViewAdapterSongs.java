@@ -101,7 +101,7 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                         ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
                         if (activityMain != null) {
                             if (audioURI.equals(activityMain.serviceMain.currentSong)) {
-                                activityMain.serviceMain.songsMap.get(
+                                activityMain.serviceMain.uriMediaPlayerWURIHashMap.get(
                                         activityMain.serviceMain.currentSong.getUri()).seekTo(0);
                             } else {
                                 activityMain.serviceMain.stopAndPreparePrevious();
@@ -118,7 +118,7 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                             activityMain.serviceMain.currentPlaylistArray =
                                     new ArrayList<>(activityMain.serviceMain.currentPlaylist
                                             .getProbFun().getProbMap().keySet());
-                            activityMain.serviceMain.clearQueue();
+                            activityMain.serviceMain.clearSongQueue();
                             activityMain.addToQueueAndPlay(audioURI);
                         }
                         if (action != null) {
@@ -145,7 +145,7 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
             } else{
                 ((ActivityMain) fragment.getActivity()).serviceMain.addToQueueAndPlay(audioURI);
                 ((ActivityMain) fragment.getActivity()).showSongPane();
-                ((ActivityMain) fragment.getActivity()).updateSongPaneUI();
+                ((ActivityMain) fragment.getActivity()).updateUI();
             }
         }
 

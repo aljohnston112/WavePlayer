@@ -74,7 +74,8 @@ public class FragmentSettings extends Fragment {
                     e.printStackTrace();
                 }
                 if (nSongs < 1) {
-                    Toast toast = Toast.makeText(getContext(), R.string.max_percent_error, Toast.LENGTH_LONG);
+                    Toast toast = Toast.makeText(
+                            getContext(), R.string.max_percent_error, Toast.LENGTH_LONG);
                     toast.show();
                 }
                 return nSongs;
@@ -88,7 +89,8 @@ public class FragmentSettings extends Fragment {
                     e.printStackTrace();
                 }
                 if (percentChangeUp < 1 || percentChangeUp > 100) {
-                    Toast toast = Toast.makeText(getContext(), R.string.percent_change_error, Toast.LENGTH_LONG);
+                    Toast toast = Toast.makeText(getContext(),
+                            R.string.percent_change_error, Toast.LENGTH_LONG);
                     toast.show();
                 }
                 return percentChangeUp;
@@ -102,7 +104,8 @@ public class FragmentSettings extends Fragment {
                     e.printStackTrace();
                 }
                 if (percentChangeDown < 1 || percentChangeDown > 100) {
-                    Toast toast = Toast.makeText(getContext(), R.string.percent_change_error, Toast.LENGTH_LONG);
+                    Toast toast = Toast.makeText(getContext(),
+                            R.string.percent_change_error, Toast.LENGTH_LONG);
                     toast.show();
                 }
                 return percentChangeDown;

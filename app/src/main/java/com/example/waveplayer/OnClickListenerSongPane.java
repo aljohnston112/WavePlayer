@@ -1,5 +1,6 @@
 package com.example.waveplayer;
 
+import android.util.Log;
 import android.view.View;
 
 import androidx.fragment.app.Fragment;
@@ -16,27 +17,31 @@ public class OnClickListenerSongPane implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
+        Log.v(ActivityMain.TAG, "OnClickListenerSongPane onClick started");
         synchronized (activityMain.lock) {
-            switch (v.getId()) {
-                case R.id.imageButtonSongPaneNext:
-                    activityMain.playNext();
-                    break;
-                case R.id.imageButtonSongPanePlayPause:
-                    activityMain.pauseOrPlay();
-                    break;
-                case R.id.imageButtonSongPanePrev:
-                    activityMain.playPrevious();
-                    break;
-                case R.id.textViewSongPaneSongName:
-                case R.id.imageViewSongPaneSongArt:
-                    FragmentManager fragmentManager = activityMain.getSupportFragmentManager();
-                    Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
-                    if (fragment != null) {
-                        NavHostFragment.findNavController(fragment).navigate(R.id.fragmentSong);
-                    }
-                    break;
+            if (v.getId() == R.id.imageButtonSongPaneNext) {
+                activityMain.playNext();
+            } else if (v.getId() == R.id.imageButtonSongPanePlayPause) {
+                activityMain.pauseOrPlay();
+            } else if (v.getId() == R.id.imageButtonSongPanePrev) {
+                activityMain.playPrevious();
+
+            } else if (v.getId() == R.id.textViewSongPaneSongName ||
+                    v.getId() == R.id.imageViewSongPaneSongArt) {
+                openFragmentSong();
             }
         }
+        Log.v(ActivityMain.TAG, "OnClickListenerSongPane onClick ended");
+    }
+
+    private void openFragmentSong() {
+        Log.v(ActivityMain.TAG, "Getting ready to open FragmentSong");
+        FragmentManager fragmentManager = activityMain.getSupportFragmentManager();
+        Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
+        if (fragment != null) {
+            NavHostFragment.findNavController(fragment).navigate(R.id.fragmentSong);
+        }
+        Log.v(ActivityMain.TAG, "Done getting ready to open FragmentSong");
     }
 
 }

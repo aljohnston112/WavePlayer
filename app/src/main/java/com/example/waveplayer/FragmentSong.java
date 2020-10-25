@@ -1,6 +1,7 @@
 package com.example.waveplayer;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -14,6 +15,7 @@ import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
@@ -31,7 +33,7 @@ public class FragmentSong extends Fragment {
 
     BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
-    BroadcastReceiver broadcastReceiver;
+    BroadcastReceiver broadcastReceiverOptionsMenuCreated;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -48,23 +50,31 @@ public class FragmentSong extends Fragment {
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         activityMain = ((ActivityMain) getActivity());
-        if(activityMain != null) {
+        if (activityMain != null) {
+            if (activityMain.serviceMain != null) {
+                activityMain.serviceMain.fragmentSongVisible = true;
+            }
             activityMain.setActionBarTitle(getResources().getString(R.string.now_playing));
             activityMain.showFab(false);
-            activityMain.updateSongUI();
+            activityMain.updateUI();
         }
+        hideKeyBoard(view);
         setUpButtons(view);
         setUpBroadcastReceiverServiceConnected(view);
         setUpBroadcastReceiverServiceOnOptionsMenuCreated();
     }
 
+    private void hideKeyBoard(View view) {
+        InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+    }
 
     private void setUpBroadcastReceiverServiceOnOptionsMenuCreated() {
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
                 R.string.broadcast_receiver_on_create_options_menu));
-        broadcastReceiver = new BroadcastReceiver() {
+        broadcastReceiverOptionsMenuCreated = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
@@ -73,7 +83,7 @@ public class FragmentSong extends Fragment {
                 menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).setVisible(true);
             }
         };
-        activityMain.registerReceiver(broadcastReceiver, filterComplete);
+        activityMain.registerReceiver(broadcastReceiverOptionsMenuCreated, filterComplete);
     }
 
     private void setUpBroadcastReceiverServiceConnected(final View view) {
@@ -91,9 +101,9 @@ public class FragmentSong extends Fragment {
     }
 
     public void notifyServiceConnected(View view) {
-        activityMain.updateSongUI();
+        activityMain.serviceMain.fragmentSongVisible = true;
+        activityMain.updateUI();
         setUpButtons(view);
-
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -219,7 +229,7 @@ public class FragmentSong extends Fragment {
             }
         });
 
-        if(activityMain.serviceMain != null) {
+        if (activityMain.serviceMain != null) {
             if (activityMain.serviceMain.shuffling) {
                 buttonShuffle.setImageResource(R.drawable.ic_shuffle_black_24dp);
             } else {
@@ -234,18 +244,70 @@ public class FragmentSong extends Fragment {
                 buttonLoop.setImageResource(R.drawable.repeat_white_24dp);
             }
         }
-
         view.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
             @Override
             public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                // TODO
-                //setUpGood();
-                //setUpBad();
-                //setUpShuffle();
+                setUpGood();
+                setUpBad();
+                setUpShuffle();
                 setUpPrev();
                 setUpPlay();
                 setUpNext();
-                //setUpLoop();
+                setUpLoop();
+            }
+
+            private void setUpGood() {
+                ImageView imageView = view.findViewById(R.id.button_thumb_up);
+                int width = imageView.getMeasuredWidth();
+                //noinspection SuspiciousNameCombination
+                int height = width;
+                Drawable drawable = ResourcesCompat.getDrawable(getResources(),
+                        R.drawable.thumb_up_alt_black_24dp, null);
+                if (drawable != null) {
+                    drawable.setBounds(0, 0, width, height);
+                    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                    Canvas canvas = new Canvas(bitmap);
+                    drawable.draw(canvas);
+                    Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
+                    bitmap.recycle();
+                    imageView.setImageBitmap(bitmapResized);
+                }
+            }
+
+            private void setUpBad() {
+                ImageView imageView = view.findViewById(R.id.button_thumb_down);
+                int width = imageView.getMeasuredWidth();
+                //noinspection SuspiciousNameCombination
+                int height = width;
+                Drawable drawable = ResourcesCompat.getDrawable(getResources(),
+                        R.drawable.thumb_down_alt_black_24dp, null);
+                if (drawable != null) {
+                    drawable.setBounds(0, 0, width, height);
+                    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                    Canvas canvas = new Canvas(bitmap);
+                    drawable.draw(canvas);
+                    Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
+                    bitmap.recycle();
+                    imageView.setImageBitmap(bitmapResized);
+                }
+            }
+
+            private void setUpShuffle() {
+                ImageView imageView = view.findViewById(R.id.imageButtonShuffle);
+                int width = imageView.getMeasuredWidth();
+                //noinspection SuspiciousNameCombination
+                int height = width;
+                Drawable drawable = ResourcesCompat.getDrawable(getResources(),
+                        R.drawable.ic_shuffle_black_24dp, null);
+                if (drawable != null) {
+                    drawable.setBounds(0, 0, width, height);
+                    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                    Canvas canvas = new Canvas(bitmap);
+                    drawable.draw(canvas);
+                    Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
+                    bitmap.recycle();
+                    imageView.setImageBitmap(bitmapResized);
+                }
             }
 
             private void setUpNext() {
@@ -304,6 +366,25 @@ public class FragmentSong extends Fragment {
                     imageView.setImageBitmap(bitmapResized);
                 }
             }
+
+            private void setUpLoop() {
+                ImageView imageView = view.findViewById(R.id.imageButtonRepeat);
+                int width = imageView.getMeasuredWidth();
+                //noinspection SuspiciousNameCombination
+                int height = width;
+                Drawable drawable = ResourcesCompat.getDrawable(getResources(),
+                        R.drawable.repeat_black_24dp, null);
+                if (drawable != null) {
+                    drawable.setBounds(0, 0, width, height);
+                    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+                    Canvas canvas = new Canvas(bitmap);
+                    drawable.draw(canvas);
+                    Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
+                    bitmap.recycle();
+                    imageView.setImageBitmap(bitmapResized);
+                }
+            }
+
         });
     }
 
@@ -311,7 +392,7 @@ public class FragmentSong extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
-        activityMain.unregisterReceiver(broadcastReceiver);
+        activityMain.unregisterReceiver(broadcastReceiverOptionsMenuCreated);
         activityMain = null;
     }
 

@@ -23,11 +23,16 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
 
     private final Fragment fragment;
 
-    public final List<RandomPlaylist> randomPlaylists;
+    public List<RandomPlaylist> randomPlaylists;
 
     public RecyclerViewAdapterPlaylists(Fragment fragment, List<RandomPlaylist> items) {
         this.fragment = fragment;
         randomPlaylists = items;
+    }
+
+    public void updateList(List<RandomPlaylist> randomPlaylists) {
+        this.randomPlaylists = randomPlaylists;
+        notifyDataSetChanged();
     }
 
     @Override
@@ -125,7 +130,7 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
                 }
                 ((ActivityMain) fragment.getActivity()).serviceMain.playNextInQueue();
                 ((ActivityMain) fragment.getActivity()).showSongPane();
-                ((ActivityMain) fragment.getActivity()).updateSongPaneUI();
+                ((ActivityMain) fragment.getActivity()).updateUI();
             }
         }
 

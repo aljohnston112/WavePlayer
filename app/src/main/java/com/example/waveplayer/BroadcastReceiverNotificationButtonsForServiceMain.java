@@ -5,11 +5,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-public class BroadcastReceiverNotificationForServiceMainMediaControls extends BroadcastReceiver {
+public class BroadcastReceiverNotificationButtonsForServiceMain extends BroadcastReceiver {
 
     ServiceMain serviceMain;
 
-    BroadcastReceiverNotificationForServiceMainMediaControls(ServiceMain serviceMain) {
+    BroadcastReceiverNotificationButtonsForServiceMain(ServiceMain serviceMain) {
         this.serviceMain = serviceMain;
     }
 

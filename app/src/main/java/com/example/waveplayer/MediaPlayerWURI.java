@@ -34,7 +34,6 @@ public class MediaPlayerWURI {
         this.serviceMain = serviceMain;
         this.mediaPlayer = mediaPlayer;
         this.audioURI = audioURI;
-        Log.v(TAG, "Set on prepared");
         mediaPlayer.setOnPreparedListener(null);
         mediaPlayer.setOnErrorListener(null);
         mediaPlayer.setOnPreparedListener(new MOnPreparedListener(this));

@@ -35,11 +35,12 @@ public class OnDestinationChangedListenerToolbar implements NavController.OnDest
                             destination.getId() == R.id.fragmentSong ||
                                     destination.getId() == R.id.fragmentPlaylist);
                     menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(
-                            destination.getId() == R.id.fragmentSongs);
+                            destination.getId() == R.id.fragmentSongs ||
+                                    destination.getId() == R.id.fragmentPlaylist ||
+                                    destination.getId() == R.id.FragmentPlaylists);
                     menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).setVisible(
                             destination.getId() == R.id.fragmentSong ||
                                     destination.getId() == R.id.fragmentPlaylist);
-
                 }
             }
         });

@@ -39,14 +39,14 @@ public class FragmentPaneSong extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        activityMain = ((ActivityMain) getActivity());
+        if (activityMain != null) {
+            if (view.getVisibility() == View.VISIBLE && activityMain.serviceMain != null) {
+                activityMain.serviceMain.fragmentSongVisible = false;
+            }
+            activityMain.updateUI();
+        }
         setupSongPane(view);
-        activityMain = ((ActivityMain)getActivity());
-        if(view.getVisibility() == View.VISIBLE && activityMain.serviceMain != null){
-            activityMain.serviceMain.fragmentSongVisible = false;
-        }
-        if(activityMain != null) {
-            activityMain.updateSongPaneUI();
-        }
         setUpBroadcastReceiver(view);
     }
 
@@ -65,11 +65,11 @@ public class FragmentPaneSong extends Fragment {
     }
 
     public void notifyServiceConnected(View view) {
-        setupSongPane(view);
-        if(view.getVisibility() == View.VISIBLE && activityMain.serviceMain != null){
+        if (view.getVisibility() == View.VISIBLE && activityMain.serviceMain != null) {
             activityMain.serviceMain.fragmentSongVisible = false;
         }
-        activityMain.updateSongPaneUI();
+        setupSongPane(view);
+        activityMain.updateUI();
     }
 
     private void setupSongPane(final View view) {
@@ -88,7 +88,7 @@ public class FragmentPaneSong extends Fragment {
                 //noinspection SuspiciousNameCombination
                 int width = height;
                 Drawable drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.skip_next_black_24dp, null);
-                if(drawable != null) {
+                if (drawable != null) {
                     drawable.setBounds(0, 0, width, height);
                     Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
                     Canvas canvas = new Canvas(bitmap);
@@ -105,13 +105,13 @@ public class FragmentPaneSong extends Fragment {
                 //noinspection SuspiciousNameCombination
                 int width = height;
                 Drawable drawable;
-                ActivityMain activityMain = ((ActivityMain)getActivity());
-                if(activityMain != null && activityMain.serviceMain != null && activityMain.serviceMain.isPlaying()) {
+                ActivityMain activityMain = ((ActivityMain) getActivity());
+                if (activityMain != null && activityMain.serviceMain != null && activityMain.serviceMain.isPlaying()) {
                     drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.pause_black_24dp, null);
-                } else{
+                } else {
                     drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.play_arrow_black_24dp, null);
                 }
-                if(drawable != null) {
+                if (drawable != null) {
                     drawable.setBounds(0, 0, width, height);
                     Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
                     Canvas canvas = new Canvas(bitmap);
@@ -128,7 +128,7 @@ public class FragmentPaneSong extends Fragment {
                 //noinspection SuspiciousNameCombination
                 int width = height;
                 Drawable drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.skip_previous_black_24dp, null);
-                if(drawable != null) {
+                if (drawable != null) {
                     drawable.setBounds(0, 0, width, height);
                     Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
                     Canvas canvas = new Canvas(bitmap);
@@ -145,7 +145,7 @@ public class FragmentPaneSong extends Fragment {
                 //noinspection SuspiciousNameCombination
                 int width = height;
                 Drawable drawableSongArt = ResourcesCompat.getDrawable(getResources(), R.drawable.music_note_black_48dp, null);
-                if(drawableSongArt != null) {
+                if (drawableSongArt != null) {
                     drawableSongArt.setBounds(0, 0, width, height);
                     Bitmap bitmapSongArt = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
                     Canvas canvas = new Canvas(bitmapSongArt);

@@ -35,7 +35,7 @@ public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<Recycle
         final ConstraintLayout linearLayout = holder.songView.findViewById(R.id.linear_layout_song_name);
         ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
         if (activityMain.serviceMain != null) {
-            ArrayList<AudioURI> allSongs = new ArrayList<>(activityMain.serviceMain.uriMap.values());
+            ArrayList<AudioURI> allSongs = new ArrayList<>(activityMain.serviceMain.uriAudioURILinkedHashMap.values());
             ArrayList<AudioURI> userPickedSongs = activityMain.serviceMain.userPickedSongs;
             if (userPickedSongs.contains(allSongs.get(position))) {
                 allSongs.get(position).setSelected(true);
@@ -56,7 +56,7 @@ public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<Recycle
     @Override
     public int getItemCount() {
         ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
-        return activityMain.serviceMain.uriMap.size();
+        return activityMain.serviceMain.uriAudioURILinkedHashMap.size();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {

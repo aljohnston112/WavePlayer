@@ -21,7 +21,7 @@ public class OnSeekBarChangeListener implements SeekBar.OnSeekBarChangeListener 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
         MediaPlayerWURI mediaPlayerWURI =
-                activityMain.serviceMain.songsMap.get(activityMain.serviceMain.currentSong.getUri());
+                activityMain.serviceMain.uriMediaPlayerWURIHashMap.get(activityMain.serviceMain.currentSong.getUri());
         if (mediaPlayerWURI != null) {
             mediaPlayerWURI.seekTo(seekBar.getProgress());
             if(!activityMain.serviceMain.isPlaying()){

@@ -20,8 +20,7 @@ public class BroadcastReceiverOnCompletion extends BroadcastReceiver {
         if (action != null) {
             if (action.equals(activityMain.getResources().getString(R.string.broadcast_receiver_action_on_completion))) {
                 if (activityMain != null) {
-                    activityMain.updateSongUI();
-                    activityMain.updateSongPaneUI();
+                    activityMain.updateUI();
                 }
             }
         }

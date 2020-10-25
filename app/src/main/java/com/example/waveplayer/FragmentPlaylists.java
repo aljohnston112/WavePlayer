@@ -1,5 +1,6 @@
 package com.example.waveplayer;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -10,6 +11,8 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.SearchView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -28,9 +31,13 @@ import java.util.Collections;
 
 public class FragmentPlaylists extends Fragment {
 
+    public static final String NAME = "FragmentPlaylists";
+
     ActivityMain activityMain;
 
     BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
+
+    BroadcastReceiver broadcastReceiverOptionsMenucreated;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -47,14 +54,38 @@ public class FragmentPlaylists extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         activityMain = ((ActivityMain) getActivity());
+        hideKeyBoard(view);
         updateMainContent(view);
+        setUpBroadcastReceiverOnServiceConnected(view);
+        setUpBroadcastReceiverServiceOnOptionsMenuCreated();
+        // TODO set up searching
     }
 
     private void updateMainContent(final View view) {
         activityMain.setActionBarTitle(getResources().getString(R.string.playlists));
         setUpRecyclerView(view);
-        setUpBroadcastReceiverOnServiceConnected(view);
         updateFAB();
+    }
+
+    private void hideKeyBoard(View view) {
+        InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+    }
+
+    private void setUpBroadcastReceiverServiceOnOptionsMenuCreated() {
+        IntentFilter filterComplete = new IntentFilter();
+        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
+        filterComplete.addAction(activityMain.getResources().getString(
+                R.string.broadcast_receiver_on_create_options_menu));
+        broadcastReceiverOptionsMenucreated = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
+                Menu menu = toolbar.getMenu();
+                menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(true);
+            }
+        };
+        activityMain.registerReceiver(broadcastReceiverOptionsMenucreated, filterComplete);
     }
 
     private void setUpBroadcastReceiverOnServiceConnected(final View view) {
@@ -191,6 +222,7 @@ public class FragmentPlaylists extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
+        activityMain.unregisterReceiver(broadcastReceiverOptionsMenucreated);
         activityMain = null;
     }
 

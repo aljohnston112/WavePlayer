@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
-import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
@@ -15,17 +14,13 @@ import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
-import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 
 import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentPlaylist;
@@ -35,19 +30,17 @@ import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitle
 
 public class FragmentTitle extends Fragment {
 
+    private static final int REQUEST_CODE_OPEN_FOLDER = 9367;
+
     ActivityMain activityMain;
 
     BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
-    Uri uri;
+    Uri uriUserPicked;
 
     long mediaStoreUriID;
 
-    List<Uri> audioFiles = new ArrayList<>();
-
     List<AudioURI> audioURIs = new ArrayList<>();
-
-    private static final int REQUEST_CODE_OPEN_FOLDER = 9367;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -59,7 +52,7 @@ public class FragmentTitle extends Fragment {
         return inflater.inflate(R.layout.fragment_title, container, false);
     }
 
-    private void setUpBroadCastReceiver(final View view) {
+    private void setUpBroadCastReceiver() {
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -67,32 +60,20 @@ public class FragmentTitle extends Fragment {
         broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if (uri != null) {
+                if (uriUserPicked != null) {
                     if (!audioURIs.isEmpty()) {
-                        if(activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID) == null) {
+                        if (activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID) == null) {
                             RandomPlaylist randomPlaylist = new RandomPlaylist(
-                                    audioURIs, ServiceMain.MAX_PERCENT, uri.getPath(), false, mediaStoreUriID);
+                                    audioURIs, ServiceMain.MAX_PERCENT, uriUserPicked.getPath(),
+                                    false, mediaStoreUriID);
                             activityMain.serviceMain.directoryPlaylists.put(
                                     mediaStoreUriID, randomPlaylist);
                             activityMain.serviceMain.playlists.add(randomPlaylist);
-                        } else{
+                        } else {
                             RandomPlaylist randomPlaylist =
                                     activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID);
-                            // Add new songs to the masterPlaylist
-                            for (AudioURI audioURIFromURIMap : audioURIs) {
-                                if (audioURIFromURIMap != null) {
-                                    if (!randomPlaylist.getProbFun().getProbMap().containsKey(audioURIFromURIMap)) {
-                                        randomPlaylist.getProbFun().add(audioURIFromURIMap);
-                                    }
-                                }
-                            }
-                            // Remove missing songs
-                            for (AudioURI audioURI : randomPlaylist.getProbFun().getProbMap().keySet()) {
-                                if (!audioURIs.contains(audioURI)) {
-                                    randomPlaylist.getProbFun().remove(audioURI);
-                                    audioURIs.remove(audioURI);
-                                }
-                            }
+                            addNewSongs(randomPlaylist);
+                            removeMissingSongs(randomPlaylist);
                         }
                         activityMain.serviceMain.userPickedPlaylist =
                                 activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID);
@@ -101,6 +82,26 @@ public class FragmentTitle extends Fragment {
                             .navigate(actionFragmentTitleToFragmentPlaylist());
                 }
             }
+
+            private void removeMissingSongs(RandomPlaylist randomPlaylist) {
+                for (AudioURI audioURI : randomPlaylist.getProbFun().getProbMap().keySet()) {
+                    if (!audioURIs.contains(audioURI)) {
+                        randomPlaylist.getProbFun().remove(audioURI);
+                        audioURIs.remove(audioURI);
+                    }
+                }
+            }
+
+            private void addNewSongs(RandomPlaylist randomPlaylist) {
+                for (AudioURI audioURIFromURIMap : audioURIs) {
+                    if (audioURIFromURIMap != null) {
+                        if (!randomPlaylist.getProbFun().getProbMap().containsKey(audioURIFromURIMap)) {
+                            randomPlaylist.getProbFun().add(audioURIFromURIMap);
+                        }
+                    }
+                }
+            }
+
         };
         activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
     }
@@ -111,7 +112,7 @@ public class FragmentTitle extends Fragment {
         activityMain = ((ActivityMain) getActivity());
         updateMainContent();
         setUpButtons(view);
-        setUpBroadCastReceiver(view);
+        setUpBroadCastReceiver();
     }
 
     private void updateMainContent() {
@@ -150,9 +151,7 @@ public class FragmentTitle extends Fragment {
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 String title = getResources().getString(R.string.pick_folder);
                 Intent chooser = Intent.createChooser(intent, title);
-                if (intent.resolveActivity(activityMain.getPackageManager()) != null) {
-                    startActivityForResult(chooser, REQUEST_CODE_OPEN_FOLDER);
-                }
+                startActivityForResult(chooser, REQUEST_CODE_OPEN_FOLDER);
             }
         });
     }
@@ -161,14 +160,10 @@ public class FragmentTitle extends Fragment {
     public void onActivityResult(int requestCode, int resultCode,
                                  Intent resultData) {
         if (requestCode == REQUEST_CODE_OPEN_FOLDER && resultCode == Activity.RESULT_OK) {
-            Uri uri = null;
+            Uri uri;
             if (resultData != null) {
                 uri = resultData.getData();
-                final int takeFlags = resultData.getFlags()
-                        & (Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                ContentResolver contentResolver = activityMain.getContentResolver();
-                contentResolver.takePersistableUriPermission(uri, takeFlags);
-                this.uri = uri;
+                this.uriUserPicked = uri;
                 traverseDirectoryEntries(uri);
             }
         }
@@ -181,45 +176,30 @@ public class FragmentTitle extends Fragment {
     }
 
     private void getFiles(Uri childrenUri, Uri rootUri) {
-/*
-        MediaMetadataRetriever mediaMetadataRetriever;
-        mediaMetadataRetriever = new MediaMetadataRetriever();
-        mediaMetadataRetriever.setDataSource(activityMain.getApplicationContext(), MediaStore.getMediaUri(childrenUri));
-        try {
-            mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-            mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
-        } catch (Exception e) {
-            // TO-DO Exception
-        }
-*/
-
         ContentResolver contentResolver = activityMain.getContentResolver();
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != ? OR" +
                 DocumentsContract.Document.COLUMN_MIME_TYPE + " == ?";
         String[] selectionArgs = new String[]{"0", DocumentsContract.Document.MIME_TYPE_DIR};
         try (Cursor cursor = contentResolver.query(childrenUri, new String[]{
                         DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-                        DocumentsContract.Document.COLUMN_DISPLAY_NAME,
                         DocumentsContract.Document.COLUMN_MIME_TYPE,
                         MediaStore.Audio.Media._ID,
                         MediaStore.Audio.Media.DISPLAY_NAME,
                         MediaStore.Audio.Media.TITLE,
-                        MediaStore.Audio.Media.ARTIST,
+                        MediaStore.Audio.Media.ARTIST_ID,
                         MediaStore.Audio.Media.DATA},
                 selection, selectionArgs, null)) {
             if (cursor != null) {
                 int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
                 while (cursor.moveToNext()) {
                     String docId = cursor.getString(0);
-                    String name = cursor.getString(1);
-                    String mime = cursor.getString(2);
+                    String mime = cursor.getString(1);
                     String displayName = cursor.getString(nameCol);
                     if (isDirectory(mime)) {
                         Uri newNode = DocumentsContract.buildChildDocumentsUriUsingTree(
                                 rootUri, docId);
-                        getFiles( newNode, rootUri);
+                        getFiles(newNode, rootUri);
                     } else {
-                        audioFiles.add(childrenUri);
                         audioURIs.add(getAudioUri(displayName));
                     }
                 }
@@ -227,39 +207,35 @@ public class FragmentTitle extends Fragment {
         }
     }
 
-    // Util method to check if the mime type is a directory
     private static boolean isDirectory(String mimeType) {
         return DocumentsContract.Document.MIME_TYPE_DIR.equals(mimeType);
     }
 
     private AudioURI getAudioUri(String displayName) {
         ContentResolver contentResolver = activityMain.getContentResolver();
-        String selection =  MediaStore.Audio.Media.DISPLAY_NAME + " == ?";
+        String selection = MediaStore.Audio.Media.DISPLAY_NAME + " == ?";
         String[] selectionArgs = new String[]{displayName};
         try (Cursor cursor = contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 new String[]{
                         MediaStore.Audio.Media._ID,
-                        MediaStore.Audio.Media.DISPLAY_NAME,
                         MediaStore.Audio.Media.TITLE,
-                        MediaStore.Audio.Media.ARTIST,
+                        MediaStore.Audio.Media.ARTIST_ID,
                         MediaStore.Audio.Media.DATA
                 },
                 selection, selectionArgs, null)) {
             if (cursor != null) {
-                while (cursor.moveToNext()) {
+                if (cursor.moveToNext()) {
                     int idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
-                    int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
                     int titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE);
-                    int artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST);
+                    int artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST_ID);
                     int dataCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
                     long id = cursor.getLong(idCol);
                     this.mediaStoreUriID = id;
-                    String displayName2 = cursor.getString(nameCol);
                     String title = cursor.getString(titleCol);
                     String artist = cursor.getString(artistCol);
                     String data = cursor.getString(dataCol);
-                    Uri uri1 = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
-                    return new AudioURI(uri1, data, displayName2, artist, title, id);
+                    Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
+                    return new AudioURI(uri, data, displayName, artist, title, id);
                 }
             }
         }

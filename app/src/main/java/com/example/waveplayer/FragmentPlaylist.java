@@ -1,5 +1,6 @@
 package com.example.waveplayer;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -10,6 +11,8 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.SearchView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -30,6 +33,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class FragmentPlaylist extends Fragment {
+
+    public static final String NAME = "FragmentPlaylist";
 
     ActivityMain activityMain;
 
@@ -56,6 +61,18 @@ public class FragmentPlaylist extends Fragment {
         setUpBroadcastReceiverServiceOnOptionsMenuCreated();
         updateFAB();
         setUpUI(view);
+        setUpSearchPane();
+        hideKeyBoard(view);
+    }
+
+    private void setUpSearchPane(){
+        SearchView searchView = activityMain.findViewById(R.id.search_view_search);
+        searchView.setOnQueryTextListener(new onQueryTextListenerSearch(activityMain, NAME));
+    }
+
+    private void hideKeyBoard(View view) {
+        InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
     private void setUpBroadcastReceiverServiceOnOptionsMenuCreated() {
@@ -71,6 +88,7 @@ public class FragmentPlaylist extends Fragment {
                 menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(true);
                 menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).setVisible(true);
                 menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).setVisible(true);
+                menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(true);
             }
         };
         activityMain.registerReceiver(broadcastReceiver, filterComplete);

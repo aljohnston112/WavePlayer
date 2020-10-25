@@ -1,5 +1,6 @@
 package com.example.waveplayer;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -7,8 +8,10 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.SearchView;
 
 import androidx.annotation.NonNull;
@@ -20,16 +23,19 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class FragmentSongs extends Fragment {
+
+    public static final String NAME = "FragmentSongs";
 
     ActivityMain activityMain;
 
     BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
-    BroadcastReceiver broadcastReceiver;
+    BroadcastReceiver broadcastReceiverOptionsMenuCreated;
 
+    private onQueryTextListenerSearch onQueryTextListenerSearch;
+    
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,101 +54,38 @@ public class FragmentSongs extends Fragment {
         if(activityMain != null && activityMain.serviceMain != null) {
             activityMain.serviceMain.userPickedPlaylist = activityMain.serviceMain.masterPlaylist;
         }
+        hideKeyBoard(view);
         updateMainContent();
+        setUpToolbar();
         setUpRecyclerView(view);
         setUpBroadcastReceiverOnCompletion(view);
-        setUpSearchPane();
         setUpBroadcastReceiverOnOptionsMenuCreated();
     }
 
-    private void setUpBroadcastReceiverOnOptionsMenuCreated() {
-        IntentFilter filterComplete = new IntentFilter();
-        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
-        filterComplete.addAction(activityMain.getResources().getString(
-                R.string.broadcast_receiver_on_create_options_menu));
-        broadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
-                Menu menu = toolbar.getMenu();
-                menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(true);
-                menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(true);
-            }
-        };
-        activityMain.registerReceiver(broadcastReceiver, filterComplete);
+    private void updateMainContent() {
+        activityMain.setActionBarTitle(getResources().getString(R.string.songs));
+        activityMain.showFab(false);
     }
 
-    private void setUpSearchPane(){
-        SearchView searchView = activityMain.findViewById(R.id.search_view_search);
-        /*
-        ImageView icon = searchView.findViewById(androidx.appcompat.);
-        Drawable whiteIcon = icon.getDrawable();
-        whiteIcon.setTint(Color.BLACK);
-        icon.setImageDrawable(whiteIcon);
-         */
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                return false;
+    private void setUpToolbar() {
+        Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
+        Menu menu = toolbar.getMenu();
+        if(menu != null) {
+            menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(true);
+            menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(true);
+            MenuItem itemSearch = menu.findItem(R.id.action_search);
+            if (itemSearch != null) {
+                onQueryTextListenerSearch = new onQueryTextListenerSearch(activityMain, NAME);
+                SearchView searchView = (SearchView) itemSearch.getActionView();
+                searchView.setOnQueryTextListener(onQueryTextListenerSearch);
             }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                RecyclerView recyclerViewSongs = activityMain.findViewById(R.id.recycler_view_playlist_list);
-                if(recyclerViewSongs == null){
-                    recyclerViewSongs = activityMain.findViewById(R.id.recycler_view_song_list);
-                }
-                RecyclerViewAdapterSongs recyclerViewAdapterSongs =
-                        (RecyclerViewAdapterSongs)recyclerViewSongs.getAdapter();
-                if(recyclerViewAdapterSongs.audioURIS.size() ==
-                        activityMain.serviceMain.masterPlaylist.getProbFun().size()) {
-                    List<AudioURI> audioURIS = new ArrayList<>(
-                                    activityMain.serviceMain.masterPlaylist.getProbFun().getProbMap().keySet());
-                    List<AudioURI> sifted = new ArrayList<>();
-                    if (!newText.equals("")) {
-                        for(AudioURI audioURI : audioURIS){
-                            if(audioURI.title.toLowerCase().contains(newText.toLowerCase())){
-                                sifted.add(audioURI);
-                            }
-                        }
-                        recyclerViewAdapterSongs.updateList(sifted);
-                        return true;
-                    } else{
-                        recyclerViewAdapterSongs.updateList(audioURIS);
-                        return true;
-                    }
-                } else {
-                    List<AudioURI> audioURIS = new ArrayList<>(
-                            activityMain.serviceMain.userPickedPlaylist.getProbFun().getProbMap().keySet());
-                    List<AudioURI> sifted = new ArrayList<>();
-                    if (!newText.equals("")) {
-                        for(AudioURI audioURI : audioURIS){
-                            if(audioURI.title.toLowerCase().contains(newText.toLowerCase())){
-                                sifted.add(audioURI);
-                            }
-                        }
-                        recyclerViewAdapterSongs.updateList(sifted);
-                        return true;
-                    } else{
-                        recyclerViewAdapterSongs.updateList(audioURIS);
-                        return true;
-                    }
-                }
-            }
-        });
-    }
-
-    private void doneWithSearchPane(){
-        // TODO
-        FragmentManager fragmentManager = getParentFragmentManager();
-        int count = fragmentManager.getBackStackEntryCount();
-        String tag = fragmentManager.getBackStackEntryAt(count - 2).getName();
-        if(tag.equals("FragmentTitle")) {
-            //activityMain.serviceMain.masterPlaylist.getProbFun().getProbMap().keySet();
-        } else {
-            //activityMain.serviceMain.userPickedPlaylist.getProbFun().getProbMap().keySet()
         }
+    }
 
+    private void hideKeyBoard(View view) {
+        InputMethodManager imm = (InputMethodManager)
+                activityMain.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
     private void setUpBroadcastReceiverOnCompletion(final View view) {
@@ -150,20 +93,31 @@ public class FragmentSongs extends Fragment {
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
                 R.string.broadcast_receiver_action_service_connected));
-        broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
+        broadcastReceiverOnServiceConnected =
+                new BroadcastReceiverOnServiceConnected() {
             @Override
             public void onReceive(Context context, Intent intent) {
                     setUpRecyclerView(view);
-                    activityMain.updateSongPaneUI();
+                    activityMain.updateUI();
             }
         };
         activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
     }
 
-    private void updateMainContent() {
-        activityMain.setActionBarTitle(getResources().getString(R.string.songs));
-        activityMain.showFab(false);
+    private void setUpBroadcastReceiverOnOptionsMenuCreated() {
+        IntentFilter filterComplete = new IntentFilter();
+        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
+        filterComplete.addAction(activityMain.getResources().getString(
+                R.string.broadcast_receiver_on_create_options_menu));
+        broadcastReceiverOptionsMenuCreated = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                setUpToolbar();
+            }
+        };
+        activityMain.registerReceiver(broadcastReceiverOptionsMenuCreated, filterComplete);
     }
+
 
     private void setUpRecyclerView(View view) {
         if(activityMain.serviceMain != null) {
@@ -179,9 +133,11 @@ public class FragmentSongs extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        hideKeyBoard(getView());
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
-        activityMain.unregisterReceiver(broadcastReceiver);
+        activityMain.unregisterReceiver(broadcastReceiverOptionsMenuCreated);
         activityMain = null;
+        onQueryTextListenerSearch = null;
     }
 
 }

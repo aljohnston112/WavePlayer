@@ -49,7 +49,6 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
         builder.setTitle(R.string.add_to_playlist)
                 .setPositiveButton(R.string.add, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        // TODO
                         AudioURI audioURI = (AudioURI) bundle.getSerializable(
                                 RecyclerViewAdapterSongs.ADD_TO_PLAYLIST_SONG);
                         if(audioURI != null) {
@@ -75,4 +74,5 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
                 });
         return builder.create();
     }
+
 }
