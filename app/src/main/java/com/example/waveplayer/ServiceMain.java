@@ -753,7 +753,6 @@ public class ServiceMain extends Service {
             MediaPlayerWURI mediaPlayerWURI = new MediaPlayerWURI(
                     serviceMain, MediaPlayer.create(
                             getApplicationContext(), audioURI.getUri()), audioURI);
-            mediaPlayerWURI.setOnCompletionListener(null);
             mediaPlayerWURI.setOnCompletionListener(onCompletionListener);
             Log.v(TAG, "makeMediaPlayerWURI made");
             return mediaPlayerWURI;

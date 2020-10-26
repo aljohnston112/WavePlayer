@@ -7,13 +7,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class onQueryTextListenerSearch implements SearchView.OnQueryTextListener {
+public class OnQueryTextListenerSearch implements SearchView.OnQueryTextListener {
 
     final ActivityMain activityMain;
 
     final String constructorFragment;
 
-    public onQueryTextListenerSearch(ActivityMain activityMain, String constructorFragment) {
+    public OnQueryTextListenerSearch(ActivityMain activityMain, String constructorFragment) {
         this.activityMain = activityMain;
         this.constructorFragment = constructorFragment;
     }

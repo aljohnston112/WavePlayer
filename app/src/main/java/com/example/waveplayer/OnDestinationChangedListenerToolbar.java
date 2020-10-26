@@ -47,4 +47,3 @@ public class OnDestinationChangedListenerToolbar implements NavController.OnDest
     }
 
 }
-

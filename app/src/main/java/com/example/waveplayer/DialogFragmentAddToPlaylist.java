@@ -14,6 +14,14 @@ import java.util.List;
 
 public class DialogFragmentAddToPlaylist extends DialogFragment {
 
+    DialogInterface.OnMultiChoiceClickListener onMultiChoiceClickListener;
+
+    boolean isSong;
+
+    DialogFragmentAddToPlaylist(boolean isSong){
+        this.isSong = isSong;
+    }
+
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
@@ -32,31 +40,22 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
             titlesArray[i++] = title;
         }
         final List<Integer> selectedPlaylists = new ArrayList<>();
+        onMultiChoiceClickListener = new OnMultiChoiceClickListenerAddToPlaylist(selectedPlaylists);
         builder.setMultiChoiceItems(titlesArray,
-                null,
-                new DialogInterface.OnMultiChoiceClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-                        if (isChecked) {
-                            selectedPlaylists.add(which);
-                        } else if (selectedPlaylists.contains(which)) {
-                            selectedPlaylists.remove(Integer.valueOf(which));
-                        }
-                    }
-                });
+                null, onMultiChoiceClickListener);
         builder.setTitle(R.string.add_to_playlist)
                 .setPositiveButton(R.string.add, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         AudioURI audioURI = (AudioURI) bundle.getSerializable(
                                 RecyclerViewAdapterSongs.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG);
-                        if(audioURI != null) {
+                        if(isSong && audioURI != null) {
                             for (int index : selectedPlaylists) {
                                 randomPlaylists.get(index).getProbFun().add(audioURI);
                             }
                         }
                         RandomPlaylist randomPlaylist = (RandomPlaylist) bundle.getSerializable(
                                 RecyclerViewAdapterPlaylists.BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST);
-                        if(randomPlaylist != null){
+                        if(!isSong && randomPlaylist != null){
                             for(AudioURI audioURI1 : randomPlaylist.getProbFun().getProbMap().keySet()){
                                 for (int index : selectedPlaylists) {
                                     randomPlaylists.get(index).getProbFun().add(audioURI1);
@@ -64,13 +63,13 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
                             }
                         }
                     }
-                })
-                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        // TODO
-                    }
                 });
         return builder.create();
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        onMultiChoiceClickListener = null;
+    }
 }

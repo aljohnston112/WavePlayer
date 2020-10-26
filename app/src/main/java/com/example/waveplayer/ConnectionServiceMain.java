@@ -46,7 +46,10 @@ public class ConnectionServiceMain implements ServiceConnection {
 
     @Override
     public void onServiceDisconnected(ComponentName arg0) {
-        Log.v(ActivityMain.TAG, "onServiceDisconnected start and end");
+        Log.v(ActivityMain.TAG, "onServiceDisconnected start");
+        activityMain.onDestinationChangedListenerPanes = null;
+        activityMain.onClickListenerSongPane = null;
+
     }
 
 }

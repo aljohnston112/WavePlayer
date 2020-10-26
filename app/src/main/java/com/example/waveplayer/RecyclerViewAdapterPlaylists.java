@@ -46,6 +46,18 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.randomPlaylist = randomPlaylists.get(position);
         holder.textViewPlaylistName.setText(randomPlaylists.get(position).getName());
+        holder.onCreateContextMenuListenerPlaylists = null;
+        holder.onCreateContextMenuListenerPlaylists =
+                new OnCreateContextMenuListenerPlaylists(fragment, holder.randomPlaylist);
+    }
+
+    @Override
+    public void onViewRecycled(@NonNull ViewHolder holder) {
+        super.onViewRecycled(holder);
+        holder.onCreateContextMenuListenerPlaylists = null;
+        holder.playlistView = null;
+        holder.textViewPlaylistName = null;
+        holder.randomPlaylist = null;
     }
 
     @Override
@@ -55,9 +67,11 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
-        public final View playlistView;
-        public final TextView textViewPlaylistName;
+        public View playlistView;
+        public TextView textViewPlaylistName;
         public RandomPlaylist randomPlaylist;
+
+        OnCreateContextMenuListenerPlaylists onCreateContextMenuListenerPlaylists;
 
         public ViewHolder(View view) {
             super(view);
@@ -67,27 +81,7 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
                 textViewPlaylistName.setText(randomPlaylist.getName());
             }
             final ImageView handle = view.findViewById(R.id.playlist_handle);
-            handle.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
-                @Override
-                public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-                    final MenuItem item = menu.add(R.string.add_to_playlist);
-                    item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                        @Override
-                        public boolean onMenuItemClick(MenuItem item) {
-                            contextMenuAddToPlaylist();
-                            return true;
-                        }
-                    });
-                    final MenuItem anotherItem = menu.add(R.string.add_to_queue);
-                    anotherItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                        @Override
-                        public boolean onMenuItemClick(MenuItem item) {
-                            contextMenuAddToQueue();
-                            return true;
-                        }
-                    });
-                }
-            });
+            handle.setOnCreateContextMenuListener(onCreateContextMenuListenerPlaylists);
             handle.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -108,36 +102,6 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
                     }
                 }
             });
-        }
-
-        private void contextMenuAddToPlaylist() {
-            ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
-            if(activityMain != null) {
-                Bundle bundle = new Bundle();
-                bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST, randomPlaylist);
-                bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, activityMain.serviceMain.playlists);
-                DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist = new DialogFragmentAddToPlaylist();
-                dialogFragmentAddToPlaylist.setArguments(bundle);
-                dialogFragmentAddToPlaylist.show(fragment.getParentFragmentManager(), fragment.getTag());
-            }
-        }
-
-        private void contextMenuAddToQueue() {
-            ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
-            if(activityMain != null) {
-                if (activityMain.serviceMain.songInProgress()) {
-                    for (AudioURI audioURI : randomPlaylist.getProbFun().getProbMap().keySet()) {
-                        activityMain.serviceMain.addToQueue(audioURI.getUri());
-                    }
-                } else {
-                    for (AudioURI audioURI : randomPlaylist.getProbFun().getProbMap().keySet()) {
-                        activityMain.serviceMain.addToQueue(audioURI.getUri());
-                    }
-                    activityMain.serviceMain.playNextInQueue();
-                    activityMain.showSongPane();
-                    activityMain.updateUI();
-                }
-            }
         }
 
         @Override

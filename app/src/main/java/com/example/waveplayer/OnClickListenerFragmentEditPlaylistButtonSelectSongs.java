@@ -4,11 +4,11 @@ import android.view.View;
 
 import androidx.navigation.fragment.NavHostFragment;
 
-public class OnClickListenerFragmentEditPlaylist implements View.OnClickListener {
+public class OnClickListenerFragmentEditPlaylistButtonSelectSongs implements View.OnClickListener {
 
     FragmentEditPlaylist fragmentEditPlaylist;
 
-    OnClickListenerFragmentEditPlaylist(FragmentEditPlaylist fragmentEditPlaylist){
+    OnClickListenerFragmentEditPlaylistButtonSelectSongs(FragmentEditPlaylist fragmentEditPlaylist){
         this.fragmentEditPlaylist = fragmentEditPlaylist;
     }
 

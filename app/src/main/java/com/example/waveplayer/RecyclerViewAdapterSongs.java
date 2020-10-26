@@ -72,7 +72,12 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                     item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                         @Override
                         public boolean onMenuItemClick(MenuItem item) {
-                            contextMenuAddToPlaylist();
+                            if (fragment instanceof FragmentSongs ||
+                            fragment instanceof FragmentPlaylist) {
+                                contextMenuAddToPlaylist(true);
+                            } else if(fragment instanceof FragmentPlaylists){
+                                contextMenuAddToPlaylist(false);
+                            }
                             return true;
                         }
                     });
@@ -134,13 +139,14 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
 
         }
 
-        private void contextMenuAddToPlaylist() {
+        private void contextMenuAddToPlaylist(boolean isSong) {
             ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
             if(activityMain != null) {
                 Bundle bundle = new Bundle();
                 bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, audioURI);
                 bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, activityMain.serviceMain.playlists);
-                DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist = new DialogFragmentAddToPlaylist();
+                DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist =
+                        new DialogFragmentAddToPlaylist(isSong);
                 dialogFragmentAddToPlaylist.setArguments(bundle);
                 dialogFragmentAddToPlaylist.show(fragment.getParentFragmentManager(), fragment.getTag());
             }

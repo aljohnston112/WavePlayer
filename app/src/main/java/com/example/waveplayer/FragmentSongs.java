@@ -29,14 +29,16 @@ public class FragmentSongs extends Fragment {
 
     ActivityMain activityMain;
 
+    View view;
+
     BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
     BroadcastReceiver broadcastReceiverOptionsMenuCreated;
 
-    private onQueryTextListenerSearch onQueryTextListenerSearch;
+    private OnQueryTextListenerSearch onQueryTextListenerSearch;
 
     boolean setUp = false;
-    
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,22 +47,23 @@ public class FragmentSongs extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.recycler_view_song_list, container, false);
+        view = inflater.inflate(R.layout.recycler_view_song_list, container, false);
+        activityMain = ((ActivityMain) getActivity());
+        if (activityMain != null && activityMain.serviceMain != null) {
+            activityMain.serviceMain.userPickedPlaylist = activityMain.serviceMain.masterPlaylist;
+        }
+        hideKeyBoard();
+        updateMainContent();
+        setUpToolbar();
+        setUpRecyclerView();
+        setUpBroadcastReceiverOnCompletion();
+        setUpBroadcastReceiverOnOptionsMenuCreated();
+        return view;
     }
 
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        activityMain = ((ActivityMain) getActivity());
-        if(activityMain != null && activityMain.serviceMain != null) {
-            activityMain.serviceMain.userPickedPlaylist = activityMain.serviceMain.masterPlaylist;
-        }
-        hideKeyBoard(view);
-        updateMainContent();
-        setUpToolbar();
-        setUpRecyclerView(view);
-        setUpBroadcastReceiverOnCompletion(view);
-        setUpBroadcastReceiverOnOptionsMenuCreated();
     }
 
     private void updateMainContent() {
@@ -71,37 +74,37 @@ public class FragmentSongs extends Fragment {
     private void setUpToolbar() {
         Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
         Menu menu = toolbar.getMenu();
-        if(menu != null) {
+        if (menu != null) {
             menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(true);
             menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(true);
             MenuItem itemSearch = menu.findItem(R.id.action_search);
             if (itemSearch != null) {
-                onQueryTextListenerSearch = new onQueryTextListenerSearch(activityMain, NAME);
+                onQueryTextListenerSearch = new OnQueryTextListenerSearch(activityMain, NAME);
                 SearchView searchView = (SearchView) itemSearch.getActionView();
                 searchView.setOnQueryTextListener(onQueryTextListenerSearch);
             }
         }
     }
 
-    private void hideKeyBoard(View view) {
+    private void hideKeyBoard() {
         InputMethodManager imm = (InputMethodManager)
                 activityMain.getSystemService(Activity.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
-    private void setUpBroadcastReceiverOnCompletion(final View view) {
+    private void setUpBroadcastReceiverOnCompletion() {
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
                 R.string.broadcast_receiver_action_service_connected));
         broadcastReceiverOnServiceConnected =
                 new BroadcastReceiverOnServiceConnected() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                    setUpRecyclerView(view);
-                    activityMain.updateUI();
-            }
-        };
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        setUpRecyclerView();
+                        activityMain.updateUI();
+                    }
+                };
         activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
     }
 
@@ -120,8 +123,8 @@ public class FragmentSongs extends Fragment {
     }
 
 
-    private void setUpRecyclerView(View view) {
-        if(activityMain.serviceMain != null && !setUp) {
+    private void setUpRecyclerView() {
+        if (activityMain.serviceMain != null && !setUp) {
             RecyclerView recyclerViewSongs = view.findViewById(R.id.recycler_view_song_list);
             RecyclerViewAdapterSongs recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(
                     this, new ArrayList<>(
@@ -135,12 +138,24 @@ public class FragmentSongs extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        hideKeyBoard(getView());
+        hideKeyBoard();
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
+        broadcastReceiverOnServiceConnected = null;
         activityMain.unregisterReceiver(broadcastReceiverOptionsMenuCreated);
-        activityMain = null;
+        broadcastReceiverOptionsMenuCreated = null;
+        Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
+        Menu menu = toolbar.getMenu();
+        if (menu != null) {
+            menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(true);
+            menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(true);
+            MenuItem itemSearch = menu.findItem(R.id.action_search);
+            SearchView searchView = (SearchView) itemSearch.getActionView();
+            searchView.setOnQueryTextListener(null);
+        }
         onQueryTextListenerSearch = null;
         setUp = false;
+        view = null;
+        activityMain = null;
     }
 
 }

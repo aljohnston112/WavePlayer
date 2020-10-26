@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -16,10 +15,8 @@ import android.widget.SearchView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -38,9 +35,19 @@ public class FragmentPlaylist extends Fragment {
 
     ActivityMain activityMain;
 
+    View view;
+
     BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
-    BroadcastReceiver broadcastReceiver;
+    BroadcastReceiver broadcastReceiverOptionsMenuCreated;
+
+    RecyclerView recyclerViewSongList;
+
+    OnQueryTextListenerSearch onQueryTextListenerSearch;
+    SongItemTouchListener songItemTouchListener;
+    ItemTouchHelper itemTouchHelper;
+    OnClickListenerFABFragmentPlaylist onClickListenerFABFragmentPlaylist;
+    FragmentPlaylist.UndoListenerSongRemoved undoListenerSongRemoved;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -50,27 +57,34 @@ public class FragmentPlaylist extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.recycler_view_song_list, container, false);
+        view = inflater.inflate(R.layout.recycler_view_song_list, container, false);
+        activityMain = ((ActivityMain) getActivity());
+        if(activityMain != null) {
+            activityMain.isSong = false;
+        }
+        onClickListenerFABFragmentPlaylist = new OnClickListenerFABFragmentPlaylist(this);
+        setUpBroadCastReceiverOnCompletion();
+        setUpBroadcastReceiverServiceOnOptionsMenuCreated();
+        updateFAB();
+        setUpUI();
+        setUpSearchPane();
+        hideKeyBoard();
+        return view;
     }
 
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        activityMain = ((ActivityMain) getActivity());
-        setUpBroadCastReceiverOnCompletion(view);
-        setUpBroadcastReceiverServiceOnOptionsMenuCreated();
-        updateFAB();
-        setUpUI(view);
-        setUpSearchPane();
-        hideKeyBoard(view);
     }
 
     private void setUpSearchPane(){
         SearchView searchView = activityMain.findViewById(R.id.search_view_search);
-        searchView.setOnQueryTextListener(new onQueryTextListenerSearch(activityMain, NAME));
+        onQueryTextListenerSearch =
+                new OnQueryTextListenerSearch(activityMain, NAME);
+        searchView.setOnQueryTextListener(onQueryTextListenerSearch);
     }
 
-    private void hideKeyBoard(View view) {
+    private void hideKeyBoard() {
         InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(Activity.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
@@ -80,7 +94,7 @@ public class FragmentPlaylist extends Fragment {
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
                 R.string.broadcast_receiver_on_create_options_menu));
-        broadcastReceiver = new BroadcastReceiver() {
+        broadcastReceiverOptionsMenuCreated = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
@@ -91,10 +105,10 @@ public class FragmentPlaylist extends Fragment {
                 menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(true);
             }
         };
-        activityMain.registerReceiver(broadcastReceiver, filterComplete);
+        activityMain.registerReceiver(broadcastReceiverOptionsMenuCreated, filterComplete);
     }
 
-    private void setUpBroadCastReceiverOnCompletion(final View view) {
+    private void setUpBroadCastReceiverOnCompletion() {
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -102,22 +116,23 @@ public class FragmentPlaylist extends Fragment {
         broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                setUpUI(view);
+                setUpUI();
             }
         };
         activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
     }
 
-    private void setUpUI(View view) {
+    private void setUpUI() {
         if (activityMain.serviceMain != null) {
-            RecyclerView recyclerViewSongList = view.findViewById(R.id.recycler_view_song_list);
+            recyclerViewSongList = view.findViewById(R.id.recycler_view_song_list);
             activityMain.setActionBarTitle(activityMain.serviceMain.userPickedPlaylist.getName());
             recyclerViewSongList.setLayoutManager(new LinearLayoutManager(recyclerViewSongList.getContext()));
             RecyclerViewAdapterSongs recyclerViewAdapterSongsList
                     = new RecyclerViewAdapterSongs(this, new ArrayList<>(
                     activityMain.serviceMain.userPickedPlaylist.getProbFun().getProbMap().keySet()));
             recyclerViewSongList.setAdapter(recyclerViewAdapterSongsList);
-            ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new SongItemTouchListener(recyclerViewSongList));
+            songItemTouchListener = new SongItemTouchListener();
+            itemTouchHelper = new ItemTouchHelper(songItemTouchListener);
             itemTouchHelper.attachToRecyclerView(recyclerViewSongList);
         }
     }
@@ -125,24 +140,10 @@ public class FragmentPlaylist extends Fragment {
     private void updateFAB() {
         activityMain.setFabImage(R.drawable.ic_add_black_24dp);
         activityMain.showFab(true);
-        activityMain.setFabOnClickListener(new View.OnClickListener() {
-            @RequiresApi(api = Build.VERSION_CODES.M)
-            @Override
-            public void onClick(View view) {
-                activityMain.serviceMain.userPickedSongs.clear();
-                NavHostFragment.findNavController(FragmentPlaylist.this)
-                        .navigate(FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSelectSongs());
-            }
-        });
+        activityMain.setFabOnClickListener(onClickListenerFABFragmentPlaylist);
     }
 
     class SongItemTouchListener extends ItemTouchHelper.Callback {
-
-        RecyclerView recyclerView;
-
-        SongItemTouchListener(RecyclerView recyclerView) {
-            this.recyclerView = recyclerView;
-        }
 
         @Override
         public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
@@ -170,7 +171,7 @@ public class FragmentPlaylist extends Fragment {
         @Override
         public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
             RecyclerViewAdapterSongs recyclerViewAdapterSongsList =
-                    (RecyclerViewAdapterSongs) recyclerView.getAdapter();
+                    (RecyclerViewAdapterSongs) recyclerViewSongList.getAdapter();
             if (recyclerViewAdapterSongsList != null) {
                 int position = viewHolder.getAdapterPosition();
                 ProbFun<AudioURI> probFun = activityMain.serviceMain.userPickedPlaylist.getProbFun();
@@ -183,9 +184,10 @@ public class FragmentPlaylist extends Fragment {
                 Snackbar snackbar = Snackbar.make(
                         activityMain.findViewById(R.id.coordinatorLayoutActivityMain),
                         R.string.song_removed, BaseTransientBottomBar.LENGTH_LONG);
-                snackbar.setAction(R.string.undo,
+                undoListenerSongRemoved =
                         new FragmentPlaylist.UndoListenerSongRemoved(recyclerViewAdapterSongsList,
-                                audioURI, prob, position));
+                                audioURI, prob, position);
+                snackbar.setAction(R.string.undo, undoListenerSongRemoved);
                 snackbar.show();
             }
         }
@@ -250,9 +252,20 @@ public class FragmentPlaylist extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        recyclerViewSongList.setAdapter(null);
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
-        activityMain.unregisterReceiver(broadcastReceiver);
+        broadcastReceiverOnServiceConnected = null;
+        activityMain.unregisterReceiver(broadcastReceiverOptionsMenuCreated);
+        broadcastReceiverOptionsMenuCreated = null;
+        SearchView searchView = activityMain.findViewById(R.id.search_view_search);
+        searchView.setOnQueryTextListener(null);
+        onQueryTextListenerSearch = null;
+        itemTouchHelper.attachToRecyclerView(null);
+        songItemTouchListener = null;
+        itemTouchHelper = null;
+        onClickListenerFABFragmentPlaylist = null;
         activityMain = null;
+        view = null;
     }
 
 }

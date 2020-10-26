@@ -30,17 +30,21 @@ import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitle
 
 public class FragmentTitle extends Fragment {
 
-    private static final int REQUEST_CODE_OPEN_FOLDER = 9367;
+    public static final int REQUEST_CODE_OPEN_FOLDER = 9367;
 
     ActivityMain activityMain;
 
+    View view;
+
     BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
+
+    OnClickListenerFragmentTitleButtons onClickListenerFragmentTitleButtons;
 
     Uri uriUserPicked;
 
     long mediaStoreUriID;
 
-    List<AudioURI> audioURIs = new ArrayList<>();
+    List<AudioURI> audioURIs;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -49,7 +53,14 @@ public class FragmentTitle extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_title, container, false);
+        view = inflater.inflate(R.layout.fragment_title, container, false);
+        activityMain = ((ActivityMain) getActivity());
+        audioURIs = new ArrayList<>();
+        onClickListenerFragmentTitleButtons = new OnClickListenerFragmentTitleButtons(this);
+        updateMainContent();
+        setUpButtons();
+        setUpBroadCastReceiver();
+        return view;
     }
 
     private void setUpBroadCastReceiver() {
@@ -106,15 +117,6 @@ public class FragmentTitle extends Fragment {
         activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
     }
 
-
-    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        activityMain = ((ActivityMain) getActivity());
-        updateMainContent();
-        setUpButtons(view);
-        setUpBroadCastReceiver();
-    }
-
     private void updateMainContent() {
         if (activityMain != null) {
             activityMain.setActionBarTitle(getResources().getString(R.string.app_name));
@@ -122,38 +124,11 @@ public class FragmentTitle extends Fragment {
         }
     }
 
-    private void setUpButtons(View view) {
-        view.findViewById(R.id.button_playlists).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                NavHostFragment.findNavController(FragmentTitle.this)
-                        .navigate(actionFragmentTitleToFragmentPlaylists());
-            }
-        });
-        view.findViewById(R.id.button_songs).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                NavHostFragment.findNavController(FragmentTitle.this)
-                        .navigate(actionFragmentTitleToFragmentSongs());
-            }
-        });
-        view.findViewById(R.id.button_settings).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                NavHostFragment.findNavController(FragmentTitle.this)
-                        .navigate(actionFragmentTitleToFragmentSettings());
-            }
-        });
-        view.findViewById(R.id.button_folder_search).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                String title = getResources().getString(R.string.pick_folder);
-                Intent chooser = Intent.createChooser(intent, title);
-                startActivityForResult(chooser, REQUEST_CODE_OPEN_FOLDER);
-            }
-        });
+    private void setUpButtons() {
+        view.findViewById(R.id.button_playlists).setOnClickListener(onClickListenerFragmentTitleButtons);
+        view.findViewById(R.id.button_songs).setOnClickListener(onClickListenerFragmentTitleButtons);
+        view.findViewById(R.id.button_settings).setOnClickListener(onClickListenerFragmentTitleButtons);
+        view.findViewById(R.id.button_folder_search).setOnClickListener(onClickListenerFragmentTitleButtons);
     }
 
     @Override
@@ -247,7 +222,19 @@ public class FragmentTitle extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
+        broadcastReceiverOnServiceConnected = null;
         activityMain = null;
+        uriUserPicked = null;
+        for (int i = 0; i < audioURIs.size(); i++) {
+            audioURIs.set(i, null);
+        }
+        audioURIs = null;
+        view.findViewById(R.id.button_playlists).setOnClickListener(null);
+        view.findViewById(R.id.button_songs).setOnClickListener(null);
+        view.findViewById(R.id.button_settings).setOnClickListener(null);
+        view.findViewById(R.id.button_folder_search).setOnClickListener(null);
+        onClickListenerFragmentTitleButtons = null;
+        view= null;
     }
 
 }

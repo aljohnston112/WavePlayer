@@ -47,7 +47,8 @@ public class ActivityMain extends AppCompatActivity {
 
     // TODO update fab with extended FAB
     // TODO help page
-    // TODO stop Fragments from leaking FAB on click listeners and SearchView query listeners.
+    // TODO check for leaks
+    // TODO allow renaming of playlists
 
     static final String DEBUG_TAG = "debug";
     static final String TAG = "ActivityMain";
@@ -60,7 +61,7 @@ public class ActivityMain extends AppCompatActivity {
     public static final int MENU_ACTION_ADD_TO_QUEUE = 3;
 
     public ServiceMain serviceMain;
-    final private ServiceConnection connection = new ConnectionServiceMain(this);
+    private ServiceConnection connection = new ConnectionServiceMain(this);
 
     BroadcastReceiverOnCompletion broadcastReceiverOnCompletion =
             new BroadcastReceiverOnCompletion(this);
@@ -68,9 +69,21 @@ public class ActivityMain extends AppCompatActivity {
             broadcastReceiverNotificationButtonsForActivityMain =
             new BroadcastReceiverNotificationButtonsForActivityMain(this);
 
+    OnDestinationChangedListenerToolbar onDestinationChangedListenerToolbar =
+            new OnDestinationChangedListenerToolbar(this);
+
+    OnDestinationChangedListenerPanes onDestinationChangedListenerPanes =
+            new OnDestinationChangedListenerPanes(this);
+
+    OnClickListenerSongPane onClickListenerSongPane = new OnClickListenerSongPane(this);
+
+    OnSeekBarChangeListener onSeekBarChangeListener = new OnSeekBarChangeListener(this);
+
     final Object lock = new Object();
 
     boolean searchInProgress = false;
+
+    boolean isSong;
 
     // region lifecycle
 
@@ -115,7 +128,7 @@ public class ActivityMain extends AppCompatActivity {
         Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
         if (fragment != null) {
             NavHostFragment.findNavController(fragment).addOnDestinationChangedListener(
-                    new OnDestinationChangedListenerToolbar(this));
+                    onDestinationChangedListenerToolbar);
         }
     }
 
@@ -280,7 +293,6 @@ public class ActivityMain extends AppCompatActivity {
 
     private void linkSongPaneButtons() {
         Log.v(TAG, "linking song pane buttons");
-        OnClickListenerSongPane onClickListenerSongPane = new OnClickListenerSongPane(this);
         findViewById(R.id.imageButtonSongPaneNext).setOnClickListener(onClickListenerSongPane);
         findViewById(R.id.imageButtonSongPanePlayPause).setOnClickListener(onClickListenerSongPane);
         findViewById(R.id.imageButtonSongPanePrev).setOnClickListener(onClickListenerSongPane);
@@ -294,7 +306,7 @@ public class ActivityMain extends AppCompatActivity {
         Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
         if (fragment != null) {
             NavHostFragment.findNavController(fragment).addOnDestinationChangedListener(
-                    new OnDestinationChangedListenerPanes(this));
+                    onDestinationChangedListenerPanes);
         }
     }
 
@@ -303,9 +315,35 @@ public class ActivityMain extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
+        FloatingActionButton fab = findViewById(R.id.fab);
+        fab.setOnClickListener(null);
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
+        if (fragment != null) {
+            NavHostFragment.findNavController(fragment).removeOnDestinationChangedListener(
+                    onDestinationChangedListenerToolbar);
+            NavHostFragment.findNavController(fragment).removeOnDestinationChangedListener(
+                    onDestinationChangedListenerPanes);
+        }
+        onDestinationChangedListenerToolbar = null;
+        onDestinationChangedListenerPanes = null;
+        SeekBar seekBar = findViewById(R.id.seekBar);
+        if (seekBar != null) {
+            seekBar.setOnSeekBarChangeListener(null);
+        }
+        onSeekBarChangeListener = null;
+        findViewById(R.id.imageButtonSongPaneNext).setOnClickListener(null);
+        findViewById(R.id.imageButtonSongPanePlayPause).setOnClickListener(null);
+        findViewById(R.id.imageButtonSongPanePrev).setOnClickListener(null);
+        findViewById(R.id.textViewSongPaneSongName).setOnClickListener(null);
+        findViewById(R.id.imageViewSongPaneSongArt).setOnClickListener(null);
+        onClickListenerSongPane = null;
         getApplicationContext().unbindService(connection);
+        connection = null;
         unregisterReceiver(broadcastReceiverOnCompletion);
+        broadcastReceiverOnCompletion = null;
         unregisterReceiver(broadcastReceiverNotificationButtonsForActivityMain);
+        broadcastReceiverNotificationButtonsForActivityMain = null;
     }
 
     @Override
@@ -425,7 +463,7 @@ public class ActivityMain extends AppCompatActivity {
             final int maxMillis = serviceMain.currentSong.getDuration(getApplicationContext());
             seekBar.setProgress(getCurrentTime());
             seekBar.setMax(maxMillis);
-            seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener(this));
+            seekBar.setOnSeekBarChangeListener(onSeekBarChangeListener);
             setUpSeekBarUpdater(maxMillis);
         }
     }
@@ -688,7 +726,7 @@ public class ActivityMain extends AppCompatActivity {
         } else if (item.getItemId() == R.id.action_add_to_playlist) {
             FragmentManager fragmentManager = getSupportFragmentManager();
             Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
-            DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist = new DialogFragmentAddToPlaylist();
+            DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist = new DialogFragmentAddToPlaylist(isSong);
             dialogFragmentAddToPlaylist.setArguments(loadBundleForAddToPlaylist());
             dialogFragmentAddToPlaylist.show(fragmentManager, fragment.getTag());
             return true;

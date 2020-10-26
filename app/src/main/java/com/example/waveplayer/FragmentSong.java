@@ -31,9 +31,17 @@ public class FragmentSong extends Fragment {
 
     ActivityMain activityMain;
 
+    View view;
+
     BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
     BroadcastReceiver broadcastReceiverOptionsMenuCreated;
+
+    OnClickListenerFragmentSong onClickListenerFragmentSong;
+
+    OnTouchListenerFragmentSongButtons onTouchListenerFragmentSongButtons;
+
+    OnLayoutChangeListenerFragmentSongButtons onLayoutChangeListenerFragmentSongButtons;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -43,28 +51,31 @@ public class FragmentSong extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_song, container, false);
-    }
-
-    @Override
-    public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+        view = inflater.inflate(R.layout.fragment_song, container, false);
         activityMain = ((ActivityMain) getActivity());
         if (activityMain != null) {
             if (activityMain.serviceMain != null) {
                 activityMain.serviceMain.fragmentSongVisible = true;
             }
+            activityMain.isSong = true;
             activityMain.setActionBarTitle(getResources().getString(R.string.now_playing));
             activityMain.showFab(false);
-            activityMain.updateUI();
         }
-        hideKeyBoard(view);
-        setUpButtons(view);
-        setUpBroadcastReceiverServiceConnected(view);
+        hideKeyBoard();
+        setUpButtons();
+        setUpBroadcastReceiverServiceConnected();
         setUpBroadcastReceiverServiceOnOptionsMenuCreated();
+        onTouchListenerFragmentSongButtons = new OnTouchListenerFragmentSongButtons();
+        return view;
     }
 
-    private void hideKeyBoard(View view) {
+    @Override
+    public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        activityMain.updateUI();
+    }
+
+    private void hideKeyBoard() {
         InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(Activity.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
@@ -86,7 +97,7 @@ public class FragmentSong extends Fragment {
         activityMain.registerReceiver(broadcastReceiverOptionsMenuCreated, filterComplete);
     }
 
-    private void setUpBroadcastReceiverServiceConnected(final View view) {
+    private void setUpBroadcastReceiverServiceConnected() {
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -94,20 +105,20 @@ public class FragmentSong extends Fragment {
         broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                notifyServiceConnected(view);
+                notifyServiceConnected();
             }
         };
         activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
     }
 
-    public void notifyServiceConnected(View view) {
+    public void notifyServiceConnected() {
         activityMain.serviceMain.fragmentSongVisible = true;
         activityMain.updateUI();
-        setUpButtons(view);
+        setUpButtons();
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private void setUpButtons(final View view) {
+    private void setUpButtons() {
         final ImageButton buttonBad = view.findViewById(R.id.button_thumb_down);
         final ImageButton buttonGood = view.findViewById(R.id.button_thumb_up);
         final ImageButton buttonShuffle = view.findViewById(R.id.imageButtonShuffle);
@@ -115,8 +126,7 @@ public class FragmentSong extends Fragment {
         final ImageButton buttonPause = view.findViewById(R.id.imageButtonPlayPause);
         final ImageButton buttonNext = view.findViewById(R.id.imageButtonNext);
         final ImageButton buttonLoop = view.findViewById(R.id.imageButtonRepeat);
-        OnClickListenerFragmentSong onClickListenerFragmentSong =
-                new OnClickListenerFragmentSong(activityMain);
+        onClickListenerFragmentSong = new OnClickListenerFragmentSong(activityMain);
         buttonBad.setOnClickListener(onClickListenerFragmentSong);
         buttonGood.setOnClickListener(onClickListenerFragmentSong);
         buttonShuffle.setOnClickListener(onClickListenerFragmentSong);
@@ -124,111 +134,13 @@ public class FragmentSong extends Fragment {
         buttonPause.setOnClickListener(onClickListenerFragmentSong);
         buttonNext.setOnClickListener(onClickListenerFragmentSong);
         buttonLoop.setOnClickListener(onClickListenerFragmentSong);
-        buttonBad.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch (motionEvent.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        buttonBad.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
-                        return true;
-                    case MotionEvent.ACTION_UP:
-                        buttonBad.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
-                        buttonBad.performClick();
-                        return true;
-                }
-                return false;
-            }
-        });
-        buttonGood.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch (motionEvent.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        buttonGood.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
-                        return true;
-                    case MotionEvent.ACTION_UP:
-                        buttonGood.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
-                        buttonGood.performClick();
-                        return true;
-                }
-                return false;
-            }
-        });
-        buttonShuffle.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch (motionEvent.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        buttonShuffle.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
-                        return true;
-                    case MotionEvent.ACTION_UP:
-                        buttonShuffle.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
-                        buttonShuffle.performClick();
-                        return true;
-                }
-                return false;
-            }
-        });
-        buttonPrev.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch (motionEvent.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        buttonPrev.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
-                        return true;
-                    case MotionEvent.ACTION_UP:
-                        buttonPrev.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
-                        buttonPrev.performClick();
-                        return true;
-                }
-                return false;
-            }
-        });
-        buttonPause.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch (motionEvent.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        buttonPause.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
-                        return true;
-                    case MotionEvent.ACTION_UP:
-                        buttonPause.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
-                        buttonPause.performClick();
-                        return true;
-                }
-                return false;
-            }
-        });
-        buttonNext.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch (motionEvent.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        buttonNext.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
-                        return true;
-                    case MotionEvent.ACTION_UP:
-                        buttonNext.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
-                        buttonNext.performClick();
-                        return true;
-                }
-                return false;
-            }
-        });
-        buttonLoop.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch (motionEvent.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        buttonLoop.setBackgroundColor(getResources().getColor(R.color.colorOnSecondary));
-                        return true;
-                    case MotionEvent.ACTION_UP:
-                        buttonLoop.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
-                        buttonLoop.performClick();
-                        return true;
-                }
-                return false;
-            }
-        });
+        buttonBad.setOnTouchListener(onTouchListenerFragmentSongButtons);
+        buttonGood.setOnTouchListener(onTouchListenerFragmentSongButtons);
+        buttonShuffle.setOnTouchListener(onTouchListenerFragmentSongButtons);
+        buttonPrev.setOnTouchListener(onTouchListenerFragmentSongButtons);
+        buttonPause.setOnTouchListener(onTouchListenerFragmentSongButtons);
+        buttonNext.setOnTouchListener(onTouchListenerFragmentSongButtons);
+        buttonLoop.setOnTouchListener(onTouchListenerFragmentSongButtons);
         if (activityMain.serviceMain != null) {
             if (activityMain.serviceMain.shuffling) {
                 buttonShuffle.setImageResource(R.drawable.ic_shuffle_black_24dp);
@@ -244,171 +156,44 @@ public class FragmentSong extends Fragment {
                 buttonLoop.setImageResource(R.drawable.repeat_white_24dp);
             }
         }
-        view.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
-            @Override
-            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                setUpGood();
-                setUpBad();
-                setUpShuffle();
-                setUpPrev();
-                setUpPlay();
-                setUpNext();
-                setUpLoop();
-            }
-
-            private void setUpGood() {
-                ImageView imageView = view.findViewById(R.id.button_thumb_up);
-                int width = imageView.getMeasuredWidth();
-                //noinspection SuspiciousNameCombination
-                int height = width;
-                Drawable drawable = ResourcesCompat.getDrawable(getResources(),
-                        R.drawable.thumb_up_alt_black_24dp, null);
-                if (drawable != null) {
-                    drawable.setBounds(0, 0, width, height);
-                    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-                    Canvas canvas = new Canvas(bitmap);
-                    drawable.draw(canvas);
-                    Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
-                    bitmap.recycle();
-                    imageView.setImageBitmap(bitmapResized);
-                }
-            }
-
-            private void setUpBad() {
-                ImageView imageView = view.findViewById(R.id.button_thumb_down);
-                int width = imageView.getMeasuredWidth();
-                //noinspection SuspiciousNameCombination
-                int height = width;
-                Drawable drawable = ResourcesCompat.getDrawable(getResources(),
-                        R.drawable.thumb_down_alt_black_24dp, null);
-                if (drawable != null) {
-                    drawable.setBounds(0, 0, width, height);
-                    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-                    Canvas canvas = new Canvas(bitmap);
-                    drawable.draw(canvas);
-                    Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
-                    bitmap.recycle();
-                    imageView.setImageBitmap(bitmapResized);
-                }
-            }
-
-            private void setUpShuffle() {
-                ImageView imageView = view.findViewById(R.id.imageButtonShuffle);
-                int width = imageView.getMeasuredWidth();
-                //noinspection SuspiciousNameCombination
-                int height = width;
-                Drawable drawable;
-                if (activityMain.serviceMain.shuffling) {
-                    drawable = ResourcesCompat.getDrawable(getResources(),
-                            R.drawable.ic_shuffle_black_24dp, null);
-                } else {
-                    drawable = ResourcesCompat.getDrawable(getResources(),
-                            R.drawable.ic_shuffle_white_24dp, null);
-                }
-                if (drawable != null) {
-                    drawable.setBounds(0, 0, width, height);
-                    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-                    Canvas canvas = new Canvas(bitmap);
-                    drawable.draw(canvas);
-                    Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
-                    bitmap.recycle();
-                    imageView.setImageBitmap(bitmapResized);
-                }
-            }
-
-            private void setUpNext() {
-                ImageView imageView = view.findViewById(R.id.imageButtonNext);
-                int width = imageView.getMeasuredWidth();
-                //noinspection SuspiciousNameCombination
-                int height = width;
-                Drawable drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.skip_next_black_24dp, null);
-                if (drawable != null) {
-                    drawable.setBounds(0, 0, width, height);
-                    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-                    Canvas canvas = new Canvas(bitmap);
-                    drawable.draw(canvas);
-                    Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
-                    bitmap.recycle();
-                    imageView.setImageBitmap(bitmapResized);
-                }
-            }
-
-            private void setUpPlay() {
-                ImageView imageView = view.findViewById(R.id.imageButtonPlayPause);
-                int width = imageView.getMeasuredWidth();
-                //noinspection SuspiciousNameCombination
-                int height = width;
-                Drawable drawable;
-                ActivityMain activityMain = ((ActivityMain) getActivity());
-                if (activityMain != null && activityMain.serviceMain != null && activityMain.serviceMain.isPlaying()) {
-                    drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.pause_black_24dp, null);
-                } else {
-                    drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.play_arrow_black_24dp, null);
-                }
-                if (drawable != null) {
-                    drawable.setBounds(0, 0, width, height);
-                    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-                    Canvas canvas = new Canvas(bitmap);
-                    drawable.draw(canvas);
-                    Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
-                    bitmap.recycle();
-                    imageView.setImageBitmap(bitmapResized);
-                }
-            }
-
-            private void setUpPrev() {
-                ImageView imageView = view.findViewById(R.id.imageButtonPrev);
-                int width = imageView.getMeasuredWidth();
-                //noinspection SuspiciousNameCombination
-                int height = width;
-                Drawable drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.skip_previous_black_24dp, null);
-                if (drawable != null) {
-                    drawable.setBounds(0, 0, width, height);
-                    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-                    Canvas canvas = new Canvas(bitmap);
-                    drawable.draw(canvas);
-                    Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
-                    bitmap.recycle();
-                    imageView.setImageBitmap(bitmapResized);
-                }
-            }
-
-            private void setUpLoop() {
-                ImageView imageView = view.findViewById(R.id.imageButtonRepeat);
-                int width = imageView.getMeasuredWidth();
-                //noinspection SuspiciousNameCombination
-                int height = width;
-                Drawable drawable;
-
-                if (activityMain.serviceMain.loopingOne) {
-                    drawable = ResourcesCompat.getDrawable(getResources(),
-                            R.drawable.repeat_one_black_24dp, null);
-                } else if (activityMain.serviceMain.looping) {
-                    drawable = ResourcesCompat.getDrawable(getResources(),
-                            R.drawable.repeat_black_24dp, null);
-                } else {
-                    drawable = ResourcesCompat.getDrawable(getResources(),
-                            R.drawable.repeat_white_24dp, null);
-                }
-                if (drawable != null) {
-                    drawable.setBounds(0, 0, width, height);
-                    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-                    Canvas canvas = new Canvas(bitmap);
-                    drawable.draw(canvas);
-                    Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
-                    bitmap.recycle();
-                    imageView.setImageBitmap(bitmapResized);
-                }
-            }
-
-        });
+        onLayoutChangeListenerFragmentSongButtons =
+                new OnLayoutChangeListenerFragmentSongButtons(activityMain);
+        view.addOnLayoutChangeListener(onLayoutChangeListenerFragmentSongButtons);
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
+        broadcastReceiverOnServiceConnected = null;
         activityMain.unregisterReceiver(broadcastReceiverOptionsMenuCreated);
+        broadcastReceiverOptionsMenuCreated = null;
+        final ImageButton buttonBad = view.findViewById(R.id.button_thumb_down);
+        final ImageButton buttonGood = view.findViewById(R.id.button_thumb_up);
+        final ImageButton buttonShuffle = view.findViewById(R.id.imageButtonShuffle);
+        final ImageButton buttonPrev = view.findViewById(R.id.imageButtonPrev);
+        final ImageButton buttonPause = view.findViewById(R.id.imageButtonPlayPause);
+        final ImageButton buttonNext = view.findViewById(R.id.imageButtonNext);
+        final ImageButton buttonLoop = view.findViewById(R.id.imageButtonRepeat);
+        buttonBad.setOnClickListener(null);
+        buttonGood.setOnClickListener(null);
+        buttonShuffle.setOnClickListener(null);
+        buttonPrev.setOnClickListener(null);
+        buttonPause.setOnClickListener(null);
+        buttonNext.setOnClickListener(null);
+        buttonLoop.setOnClickListener(null);
+        buttonBad.setOnTouchListener(null);
+        buttonGood.setOnTouchListener(null);
+        buttonShuffle.setOnTouchListener(null);
+        buttonPrev.setOnTouchListener(null);
+        buttonPause.setOnTouchListener(null);
+        buttonNext.setOnTouchListener(null);
+        buttonLoop.setOnTouchListener(null);
+        onClickListenerFragmentSong = null;
+        onTouchListenerFragmentSongButtons = null;
+        view.removeOnLayoutChangeListener(onLayoutChangeListenerFragmentSongButtons);
+        onLayoutChangeListenerFragmentSongButtons = null;
+        view = null;
         activityMain = null;
     }
 

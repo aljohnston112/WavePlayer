@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -15,10 +14,8 @@ import android.view.inputmethod.InputMethodManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -34,11 +31,23 @@ public class FragmentPlaylists extends Fragment {
 
     ActivityMain activityMain;
 
+    View view;
+
     BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
     BroadcastReceiver broadcastReceiverOptionsMenuCreated;
 
+    OnClickListenerFABFragmentPlaylists onClickListenerFABFragmentPlaylists;
+
+    ItemTouchHelper itemTouchHelper;
+    ItemTouchListenerPlaylist itemTouchListenerPlaylist;
+    UndoListenerPlaylistRemoved undoListenerPlaylistRemoved;
+
+    RecyclerView recyclerView;
+
     boolean setUp = false;
+
+    Snackbar snackbar;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -48,55 +57,50 @@ public class FragmentPlaylists extends Fragment {
     @Override
     public View onCreateView(
             LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.recycler_view_playlist_list, container, false);
+        activityMain = ((ActivityMain) getActivity());
+        view = inflater.inflate(R.layout.recycler_view_playlist_list, container, false);
+        onClickListenerFABFragmentPlaylists = new OnClickListenerFABFragmentPlaylists(this);
+        hideKeyBoard();
+        updateMainContent();
+        setUpBroadcastReceiverOnServiceConnected();
+        setUpBroadcastReceiverServiceOnOptionsMenuCreated();
+        // TODO set up searching
+        return view;
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        activityMain = ((ActivityMain) getActivity());
-        hideKeyBoard(view);
-        updateMainContent(view);
-        setUpBroadcastReceiverOnServiceConnected(view);
-        setUpBroadcastReceiverServiceOnOptionsMenuCreated();
-        // TODO set up searching
+
     }
 
-    private void hideKeyBoard(View view) {
+    private void hideKeyBoard() {
         InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(Activity.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
-    private void updateMainContent(final View view) {
+    private void updateMainContent() {
         activityMain.setActionBarTitle(getResources().getString(R.string.playlists));
         updateFAB();
-        setUpRecyclerView(view);
+        setUpRecyclerView();
     }
 
     private void updateFAB() {
         activityMain.setFabImage(R.drawable.ic_add_black_24dp);
         activityMain.showFab(true);
-        activityMain.setFabOnClickListener(new View.OnClickListener() {
-            @RequiresApi(api = Build.VERSION_CODES.M)
-            @Override
-            public void onClick(View view) {
-                activityMain.serviceMain.userPickedPlaylist = null;
-                activityMain.serviceMain.userPickedSongs.clear();
-                NavHostFragment.findNavController(FragmentPlaylists.this).navigate(
-                        FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentEditPlaylist());
-            }
-        });
+        activityMain.setFabOnClickListener(onClickListenerFABFragmentPlaylists);
     }
 
-    private void setUpRecyclerView(View view) {
+    private void setUpRecyclerView() {
         if (activityMain.serviceMain != null && !setUp) {
-            RecyclerView recyclerView = view.findViewById(R.id.recycler_view_playlist_list);
+            recyclerView = view.findViewById(R.id.recycler_view_playlist_list);
             recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
             RecyclerViewAdapterPlaylists recyclerViewAdapter =
                     new RecyclerViewAdapterPlaylists(
                             this, activityMain.serviceMain.playlists);
             recyclerView.setAdapter(recyclerViewAdapter);
-            ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new ItemTouchListenerPlaylist());
+            itemTouchListenerPlaylist = new ItemTouchListenerPlaylist();
+            itemTouchHelper = new ItemTouchHelper(itemTouchListenerPlaylist);
             itemTouchHelper.attachToRecyclerView(recyclerView);
             setUp = true;
         }
@@ -130,7 +134,7 @@ public class FragmentPlaylists extends Fragment {
 
         @Override
         public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-            RecyclerView recyclerView = activityMain.findViewById(R.id.recycler_view_playlist_list);
+            recyclerView = activityMain.findViewById(R.id.recycler_view_playlist_list);
             RecyclerViewAdapterPlaylists recyclerViewAdapter =
                     (RecyclerViewAdapterPlaylists) recyclerView.getAdapter();
             if (recyclerViewAdapter != null) {
@@ -138,19 +142,19 @@ public class FragmentPlaylists extends Fragment {
                 RandomPlaylist randomPlaylist = activityMain.serviceMain.playlists.get(position);
                 activityMain.serviceMain.playlists.remove(position);
                 boolean isDirectoryPlaylist = false;
-                if(activityMain.serviceMain.directoryPlaylists.containsValue(randomPlaylist)){
+                if (activityMain.serviceMain.directoryPlaylists.containsValue(randomPlaylist)) {
                     isDirectoryPlaylist = true;
                     activityMain.serviceMain.directoryPlaylists.remove(randomPlaylist.mediaStoreUriID);
                 }
                 recyclerViewAdapter.notifyItemRemoved(position);
                 activityMain.serviceMain.saveFile();
-                Snackbar snackbar = Snackbar.make(
+                snackbar = Snackbar.make(
                         activityMain.findViewById(R.id.coordinatorLayoutActivityMain),
                         R.string.playlist_deleted, BaseTransientBottomBar.LENGTH_LONG);
-                snackbar.setAction(R.string.undo,
-                        new UndoListenerPlaylistRemoved(
-                                recyclerViewAdapter, randomPlaylist, position,
-                                isDirectoryPlaylist, randomPlaylist.mediaStoreUriID));
+                undoListenerPlaylistRemoved = new UndoListenerPlaylistRemoved(
+                        recyclerViewAdapter, randomPlaylist, position,
+                        isDirectoryPlaylist, randomPlaylist.mediaStoreUriID);
+                snackbar.setAction(R.string.undo, undoListenerPlaylistRemoved);
                 snackbar.show();
             }
         }
@@ -177,7 +181,7 @@ public class FragmentPlaylists extends Fragment {
         @Override
         public void onClick(View v) {
             activityMain.serviceMain.playlists.add(position, randomPlaylist);
-            if(isDirectoryPlaylist){
+            if (isDirectoryPlaylist) {
                 activityMain.serviceMain.directoryPlaylists.put(uriID, randomPlaylist);
             }
             recyclerViewAdapter.notifyItemInserted(position);
@@ -185,7 +189,7 @@ public class FragmentPlaylists extends Fragment {
         }
     }
 
-    private void setUpBroadcastReceiverOnServiceConnected(final View view) {
+    private void setUpBroadcastReceiverOnServiceConnected() {
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -193,7 +197,7 @@ public class FragmentPlaylists extends Fragment {
         broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                setUpRecyclerView(view);
+                setUpRecyclerView();
             }
         };
         activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
@@ -218,10 +222,23 @@ public class FragmentPlaylists extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        recyclerView.setAdapter(null);
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
+        broadcastReceiverOnServiceConnected = null;
         activityMain.unregisterReceiver(broadcastReceiverOptionsMenuCreated);
-        activityMain = null;
+        broadcastReceiverOptionsMenuCreated = null;
         setUp = false;
+        onClickListenerFABFragmentPlaylists = null;
+        itemTouchHelper.attachToRecyclerView(null);
+        itemTouchListenerPlaylist = null;
+        itemTouchHelper = null;
+        if(snackbar != null) {
+            snackbar.setAction(null, null);
+        }
+        undoListenerPlaylistRemoved = null;
+        snackbar = null;
+        view = null;
+        activityMain = null;
     }
 
 }

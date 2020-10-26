@@ -12,7 +12,6 @@ import android.view.ViewGroup;
 
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -28,7 +27,14 @@ public class FragmentEditPlaylist extends Fragment {
 
     ActivityMain activityMain;
 
+    View view;
+
     BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
+
+    OnClickListenerFragmentEditPlaylistButtonSelectSongs
+            onClickListenerFragmentEditPlaylistButtonSelectSongs;
+
+    OnClickListenerFABFragmentEditPlaylist onClickListenerFABFragmentEditPlaylist;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -38,20 +44,23 @@ public class FragmentEditPlaylist extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_edit_playlist, container, false);
-    }
-
-    @Override
-    public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+        view = inflater.inflate(R.layout.fragment_edit_playlist, container, false);
+        onClickListenerFragmentEditPlaylistButtonSelectSongs =
+                new OnClickListenerFragmentEditPlaylistButtonSelectSongs(this);
         activityMain = ((ActivityMain) getActivity());
         if (activityMain != null) {
             activityMain.setActionBarTitle(getResources().getString(R.string.edit_playlist));
         }
         updateFAB(view);
         view.findViewById(R.id.buttonEditSongs).setOnClickListener(
-                new OnClickListenerFragmentEditPlaylist(this));
+                onClickListenerFragmentEditPlaylistButtonSelectSongs);
         setUpBroadcastReceiverServiceConnected(view);
+        return view;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
     }
 
     private void updateFAB(View view) {
@@ -74,73 +83,19 @@ public class FragmentEditPlaylist extends Fragment {
                         activityMain.serviceMain.userPickedPlaylist.getName());
             }
             final ArrayList<AudioURI> finalPlaylistSongs = playlistSongs;
-            activityMain.setFabOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    String playlistName = finalEditTextPlaylistName.getText().toString();
-                    int playlistIndex = indexOfPlaylistWName(playlistName);
-                    if (activityMain.serviceMain.userPickedSongs.size() == 0) {
-                        Toast toast = Toast.makeText(getContext(),
-                                R.string.not_enough_songs_for_playlist, Toast.LENGTH_LONG);
-                        toast.show();
-                    } else if (playlistName.length() == 0) {
-                        Toast toast = Toast.makeText(getContext(),
-                                R.string.no_name_playlist, Toast.LENGTH_LONG);
-                        toast.show();
-                    } else if (playlistIndex != -1 &&
-                            activityMain.serviceMain.userPickedPlaylist == null) {
-                        Toast toast = Toast.makeText(getContext(),
-                                R.string.duplicate_name_playlist, Toast.LENGTH_LONG);
-                        toast.show();
-                    } else if (activityMain.serviceMain.userPickedPlaylist == null) {
-                        activityMain.serviceMain.playlists.add(new RandomPlaylist(
-                                activityMain.serviceMain.userPickedSongs,
-                                ServiceMain.MAX_PERCENT,
-                                finalEditTextPlaylistName.getText().toString(),
-                                false, -1));
-                        for (AudioURI audioURI : activityMain.serviceMain.userPickedSongs) {
-                            audioURI.setSelected(false);
-                        }
-                        activityMain.serviceMain.userPickedSongs.clear();
-                        activityMain.serviceMain.saveFile();
-                        popBackStackAndHideKeyboard(view);
-                    } else {
-                        for (AudioURI audioURI : finalPlaylistSongs) {
-                            if (!activityMain.serviceMain.userPickedSongs.contains(audioURI)) {
-                                activityMain.serviceMain.userPickedPlaylist.getProbFun().remove(audioURI);
-                            }
-                        }
-                        for (AudioURI audioURI : activityMain.serviceMain.userPickedSongs) {
-                            activityMain.serviceMain.userPickedPlaylist.getProbFun().add(audioURI);
-                            audioURI.setSelected(false);
-                        }
-                        activityMain.serviceMain.saveFile();
-                        popBackStackAndHideKeyboard(view);
-                    }
-                }
-
-                private int indexOfPlaylistWName(String playlistName) {
-                    int playlistIndex = -1;
-                    int i = 0;
-                    for (RandomPlaylist randomPlaylist : activityMain.serviceMain.playlists) {
-                        if (randomPlaylist.getName().equals(playlistName)) {
-                            playlistIndex = i;
-                        }
-                        i++;
-                    }
-                    return playlistIndex;
-                }
-
-                private void popBackStackAndHideKeyboard(View view) {
-                    NavController navController = NavHostFragment.findNavController(
-                            FragmentEditPlaylist.this);
-                    navController.popBackStack();
-                    InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(
-                            Activity.INPUT_METHOD_SERVICE);
-                    imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-                }
-            });
+            onClickListenerFABFragmentEditPlaylist = new OnClickListenerFABFragmentEditPlaylist(
+              this, finalPlaylistSongs,
+                    finalEditTextPlaylistName);
+            activityMain.setFabOnClickListener(onClickListenerFABFragmentEditPlaylist);
         }
+    }
+    void popBackStackAndHideKeyboard(View view) {
+        NavController navController = NavHostFragment.findNavController(
+                FragmentEditPlaylist.this);
+        navController.popBackStack();
+        InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(
+                Activity.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
     private void setUpBroadcastReceiverServiceConnected(final View view) {
@@ -161,7 +116,11 @@ public class FragmentEditPlaylist extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
+        view.findViewById(R.id.buttonEditSongs).setOnClickListener(null);
+        onClickListenerFragmentEditPlaylistButtonSelectSongs = null;
+        onClickListenerFABFragmentEditPlaylist = null;
         activityMain = null;
+        view = null;
     }
 
 }

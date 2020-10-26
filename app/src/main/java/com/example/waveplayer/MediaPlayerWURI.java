@@ -30,13 +30,15 @@ public class MediaPlayerWURI {
         }
     };
 
+    MOnPreparedListener mOnPreparedListener = new MOnPreparedListener(this);
+
     MediaPlayerWURI(final ServiceMain serviceMain, MediaPlayer mediaPlayer, AudioURI audioURI){
         this.serviceMain = serviceMain;
         this.mediaPlayer = mediaPlayer;
         this.audioURI = audioURI;
         mediaPlayer.setOnPreparedListener(null);
         mediaPlayer.setOnErrorListener(null);
-        mediaPlayer.setOnPreparedListener(new MOnPreparedListener(this));
+        mediaPlayer.setOnPreparedListener(mOnPreparedListener);
         mediaPlayer.setOnErrorListener(onErrorListener);
     }
 
