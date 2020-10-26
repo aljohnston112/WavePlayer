@@ -1,9 +1,6 @@
 package com.example.waveplayer;
 
-import android.os.Bundle;
-import android.view.ContextMenu;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -18,12 +15,15 @@ import java.util.List;
 
 public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerViewAdapterPlaylists.ViewHolder> {
 
-    public static final String BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST = "ADD_TO_PLAYLIST_PLAYLIST";
-    public static final String BUNDLE_KEY_PLAYLISTS = "PLAYLISTS";
-
     private final Fragment fragment;
 
     public List<RandomPlaylist> randomPlaylists;
+
+    OnCreateContextMenuListenerPlaylists onCreateContextMenuListenerPlaylists;
+
+    View.OnClickListener onClickListenerHandle;
+
+    View.OnClickListener onClickListenerViewHolder;
 
     public RecyclerViewAdapterPlaylists(Fragment fragment, List<RandomPlaylist> items) {
         this.fragment = fragment;
@@ -46,15 +46,45 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.randomPlaylist = randomPlaylists.get(position);
         holder.textViewPlaylistName.setText(randomPlaylists.get(position).getName());
-        holder.onCreateContextMenuListenerPlaylists = null;
-        holder.onCreateContextMenuListenerPlaylists =
+        holder.handle.setOnCreateContextMenuListener(null);
+        onCreateContextMenuListenerPlaylists =
                 new OnCreateContextMenuListenerPlaylists(fragment, holder.randomPlaylist);
+        holder.handle.setOnCreateContextMenuListener(onCreateContextMenuListenerPlaylists);
+        onClickListenerHandle = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                holder.handle.performLongClick();
+            }
+        };
+        holder.handle.setOnClickListener(null);
+        holder.handle.setOnClickListener(onClickListenerHandle);
+        onClickListenerViewHolder = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int position = holder.getAdapterPosition();
+                if (position != RecyclerView.NO_POSITION) {
+                    ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
+                    if (activityMain != null) {
+                        activityMain.serviceMain.userPickedPlaylist = holder.randomPlaylist;
+                    }
+                    NavHostFragment.findNavController(fragment).navigate(
+                            FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentPlaylist());
+                }
+            }
+        };
+        holder.playlistView.setOnClickListener(null);
+        holder.playlistView.setOnClickListener(onClickListenerViewHolder);
     }
 
     @Override
     public void onViewRecycled(@NonNull ViewHolder holder) {
         super.onViewRecycled(holder);
-        holder.onCreateContextMenuListenerPlaylists = null;
+        onCreateContextMenuListenerPlaylists = null;
+        holder.handle.setOnCreateContextMenuListener(null);
+        onClickListenerHandle = null;
+        holder.handle.setOnClickListener(null);
+        onClickListenerViewHolder = null;
+        holder.playlistView.setOnClickListener(null);
         holder.playlistView = null;
         holder.textViewPlaylistName = null;
         holder.randomPlaylist = null;
@@ -70,8 +100,7 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
         public View playlistView;
         public TextView textViewPlaylistName;
         public RandomPlaylist randomPlaylist;
-
-        OnCreateContextMenuListenerPlaylists onCreateContextMenuListenerPlaylists;
+        final ImageView handle;
 
         public ViewHolder(View view) {
             super(view);
@@ -80,28 +109,7 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
             if (randomPlaylist != null) {
                 textViewPlaylistName.setText(randomPlaylist.getName());
             }
-            final ImageView handle = view.findViewById(R.id.playlist_handle);
-            handle.setOnCreateContextMenuListener(onCreateContextMenuListenerPlaylists);
-            handle.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    handle.performLongClick();
-                }
-            });
-            view.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    int position = getAdapterPosition();
-                    if (position != RecyclerView.NO_POSITION) {
-                        ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
-                        if (activityMain != null) {
-                            activityMain.serviceMain.userPickedPlaylist = randomPlaylist;
-                        }
-                        NavHostFragment.findNavController(fragment).navigate(
-                                FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentPlaylist());
-                    }
-                }
-            });
+            handle = view.findViewById(R.id.playlist_handle);
         }
 
         @Override

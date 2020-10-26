@@ -40,8 +40,10 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static androidx.annotation.Dimension.SP;
-import static com.example.waveplayer.RecyclerViewAdapterSongs.BUNDLE_KEY_PLAYLISTS;
+import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST;
+import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG;
+import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_IS_SONG;
+import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_PLAYLISTS;
 
 public class ActivityMain extends AppCompatActivity {
 
@@ -154,7 +156,7 @@ public class ActivityMain extends AppCompatActivity {
                 appCompatTextView.setLayoutParams(params);
                 appCompatTextView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
 
-                appCompatTextView.setTextSize(30);
+                appCompatTextView.setTextSize(25);
             }
         }
         Log.v(TAG, "Centered the ActionBar title");
@@ -728,8 +730,8 @@ public class ActivityMain extends AppCompatActivity {
         } else if (item.getItemId() == R.id.action_add_to_playlist) {
             FragmentManager fragmentManager = getSupportFragmentManager();
             Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
-            DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist = new DialogFragmentAddToPlaylist(isSong);
-            dialogFragmentAddToPlaylist.setArguments(loadBundleForAddToPlaylist());
+            DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist = new DialogFragmentAddToPlaylist();
+            dialogFragmentAddToPlaylist.setArguments(loadBundleForAddToPlaylist(isSong));
             dialogFragmentAddToPlaylist.show(fragmentManager, fragment.getTag());
             return true;
         } else if (item.getItemId() == R.id.action_search) {
@@ -759,11 +761,12 @@ public class ActivityMain extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private Bundle loadBundleForAddToPlaylist() {
+    private Bundle loadBundleForAddToPlaylist(boolean isSong) {
         Bundle bundle = new Bundle();
-        bundle.putSerializable(RecyclerViewAdapterSongs.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, serviceMain.currentSong);
+        bundle.putBoolean(BUNDLE_KEY_IS_SONG, isSong);
+        bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, serviceMain.currentSong);
         bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, serviceMain.playlists);
-        bundle.putSerializable(RecyclerViewAdapterPlaylists.BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST, serviceMain.userPickedPlaylist);
+        bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST, serviceMain.userPickedPlaylist);
         return bundle;
     }
 

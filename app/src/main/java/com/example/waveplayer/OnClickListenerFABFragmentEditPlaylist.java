@@ -51,17 +51,29 @@ public class OnClickListenerFABFragmentEditPlaylist implements View.OnClickListe
             activityMain.serviceMain.saveFile();
             fragmentEditPlaylist.popBackStackAndHideKeyboard(view);
         } else {
-            for (AudioURI audioURI : finalPlaylistSongs) {
-                if (!activityMain.serviceMain.userPickedSongs.contains(audioURI)) {
-                    activityMain.serviceMain.userPickedPlaylist.getProbFun().remove(audioURI);
+            ArrayList<String> names = new ArrayList<>();
+            for (RandomPlaylist randomPlaylist : activityMain.serviceMain.playlists) {
+                names.add(randomPlaylist.getName());
+            }
+            if (activityMain.serviceMain.userPickedPlaylist.getName().equals(
+                    playlistName.getText().toString()) || !names.contains(playlistName.getText().toString())) {
+                activityMain.serviceMain.userPickedPlaylist.setName(playlistName.getText().toString());
+                for (AudioURI audioURI : finalPlaylistSongs) {
+                    if (!activityMain.serviceMain.userPickedSongs.contains(audioURI)) {
+                        activityMain.serviceMain.userPickedPlaylist.getProbFun().remove(audioURI);
+                    }
                 }
+                for (AudioURI audioURI : activityMain.serviceMain.userPickedSongs) {
+                    activityMain.serviceMain.userPickedPlaylist.getProbFun().add(audioURI);
+                    audioURI.setSelected(false);
+                }
+                activityMain.serviceMain.saveFile();
+                fragmentEditPlaylist.popBackStackAndHideKeyboard(view);
+            } else {
+                Toast toast = Toast.makeText(activityMain.getApplicationContext(),
+                        R.string.duplicate_name_playlist, Toast.LENGTH_LONG);
+                toast.show();
             }
-            for (AudioURI audioURI : activityMain.serviceMain.userPickedSongs) {
-                activityMain.serviceMain.userPickedPlaylist.getProbFun().add(audioURI);
-                audioURI.setSelected(false);
-            }
-            activityMain.serviceMain.saveFile();
-            fragmentEditPlaylist.popBackStackAndHideKeyboard(view);
         }
     }
 

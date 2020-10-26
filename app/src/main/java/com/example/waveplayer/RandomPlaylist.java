@@ -14,7 +14,7 @@ public class RandomPlaylist implements Serializable {
 
     private static final long serialVersionUID = 2323326608918863420L;
 
-    private final String name;
+    private String name;
 
     // The ProbFun that randomly picks the media to play
     private final ProbFun<AudioURI> probabilityFunction;
@@ -57,4 +57,7 @@ public class RandomPlaylist implements Serializable {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
 }
