@@ -61,23 +61,19 @@ public class ActivityMain extends AppCompatActivity {
     public static final int MENU_ACTION_ADD_TO_QUEUE = 3;
 
     public ServiceMain serviceMain;
-    private ServiceConnection connection = new ConnectionServiceMain(this);
+    private ServiceConnection connection;
 
-    BroadcastReceiverOnCompletion broadcastReceiverOnCompletion =
-            new BroadcastReceiverOnCompletion(this);
+    BroadcastReceiverOnCompletion broadcastReceiverOnCompletion;
     BroadcastReceiverNotificationButtonsForActivityMain
-            broadcastReceiverNotificationButtonsForActivityMain =
-            new BroadcastReceiverNotificationButtonsForActivityMain(this);
+            broadcastReceiverNotificationButtonsForActivityMain;
 
-    OnDestinationChangedListenerToolbar onDestinationChangedListenerToolbar =
-            new OnDestinationChangedListenerToolbar(this);
+    OnDestinationChangedListenerToolbar onDestinationChangedListenerToolbar;
 
-    OnDestinationChangedListenerPanes onDestinationChangedListenerPanes =
-            new OnDestinationChangedListenerPanes(this);
+    OnDestinationChangedListenerPanes onDestinationChangedListenerPanes;
 
-    OnClickListenerSongPane onClickListenerSongPane = new OnClickListenerSongPane(this);
+    OnClickListenerSongPane onClickListenerSongPane;
 
-    OnSeekBarChangeListener onSeekBarChangeListener = new OnSeekBarChangeListener(this);
+    OnSeekBarChangeListener onSeekBarChangeListener;
 
     final Object lock = new Object();
 
@@ -104,6 +100,14 @@ public class ActivityMain extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        connection = new ConnectionServiceMain(this);
+        broadcastReceiverOnCompletion = new BroadcastReceiverOnCompletion(this);
+        broadcastReceiverNotificationButtonsForActivityMain =
+                new BroadcastReceiverNotificationButtonsForActivityMain(this);
+        onDestinationChangedListenerToolbar = new OnDestinationChangedListenerToolbar(this);
+        onDestinationChangedListenerPanes = new OnDestinationChangedListenerPanes(this);
+        onClickListenerSongPane = new OnClickListenerSongPane(this);
+        onSeekBarChangeListener = new OnSeekBarChangeListener(this);
         setUpActionBar();
         startAndBindServiceMain();
     }
@@ -111,6 +115,7 @@ public class ActivityMain extends AppCompatActivity {
     private void setUpActionBar() {
         Log.v(TAG, "Setting up ActionBar");
         Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         toolbar.setTitleTextColor(getResources().getColor(R.color.colorOnPrimary));
         Drawable overflowIcon = toolbar.getOverflowIcon();
         if (overflowIcon != null) {
@@ -118,7 +123,6 @@ public class ActivityMain extends AppCompatActivity {
                     getResources().getColor(R.color.colorOnPrimary), PorterDuff.Mode.SRC_ATOP);
         }
         centerActionBarTitle();
-        setSupportActionBar(toolbar);
         setUpDestinationChangedListenerForToolbar();
         Log.v(TAG, "ActionBar set up");
     }
@@ -146,10 +150,11 @@ public class ActivityMain extends AppCompatActivity {
             }
             if (appCompatTextView != null) {
                 ViewGroup.LayoutParams params = appCompatTextView.getLayoutParams();
-                appCompatTextView.setTextSize(18, SP);
                 params.width = ViewGroup.LayoutParams.MATCH_PARENT;
                 appCompatTextView.setLayoutParams(params);
                 appCompatTextView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+
+                appCompatTextView.setTextSize(30);
             }
         }
         Log.v(TAG, "Centered the ActionBar title");
@@ -358,7 +363,7 @@ public class ActivityMain extends AppCompatActivity {
         super.onPause();
         if (serviceMain != null) {
             serviceMain.saveFile();
-            if(serviceMain.scheduledExecutorService != null) {
+            if (serviceMain.scheduledExecutorService != null) {
                 serviceMain.scheduledExecutorService.shutdown();
                 serviceMain.scheduledExecutorService = null;
             }
@@ -371,20 +376,20 @@ public class ActivityMain extends AppCompatActivity {
     // region UI
 
     public void setActionBarTitle(final String title) {
-                Log.v(TAG, "setting ActionBar title");
-                ActionBar actionBar = getSupportActionBar();
-                if (actionBar != null) {
-                    actionBar.setTitle(title);
-                }
-                Log.v(TAG, "done setting ActionBar title");
+        Log.v(TAG, "setting ActionBar title");
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setTitle(title);
+        }
+        Log.v(TAG, "done setting ActionBar title");
     }
 
     public void setFabImage(final int id) {
-                Log.v(TAG, "setting FAB image");
-                FloatingActionButton fab;
-                fab = findViewById(R.id.fab);
-                fab.setImageDrawable(ResourcesCompat.getDrawable(getResources(), id, null));
-                Log.v(TAG, "done setting FAB image");
+        Log.v(TAG, "setting FAB image");
+        FloatingActionButton fab;
+        fab = findViewById(R.id.fab);
+        fab.setImageDrawable(ResourcesCompat.getDrawable(getResources(), id, null));
+        Log.v(TAG, "done setting FAB image");
     }
 
     public void showFab(final boolean show) {
@@ -492,7 +497,7 @@ public class ActivityMain extends AppCompatActivity {
         TextView textViewCurrent = findViewById(R.id.editTextCurrentTime);
         if (seekBar != null && textViewCurrent != null) {
             if (serviceMain != null) {
-                if(serviceMain.scheduledExecutorService != null) {
+                if (serviceMain.scheduledExecutorService != null) {
                     serviceMain.scheduledExecutorService.shutdown();
                 }
                 serviceMain.scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -626,9 +631,6 @@ public class ActivityMain extends AppCompatActivity {
 
     private void updatePlayButtons() {
         Log.v(TAG, "updatePlayButtons start");
-        if (serviceMain != null) {
-            serviceMain.updateNotificationPlayButton();
-        }
         updateSongPlayButton();
         updateSongPanePlayButton();
         Log.v(TAG, "updatePlayButtons end");
@@ -734,24 +736,24 @@ public class ActivityMain extends AppCompatActivity {
             showSearchPane();
         } else if (item.getItemId() == R.id.action_add_to_queue) {
             // TODO
-                if (serviceMain.songInProgress()) {
+            if (serviceMain.songInProgress()) {
                     /*
                     for (AudioURI audioURI : randomPlaylist.getProbFun().getProbMap().keySet()) {
                         serviceMain.addToQueue(audioURI.getUri());
                     }
 
                      */
-                } else {
+            } else {
                     /*
                     for (AudioURI audioURI : randomPlaylist.getProbFun().getProbMap().keySet()) {
                         serviceMain.addToQueue(audioURI.getUri());
                     }
 
                      */
-                    serviceMain.playNextInQueue();
-                    showSongPane();
-                    updateUI();
-                }
+                serviceMain.playNextInQueue();
+                showSongPane();
+                updateUI();
+            }
         }
         Log.v(TAG, "onOptionsItemSelected action_unknown end");
         return super.onOptionsItemSelected(item);

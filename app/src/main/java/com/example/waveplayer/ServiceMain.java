@@ -527,6 +527,7 @@ public class ServiceMain extends Service {
         } else {
             playNext();
         }
+        updateNotification();
         Log.v(TAG, "pauseOrPlay ended");
     }
 
