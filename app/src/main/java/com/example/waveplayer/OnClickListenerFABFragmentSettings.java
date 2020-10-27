@@ -1,7 +1,9 @@
 package com.example.waveplayer;
 
+import android.graphics.PorterDuff;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.navigation.NavController;
@@ -53,6 +55,7 @@ public class OnClickListenerFABFragmentSettings implements View.OnClickListener 
             Toast toast = Toast.makeText(
                     fragmentSettings.getContext(), R.string.max_percent_error, Toast.LENGTH_LONG);
             toast.show();
+            nSongs = -1;
         }
         return nSongs;
     }
@@ -68,11 +71,13 @@ public class OnClickListenerFABFragmentSettings implements View.OnClickListener 
             Toast toast = Toast.makeText(fragmentSettings.getContext(),
                     R.string.percent_change_error, Toast.LENGTH_LONG);
             toast.show();
+            percentChangeUp = -1;
         }
         return percentChangeUp;
     }
 
     private int getPercentChangeDown() {
+        ActivityMain activityMain = fragmentSettings.activityMain;
         int percentChangeDown = -1;
         try {
             percentChangeDown = Integer.parseInt(editTextPercentChangeDown.getText().toString());
@@ -82,7 +87,12 @@ public class OnClickListenerFABFragmentSettings implements View.OnClickListener 
         if (percentChangeDown < 1 || percentChangeDown > 100) {
             Toast toast = Toast.makeText(fragmentSettings.getContext(),
                     R.string.percent_change_error, Toast.LENGTH_LONG);
+            toast.getView().getBackground().setColorFilter(
+                    activityMain.getResources().getColor(R.color.colorPrimary), PorterDuff.Mode.SRC_IN);
+            TextView text = toast.getView().findViewById(android.R.id.message);
+            text.setTextSize(16);
             toast.show();
+            percentChangeDown = -1;
         }
         return percentChangeDown;
     }

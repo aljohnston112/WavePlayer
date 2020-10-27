@@ -60,8 +60,9 @@ public class FragmentEditPlaylist extends Fragment {
     }
 
     private void updateFAB(View view) {
-        activityMain.showFab(true);
         activityMain.setFabImage(R.drawable.ic_check_black_24dp);
+        activityMain.setFABText(R.string.fab_save);
+        activityMain.showFab(true);
         if (activityMain.serviceMain != null) {
             final EditText finalEditTextPlaylistName = view.findViewById(R.id.editTextPlaylistName);
             ArrayList<AudioURI> playlistSongs = new ArrayList<>();

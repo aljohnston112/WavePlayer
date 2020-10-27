@@ -34,6 +34,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
@@ -47,7 +48,6 @@ import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_PLAY
 
 public class ActivityMain extends AppCompatActivity {
 
-    // TODO update fab with extended FAB
     // TODO help page
     // TODO check for leaks
     // TODO warn user about resetting probabilities
@@ -329,7 +329,7 @@ public class ActivityMain extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        FloatingActionButton fab = findViewById(R.id.fab);
+        ExtendedFloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(null);
         FragmentManager fragmentManager = getSupportFragmentManager();
         Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
@@ -395,15 +395,21 @@ public class ActivityMain extends AppCompatActivity {
 
     public void setFabImage(final int id) {
         Log.v(TAG, "setting FAB image");
-        FloatingActionButton fab;
+        ExtendedFloatingActionButton fab;
         fab = findViewById(R.id.fab);
-        fab.setImageDrawable(ResourcesCompat.getDrawable(getResources(), id, null));
+        fab.setIcon(ResourcesCompat.getDrawable(getResources(), id, null));
         Log.v(TAG, "done setting FAB image");
+    }
+
+    public void setFABText(int id) {
+        ExtendedFloatingActionButton fab;
+        fab = findViewById(R.id.fab);
+        fab.setText(id);
     }
 
     public void showFab(final boolean show) {
         Log.v(TAG, "showing or hiding FAB");
-        FloatingActionButton fab;
+        ExtendedFloatingActionButton fab;
         fab = findViewById(R.id.fab);
         if (show) {
             fab.show();
@@ -415,7 +421,7 @@ public class ActivityMain extends AppCompatActivity {
 
     public void setFabOnClickListener(final View.OnClickListener onClickListener) {
         Log.v(TAG, "setting FAB OnClickListener");
-        FloatingActionButton fab;
+        ExtendedFloatingActionButton fab;
         fab = findViewById(R.id.fab);
         fab.setOnClickListener(null);
         fab.setOnClickListener(onClickListener);

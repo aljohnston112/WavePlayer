@@ -24,6 +24,12 @@
     <string name="search">Search</string>
     <string name="add_to_queue">Add to queue</string>
 
+    <!--FAB text-->
+    <string name="fab_save">Save</string>
+    <string name="fab_done">Done</string>
+    <string name="fab_new">New</string>
+    <string name="fab_edit">Edit</string>
+
     <!--Toolbar titles-->
     <string name="app_name">AI Playlist</string>
     <string name="playlists">Playlists</string>
@@ -52,7 +58,7 @@
         when the thumb up, thumb down, or skip button is tapped. 1 makes the smallest change and 100 makes the largest change.
     When min grain size is 1 and mod magnitude is 100, a song will take the least number of taps to repeat often.
      When min grain size is 1 and mod magnitude is 1, a song will take the most number of taps to repeat often.</string>
-    <string name="percent_change_error">Enter a number between 1 and 100 for Mod Magnitude</string>
+    <string name="percent_change_error">Mod Magnitude must be between 1 and 100</string>
     <string name="action_settings">Settings</string>
 
 

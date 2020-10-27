@@ -47,6 +47,7 @@ public class FragmentSettings extends Fragment {
         final EditText editTextPercentChangeUp = activityMain.findViewById(R.id.editTextPercentChangeUp);
         final EditText editTextPercentChangeDown = activityMain.findViewById(R.id.editTextPercentChangeDown);
         activityMain.setFabImage(R.drawable.ic_check_black_24dp);
+        activityMain.setFABText(R.string.fab_save);
         activityMain.showFab(true);
         onClickListenerFABFragmentSettings = new OnClickListenerFABFragmentSettings(
                 this, editTextNSongs, editTextPercentChangeDown, editTextPercentChangeUp);

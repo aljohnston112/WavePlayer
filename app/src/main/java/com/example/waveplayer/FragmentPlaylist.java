@@ -160,6 +160,7 @@ public class FragmentPlaylist extends Fragment {
 
     private void updateFAB() {
         activityMain.setFabImage(R.drawable.ic_add_black_24dp);
+        activityMain.setFABText(R.string.fab_edit);
         activityMain.showFab(true);
         activityMain.setFabOnClickListener(onClickListenerFABFragmentPlaylist);
     }

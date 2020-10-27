@@ -8,16 +8,19 @@
     android:background="@color/colorOnPrimary"
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/fab_margin"
+        app:iconTint="@color/colorOnPrimary"
         android:backgroundTint="@color/colorPrimary"
         app:layout_constraintBottom_toTopOf="@+id/fragmentSongPane"
         app:layout_constraintEnd_toEndOf="parent"
-        app:rippleColor="@color/colorPrimaryVariant" />
+        app:rippleColor="@color/colorPrimaryVariant"
+        android:textColor="@color/colorOnPrimary"
+        android:textSize="16sp"/>
 
     <fragment
         android:id="@+id/fragmentSongPane"

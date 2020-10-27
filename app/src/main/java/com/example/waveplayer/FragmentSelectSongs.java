@@ -70,6 +70,7 @@ public class FragmentSelectSongs extends Fragment {
 
     private void setupFAB() {
         activityMain.setFabImage(R.drawable.ic_check_white_24dp);
+        activityMain.setFABText(R.string.fab_done);
         activityMain.showFab(true);
         activityMain.setFabOnClickListener(onClickListenerFABFragmentSelectSongs);
     }
