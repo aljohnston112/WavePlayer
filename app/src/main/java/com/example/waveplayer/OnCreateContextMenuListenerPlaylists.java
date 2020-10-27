@@ -63,6 +63,9 @@ public class OnCreateContextMenuListenerPlaylists implements View.OnCreateContex
                     activityMain.serviceMain.addToQueue(audioURI.getUri());
                 }
             } else {
+                if(activityMain.serviceMain.songQueue.isEmpty()){
+                    activityMain.serviceMain.currentPlaylist = randomPlaylist;
+                }
                 for (AudioURI audioURI : randomPlaylist.getProbFun().getProbMap().keySet()) {
                     activityMain.serviceMain.addToQueue(audioURI.getUri());
                 }

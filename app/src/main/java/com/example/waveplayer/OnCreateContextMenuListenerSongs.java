@@ -61,9 +61,9 @@ public class OnCreateContextMenuListenerSongs implements View.OnCreateContextMen
             if (activityMain.serviceMain.songInProgress()) {
                 ((ActivityMain) fragment.getActivity()).serviceMain.addToQueue(audioURI.getUri());
             } else {
-                ((ActivityMain) fragment.getActivity()).serviceMain.addToQueueAndPlay(audioURI);
-                ((ActivityMain) fragment.getActivity()).showSongPane();
-                ((ActivityMain) fragment.getActivity()).updateUI();
+                activityMain.serviceMain.addToQueueAndPlay(audioURI);
+                activityMain.showSongPane();
+                activityMain.updateUI();
             }
         }
     }

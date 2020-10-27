@@ -40,7 +40,6 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static androidx.navigation.ui.NavigationUI.setupActionBarWithNavController;
 import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST;
 import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG;
 import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_IS_SONG;
@@ -52,6 +51,11 @@ public class ActivityMain extends AppCompatActivity {
     // TODO help page
     // TODO check for leaks
     // TODO warn user about resetting probabilities
+
+    // TODO AFTER RELEASE
+    // Open current song in folder as a menu action
+    // Setting to not keep playing after queue is done
+
 
     static final String DEBUG_TAG = "debug";
     static final String TAG = "ActivityMain";
@@ -82,6 +86,10 @@ public class ActivityMain extends AppCompatActivity {
     boolean searchInProgress = false;
 
     boolean isSong;
+
+    AudioURI songToAddToQueue;
+
+    RandomPlaylist playlistToAddToQueue;
 
     // region lifecycle
 
@@ -712,23 +720,22 @@ public class ActivityMain extends AppCompatActivity {
             dialogFragmentAddToPlaylist.show(fragmentManager, fragment.getTag());
             return true;
         } else if (item.getItemId() == R.id.action_add_to_queue) {
-            // TODO
-            if (serviceMain.songInProgress()) {
-                    /*
-                    for (AudioURI audioURI : randomPlaylist.getProbFun().getProbMap().keySet()) {
-                        serviceMain.addToQueue(audioURI.getUri());
-                    }
+            if (serviceMain.songInProgress() && songToAddToQueue != null) {
+                serviceMain.addToQueue(songToAddToQueue.getUri());
 
-                     */
-            } else {
-                    /*
-                    for (AudioURI audioURI : randomPlaylist.getProbFun().getProbMap().keySet()) {
-                        serviceMain.addToQueue(audioURI.getUri());
-                    }
-
-                     */
+            } else if (playlistToAddToQueue != null) {
+                for (AudioURI audioURI : playlistToAddToQueue.getProbFun().getProbMap().keySet()) {
+                    serviceMain.addToQueue(audioURI.getUri());
+                }
+                if(serviceMain.songQueue.isEmpty()){
+                    serviceMain.currentPlaylist = playlistToAddToQueue;
+                }
+                if (!serviceMain.songInProgress) {
+                    showSongPane();
+                }
+            }
+            if (!serviceMain.songInProgress) {
                 serviceMain.playNextInQueue();
-                showSongPane();
                 updateUI();
             }
         }

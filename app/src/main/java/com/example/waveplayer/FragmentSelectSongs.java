@@ -45,9 +45,14 @@ public class FragmentSelectSongs extends Fragment {
             activityMain.setActionBarTitle(getResources().getString(R.string.select_songs));
         }
         setupFAB();
-        setUpRecyclerView();
         setUpBroadcastReceiverServiceConnected();
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        setUpRecyclerView();
     }
 
     @Override

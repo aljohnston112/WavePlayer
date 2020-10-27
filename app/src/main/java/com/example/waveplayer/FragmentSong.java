@@ -63,6 +63,9 @@ public class FragmentSong extends Fragment {
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         activityMain.updateUI();
+        if (activityMain.serviceMain != null) {
+            activityMain.songToAddToQueue = activityMain.serviceMain.currentSong;
+        }
     }
 
     private void hideKeyBoard() {
@@ -108,6 +111,7 @@ public class FragmentSong extends Fragment {
         activityMain.serviceMain.fragmentSongVisible = true;
         activityMain.updateUI();
         setUpButtons();
+        activityMain.songToAddToQueue = activityMain.serviceMain.currentSong;
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -187,6 +191,7 @@ public class FragmentSong extends Fragment {
         view.removeOnLayoutChangeListener(onLayoutChangeListenerFragmentSongButtons);
         onLayoutChangeListenerFragmentSongButtons = null;
         view = null;
+        activityMain.songToAddToQueue = null;
         activityMain = null;
     }
 

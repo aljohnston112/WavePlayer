@@ -17,7 +17,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.view.MenuItemCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -71,7 +70,10 @@ public class FragmentPlaylist extends Fragment {
         setUpBroadCastReceiverOnCompletion();
         setUpBroadcastReceiverServiceOnOptionsMenuCreated();
         hideKeyBoard();
-        return view;
+        if (activityMain.serviceMain != null) {
+            activityMain.playlistToAddToQueue = activityMain.serviceMain.userPickedPlaylist;
+        }
+            return view;
     }
 
     @Override
@@ -91,7 +93,7 @@ public class FragmentPlaylist extends Fragment {
             MenuItem itemSearch = menu.findItem(R.id.action_search);
             if (itemSearch != null) {
                 onQueryTextListenerSearch = new OnQueryTextListenerSearch(activityMain, NAME);
-                SearchView searchView = (SearchView) MenuItemCompat.getActionView(itemSearch);
+                SearchView searchView = (SearchView) (itemSearch.getActionView());
                 searchView.setOnQueryTextListener(null);
                 searchView.setOnQueryTextListener(onQueryTextListenerSearch);
             }
@@ -196,7 +198,13 @@ public class FragmentPlaylist extends Fragment {
                 ProbFun<AudioURI> probFun = activityMain.serviceMain.userPickedPlaylist.getProbFun();
                 AudioURI audioURI = recyclerViewAdapterSongsList.audioURIS.get(position);
                 double prob = probFun.getProbMap().get(audioURI);
-                probFun.remove(audioURI);
+                if(probFun.size() == 1){
+                    activityMain.serviceMain.playlists.remove(
+                            activityMain.serviceMain.userPickedPlaylist);
+                    activityMain.serviceMain.userPickedPlaylist = null;
+                } else {
+                    probFun.remove(audioURI);
+                }
                 recyclerViewAdapterSongsList.audioURIS.remove(position);
                 recyclerViewAdapterSongsList.notifyItemRemoved(position);
                 activityMain.serviceMain.saveFile();
@@ -286,13 +294,14 @@ public class FragmentPlaylist extends Fragment {
 
              */
             MenuItem itemSearch = menu.findItem(R.id.action_search);
-            SearchView searchView = (SearchView) MenuItemCompat.getActionView(itemSearch);
+            SearchView searchView = (SearchView) (itemSearch.getActionView());
             searchView.onActionViewCollapsed();
         }
         itemTouchHelper.attachToRecyclerView(null);
         songItemTouchListener = null;
         itemTouchHelper = null;
         onClickListenerFABFragmentPlaylist = null;
+        activityMain.playlistToAddToQueue = null;
         activityMain = null;
         view = null;
     }
