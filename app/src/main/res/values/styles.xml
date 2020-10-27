@@ -8,12 +8,10 @@
         <item name="colorSecondary">@color/colorSecondary</item>
         <item name="colorSecondaryVariant">@color/colorSecondaryVariant</item>
         <item name="colorOnSecondary">@color/colorOnSecondary</item>
-        <item name="android:buttonStyle">@style/AppTheme.buttonStyle</item>
         <item name="buttonStyle">@style/AppTheme.buttonStyle</item>
     </style>
 
     <style name="AppTheme.buttonStyle">
-        <item name="android:textSize">36sp</item>>
     </style>
 
     <style name="AppTheme.NoActionBar">

@@ -16,7 +16,7 @@
         android:layout_marginEnd="4dp"
         android:layout_weight="1"
         android:background="@color/colorPrimary"
-        app:srcCompat="@drawable/music_note_black_48dp" />
+        android:src="@drawable/music_note_black_48dp" />
 
     <TextView
         android:id="@+id/textViewNotificationSongPaneSongName"
@@ -25,7 +25,7 @@
         android:layout_marginStart="4dp"
         android:layout_marginEnd="4dp"
         android:layout_weight="3"
-        android:text="TextView" />
+        android:text="Easter Egg!" />
 
     <ImageButton
         android:id="@+id/imageButtonNotificationSongPanePrev"
@@ -35,7 +35,7 @@
         android:layout_marginEnd="4dp"
         android:layout_weight="1"
         android:background="@color/colorPrimary"
-        app:srcCompat="@drawable/skip_previous_black_24dp" />
+        android:src="@drawable/skip_previous_black_24dp" />
 
     <ImageButton
         android:id="@+id/imageButtonNotificationSongPanePlayPause"
@@ -45,7 +45,7 @@
         android:layout_marginEnd="4dp"
         android:background="@color/colorPrimary"
         android:layout_weight="1"
-        app:srcCompat="@drawable/play_arrow_black_24dp" />
+        android:src="@drawable/play_arrow_black_24dp" />
 
     <ImageButton
         android:id="@+id/imageButtonNotificationSongPaneNext"
@@ -55,6 +55,6 @@
         android:layout_marginEnd="8dp"
         android:layout_weight="1"
         android:background="@color/colorPrimary"
-        app:srcCompat="@drawable/skip_next_black_24dp" />
+        android:src="@drawable/skip_next_black_24dp" />
 
 </LinearLayout>
