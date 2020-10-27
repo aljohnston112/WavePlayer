@@ -114,6 +114,7 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
         holder.handle.setOnClickListener(null);
         onClickListenerViewHolder = null;
         holder.songView.setOnClickListener(null);
+        holder.audioURI = null;
     }
 
     @Override

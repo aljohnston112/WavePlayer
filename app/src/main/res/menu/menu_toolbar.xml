@@ -15,8 +15,8 @@
         android:id="@+id/action_search"
         android:icon="@drawable/ic_search_black_48dp"
         android:title="@string/search"
-        app:showAsAction="ifRoom"
-        app:actionViewClass="android.widget.SearchView"
+        app:showAsAction="always"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"
         android:visible="false"/>
     <item
         android:id="@+id/action_add_to_queue"

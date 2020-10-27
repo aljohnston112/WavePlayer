@@ -85,8 +85,6 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
         holder.handle.setOnClickListener(null);
         onClickListenerViewHolder = null;
         holder.playlistView.setOnClickListener(null);
-        holder.playlistView = null;
-        holder.textViewPlaylistName = null;
         holder.randomPlaylist = null;
     }
 
@@ -97,8 +95,8 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
-        public View playlistView;
-        public TextView textViewPlaylistName;
+        final public View playlistView;
+        final public TextView textViewPlaylistName;
         public RandomPlaylist randomPlaylist;
         final ImageView handle;
 

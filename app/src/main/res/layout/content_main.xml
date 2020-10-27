@@ -19,18 +19,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:rippleColor="@color/colorPrimaryVariant" />
 
-    <include
-        android:id="@+id/includeSearch"
-        layout="@layout/pane_search"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="1dp"
-        android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@+id/nav_host_fragment"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
     <fragment
         android:id="@+id/fragmentSongPane"
         android:name="com.example.waveplayer.FragmentPaneSong"

@@ -26,10 +26,12 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatTextView;
+import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.core.view.MenuItemCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.navigation.fragment.NavHostFragment;
@@ -50,7 +52,7 @@ public class ActivityMain extends AppCompatActivity {
     // TODO update fab with extended FAB
     // TODO help page
     // TODO check for leaks
-    // TODO allow renaming of playlists
+    // TODO warn user about resetting probabilities
 
     static final String DEBUG_TAG = "debug";
     static final String TAG = "ActivityMain";
@@ -155,8 +157,7 @@ public class ActivityMain extends AppCompatActivity {
                 params.width = ViewGroup.LayoutParams.MATCH_PARENT;
                 appCompatTextView.setLayoutParams(params);
                 appCompatTextView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-
-                appCompatTextView.setTextSize(25);
+                appCompatTextView.setTextSize(28);
             }
         }
         Log.v(TAG, "Centered the ActionBar title");
@@ -422,31 +423,8 @@ public class ActivityMain extends AppCompatActivity {
                 updateSongUI();
                 updateSongPaneUI();
                 updatePlayButtons();
-                if (serviceMain != null && serviceMain.fragmentSongVisible) {
-                    hideSearchPane();
-                }
             }
         });
-    }
-
-    private void showSearchPane() {
-        findViewById(R.id.includeSearch).setVisibility(View.VISIBLE);
-        ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
-        ConstraintSet constraintSet = new ConstraintSet();
-        constraintSet.clone(constraintLayout);
-        constraintSet.connect(R.id.nav_host_fragment, ConstraintSet.TOP,
-                R.id.includeSearch, ConstraintSet.BOTTOM);
-        constraintSet.applyTo(constraintLayout);
-    }
-
-    private void hideSearchPane() {
-        findViewById(R.id.includeSearch).setVisibility(View.GONE);
-        ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
-        ConstraintSet constraintSet = new ConstraintSet();
-        constraintSet.clone(constraintLayout);
-        constraintSet.connect(R.id.nav_host_fragment, ConstraintSet.TOP,
-                R.id.constraintMain, ConstraintSet.TOP);
-        constraintSet.applyTo(constraintLayout);
     }
 
     // region updateSongUI
@@ -734,8 +712,6 @@ public class ActivityMain extends AppCompatActivity {
             dialogFragmentAddToPlaylist.setArguments(loadBundleForAddToPlaylist(isSong));
             dialogFragmentAddToPlaylist.show(fragmentManager, fragment.getTag());
             return true;
-        } else if (item.getItemId() == R.id.action_search) {
-            showSearchPane();
         } else if (item.getItemId() == R.id.action_add_to_queue) {
             // TODO
             if (serviceMain.songInProgress()) {

@@ -1,31 +1,21 @@
 package com.example.waveplayer;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.res.ResourcesCompat;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
-
-import static com.example.waveplayer.FragmentPaneSong.getResizedBitmap;
 
 public class FragmentSong extends Fragment {
 
@@ -76,7 +66,7 @@ public class FragmentSong extends Fragment {
     }
 
     private void hideKeyBoard() {
-        InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(AppCompatActivity.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
@@ -88,10 +78,13 @@ public class FragmentSong extends Fragment {
         broadcastReceiverOptionsMenuCreated = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+                /*
                 Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
                 Menu menu = toolbar.getMenu();
                 menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).setVisible(true);
                 menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).setVisible(true);
+
+                 */
             }
         };
         activityMain.registerReceiver(broadcastReceiverOptionsMenuCreated, filterComplete);

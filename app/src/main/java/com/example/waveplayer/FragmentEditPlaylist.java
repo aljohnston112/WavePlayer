@@ -1,23 +1,19 @@
 package com.example.waveplayer;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
-
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
@@ -94,7 +90,7 @@ public class FragmentEditPlaylist extends Fragment {
                 FragmentEditPlaylist.this);
         navController.popBackStack();
         InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(
-                Activity.INPUT_METHOD_SERVICE);
+                AppCompatActivity.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 

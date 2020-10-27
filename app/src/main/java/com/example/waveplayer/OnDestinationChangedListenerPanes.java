@@ -25,8 +25,6 @@ public class OnDestinationChangedListenerPanes
                 activityMain.serviceMain.fragmentSongVisible = false;
                 activityMain.showSongPane();
                 activityMain.updateUI();
-                // TODO ?
-                //activityMain.hideSearchPane();
             }
         } else {
             activityMain.serviceMain.fragmentSongVisible = true;

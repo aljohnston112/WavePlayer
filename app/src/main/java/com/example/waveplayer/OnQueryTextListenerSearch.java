@@ -1,7 +1,6 @@
 package com.example.waveplayer;
 
-import android.widget.SearchView;
-
+import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
@@ -25,7 +24,7 @@ public class OnQueryTextListenerSearch implements SearchView.OnQueryTextListener
 
     @Override
     public boolean onQueryTextChange(String newText) {
-        if(activityMain.searchInProgress) {
+       // if(activityMain.searchInProgress) {
             switch (constructorFragment) {
                 case FragmentSongs.NAME: {
                     RecyclerView recyclerViewSongs = activityMain.findViewById(R.id.recycler_view_song_list);
@@ -90,7 +89,7 @@ public class OnQueryTextListenerSearch implements SearchView.OnQueryTextListener
                     return true;
                 }
             }
-        }
+       // }
         return false;
     }
 }
