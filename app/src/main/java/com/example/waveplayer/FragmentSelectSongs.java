@@ -44,7 +44,6 @@ public class FragmentSelectSongs extends Fragment {
         if (activityMain != null) {
             activityMain.setActionBarTitle(getResources().getString(R.string.select_songs));
         }
-        hideKeyboard();
         setupFAB();
         setUpRecyclerView();
         setUpBroadcastReceiverServiceConnected();
@@ -54,6 +53,8 @@ public class FragmentSelectSongs extends Fragment {
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        this.view = view;
+        hideKeyboard();
     }
 
     private void hideKeyboard() {

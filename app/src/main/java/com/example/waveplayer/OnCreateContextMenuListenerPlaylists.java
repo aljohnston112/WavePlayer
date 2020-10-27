@@ -48,7 +48,8 @@ public class OnCreateContextMenuListenerPlaylists implements View.OnCreateContex
             bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST, randomPlaylist);
             bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, activityMain.serviceMain.playlists);
             bundle.putSerializable(BUNDLE_KEY_IS_SONG, false);
-            DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist = new DialogFragmentAddToPlaylist();
+            DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist
+                    = new DialogFragmentAddToPlaylist(activityMain);
             dialogFragmentAddToPlaylist.setArguments(bundle);
             dialogFragmentAddToPlaylist.show(fragment.getParentFragmentManager(), fragment.getTag());
         }

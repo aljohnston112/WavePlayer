@@ -26,12 +26,10 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatTextView;
-import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.res.ResourcesCompat;
-import androidx.core.view.MenuItemCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.navigation.fragment.NavHostFragment;
@@ -42,6 +40,7 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static androidx.navigation.ui.NavigationUI.setupActionBarWithNavController;
 import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST;
 import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG;
 import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_IS_SONG;
@@ -56,7 +55,6 @@ public class ActivityMain extends AppCompatActivity {
 
     static final String DEBUG_TAG = "debug";
     static final String TAG = "ActivityMain";
-
     private static final int REQUEST_CODE_PERMISSION_READ = 245083964;
 
     public static final int MENU_ACTION_RESET_PROBS_INDEX = 0;
@@ -708,7 +706,8 @@ public class ActivityMain extends AppCompatActivity {
         } else if (item.getItemId() == R.id.action_add_to_playlist) {
             FragmentManager fragmentManager = getSupportFragmentManager();
             Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
-            DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist = new DialogFragmentAddToPlaylist();
+            DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist =
+                    new DialogFragmentAddToPlaylist(this);
             dialogFragmentAddToPlaylist.setArguments(loadBundleForAddToPlaylist(isSong));
             dialogFragmentAddToPlaylist.show(fragmentManager, fragment.getTag());
             return true;
