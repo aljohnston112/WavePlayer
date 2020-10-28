@@ -561,7 +561,7 @@ public class ActivityMain extends AppCompatActivity {
 
     private void updateSongPaneArt() {
         int songArtHeight = getSongArtHeight();
-        if (songArtHeight != -1) {
+        if (songArtHeight > 0) {
             @SuppressWarnings("SuspiciousNameCombination")
             int songArtWidth = songArtHeight;
             setImageViewSongPaneArt(songArtWidth, songArtHeight);
@@ -572,7 +572,7 @@ public class ActivityMain extends AppCompatActivity {
         ImageView imageViewSongPaneSongArt = findViewById(R.id.imageViewSongPaneSongArt);
         if (imageViewSongPaneSongArt != null) {
             int songArtHeight = imageViewSongPaneSongArt.getMeasuredHeight();
-            if (songArtHeight != 0) {
+            if (songArtHeight > 0) {
                 serviceMain.songPaneArtHeight = songArtHeight;
             } else {
                 songArtHeight = serviceMain.songPaneArtHeight;
