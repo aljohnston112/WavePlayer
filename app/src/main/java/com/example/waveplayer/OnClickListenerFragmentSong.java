@@ -15,20 +15,20 @@ public class OnClickListenerFragmentSong implements View.OnClickListener {
     public void onClick(View v) {
         synchronized (activityMain.lock) {
             if (v.getId() == R.id.button_thumb_down) {
-                activityMain.serviceMain.currentPlaylist.getProbFun().bad(
-                        activityMain.serviceMain.getCurrentSong(), ServiceMain.PERCENT_CHANGE_DOWN);
-                activityMain.serviceMain.saveFile();
+                activityMain.getCurrentPlaylist().bad(
+                        activityMain.getCurrentSong(), activityMain.getPercentChangeDown());
+                activityMain.saveFile();
             } else if (v.getId() == R.id.button_thumb_up) {
-                activityMain.serviceMain.currentPlaylist.getProbFun().good(
-                        activityMain.serviceMain.getCurrentSong(), ServiceMain.PERCENT_CHANGE_UP);
-                activityMain.serviceMain.saveFile();
+                activityMain.getCurrentPlaylist().good(
+                        activityMain.getCurrentSong(), activityMain.getPercentChangeUp());
+                activityMain.saveFile();
             } else if (v.getId() == R.id.imageButtonShuffle) {
                 ImageButton imageButton = (ImageButton)v;
-                if(activityMain.serviceMain.shuffling){
-                    activityMain.serviceMain.shuffling = false;
+                if(activityMain.shuffling()){
+                    activityMain.shuffling(false);
                     imageButton.setImageResource(R.drawable.ic_shuffle_white_24dp);
                 } else {
-                    activityMain.serviceMain.shuffling = true;
+                    activityMain.shuffling(true);
                     imageButton.setImageResource(R.drawable.ic_shuffle_black_24dp);
                 }
             } else if (v.getId() == R.id.imageButtonPrev) {
@@ -39,16 +39,16 @@ public class OnClickListenerFragmentSong implements View.OnClickListener {
                 activityMain.playNext();
             } else if (v.getId() == R.id.imageButtonRepeat) {
                 ImageButton imageButton = (ImageButton)v;
-                if(activityMain.serviceMain.loopingOne){
-                    activityMain.serviceMain.loopingOne = false;
+                if(activityMain.loopingOne()){
+                    activityMain.loopingOne(false);
                     imageButton.setImageResource(R.drawable.repeat_white_24dp);
-                } else if(activityMain.serviceMain.looping){
-                    activityMain.serviceMain.looping = false;
-                    activityMain.serviceMain.loopingOne = true;
+                } else if(activityMain.looping()){
+                    activityMain.looping(false);
+                    activityMain.loopingOne(true);
                     imageButton.setImageResource(R.drawable.repeat_one_black_24dp);
                 } else{
-                    activityMain.serviceMain.looping = true;
-                    activityMain.serviceMain.loopingOne = false;
+                    activityMain.looping(true);
+                    activityMain.loopingOne(false);
                     imageButton.setImageResource(R.drawable.repeat_black_24dp);
                 }
             }

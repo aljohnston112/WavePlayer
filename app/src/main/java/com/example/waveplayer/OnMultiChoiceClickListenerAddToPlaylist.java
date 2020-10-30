@@ -8,9 +8,13 @@ import java.util.List;
 public class OnMultiChoiceClickListenerAddToPlaylist
         implements DialogInterface.OnMultiChoiceClickListener {
 
-    final List<Integer> selectedPlaylists;
+    private final List<Integer> selectedPlaylists;
 
-    public OnMultiChoiceClickListenerAddToPlaylist(final List<Integer> selectedPlaylists){
+    private OnMultiChoiceClickListenerAddToPlaylist(){
+        throw new UnsupportedOperationException();
+    }
+
+    public OnMultiChoiceClickListenerAddToPlaylist(List<Integer> selectedPlaylists){
         this.selectedPlaylists = selectedPlaylists;
     }
 

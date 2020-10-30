@@ -76,11 +76,11 @@ public class FragmentSelectSongs extends Fragment {
     }
 
     private void setUpRecyclerView() {
-        if (activityMain.serviceMain != null && !setUp) {
+        if (!setUp) {
             recyclerViewSongList = view.findViewById(R.id.recycler_view_song_list);
             recyclerViewSongList.setLayoutManager(
                     new LinearLayoutManager(recyclerViewSongList.getContext()));
-            for (AudioURI audioURI : activityMain.serviceMain.userPickedSongs) {
+            for (AudioUri audioURI : activityMain.getUserPickedSongs()) {
                 audioURI.setSelected(true);
             }
             RecyclerViewAdapterSelectSongs recyclerViewAdapterSelectSongs =

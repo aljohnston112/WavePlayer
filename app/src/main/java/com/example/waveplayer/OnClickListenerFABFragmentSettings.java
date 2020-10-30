@@ -98,16 +98,11 @@ public class OnClickListenerFABFragmentSettings implements View.OnClickListener 
     }
 
     private void updateSettings(int nSongs, int percentChangeUp, int percentChangeDown) {
-        ServiceMain.MAX_PERCENT = (1.0 / (double) nSongs);
-        for (RandomPlaylist randomPlaylist : fragmentSettings.activityMain.serviceMain.playlists) {
-            randomPlaylist.setMaxPercent(ServiceMain.MAX_PERCENT);
-        }
-        for (RandomPlaylist randomPlaylist : fragmentSettings.activityMain.serviceMain.directoryPlaylists.values()) {
-            randomPlaylist.setMaxPercent(ServiceMain.MAX_PERCENT);
-        }
-        fragmentSettings.activityMain.serviceMain.masterPlaylist.setMaxPercent(ServiceMain.MAX_PERCENT);
-        ServiceMain.PERCENT_CHANGE_UP = ((double) percentChangeUp) / 100.0;
-        ServiceMain.PERCENT_CHANGE_DOWN = ((double) percentChangeDown) / 100.0;
+        double maxPercent = (1.0 / (double) nSongs);
+        ActivityMain activityMain = (ActivityMain) fragmentSettings.getActivity();
+        activityMain.setMaxPercent(maxPercent);
+        activityMain.setPercentChangeUp(((double) percentChangeUp) / 100.0);
+        activityMain.setPercentChangeDown(((double) percentChangeDown) / 100.0);
     }
 
 }

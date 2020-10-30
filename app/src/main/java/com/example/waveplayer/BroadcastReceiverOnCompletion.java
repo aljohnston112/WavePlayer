@@ -7,7 +7,7 @@ import android.util.Log;
 
 public class BroadcastReceiverOnCompletion extends BroadcastReceiver {
 
-    ActivityMain activityMain;
+    private final ActivityMain activityMain;
 
     public BroadcastReceiverOnCompletion(ActivityMain activityMain) {
         this.activityMain = activityMain;
@@ -19,12 +19,12 @@ public class BroadcastReceiverOnCompletion extends BroadcastReceiver {
         String action = intent.getAction();
         if (action != null) {
             if (action.equals(activityMain.getResources().getString(R.string.broadcast_receiver_action_on_completion))) {
-                if (activityMain != null) {
-                    activityMain.updateUI();
-                }
+                activityMain.updateUI();
             }
         }
         Log.v(ActivityMain.TAG, "BroadcastReceiverOnCompletion end");
     }
+
+
 
 }

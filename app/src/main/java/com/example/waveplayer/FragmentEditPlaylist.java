@@ -18,6 +18,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class FragmentEditPlaylist extends Fragment {
 
@@ -63,29 +64,26 @@ public class FragmentEditPlaylist extends Fragment {
         activityMain.setFabImage(R.drawable.ic_check_black_24dp);
         activityMain.setFABText(R.string.fab_save);
         activityMain.showFab(true);
-        if (activityMain.serviceMain != null) {
-            final EditText finalEditTextPlaylistName = view.findViewById(R.id.editTextPlaylistName);
-            ArrayList<AudioURI> playlistSongs = new ArrayList<>();
-            // userPickedPlaylist is null when user is making a new playlist
-            if (activityMain.serviceMain.userPickedPlaylist != null) {
-                // activityMain.serviceMain.userPickedSongs.isEmpty()
-                // when the user is editing a playlist
-                if (activityMain.serviceMain.userPickedSongs.isEmpty()) {
-                    activityMain.serviceMain.userPickedSongs.addAll(
-                            activityMain.serviceMain.userPickedPlaylist.getProbFun().getProbMap().keySet());
-                }
-                playlistSongs = new ArrayList<>(
-                        activityMain.serviceMain.userPickedPlaylist.getProbFun().getProbMap().keySet());
-                finalEditTextPlaylistName.setText(
-                        activityMain.serviceMain.userPickedPlaylist.getName());
+        final EditText finalEditTextPlaylistName = view.findViewById(R.id.editTextPlaylistName);
+        ArrayList<AudioUri> playlistSongs = new ArrayList<>();
+        RandomPlaylist userPickedPlaylist = activityMain.getUserPickedPlaylist();
+        // userPickedPlaylist is null when user is making a new playlist
+        if (userPickedPlaylist != null) {
+            List<AudioUri> userPickedSongs = activityMain.getUserPickedSongs();
+            // userPickedSongs.isEmpty() when the user is editing a playlist
+            if (userPickedSongs.isEmpty()) {
+                userPickedSongs.addAll(userPickedPlaylist.getAudioUris());
             }
-            final ArrayList<AudioURI> finalPlaylistSongs = playlistSongs;
-            onClickListenerFABFragmentEditPlaylist = new OnClickListenerFABFragmentEditPlaylist(
-              this, finalPlaylistSongs,
-                    finalEditTextPlaylistName);
-            activityMain.setFabOnClickListener(onClickListenerFABFragmentEditPlaylist);
+            playlistSongs = new ArrayList<>(userPickedPlaylist.getAudioUris());
+            finalEditTextPlaylistName.setText(userPickedPlaylist.getName());
         }
+        final ArrayList<AudioUri> finalPlaylistSongs = playlistSongs;
+        onClickListenerFABFragmentEditPlaylist = new OnClickListenerFABFragmentEditPlaylist(
+                userPickedPlaylist, this, finalPlaylistSongs,
+                finalEditTextPlaylistName);
+        activityMain.setFabOnClickListener(onClickListenerFABFragmentEditPlaylist);
     }
+
     void popBackStackAndHideKeyboard(View view) {
         NavController navController = NavHostFragment.findNavController(
                 FragmentEditPlaylist.this);

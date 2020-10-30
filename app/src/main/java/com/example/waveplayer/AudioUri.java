@@ -1,11 +1,11 @@
 package com.example.waveplayer;
 
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
+import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
-import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
@@ -17,7 +17,7 @@ import androidx.annotation.Nullable;
 import java.io.IOException;
 import java.io.Serializable;
 
-public final class AudioURI implements Comparable<AudioURI>, Serializable {
+public final class AudioUri implements Comparable<AudioUri>, Serializable {
 
     transient static final String TAG = "AudioURI";
 
@@ -71,61 +71,85 @@ public final class AudioURI implements Comparable<AudioURI>, Serializable {
         isSelected = selected;
     }
 
-    public AudioURI(Uri uri, String data, String displayName, String artist, String title, long id) {
-        Log.v(TAG, "AudioURI constructing");
+    public AudioUri(Uri uri, String data, String displayName, String artist, String title, long id) {
+        //Log.v(TAG, "AudioURI constructing");
         this.uri = uri;
         this.displayName = displayName;
         this.artist = artist;
         this.title = title;
         this.id = id;
         this.data = data;
-        Log.v(TAG, "AudioURI constructed");
+       // Log.v(TAG, "AudioURI constructed");
     }
 
-    public static Bitmap getThumbnail(AudioURI audioURI, Context context) {
+    // TODO does not work correctly
+
+    public static Bitmap getThumbnail(AudioUri audioURI, Context context) {
         Log.v(TAG, "getThumbnail start");
         Bitmap thumbnail = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             try {
                 thumbnail = context.getContentResolver().loadThumbnail(
-                        audioURI.getUri(), new Size(640, 480), null);
+                        audioURI.getUri(), new Size(128, 128), null);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         } else {
-            final int thumbNailWidthAndHeight = 128;
-            thumbnail = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(audioURI.data),
-                    thumbNailWidthAndHeight, thumbNailWidthAndHeight);
+            try {
+                thumbnail = MediaStore.Images.Media.getBitmap(context.getContentResolver(), audioURI.getUri());
+            } catch (IOException e) {
+                Log.e(TAG, "getThumbnail failed");
+                e.printStackTrace();
+            }
         }
         Log.v(TAG, "getThumbnail end");
         return thumbnail;
     }
 
+    private static String getImageRealPath(ContentResolver contentResolver, Uri uri) {
+        String ret = "";
+        try(Cursor cursor = contentResolver.query(
+                uri, null, null, null, null)) {
+            if (cursor != null) {
+                boolean moveToFirst = cursor.moveToFirst();
+                if (moveToFirst) {
+                    String columnName = MediaStore.Images.Media.DATA;
+                    if (uri == MediaStore.Images.Media.EXTERNAL_CONTENT_URI) {
+                        columnName = MediaStore.Images.Media.DATA;
+                    }
+                    int imageColumnIndex = cursor.getColumnIndex(columnName);
+                    ret = cursor.getString(imageColumnIndex);
+                }
+            }
+        }
+        return ret;
+    }
+
     @Override
-    public int compareTo(AudioURI o) {
-        Log.v(TAG, "compareTo start");
+    public int compareTo(AudioUri o) {
+       // Log.v(TAG, "compareTo start");
         int h = title.compareTo(o.title);
-        Log.v(TAG, "compareTo end");
+       // Log.v(TAG, "compareTo end");
         return h;
     }
 
     @Override
     public boolean equals(@Nullable Object obj) {
-        Log.v(TAG, "equals start");
+        //Log.v(TAG, "equals start");
         if (uri == null) {
             this.uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
         }
-        Log.v(TAG, "equals end");
-        return obj instanceof AudioURI && uri.equals(((AudioURI) obj).getUri());
+       // Log.v(TAG, "equals end");
+        return obj instanceof AudioUri && uri.equals(((AudioUri) obj).getUri());
     }
 
     @Override
     public int hashCode() {
-        Log.v(TAG, "hashCode start");
+        //Log.v(TAG, "hashCode start");
         if (uri == null) {
             this.uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
         }
-        Log.v(TAG, "hashCode end");
+        //Log.v(TAG, "hashCode end");
         return uri.toString().hashCode();
     }
 

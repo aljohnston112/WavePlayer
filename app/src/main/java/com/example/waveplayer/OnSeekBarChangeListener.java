@@ -4,9 +4,9 @@ import android.widget.SeekBar;
 
 public class OnSeekBarChangeListener implements SeekBar.OnSeekBarChangeListener {
 
-    ActivityMain activityMain;
+    private final ActivityMain activityMain;
 
-    public OnSeekBarChangeListener(ActivityMain activityMain){
+    public OnSeekBarChangeListener(ActivityMain activityMain) {
         this.activityMain = activityMain;
     }
 
@@ -20,14 +20,7 @@ public class OnSeekBarChangeListener implements SeekBar.OnSeekBarChangeListener 
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
-        MediaPlayerWURI mediaPlayerWURI =
-                activityMain.serviceMain.uriMediaPlayerWURIHashMap.get(activityMain.serviceMain.currentSong.getUri());
-        if (mediaPlayerWURI != null) {
-            mediaPlayerWURI.seekTo(seekBar.getProgress());
-            if(!activityMain.serviceMain.isPlaying()){
-                activityMain.pauseOrPlay();
-            }
-        }
+        activityMain.seekTo(seekBar.getProgress());
     }
 
 }

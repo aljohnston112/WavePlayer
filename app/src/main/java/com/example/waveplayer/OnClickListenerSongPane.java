@@ -9,6 +9,8 @@ import androidx.navigation.fragment.NavHostFragment;
 
 public class OnClickListenerSongPane implements View.OnClickListener {
 
+    // TODO does not appear to work
+
     ActivityMain activityMain;
 
     public OnClickListenerSongPane(ActivityMain activityMain) {
@@ -25,7 +27,6 @@ public class OnClickListenerSongPane implements View.OnClickListener {
                 activityMain.pauseOrPlay();
             } else if (v.getId() == R.id.imageButtonSongPanePrev) {
                 activityMain.playPrevious();
-
             } else if (v.getId() == R.id.textViewSongPaneSongName ||
                     v.getId() == R.id.imageViewSongPaneSongArt) {
                 openFragmentSong();

@@ -14,8 +14,10 @@ public class OnClickListenerFABFragmentPlaylists implements View.OnClickListener
 
         @Override
         public void onClick(View view) {
-            fragmentPlaylists.activityMain.serviceMain.userPickedPlaylist = null;
-            fragmentPlaylists.activityMain.serviceMain.userPickedSongs.clear();
+            ActivityMain activityMain = (ActivityMain) fragmentPlaylists.getActivity();
+            // userPickedPlaylist is null when user is making a new playlist
+            activityMain.setUserPickedPlaylist(null);
+            activityMain.clearUserPickedSongs();
             NavHostFragment.findNavController(fragmentPlaylists).navigate(
                     FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentEditPlaylist());
         }

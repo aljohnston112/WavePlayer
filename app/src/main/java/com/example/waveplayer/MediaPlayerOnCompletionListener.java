@@ -4,8 +4,6 @@ import android.content.Intent;
 import android.media.MediaPlayer;
 import android.util.Log;
 
-import java.util.concurrent.Executors;
-
 public class MediaPlayerOnCompletionListener implements MediaPlayer.OnCompletionListener {
 
     ServiceMain serviceMain;
@@ -19,49 +17,25 @@ public class MediaPlayerOnCompletionListener implements MediaPlayer.OnCompletion
         Log.v(ServiceMain.TAG, "Media player: " +
                 mediaPlayer.hashCode() +
                 " onCompletion started");
-        if (serviceMain.currentSong != null) {
-            if (serviceMain.loopingOne) {
-                MediaPlayerWURI mediaPlayerWURI = serviceMain.uriMediaPlayerWURIHashMap.get(
-                        serviceMain.currentSong.getUri());
-                if (mediaPlayerWURI != null) {
-                    mediaPlayerWURI.seekTo(0);
-                    mediaPlayerWURI.shouldStart(true);
-                    serviceMain.addToQueueAtCurrentIndex(mediaPlayerWURI.audioURI.getUri());
-                }
+        if (serviceMain.getCurrentSong() != null) {
+            if (serviceMain.loopingOne()) {
+                serviceMain.seekTo(0);
+                serviceMain.shouldStart(true);
                 serviceMain.saveFile();
                 return;
             }
         }
-        if ((!serviceMain.shuffling && !serviceMain.currentPlaylistIterator.hasNext() &&
-                !serviceMain.looping)) {
-            serviceMain.scheduledExecutorService.shutdown();
-            if (serviceMain.fragmentSongVisible) {
-                serviceMain.scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-            }
+        if ((!serviceMain.shuffling() && !serviceMain.playlistHasNext() &&
+                !serviceMain.looping())) {
+            serviceMain.shutDownSeekBarUpdater();
         }
         serviceMain.stopAndPreparePrevious();
-        if (!serviceMain.shuffling) {
-            if (serviceMain.currentPlaylistIterator.hasNext()) {
-                serviceMain.addToQueueAndPlay(serviceMain.currentPlaylistIterator.next().getUri());
-            } else if (serviceMain.looping) {
-                serviceMain.currentPlaylistIterator =
-                        serviceMain.currentPlaylistArray.listIterator(0);
-                serviceMain.addToQueueAndPlay(serviceMain.currentPlaylistIterator.next().getUri());
-            } else {
-                serviceMain.isPlaying = false;
-                serviceMain.songInProgress = false;
-            }
+        if (!serviceMain.shuffling()) {
+            serviceMain.playNextInPlaylist();
         } else {
-            if (serviceMain.songQueueIterator.hasNext()) {
-                serviceMain.playNextInQueue();
-            } else if (serviceMain.looping) {
-                serviceMain.songQueueIterator = serviceMain.songQueue.listIterator(0);
-                serviceMain.play(serviceMain.songQueueIterator.next());
-            } else {
-                serviceMain.addToQueueAndPlay(
-                        serviceMain.currentPlaylist.getProbFun().fun(ServiceMain.random));
-            }
+            serviceMain.playNextInQueue(true);
         }
+
         sendBroadcastOnCompletion();
         Log.v(ServiceMain.TAG, "Media player: " +
                 mediaPlayer.hashCode() +

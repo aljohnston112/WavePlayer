@@ -9,17 +9,15 @@ public class OnClickListenerFABFragmentSelectSongs implements View.OnClickListen
 
     final FragmentSelectSongs fragmentSelectSongs;
 
-    OnClickListenerFABFragmentSelectSongs(FragmentSelectSongs fragmentSelectSongs){
+    OnClickListenerFABFragmentSelectSongs(FragmentSelectSongs fragmentSelectSongs) {
         this.fragmentSelectSongs = fragmentSelectSongs;
     }
 
-        @Override
-        public void onClick(View view) {
-            if(fragmentSelectSongs.activityMain.serviceMain != null) {
-                NavController navController =
-                        NavHostFragment.findNavController(fragmentSelectSongs);
-                navController.popBackStack();
-            }
-        }
+    @Override
+    public void onClick(View view) {
+        NavController navController =
+                NavHostFragment.findNavController(fragmentSelectSongs);
+        navController.popBackStack();
+    }
 
 }

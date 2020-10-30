@@ -16,7 +16,7 @@ public class OnClickListenerFABFragmentPlaylist implements View.OnClickListener 
 
         @Override
         public void onClick(View view) {
-            fragmentPlaylist.activityMain.serviceMain.userPickedSongs.clear();
+            ((ActivityMain)fragmentPlaylist.getActivity()).clearUserPickedSongs();
             NavHostFragment.findNavController(fragmentPlaylist)
                     .navigate(FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSelectSongs());
         }

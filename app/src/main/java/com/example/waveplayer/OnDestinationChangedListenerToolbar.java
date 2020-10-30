@@ -12,7 +12,7 @@ import androidx.navigation.NavDestination;
 
 public class OnDestinationChangedListenerToolbar implements NavController.OnDestinationChangedListener {
 
-    ActivityMain activityMain;
+    private final ActivityMain activityMain;
 
     public OnDestinationChangedListenerToolbar(ActivityMain activityMain) {
         this.activityMain = activityMain;

@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -15,22 +16,16 @@ import android.widget.ImageButton;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 
 public class FragmentSong extends Fragment {
 
-    ActivityMain activityMain;
-
-    View view;
-
     BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
-
     BroadcastReceiver broadcastReceiverOptionsMenuCreated;
 
     OnClickListenerFragmentSong onClickListenerFragmentSong;
-
     OnTouchListenerFragmentSongButtons onTouchListenerFragmentSongButtons;
-
     OnLayoutChangeListenerFragmentSongButtons onLayoutChangeListenerFragmentSongButtons;
 
     @Override
@@ -41,39 +36,37 @@ public class FragmentSong extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        view = inflater.inflate(R.layout.fragment_song, container, false);
-        activityMain = ((ActivityMain) getActivity());
-        if (activityMain != null) {
-            if (activityMain.serviceMain != null) {
-                activityMain.serviceMain.fragmentSongVisible = true;
-            }
-            activityMain.isSong = true;
-            activityMain.setActionBarTitle(getResources().getString(R.string.now_playing));
-            activityMain.showFab(false);
-        }
-        hideKeyBoard();
-        setUpButtons();
-        setUpBroadcastReceiverServiceConnected();
-        setUpBroadcastReceiverServiceOnOptionsMenuCreated();
-        onTouchListenerFragmentSongButtons = new OnTouchListenerFragmentSongButtons();
-        return view;
+        return inflater.inflate(R.layout.fragment_song, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        ActivityMain activityMain = ((ActivityMain) getActivity());
+        activityMain.fragmentSongVisible(true);
+        activityMain.isSong(true);
+        activityMain.setActionBarTitle(getResources().getString(R.string.now_playing));
+        activityMain.showFab(false);
+        activityMain.setSongToAddToQueue(activityMain.getCurrentSong());
+        hideKeyBoard();
+        setUpButtons();
+        updateUI();
+        setUpBroadcastReceiverServiceConnected();
+        setUpBroadcastReceiverServiceOnOptionsMenuCreated();
+    }
+
+    private void updateUI(){
+        ActivityMain activityMain = ((ActivityMain) getActivity());
         activityMain.updateUI();
-        if (activityMain.serviceMain != null) {
-            activityMain.songToAddToQueue = activityMain.serviceMain.currentSong;
-        }
     }
 
     private void hideKeyBoard() {
-        InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(AppCompatActivity.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        ActivityMain activityMain = ((ActivityMain) getActivity());
+        activityMain.hideKeyboard(getView());
     }
 
     private void setUpBroadcastReceiverServiceOnOptionsMenuCreated() {
+        final ActivityMain activityMain = ((ActivityMain) getActivity());
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -81,19 +74,17 @@ public class FragmentSong extends Fragment {
         broadcastReceiverOptionsMenuCreated = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                /*
                 Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
                 Menu menu = toolbar.getMenu();
                 menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).setVisible(true);
                 menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).setVisible(true);
-
-                 */
             }
         };
         activityMain.registerReceiver(broadcastReceiverOptionsMenuCreated, filterComplete);
     }
 
     private void setUpBroadcastReceiverServiceConnected() {
+        ActivityMain activityMain = ((ActivityMain) getActivity());
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -108,14 +99,17 @@ public class FragmentSong extends Fragment {
     }
 
     public void notifyServiceConnected() {
-        activityMain.serviceMain.fragmentSongVisible = true;
-        activityMain.updateUI();
+        ActivityMain activityMain = ((ActivityMain) getActivity());
+        activityMain.fragmentSongVisible(true);
+        updateUI();
         setUpButtons();
-        activityMain.songToAddToQueue = activityMain.serviceMain.currentSong;
+        activityMain.setSongToAddToQueue(activityMain.getCurrentSong());
     }
 
     @SuppressLint("ClickableViewAccessibility")
     private void setUpButtons() {
+        ActivityMain activityMain = ((ActivityMain) getActivity());
+        View view = getView();
         final ImageButton buttonBad = view.findViewById(R.id.button_thumb_down);
         final ImageButton buttonGood = view.findViewById(R.id.button_thumb_up);
         final ImageButton buttonShuffle = view.findViewById(R.id.imageButtonShuffle);
@@ -131,6 +125,7 @@ public class FragmentSong extends Fragment {
         buttonPause.setOnClickListener(onClickListenerFragmentSong);
         buttonNext.setOnClickListener(onClickListenerFragmentSong);
         buttonLoop.setOnClickListener(onClickListenerFragmentSong);
+        onTouchListenerFragmentSongButtons = new OnTouchListenerFragmentSongButtons();
         buttonBad.setOnTouchListener(onTouchListenerFragmentSongButtons);
         buttonGood.setOnTouchListener(onTouchListenerFragmentSongButtons);
         buttonShuffle.setOnTouchListener(onTouchListenerFragmentSongButtons);
@@ -138,21 +133,19 @@ public class FragmentSong extends Fragment {
         buttonPause.setOnTouchListener(onTouchListenerFragmentSongButtons);
         buttonNext.setOnTouchListener(onTouchListenerFragmentSongButtons);
         buttonLoop.setOnTouchListener(onTouchListenerFragmentSongButtons);
-        if (activityMain.serviceMain != null) {
-            if (activityMain.serviceMain.shuffling) {
+            if (activityMain.shuffling()) {
                 buttonShuffle.setImageResource(R.drawable.ic_shuffle_black_24dp);
             } else {
                 buttonShuffle.setImageResource(R.drawable.ic_shuffle_white_24dp);
             }
 
-            if (activityMain.serviceMain.loopingOne) {
+            if (activityMain.loopingOne()) {
                 buttonLoop.setImageResource(R.drawable.repeat_one_black_24dp);
-            } else if (activityMain.serviceMain.looping) {
+            } else if (activityMain.looping()) {
                 buttonLoop.setImageResource(R.drawable.repeat_black_24dp);
             } else {
                 buttonLoop.setImageResource(R.drawable.repeat_white_24dp);
             }
-        }
         onLayoutChangeListenerFragmentSongButtons =
                 new OnLayoutChangeListenerFragmentSongButtons(activityMain);
         view.addOnLayoutChangeListener(onLayoutChangeListenerFragmentSongButtons);
@@ -161,6 +154,8 @@ public class FragmentSong extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        ActivityMain activityMain = ((ActivityMain) getActivity());
+        View view = getView();
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
         broadcastReceiverOnServiceConnected = null;
         activityMain.unregisterReceiver(broadcastReceiverOptionsMenuCreated);
@@ -190,9 +185,7 @@ public class FragmentSong extends Fragment {
         onTouchListenerFragmentSongButtons = null;
         view.removeOnLayoutChangeListener(onLayoutChangeListenerFragmentSongButtons);
         onLayoutChangeListenerFragmentSongButtons = null;
-        view = null;
-        activityMain.songToAddToQueue = null;
-        activityMain = null;
+        activityMain.setSongToAddToQueue(null);
     }
 
 }

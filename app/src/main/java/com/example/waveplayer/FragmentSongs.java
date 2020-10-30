@@ -50,13 +50,13 @@ public class FragmentSongs extends Fragment {
                              Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.recycler_view_song_list, container, false);
         activityMain = ((ActivityMain) getActivity());
-        if (activityMain != null && activityMain.serviceMain != null) {
-            activityMain.serviceMain.userPickedPlaylist = activityMain.serviceMain.masterPlaylist;
+        if (activityMain != null) {
+            activityMain.setUserPickedPlaylistToMasterPlaylist();
         }
         hideKeyBoard();
         updateMainContent();
         setUpRecyclerView();
-        setUpBroadcastReceiverOnCompletion();
+        setUpBroadcastReceiverServiceConnected();
         setUpBroadcastReceiverOnOptionsMenuCreated();
         return view;
     }
@@ -96,7 +96,7 @@ public class FragmentSongs extends Fragment {
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
-    private void setUpBroadcastReceiverOnCompletion() {
+    private void setUpBroadcastReceiverServiceConnected() {
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -128,12 +128,12 @@ public class FragmentSongs extends Fragment {
 
 
     private void setUpRecyclerView() {
-        if (activityMain.serviceMain != null && !setUp) {
+        if (!setUp) {
             RecyclerView recyclerViewSongs = view.findViewById(R.id.recycler_view_song_list);
             RecyclerViewAdapterSongs recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(
-                    this, new ArrayList<>(
-                    activityMain.serviceMain.masterPlaylist.getProbFun().getProbMap().keySet()));
-            recyclerViewSongs.setLayoutManager(new LinearLayoutManager(recyclerViewSongs.getContext()));
+                    this, new ArrayList<>(activityMain.getAllSongs()));
+            recyclerViewSongs.setLayoutManager(
+                    new LinearLayoutManager(recyclerViewSongs.getContext()));
             recyclerViewSongs.setAdapter(recyclerViewAdapterSongs);
             setUp = true;
         }

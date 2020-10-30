@@ -14,42 +14,42 @@ import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_PLAY
 public class OnCreateContextMenuListenerSongs implements View.OnCreateContextMenuListener {
 
     final Fragment fragment;
-    final AudioURI audioURI;
+    final AudioUri audioURI;
 
-    OnCreateContextMenuListenerSongs(Fragment fragment, AudioURI audioURI){
+    OnCreateContextMenuListenerSongs(Fragment fragment, AudioUri audioURI) {
         this.fragment = fragment;
         this.audioURI = audioURI;
     }
 
-        @Override
-        public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-            final MenuItem item = menu.add(R.string.add_to_playlist);
-            item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                @Override
-                public boolean onMenuItemClick(MenuItem item) {
-                    contextMenuAddToPlaylist();
-                    return true;
-                }
-            });
-            final MenuItem anotherItem = menu.add(R.string.add_to_queue);
-            anotherItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                @Override
-                public boolean onMenuItemClick(MenuItem item) {
-                    contextMenuAddToQueue();
-                    return true;
-                }
-            });
-        }
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        final MenuItem item = menu.add(R.string.add_to_playlist);
+        item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                contextMenuAddToPlaylist();
+                return true;
+            }
+        });
+        final MenuItem anotherItem = menu.add(R.string.add_to_queue);
+        anotherItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                contextMenuAddToQueue();
+                return true;
+            }
+        });
+    }
 
     private void contextMenuAddToPlaylist() {
         ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
-        if(activityMain != null) {
+        if (activityMain != null) {
             Bundle bundle = new Bundle();
-            bundle.putBoolean(BUNDLE_KEY_IS_SONG, true);
             bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, audioURI);
-            bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, activityMain.serviceMain.playlists);
+            bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, activityMain.getPlaylists());
+            bundle.putBoolean(BUNDLE_KEY_IS_SONG, true);
             DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist =
-                    new DialogFragmentAddToPlaylist(activityMain);
+                    new DialogFragmentAddToPlaylist();
             dialogFragmentAddToPlaylist.setArguments(bundle);
             dialogFragmentAddToPlaylist.show(fragment.getParentFragmentManager(), fragment.getTag());
         }
@@ -57,13 +57,12 @@ public class OnCreateContextMenuListenerSongs implements View.OnCreateContextMen
 
     private void contextMenuAddToQueue() {
         ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
-        if(activityMain != null) {
-            if (activityMain.serviceMain.songInProgress()) {
-                ((ActivityMain) fragment.getActivity()).serviceMain.addToQueue(audioURI.getUri());
+        if (activityMain != null) {
+            if (activityMain.songInProgress()) {
+                ((ActivityMain) fragment.getActivity()).addToQueue(audioURI.getUri());
             } else {
-                activityMain.serviceMain.addToQueueAndPlay(audioURI);
                 activityMain.showSongPane();
-                activityMain.updateUI();
+                activityMain.addToQueueAndPlay(audioURI);
             }
         }
     }

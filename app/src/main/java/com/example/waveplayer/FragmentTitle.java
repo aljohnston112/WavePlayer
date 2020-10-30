@@ -24,17 +24,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentPlaylist;
-import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentPlaylists;
-import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentSettings;
-import static com.example.waveplayer.FragmentTitleDirections.actionFragmentTitleToFragmentSongs;
 
 public class FragmentTitle extends Fragment {
 
     public static final int REQUEST_CODE_OPEN_FOLDER = 9367;
-
-    ActivityMain activityMain;
-
-    View view;
 
     BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
@@ -44,7 +37,7 @@ public class FragmentTitle extends Fragment {
 
     long mediaStoreUriID;
 
-    List<AudioURI> audioURIs;
+    List<AudioUri> audioUris;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -53,17 +46,20 @@ public class FragmentTitle extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        view = inflater.inflate(R.layout.fragment_title, container, false);
-        activityMain = ((ActivityMain) getActivity());
-        audioURIs = new ArrayList<>();
-        onClickListenerFragmentTitleButtons = new OnClickListenerFragmentTitleButtons(this);
+        audioUris = new ArrayList<>();
+        return inflater.inflate(R.layout.fragment_title, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
         updateMainContent();
         setUpButtons();
         setUpBroadCastReceiver();
-        return view;
     }
 
     private void setUpBroadCastReceiver() {
+        final ActivityMain activityMain = ((ActivityMain) getActivity());
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -72,22 +68,20 @@ public class FragmentTitle extends Fragment {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (uriUserPicked != null) {
-                    if (!audioURIs.isEmpty()) {
-                        if (activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID) == null) {
+                    if (!audioUris.isEmpty()) {
+                        if (!activityMain.containsDirectoryPlaylists(mediaStoreUriID)) {
                             RandomPlaylist randomPlaylist = new RandomPlaylist(
-                                    audioURIs, ServiceMain.MAX_PERCENT, uriUserPicked.getPath(),
+                                    uriUserPicked.getPath(), audioUris, activityMain.getMaxPercent(),
                                     false, mediaStoreUriID);
-                            activityMain.serviceMain.directoryPlaylists.put(
-                                    mediaStoreUriID, randomPlaylist);
-                            activityMain.serviceMain.playlists.add(randomPlaylist);
+                            activityMain.addDirectoryPlaylist(mediaStoreUriID, randomPlaylist);
                         } else {
                             RandomPlaylist randomPlaylist =
-                                    activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID);
+                                    activityMain.getDirectoryPlaylist(mediaStoreUriID);
                             addNewSongs(randomPlaylist);
                             removeMissingSongs(randomPlaylist);
                         }
-                        activityMain.serviceMain.userPickedPlaylist =
-                                activityMain.serviceMain.directoryPlaylists.get(mediaStoreUriID);
+                        activityMain.setUserPickedPlaylist(
+                                activityMain.getDirectoryPlaylist(mediaStoreUriID));
                     }
                     NavHostFragment.findNavController(FragmentTitle.this)
                             .navigate(actionFragmentTitleToFragmentPlaylist());
@@ -95,19 +89,19 @@ public class FragmentTitle extends Fragment {
             }
 
             private void removeMissingSongs(RandomPlaylist randomPlaylist) {
-                for (AudioURI audioURI : randomPlaylist.getProbFun().getProbMap().keySet()) {
-                    if (!audioURIs.contains(audioURI)) {
-                        randomPlaylist.getProbFun().remove(audioURI);
-                        audioURIs.remove(audioURI);
+                for (AudioUri audioURI : randomPlaylist.getAudioUris()) {
+                    if (!audioUris.contains(audioURI)) {
+                        randomPlaylist.remove(audioURI);
+                        audioUris.remove(audioURI);
                     }
                 }
             }
 
             private void addNewSongs(RandomPlaylist randomPlaylist) {
-                for (AudioURI audioURIFromURIMap : audioURIs) {
-                    if (audioURIFromURIMap != null) {
-                        if (!randomPlaylist.getProbFun().getProbMap().containsKey(audioURIFromURIMap)) {
-                            randomPlaylist.getProbFun().add(audioURIFromURIMap);
+                for (AudioUri audioURIFromUriMap : audioUris) {
+                    if (audioURIFromUriMap != null) {
+                        if (!randomPlaylist.contains(audioURIFromUriMap)) {
+                            randomPlaylist.add(audioURIFromUriMap);
                         }
                     }
                 }
@@ -118,13 +112,14 @@ public class FragmentTitle extends Fragment {
     }
 
     private void updateMainContent() {
-        if (activityMain != null) {
-            activityMain.setActionBarTitle(getResources().getString(R.string.app_name));
-            activityMain.showFab(false);
-        }
+        ActivityMain activityMain = ((ActivityMain) getActivity());
+        activityMain.setActionBarTitle(getResources().getString(R.string.app_name));
+        activityMain.showFab(false);
     }
 
     private void setUpButtons() {
+        View view = getView();
+        onClickListenerFragmentTitleButtons = new OnClickListenerFragmentTitleButtons(this);
         view.findViewById(R.id.button_playlists).setOnClickListener(onClickListenerFragmentTitleButtons);
         view.findViewById(R.id.button_songs).setOnClickListener(onClickListenerFragmentTitleButtons);
         view.findViewById(R.id.button_settings).setOnClickListener(onClickListenerFragmentTitleButtons);
@@ -151,6 +146,7 @@ public class FragmentTitle extends Fragment {
     }
 
     private void getFiles(Uri childrenUri, Uri rootUri) {
+        ActivityMain activityMain = ((ActivityMain) getActivity());
         ContentResolver contentResolver = activityMain.getContentResolver();
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != ? OR" +
                 DocumentsContract.Document.COLUMN_MIME_TYPE + " == ?";
@@ -175,7 +171,7 @@ public class FragmentTitle extends Fragment {
                                 rootUri, docId);
                         getFiles(newNode, rootUri);
                     } else {
-                        audioURIs.add(getAudioUri(displayName));
+                        audioUris.add(getAudioUri(displayName));
                     }
                 }
             }
@@ -186,7 +182,8 @@ public class FragmentTitle extends Fragment {
         return DocumentsContract.Document.MIME_TYPE_DIR.equals(mimeType);
     }
 
-    private AudioURI getAudioUri(String displayName) {
+    private AudioUri getAudioUri(String displayName) {
+        ActivityMain activityMain = ((ActivityMain) getActivity());
         ContentResolver contentResolver = activityMain.getContentResolver();
         String selection = MediaStore.Audio.Media.DISPLAY_NAME + " == ?";
         String[] selectionArgs = new String[]{displayName};
@@ -210,7 +207,7 @@ public class FragmentTitle extends Fragment {
                     String artist = cursor.getString(artistCol);
                     String data = cursor.getString(dataCol);
                     Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
-                    return new AudioURI(uri, data, displayName, artist, title, id);
+                    return new AudioUri(uri, data, displayName, artist, title, id);
                 }
             }
         }
@@ -221,20 +218,20 @@ public class FragmentTitle extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        ActivityMain activityMain = ((ActivityMain) getActivity());
+        View view = getView();
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
         broadcastReceiverOnServiceConnected = null;
-        activityMain = null;
         uriUserPicked = null;
-        for (int i = 0; i < audioURIs.size(); i++) {
-            audioURIs.set(i, null);
+        for (int i = 0; i < audioUris.size(); i++) {
+            audioUris.set(i, null);
         }
-        audioURIs = null;
+        audioUris = null;
         view.findViewById(R.id.button_playlists).setOnClickListener(null);
         view.findViewById(R.id.button_songs).setOnClickListener(null);
         view.findViewById(R.id.button_settings).setOnClickListener(null);
         view.findViewById(R.id.button_folder_search).setOnClickListener(null);
         onClickListenerFragmentTitleButtons = null;
-        view= null;
     }
 
 }

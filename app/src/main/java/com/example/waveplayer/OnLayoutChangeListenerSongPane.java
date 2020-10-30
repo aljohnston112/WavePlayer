@@ -51,7 +51,7 @@ public class OnLayoutChangeListenerSongPane implements View.OnLayoutChangeListen
         int width = height;
         Drawable drawable;
         ActivityMain activityMain = ((ActivityMain) fragmentPaneSong.getActivity());
-        if (activityMain != null && activityMain.serviceMain != null && activityMain.serviceMain.isPlaying()) {
+        if (activityMain != null && activityMain.isPlaying()) {
             drawable = ResourcesCompat.getDrawable(
                     fragmentPaneSong.getResources(), R.drawable.pause_black_24dp, null);
         } else {

@@ -3,15 +3,15 @@ package com.example.waveplayer;
 import android.media.MediaPlayer;
 import android.util.Log;
 
-public class MediaPlayerWURI {
+public class MediaPlayerWUri {
 
     private static final String TAG = "MediaPlayerWURI";
 
-    private final MediaPlayerWURI mediaPlayerWURI = this;
+    private final MediaPlayerWUri mediaPlayerWURI = this;
 
     private MediaPlayer mediaPlayer;
 
-    final AudioURI audioURI;
+    final AudioUri audioURI;
 
     final ServiceMain serviceMain;
 
@@ -24,7 +24,7 @@ public class MediaPlayerWURI {
         public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
             synchronized (mediaPlayerWURI) {
                 serviceMain.releaseMediaPlayers();
-                serviceMain.addToQueueAndPlay(serviceMain.currentSong);
+                serviceMain.addToQueueAndPlay(serviceMain.getCurrentSong());
                 return false;
             }
         }
@@ -32,7 +32,7 @@ public class MediaPlayerWURI {
 
     MOnPreparedListener mOnPreparedListener = new MOnPreparedListener(this);
 
-    MediaPlayerWURI(final ServiceMain serviceMain, MediaPlayer mediaPlayer, AudioURI audioURI){
+    MediaPlayerWUri(final ServiceMain serviceMain, MediaPlayer mediaPlayer, AudioUri audioURI){
         this.serviceMain = serviceMain;
         this.mediaPlayer = mediaPlayer;
         this.audioURI = audioURI;
@@ -105,9 +105,9 @@ public class MediaPlayerWURI {
 
     class MOnPreparedListener implements MediaPlayer.OnPreparedListener{
 
-        final MediaPlayerWURI mediaPlayerWURI;
+        final MediaPlayerWUri mediaPlayerWURI;
 
-        public  MOnPreparedListener(MediaPlayerWURI mediaPlayerWURI){
+        public  MOnPreparedListener(MediaPlayerWUri mediaPlayerWURI){
             this.mediaPlayerWURI = mediaPlayerWURI;
         }
 

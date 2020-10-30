@@ -8,7 +8,7 @@ import android.util.Log;
 
 public class ConnectionServiceMain implements ServiceConnection {
 
-    ActivityMain activityMain;
+    private ActivityMain activityMain;
 
     ConnectionServiceMain(ActivityMain activityMain) {
         this.activityMain = activityMain;
@@ -18,18 +18,11 @@ public class ConnectionServiceMain implements ServiceConnection {
     public void onServiceConnected(ComponentName className, IBinder service) {
         Log.v(ActivityMain.TAG, "onServiceConnected started");
         ServiceMain.ServiceMainBinder binder = (ServiceMain.ServiceMainBinder) service;
-        activityMain.serviceMain = binder.getService();
-        activityMain.setUpBroadcastReceivers();
+        activityMain.setServiceMain(binder.getService());
         activityMain.askForExternalStoragePermissionAndFetchMediaFiles();
+        activityMain.setUpBroadcastReceivers();
         activityMain.setUpSongPane();
-        if (activityMain.serviceMain.currentSong != null) {
-            activityMain.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    activityMain.updateUI();
-                }
-            });
-        }
+        activityMain.updateUI();
         sendBroadcast();
         Log.v(ActivityMain.TAG, "onServiceConnected ended");
     }
@@ -47,9 +40,9 @@ public class ConnectionServiceMain implements ServiceConnection {
     @Override
     public void onServiceDisconnected(ComponentName arg0) {
         Log.v(ActivityMain.TAG, "onServiceDisconnected start");
-        activityMain.onDestinationChangedListenerPanes = null;
-        activityMain.onClickListenerSongPane = null;
-
+        activityMain.unregisterReceivers();
+        activityMain.removeListeners();
+        activityMain = null;
     }
 
 }

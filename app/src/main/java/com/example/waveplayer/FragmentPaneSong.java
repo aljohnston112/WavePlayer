@@ -16,14 +16,9 @@ import android.view.ViewGroup;
 
 public class FragmentPaneSong extends Fragment {
 
-    ActivityMain activityMain;
-
-    View view;
-
     BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
-    OnLayoutChangeListenerSongPane onLayoutChangeListenerSongPane =
-            new OnLayoutChangeListenerSongPane(this);
+    OnLayoutChangeListenerSongPane onLayoutChangeListenerSongPane;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -34,25 +29,30 @@ public class FragmentPaneSong extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_pane_song, container, false);
+        View view = inflater.inflate(R.layout.fragment_pane_song, container, false);
+        onLayoutChangeListenerSongPane = new OnLayoutChangeListenerSongPane(this);
+        view.addOnLayoutChangeListener(onLayoutChangeListenerSongPane);
+        return view;
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        activityMain = ((ActivityMain) getActivity());
-        this.view = view;
-        if (activityMain != null) {
-            if (view.getVisibility() == View.VISIBLE && activityMain.serviceMain != null) {
-                activityMain.serviceMain.fragmentSongVisible = false;
-            }
-            activityMain.updateUI();
-        }
-        setupSongPane();
+        updateUI();
         setUpBroadcastReceiver();
     }
 
+    private void updateUI() {
+        ActivityMain activityMain = ((ActivityMain) getActivity());
+        View view = getView();
+        if (view.getVisibility() == View.VISIBLE) {
+            activityMain.fragmentSongVisible(false);
+            activityMain.updateUI();
+        }
+    }
+
     private void setUpBroadcastReceiver() {
+        ActivityMain activityMain = ((ActivityMain) getActivity());
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -67,15 +67,7 @@ public class FragmentPaneSong extends Fragment {
     }
 
     public void notifyServiceConnected() {
-        if (view.getVisibility() == View.VISIBLE && activityMain.serviceMain != null) {
-            activityMain.serviceMain.fragmentSongVisible = false;
-        }
-        setupSongPane();
-        activityMain.updateUI();
-    }
-
-    private void setupSongPane() {
-        view.addOnLayoutChangeListener(onLayoutChangeListenerSongPane);
+        updateUI();
     }
 
     public static Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
@@ -92,12 +84,12 @@ public class FragmentPaneSong extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        ActivityMain activityMain = ((ActivityMain) getActivity());
+        View view = getView();
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
         broadcastReceiverOnServiceConnected = null;
-        activityMain = null;
         view.removeOnLayoutChangeListener(onLayoutChangeListenerSongPane);
         onLayoutChangeListenerSongPane = null;
-        view = null;
     }
 
 }

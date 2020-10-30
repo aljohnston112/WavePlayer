@@ -71,7 +71,7 @@ public class OnLayoutChangeListenerFragmentSongButtons implements View.OnLayoutC
         //noinspection SuspiciousNameCombination
         int height = width;
         Drawable drawable;
-        if (activityMain.serviceMain.shuffling) {
+        if (activityMain.shuffling()) {
             drawable = ResourcesCompat.getDrawable(view.getResources(),
                     R.drawable.ic_shuffle_black_24dp, null);
         } else {
@@ -112,7 +112,7 @@ public class OnLayoutChangeListenerFragmentSongButtons implements View.OnLayoutC
         //noinspection SuspiciousNameCombination
         int height = width;
         Drawable drawable;
-        if (activityMain != null && activityMain.serviceMain != null && activityMain.serviceMain.isPlaying()) {
+        if (activityMain != null && activityMain.isPlaying()) {
             drawable = ResourcesCompat.getDrawable(view.getResources(), R.drawable.pause_black_24dp, null);
         } else {
             drawable = ResourcesCompat.getDrawable(view.getResources(), R.drawable.play_arrow_black_24dp, null);
@@ -152,10 +152,10 @@ public class OnLayoutChangeListenerFragmentSongButtons implements View.OnLayoutC
         int height = width;
         Drawable drawable;
 
-        if (activityMain.serviceMain.loopingOne) {
+        if (activityMain.loopingOne()) {
             drawable = ResourcesCompat.getDrawable(view.getResources(),
                     R.drawable.repeat_one_black_24dp, null);
-        } else if (activityMain.serviceMain.looping) {
+        } else if (activityMain.looping()) {
             drawable = ResourcesCompat.getDrawable(view.getResources(),
                     R.drawable.repeat_black_24dp, null);
         } else {

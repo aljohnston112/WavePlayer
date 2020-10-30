@@ -10,7 +10,7 @@ import androidx.navigation.NavDestination;
 public class OnDestinationChangedListenerPanes
         implements NavController.OnDestinationChangedListener {
 
-    final ActivityMain activityMain;
+    private final ActivityMain activityMain;
 
     public OnDestinationChangedListenerPanes(ActivityMain activityMain){
         this.activityMain = activityMain;
@@ -21,13 +21,13 @@ public class OnDestinationChangedListenerPanes
                                      @NonNull final NavDestination destination,
                                      @Nullable Bundle arguments) {
         if (destination.getId() != R.id.fragmentSong) {
-            if(activityMain.serviceMain.songInProgress()) {
-                activityMain.serviceMain.fragmentSongVisible = false;
+            if(activityMain.songInProgress()) {
+                activityMain.fragmentSongVisible(false);
                 activityMain.showSongPane();
                 activityMain.updateUI();
             }
         } else {
-            activityMain.serviceMain.fragmentSongVisible = true;
+            activityMain.fragmentSongVisible(true);
             activityMain.hideSongPane();
         }
 

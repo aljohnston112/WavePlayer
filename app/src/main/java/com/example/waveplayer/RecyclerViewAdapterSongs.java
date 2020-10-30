@@ -1,9 +1,6 @@
 package com.example.waveplayer;
 
-import android.os.Bundle;
-import android.view.ContextMenu;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -20,22 +17,26 @@ import java.util.List;
 
 public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewAdapterSongs.ViewHolder> {
 
-    final private Fragment fragment;
-    public List<AudioURI> audioURIS;
+    private final Fragment fragment;
 
-    OnCreateContextMenuListenerSongs onCreateContextMenuListenerSongs;
-
-    View.OnClickListener onClickListenerHandle;
-
-    View.OnClickListener onClickListenerViewHolder;
-
-    public RecyclerViewAdapterSongs(Fragment fragment, List<AudioURI> items) {
-        this.fragment = fragment;
-        audioURIS = items;
+    private List<AudioUri> audioUris;
+    List<AudioUri> getAudioUris(){
+        return audioUris;
     }
 
-    public void updateList(List<AudioURI> audioURIS) {
-        this.audioURIS = audioURIS;
+    private OnCreateContextMenuListenerSongs onCreateContextMenuListenerSongs;
+
+    private View.OnClickListener onClickListenerHandle;
+
+    private View.OnClickListener onClickListenerViewHolder;
+
+    public RecyclerViewAdapterSongs(Fragment fragment, List<AudioUri> items) {
+        this.fragment = fragment;
+        audioUris = items;
+    }
+
+    public void updateList(List<AudioUri> audioURISES) {
+        this.audioUris = audioURISES;
         notifyDataSetChanged();
     }
 
@@ -48,8 +49,8 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        holder.audioURI = audioURIS.get(position);
-        holder.textViewSongName.setText(audioURIS.get(position).title);
+        holder.audioURI = audioUris.get(position);
+        holder.textViewSongName.setText(audioUris.get(position).title);
         onCreateContextMenuListenerSongs =
                 new OnCreateContextMenuListenerSongs(fragment, holder.audioURI);
         holder.handle.setOnCreateContextMenuListener(null);
@@ -70,29 +71,18 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                 if (position != RecyclerView.NO_POSITION) {
                     ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
                     if (activityMain != null) {
-                        if (holder.audioURI.equals(activityMain.serviceMain.currentSong)) {
-                            MediaPlayerWURI mediaPlayerWURI =
-                                    activityMain.serviceMain.uriMediaPlayerWURIHashMap.get(
-                                            activityMain.serviceMain.currentSong.getUri());
-                            if(mediaPlayerWURI != null) {
-                                mediaPlayerWURI.seekTo(0);
-                            }
+                        if (holder.audioURI.equals(activityMain.getCurrentSong())) {
+                            activityMain.seekTo(0);
                         } else {
-                            activityMain.serviceMain.stopAndPreparePrevious();
+                            activityMain.stopAndPreparePrevious();
                         }
                         if (fragment instanceof FragmentSongs) {
-                            activityMain.serviceMain.currentPlaylist =
-                                    activityMain.serviceMain.masterPlaylist;
+                            activityMain.setCurrentPlaylistToMaster();
                             action = FragmentSongsDirections.actionFragmentSongsToFragmentSong();
                         } else if (fragment instanceof FragmentPlaylist) {
-                            activityMain.serviceMain.currentPlaylist =
-                                    activityMain.serviceMain.userPickedPlaylist;
+                            activityMain.setCurrentPlaylist(activityMain.getUserPickedPlaylist());
                             action = FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong();
                         }
-                        activityMain.serviceMain.currentPlaylistArray =
-                                new ArrayList<>(activityMain.serviceMain.currentPlaylist
-                                        .getProbFun().getProbMap().keySet());
-                        activityMain.serviceMain.clearSongQueue();
                         activityMain.addToQueueAndPlay(holder.audioURI);
                     }
                     if (action != null) {
@@ -119,14 +109,14 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
 
     @Override
     public int getItemCount() {
-        return audioURIS.size();
+        return audioUris.size();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         public final View songView;
         public final TextView textViewSongName;
-        public AudioURI audioURI;
+        public AudioUri audioURI;
         final ImageView handle;
 
         public ViewHolder(View view) {

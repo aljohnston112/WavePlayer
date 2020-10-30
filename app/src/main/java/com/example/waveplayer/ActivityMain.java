@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,6 +17,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -32,13 +34,13 @@ import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
-import java.util.concurrent.Executors;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST;
@@ -56,40 +58,52 @@ public class ActivityMain extends AppCompatActivity {
     // Open current song in folder as a menu action
     // Setting to not keep playing after queue is done
 
-
     static final String DEBUG_TAG = "debug";
     static final String TAG = "ActivityMain";
+
     private static final int REQUEST_CODE_PERMISSION_READ = 245083964;
+    private static final int REQUEST_CODE_PERMISSION_WRITE = 245083965;
 
     public static final int MENU_ACTION_RESET_PROBS_INDEX = 0;
     public static final int MENU_ACTION_ADD_TO_PLAYLIST_INDEX = 1;
     public static final int MENU_ACTION_SEARCH_INDEX = 2;
     public static final int MENU_ACTION_ADD_TO_QUEUE = 3;
 
-    public ServiceMain serviceMain;
-    private ServiceConnection connection;
+    private ServiceMain serviceMain;
 
-    BroadcastReceiverOnCompletion broadcastReceiverOnCompletion;
-    BroadcastReceiverNotificationButtonsForActivityMain
+    public void setServiceMain(ServiceMain serviceMain) {
+        this.serviceMain = serviceMain;
+    }
+
+    private ServiceConnection connectionServiceMain;
+
+    private BroadcastReceiverOnCompletion broadcastReceiverOnCompletion;
+    private BroadcastReceiverNotificationButtonsForActivityMain
             broadcastReceiverNotificationButtonsForActivityMain;
 
-    OnDestinationChangedListenerToolbar onDestinationChangedListenerToolbar;
+    private OnDestinationChangedListenerToolbar onDestinationChangedListenerToolbar;
 
-    OnDestinationChangedListenerPanes onDestinationChangedListenerPanes;
+    private OnDestinationChangedListenerPanes onDestinationChangedListenerPanes;
 
-    OnClickListenerSongPane onClickListenerSongPane;
+    private OnClickListenerSongPane onClickListenerSongPane;
 
-    OnSeekBarChangeListener onSeekBarChangeListener;
+    private OnSeekBarChangeListener onSeekBarChangeListener;
 
-    final Object lock = new Object();
+    public final Object lock = new Object();
 
-    boolean searchInProgress = false;
+    private boolean isSong;
 
-    boolean isSong;
+    public void isSong(boolean isSong) {
+        this.isSong = isSong;
+    }
 
-    AudioURI songToAddToQueue;
+    private AudioUri songToAddToQueue;
 
-    RandomPlaylist playlistToAddToQueue;
+    private RandomPlaylist playlistToAddToQueue;
+
+    public void setPlaylistToAddToQueue(RandomPlaylist randomPlaylist) {
+        this.playlistToAddToQueue = randomPlaylist;
+    }
 
     // region lifecycle
 
@@ -110,73 +124,80 @@ public class ActivityMain extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        connection = new ConnectionServiceMain(this);
-        broadcastReceiverOnCompletion = new BroadcastReceiverOnCompletion(this);
-        broadcastReceiverNotificationButtonsForActivityMain =
-                new BroadcastReceiverNotificationButtonsForActivityMain(this);
-        onDestinationChangedListenerToolbar = new OnDestinationChangedListenerToolbar(this);
-        onDestinationChangedListenerPanes = new OnDestinationChangedListenerPanes(this);
-        onClickListenerSongPane = new OnClickListenerSongPane(this);
+        startAndBindServiceMain();
         onSeekBarChangeListener = new OnSeekBarChangeListener(this);
         setUpActionBar();
-        startAndBindServiceMain();
     }
 
-    private void setUpActionBar() {
-        Log.v(TAG, "Setting up ActionBar");
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        toolbar.setTitleTextColor(getResources().getColor(R.color.colorOnPrimary));
-        Drawable overflowIcon = toolbar.getOverflowIcon();
-        if (overflowIcon != null) {
-            overflowIcon.setColorFilter(
-                    getResources().getColor(R.color.colorOnPrimary), PorterDuff.Mode.SRC_ATOP);
+    private void startAndBindServiceMain() {
+        Log.v(TAG, "starting and binding ServiceMain");
+        Intent intentServiceMain = new Intent(ActivityMain.this, ServiceMain.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intentServiceMain);
+        } else {
+            startService(intentServiceMain);
         }
-        centerActionBarTitle();
-        setUpDestinationChangedListenerForToolbar();
-        Log.v(TAG, "ActionBar set up");
+        connectionServiceMain = new ConnectionServiceMain(this);
+        getApplicationContext().bindService(
+                intentServiceMain, connectionServiceMain, BIND_AUTO_CREATE | BIND_IMPORTANT);
+        Log.v(TAG, "started and bound ServiceMain");
     }
 
-    private void setUpDestinationChangedListenerForToolbar() {
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
-        if (fragment != null) {
-            NavHostFragment.findNavController(fragment).addOnDestinationChangedListener(
-                    onDestinationChangedListenerToolbar);
-        }
-    }
-
-    private void centerActionBarTitle() {
-        Log.v(TAG, "sending runnable to center the ActionBar title");
-        ArrayList<View> textViews = new ArrayList<>();
-        getWindow().getDecorView().findViewsWithText(textViews, getTitle(), View.FIND_VIEWS_WITH_TEXT);
-        if (!textViews.isEmpty()) {
-            AppCompatTextView appCompatTextView = null;
-            for (View v : textViews) {
-                if (v.getParent() instanceof Toolbar) {
-                    appCompatTextView = (AppCompatTextView) v;
-                    break;
-                }
+    void askForExternalStoragePermissionAndFetchMediaFiles() {
+        Log.v(TAG, "Making sure there is external storage permission");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        REQUEST_CODE_PERMISSION_WRITE);
             }
-            if (appCompatTextView != null) {
-                ViewGroup.LayoutParams params = appCompatTextView.getLayoutParams();
-                params.width = ViewGroup.LayoutParams.MATCH_PARENT;
-                appCompatTextView.setLayoutParams(params);
-                appCompatTextView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                appCompatTextView.setTextSize(28);
+            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        REQUEST_CODE_PERMISSION_READ);
+            } else {
+                serviceMain.getAudioFiles();
+            }
+        } else {
+            serviceMain.getAudioFiles();
+        }
+
+        Log.v(TAG, "Done making sure there is external storage permission");
+    }
+
+    @Override
+    public void onRequestPermissionsResult(
+            int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        Log.v(TAG, "onRequestPermissionsResult start");
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CODE_PERMISSION_READ && grantResults.length > 0 &&
+                grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            serviceMain.getAudioFiles();
+        } else if (requestCode == REQUEST_CODE_PERMISSION_READ) {
+            Toast toast = Toast.makeText(getApplicationContext(),
+                    R.string.permission_needed, Toast.LENGTH_LONG);
+            toast.show();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                requestPermissions(
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        REQUEST_CODE_PERMISSION_READ);
             }
         }
-        Log.v(TAG, "Centered the ActionBar title");
+        Log.v(TAG, "onRequestPermissionsResult end");
     }
 
     void setUpBroadcastReceivers() {
         Log.v(TAG, "setting up BroadcastReceivers");
+        broadcastReceiverOnCompletion = new BroadcastReceiverOnCompletion(this);
         setUpBroadcastReceiverOnCompletion();
+        broadcastReceiverNotificationButtonsForActivityMain =
+                new BroadcastReceiverNotificationButtonsForActivityMain(this);
         setUpBroadcastReceiverActionNext();
         setUpBroadcastReceiverActionPrevious();
         setUpBroadcastReceiverActionPlayPause();
         Log.v(TAG, "done setting up BroadcastReceivers");
-
     }
 
     private void setUpBroadcastReceiverOnCompletion() {
@@ -208,57 +229,6 @@ public class ActivityMain extends AppCompatActivity {
                 R.string.broadcast_receiver_action_play_pause));
         filterPlayPause.addCategory(Intent.CATEGORY_DEFAULT);
         registerReceiver(broadcastReceiverNotificationButtonsForActivityMain, filterPlayPause);
-    }
-
-    private void startAndBindServiceMain() {
-        Log.v(TAG, "starting and binding ServiceMain");
-        Intent intentServiceMain = new Intent(ActivityMain.this, ServiceMain.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intentServiceMain);
-        } else {
-            startService(intentServiceMain);
-        }
-        getApplicationContext().bindService(
-                intentServiceMain, connection, BIND_AUTO_CREATE | BIND_IMPORTANT);
-        Log.v(TAG, "started and bound ServiceMain");
-    }
-
-    void askForExternalStoragePermissionAndFetchMediaFiles() {
-        Log.v(TAG, "Making sure there is external storage permission");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(
-                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                        REQUEST_CODE_PERMISSION_READ);
-            } else {
-                serviceMain.getAudioFiles();
-            }
-        } else {
-            serviceMain.getAudioFiles();
-        }
-        Log.v(TAG, "Done making sure there is external storage permission");
-    }
-
-    @Override
-    public void onRequestPermissionsResult(
-            int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        Log.v(TAG, "onRequestPermissionsResult start");
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_CODE_PERMISSION_READ && grantResults.length > 0 &&
-                grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            serviceMain.getAudioFiles();
-        } else if (requestCode == REQUEST_CODE_PERMISSION_READ) {
-            Toast toast = Toast.makeText(getApplicationContext(),
-                    R.string.permission_needed, Toast.LENGTH_LONG);
-            toast.show();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                requestPermissions(
-                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                        REQUEST_CODE_PERMISSION_READ);
-            }
-        }
-        Log.v(TAG, "onRequestPermissionsResult end");
     }
 
     void setUpSongPane() {
@@ -307,6 +277,7 @@ public class ActivityMain extends AppCompatActivity {
 
     private void linkSongPaneButtons() {
         Log.v(TAG, "linking song pane buttons");
+        onClickListenerSongPane = new OnClickListenerSongPane(this);
         findViewById(R.id.imageButtonSongPaneNext).setOnClickListener(onClickListenerSongPane);
         findViewById(R.id.imageButtonSongPanePlayPause).setOnClickListener(onClickListenerSongPane);
         findViewById(R.id.imageButtonSongPanePrev).setOnClickListener(onClickListenerSongPane);
@@ -316,6 +287,7 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     private void setUpDestinationChangedListenerForPaneSong() {
+        onDestinationChangedListenerPanes = new OnDestinationChangedListenerPanes(this);
         FragmentManager fragmentManager = getSupportFragmentManager();
         Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
         if (fragment != null) {
@@ -324,40 +296,99 @@ public class ActivityMain extends AppCompatActivity {
         }
     }
 
+    private void setUpActionBar() {
+        Log.v(TAG, "Setting up ActionBar");
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        toolbar.setTitleTextColor(getResources().getColor(R.color.colorOnPrimary));
+        Drawable overflowIcon = toolbar.getOverflowIcon();
+        if (overflowIcon != null) {
+            overflowIcon.setColorFilter(
+                    getResources().getColor(R.color.colorOnPrimary), PorterDuff.Mode.SRC_ATOP);
+        }
+        centerActionBarTitleAndSetTextSize();
+        setUpDestinationChangedListenerForToolbar();
+        Log.v(TAG, "ActionBar set up");
+    }
+
+    private void centerActionBarTitleAndSetTextSize() {
+        Log.v(TAG, "sending runnable to center the ActionBar title");
+        ArrayList<View> textViews = new ArrayList<>();
+        getWindow().getDecorView().findViewsWithText(textViews, getTitle(), View.FIND_VIEWS_WITH_TEXT);
+        if (!textViews.isEmpty()) {
+            AppCompatTextView appCompatTextView = null;
+            for (View v : textViews) {
+                if (v.getParent() instanceof Toolbar) {
+                    appCompatTextView = (AppCompatTextView) v;
+                    break;
+                }
+            }
+            if (appCompatTextView != null) {
+                ViewGroup.LayoutParams params = appCompatTextView.getLayoutParams();
+                params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                appCompatTextView.setLayoutParams(params);
+                appCompatTextView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                appCompatTextView.setTextSize(28);
+            }
+        }
+        Log.v(TAG, "Centered the ActionBar title");
+    }
+
+    private void setUpDestinationChangedListenerForToolbar() {
+        onDestinationChangedListenerToolbar = new OnDestinationChangedListenerToolbar(this);
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
+        if (fragment != null) {
+            NavHostFragment.findNavController(fragment).addOnDestinationChangedListener(
+                    onDestinationChangedListenerToolbar);
+        }
+    }
+
     // endregion onStart
 
     @Override
     protected void onStop() {
         super.onStop();
-        ExtendedFloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(null);
+        getApplicationContext().unbindService(connectionServiceMain);
+        connectionServiceMain = null;
         FragmentManager fragmentManager = getSupportFragmentManager();
         Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
         if (fragment != null) {
             NavHostFragment.findNavController(fragment).removeOnDestinationChangedListener(
                     onDestinationChangedListenerToolbar);
-            NavHostFragment.findNavController(fragment).removeOnDestinationChangedListener(
-                    onDestinationChangedListenerPanes);
         }
         onDestinationChangedListenerToolbar = null;
-        onDestinationChangedListenerPanes = null;
+        onSeekBarChangeListener = null;
+
+        ExtendedFloatingActionButton fab = findViewById(R.id.fab);
+        fab.setOnClickListener(null);
         SeekBar seekBar = findViewById(R.id.seekBar);
         if (seekBar != null) {
             seekBar.setOnSeekBarChangeListener(null);
         }
-        onSeekBarChangeListener = null;
+    }
+
+    public void unregisterReceivers() {
+        unregisterReceiver(broadcastReceiverOnCompletion);
+        broadcastReceiverOnCompletion = null;
+        unregisterReceiver(broadcastReceiverNotificationButtonsForActivityMain);
+        broadcastReceiverNotificationButtonsForActivityMain = null;
+    }
+
+    public void removeListeners() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
+        if (fragment != null) {
+            NavHostFragment.findNavController(fragment).removeOnDestinationChangedListener(
+                    onDestinationChangedListenerPanes);
+        }
+        onDestinationChangedListenerPanes = null;
         findViewById(R.id.imageButtonSongPaneNext).setOnClickListener(null);
         findViewById(R.id.imageButtonSongPanePlayPause).setOnClickListener(null);
         findViewById(R.id.imageButtonSongPanePrev).setOnClickListener(null);
         findViewById(R.id.textViewSongPaneSongName).setOnClickListener(null);
         findViewById(R.id.imageViewSongPaneSongArt).setOnClickListener(null);
         onClickListenerSongPane = null;
-        getApplicationContext().unbindService(connection);
-        connection = null;
-        unregisterReceiver(broadcastReceiverOnCompletion);
-        broadcastReceiverOnCompletion = null;
-        unregisterReceiver(broadcastReceiverNotificationButtonsForActivityMain);
-        broadcastReceiverNotificationButtonsForActivityMain = null;
     }
 
     @Override
@@ -372,10 +403,7 @@ public class ActivityMain extends AppCompatActivity {
         super.onPause();
         if (serviceMain != null) {
             serviceMain.saveFile();
-            if (serviceMain.scheduledExecutorService != null) {
-                serviceMain.scheduledExecutorService.shutdown();
-                serviceMain.scheduledExecutorService = null;
-            }
+            serviceMain.shutDownSeekBarUpdater();
         }
         Log.v(TAG, "onPause ended");
     }
@@ -384,7 +412,7 @@ public class ActivityMain extends AppCompatActivity {
 
     // region UI
 
-    public void setActionBarTitle(final String title) {
+    public void setActionBarTitle(String title) {
         Log.v(TAG, "setting ActionBar title");
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
@@ -393,24 +421,9 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "done setting ActionBar title");
     }
 
-    public void setFabImage(final int id) {
-        Log.v(TAG, "setting FAB image");
-        ExtendedFloatingActionButton fab;
-        fab = findViewById(R.id.fab);
-        fab.setIcon(ResourcesCompat.getDrawable(getResources(), id, null));
-        Log.v(TAG, "done setting FAB image");
-    }
-
-    public void setFABText(int id) {
-        ExtendedFloatingActionButton fab;
-        fab = findViewById(R.id.fab);
-        fab.setText(id);
-    }
-
-    public void showFab(final boolean show) {
+    public void showFab(boolean show) {
         Log.v(TAG, "showing or hiding FAB");
-        ExtendedFloatingActionButton fab;
-        fab = findViewById(R.id.fab);
+        ExtendedFloatingActionButton fab = findViewById(R.id.fab);
         if (show) {
             fab.show();
         } else {
@@ -419,10 +432,23 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "done showing or hiding FAB");
     }
 
-    public void setFabOnClickListener(final View.OnClickListener onClickListener) {
-        Log.v(TAG, "setting FAB OnClickListener");
+    public void setFABText(int id) {
         ExtendedFloatingActionButton fab;
         fab = findViewById(R.id.fab);
+        fab.setText(id);
+    }
+
+    public void setFabImage(int id) {
+        Log.v(TAG, "setting FAB image");
+        ExtendedFloatingActionButton fab;
+        fab = findViewById(R.id.fab);
+        fab.setIcon(ResourcesCompat.getDrawable(getResources(), id, null));
+        Log.v(TAG, "done setting FAB image");
+    }
+
+    public void setFabOnClickListener(final View.OnClickListener onClickListener) {
+        Log.v(TAG, "setting FAB OnClickListener");
+        ExtendedFloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(null);
         fab.setOnClickListener(onClickListener);
         Log.v(TAG, "done setting FAB OnClickListener");
@@ -443,45 +469,32 @@ public class ActivityMain extends AppCompatActivity {
 
     private void updateSongUI() {
         Log.v(TAG, "Updating the song UI");
-        if (serviceMain != null) {
-            if (serviceMain.fragmentSongVisible && serviceMain.currentSong != null) {
-                updateSeekBar();
-                updateSongArt();
-                updateSongName();
-                updateTextViewTimes();
-                Log.v(TAG, "done updating the song UI");
-            }
+        if (serviceMain != null
+                && serviceMain.fragmentSongVisible() && serviceMain.getCurrentSong() != null) {
+            updateSeekBar();
+            updateSongArt();
+            updateSongName();
+            updateTextViewTimes();
+            Log.v(TAG, "done updating the song UI");
         }
     }
 
     private void updateSeekBar() {
         SeekBar seekBar = findViewById(R.id.seekBar);
-        if (seekBar != null) {
-            final int maxMillis = serviceMain.currentSong.getDuration(getApplicationContext());
-            seekBar.setProgress(getCurrentTime());
+        if (seekBar != null && serviceMain != null) {
+            final int maxMillis = serviceMain.getCurrentSong().getDuration(getApplicationContext());
             seekBar.setMax(maxMillis);
+            seekBar.setProgress(getCurrentTime());
             seekBar.setOnSeekBarChangeListener(onSeekBarChangeListener);
             setUpSeekBarUpdater(maxMillis);
         }
     }
 
-    private String formatMillis(int millis) {
-        return String.format(getResources().getConfiguration().locale,
-                "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(millis),
-                TimeUnit.MILLISECONDS.toMinutes(millis) -
-                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
-                TimeUnit.MILLISECONDS.toSeconds(millis) -
-                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
-    }
-
     private int getCurrentTime() {
-        MediaPlayerWURI mediaPlayerWURI =
-                serviceMain.uriMediaPlayerWURIHashMap.get(serviceMain.currentSong.getUri());
-        if (mediaPlayerWURI != null) {
-            return mediaPlayerWURI.getCurrentPosition();
-        } else {
-            return 0;
+        if (serviceMain != null) {
+            return serviceMain.getCurrentTime();
         }
+        return -1;
     }
 
     private void setUpSeekBarUpdater(int maxMillis) {
@@ -489,42 +502,34 @@ public class ActivityMain extends AppCompatActivity {
         TextView textViewCurrent = findViewById(R.id.editTextCurrentTime);
         if (seekBar != null && textViewCurrent != null) {
             if (serviceMain != null) {
-                if (serviceMain.scheduledExecutorService != null) {
-                    serviceMain.scheduledExecutorService.shutdown();
-                }
-                serviceMain.scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-                serviceMain.scheduledExecutorService.scheduleAtFixedRate(
-                        new RunnableSeekBarUpdater(
-                                serviceMain.uriMediaPlayerWURIHashMap.get(serviceMain.currentSong.getUri()),
-                                seekBar, textViewCurrent, maxMillis,
-                                getResources().getConfiguration().locale),
-                        0L, 1L, TimeUnit.SECONDS);
+                serviceMain.updateSeekBarUpdater(seekBar, textViewCurrent, maxMillis);
             }
         }
     }
 
     private void updateSongArt() {
         ImageView imageViewSongArt = findViewById(R.id.image_view_song_art);
-        if (imageViewSongArt != null) {
-            if (AudioURI.getThumbnail(serviceMain.currentSong, getApplicationContext()) == null) {
+        if (imageViewSongArt != null && serviceMain != null) {
+            Bitmap bitmap =
+                    AudioUri.getThumbnail(serviceMain.getCurrentSong(), getApplicationContext());
+            if (bitmap == null) {
                 imageViewSongArt.setImageDrawable(ResourcesCompat.getDrawable(
                         getResources(), R.drawable.music_note_black_48dp, null));
             } else {
-                imageViewSongArt.setImageBitmap(AudioURI.getThumbnail(
-                        serviceMain.currentSong, getApplicationContext()));
+                imageViewSongArt.setImageBitmap(bitmap);
             }
         }
     }
 
     private void updateSongName() {
         TextView textViewSongName = findViewById(R.id.text_view_song_name);
-        if (textViewSongName != null) {
-            textViewSongName.setText(serviceMain.currentSong.title);
+        if (textViewSongName != null && serviceMain != null) {
+            textViewSongName.setText(serviceMain.getCurrentSong().title);
         }
     }
 
     private void updateTextViewTimes() {
-        final int maxMillis = serviceMain.currentSong.getDuration(getApplicationContext());
+        final int maxMillis = serviceMain.getCurrentSong().getDuration(getApplicationContext());
         final String stringEndTime = formatMillis(maxMillis);
         String stringCurrentTime = formatMillis(getCurrentTime());
         TextView textViewCurrent = findViewById(R.id.editTextCurrentTime);
@@ -537,25 +542,34 @@ public class ActivityMain extends AppCompatActivity {
         }
     }
 
+    private String formatMillis(int millis) {
+        return String.format(getResources().getConfiguration().locale,
+                "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(millis),
+                TimeUnit.MILLISECONDS.toMinutes(millis) -
+                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
+                TimeUnit.MILLISECONDS.toSeconds(millis) -
+                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
+    }
+
     // endregion updateSongUI
 
     // region updateSongPaneUI
 
     private void updateSongPaneUI() {
-        if (serviceMain != null && !serviceMain.fragmentSongVisible && serviceMain.currentSong != null) {
-            Log.v(TAG, "updating the song pane UI");
-            if (serviceMain.songInProgress()) {
-                updateSongPaneName();
-                updateSongPaneArt();
-            }
-            Log.v(TAG, "done updating the song pane UI");
+        Log.v(TAG, "updating the song pane UI");
+        if (serviceMain != null
+                && !serviceMain.fragmentSongVisible() && serviceMain.getCurrentSong() != null
+                && serviceMain.songInProgress()) {
+            updateSongPaneName();
+            updateSongPaneArt();
         }
+        Log.v(TAG, "done updating the song pane UI");
     }
 
     private void updateSongPaneName() {
         TextView textViewSongPaneSongName = findViewById(R.id.textViewSongPaneSongName);
-        if (textViewSongPaneSongName != null) {
-            textViewSongPaneSongName.setText(serviceMain.currentSong.title);
+        if (textViewSongPaneSongName != null && serviceMain != null) {
+            textViewSongPaneSongName.setText(serviceMain.getCurrentSong().title);
         }
     }
 
@@ -570,12 +584,12 @@ public class ActivityMain extends AppCompatActivity {
 
     private int getSongArtHeight() {
         ImageView imageViewSongPaneSongArt = findViewById(R.id.imageViewSongPaneSongArt);
-        if (imageViewSongPaneSongArt != null) {
+        if (imageViewSongPaneSongArt != null && serviceMain != null) {
             int songArtHeight = imageViewSongPaneSongArt.getMeasuredHeight();
             if (songArtHeight > 0) {
-                serviceMain.songPaneArtHeight = songArtHeight;
+                serviceMain.setSongPaneArtHeight(songArtHeight);
             } else {
-                songArtHeight = serviceMain.songPaneArtHeight;
+                songArtHeight = serviceMain.getSongPaneArtHeight();
             }
             return songArtHeight;
         }
@@ -584,9 +598,9 @@ public class ActivityMain extends AppCompatActivity {
 
     private void setImageViewSongPaneArt(int songArtWidth, int songArtHeight) {
         ImageView imageViewSongPaneSongArt = findViewById(R.id.imageViewSongPaneSongArt);
-        if (imageViewSongPaneSongArt != null) {
-            Bitmap bitmapSongArt = AudioURI.getThumbnail(
-                    serviceMain.currentSong, getApplicationContext());
+        if (imageViewSongPaneSongArt != null && serviceMain != null) {
+            Bitmap bitmapSongArt = AudioUri.getThumbnail(
+                    serviceMain.getCurrentSong(), getApplicationContext());
             if (bitmapSongArt != null) {
                 Bitmap bitmapSongArtResized = FragmentPaneSong.getResizedBitmap(
                         bitmapSongArt, songArtWidth, songArtHeight);
@@ -610,8 +624,7 @@ public class ActivityMain extends AppCompatActivity {
                     songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmapSongArt);
             drawableSongArt.draw(canvas);
-            Bitmap bitmapSongArtResized =
-                    FragmentPaneSong.getResizedBitmap(
+            Bitmap bitmapSongArtResized = FragmentPaneSong.getResizedBitmap(
                             bitmapSongArt, songArtWidth, songArtHeight);
             bitmapSongArt.recycle();
             return bitmapSongArtResized;
@@ -662,37 +675,161 @@ public class ActivityMain extends AppCompatActivity {
 
     // region playbackControls
 
-    public void addToQueueAndPlay(AudioURI audioURI) {
+    public void addToQueue(Uri uri) {
+        if (serviceMain != null) {
+            serviceMain.addToQueue(uri);
+        }
+    }
+
+    public void addToQueueAndPlay(AudioUri audioURI) {
         Log.v(TAG, "addToQueueAndPlay start");
-        serviceMain.addToQueueAndPlay(audioURI);
+        if (serviceMain != null) {
+            serviceMain.addToQueueAndPlay(audioURI);
+        }
         updateUI();
         Log.v(TAG, "addToQueueAndPlay end");
     }
 
     public void playNext() {
         Log.v(TAG, "playNext start");
-        serviceMain.playNext();
+        if (serviceMain != null) {
+            serviceMain.playNext();
+        }
         updateUI();
         Log.v(TAG, "playNext end");
     }
 
     public void playPrevious() {
         Log.v(TAG, "playPrevious start");
-        serviceMain.playPrevious();
+        if (serviceMain != null) {
+            serviceMain.playPrevious();
+        }
         updateUI();
         Log.v(TAG, "playPrevious end");
     }
 
     public void pauseOrPlay() {
         Log.v(TAG, "pauseOrPlay start");
-        if (serviceMain.currentSong != null) {
+        if (serviceMain != null && serviceMain.getCurrentSong() != null) {
             serviceMain.pauseOrPlay();
         }
         updatePlayButtons();
         Log.v(TAG, "pauseOrPlay end");
     }
 
+    public void seekTo(int progress) {
+        if (serviceMain != null) {
+            serviceMain.seekTo(progress);
+            if (!serviceMain.isPlaying()) {
+                pauseOrPlay();
+            }
+        }
+    }
+
     // endregion playbackControls
+
+    public boolean songInProgress() {
+        if (serviceMain != null) {
+            return serviceMain.songInProgress();
+        }
+        return false;
+    }
+
+    public boolean isPlaying() {
+        if (serviceMain != null) {
+            return serviceMain.isPlaying();
+        }
+        return false;
+    }
+
+    public boolean songQueueIsEmpty() {
+        if (serviceMain != null) {
+            return serviceMain.songQueueIsEmpty();
+        }
+        return false;
+    }
+
+    public ArrayList<RandomPlaylist> getPlaylists() {
+        if (serviceMain != null) {
+            return serviceMain.getPlaylists();
+        }
+        return null;
+    }
+
+    public void addPlaylist(RandomPlaylist randomPlaylist) {
+        if (serviceMain != null) {
+            serviceMain.addPlaylist(randomPlaylist);
+        }
+    }
+
+    public void addPlaylist(int position, RandomPlaylist randomPlaylist) {
+        if (serviceMain != null) {
+            serviceMain.addPlaylist(position, randomPlaylist);
+        }
+    }
+
+    public void addDirectoryPlaylist(long uriID, RandomPlaylist randomPlaylist) {
+        if (serviceMain != null) {
+            serviceMain.addDirectoryPlaylist(uriID, randomPlaylist);
+        }
+    }
+
+    public void removePlaylist(RandomPlaylist randomPlaylist) {
+        if (serviceMain != null) {
+            serviceMain.removePlaylist(randomPlaylist);
+        }
+    }
+
+    public void setCurrentPlaylistToMaster() {
+        if (serviceMain != null) {
+            serviceMain.setCurrentPlaylistToMaster();
+        }
+    }
+
+    public void setCurrentPlaylist(RandomPlaylist userPickedPlaylist) {
+        if (serviceMain != null) {
+            serviceMain.setCurrentPlaylist(userPickedPlaylist);
+        }
+    }
+
+    public RandomPlaylist getUserPickedPlaylist() {
+        if (serviceMain != null) {
+            return serviceMain.getUserPickedPlaylist();
+        }
+        return null;
+    }
+
+    // TODO check usages of all methods below
+    public void setUserPickedPlaylist(RandomPlaylist randomPlaylist) {
+        if (serviceMain != null) {
+            serviceMain.setUserPickedPlaylist(randomPlaylist);
+        }
+    }
+
+    public List<AudioUri> getUserPickedSongs() {
+        if (serviceMain != null) {
+            return serviceMain.getUserPickedSongs();
+        }
+        return null;
+    }
+
+    public void addUserPickedSong(AudioUri audioURI) {
+        if (serviceMain != null) {
+            serviceMain.addUserPickedSong(audioURI);
+        }
+    }
+
+    public void clearUserPickedSongs() {
+        if (serviceMain != null) {
+            serviceMain.clearUserPickedSongs();
+        }
+    }
+
+    public void fragmentSongVisible(boolean fragmentSongVisible) {
+        if (serviceMain != null) {
+            serviceMain.fragmentSongVisible(fragmentSongVisible);
+        }
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -714,34 +851,34 @@ public class ActivityMain extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         Log.v(TAG, "onOptionsItemSelected start");
-        if (item.getItemId() == R.id.action_reset_probs) {
-            serviceMain.currentPlaylist.getProbFun().clearProbs();
+        if (item.getItemId() == R.id.action_reset_probs && serviceMain != null) {
+            serviceMain.clearProbabilities();
             return true;
         } else if (item.getItemId() == R.id.action_add_to_playlist) {
             FragmentManager fragmentManager = getSupportFragmentManager();
             Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
             DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist =
-                    new DialogFragmentAddToPlaylist(this);
+                    new DialogFragmentAddToPlaylist();
             dialogFragmentAddToPlaylist.setArguments(loadBundleForAddToPlaylist(isSong));
             dialogFragmentAddToPlaylist.show(fragmentManager, fragment.getTag());
             return true;
-        } else if (item.getItemId() == R.id.action_add_to_queue) {
+        } else if (item.getItemId() == R.id.action_add_to_queue && serviceMain != null) {
             if (serviceMain.songInProgress() && songToAddToQueue != null) {
                 serviceMain.addToQueue(songToAddToQueue.getUri());
 
             } else if (playlistToAddToQueue != null) {
-                for (AudioURI audioURI : playlistToAddToQueue.getProbFun().getProbMap().keySet()) {
+                for (AudioUri audioURI : playlistToAddToQueue.getAudioUris()) {
                     serviceMain.addToQueue(audioURI.getUri());
                 }
-                if(serviceMain.songQueue.isEmpty()){
-                    serviceMain.currentPlaylist = playlistToAddToQueue;
+                if (serviceMain.songQueueIsEmpty()) {
+                    serviceMain.setCurrentPlaylist(playlistToAddToQueue);
                 }
-                if (!serviceMain.songInProgress) {
+                if (!serviceMain.songInProgress()) {
                     showSongPane();
                 }
             }
-            if (!serviceMain.songInProgress) {
-                serviceMain.playNextInQueue();
+            if (!serviceMain.songInProgress()) {
+                serviceMain.playNextInQueue(false);
                 updateUI();
             }
         }
@@ -752,10 +889,189 @@ public class ActivityMain extends AppCompatActivity {
     private Bundle loadBundleForAddToPlaylist(boolean isSong) {
         Bundle bundle = new Bundle();
         bundle.putBoolean(BUNDLE_KEY_IS_SONG, isSong);
-        bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, serviceMain.currentSong);
-        bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, serviceMain.playlists);
-        bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST, serviceMain.userPickedPlaylist);
+        bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, serviceMain.getCurrentSong());
+        bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, serviceMain.getPlaylists());
+        bundle.putSerializable(
+                BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST, serviceMain.getUserPickedPlaylist());
         return bundle;
     }
+
+    public void navigateTo(int id) {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        if (fragmentManager != null) {
+            Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
+            if (fragment != null) {
+                NavController navController = NavHostFragment.findNavController(fragment);
+                if (navController != null) {
+                    navController.navigate(id);
+                }
+            }
+        }
+    }
+
+    public void showToast(int idMessage) {
+        Toast toast = Toast.makeText(getApplicationContext(), idMessage, Toast.LENGTH_LONG);
+        toast.show();
+    }
+
+    public void saveFile() {
+        if (serviceMain != null) {
+            serviceMain.saveFile();
+        }
+    }
+
+    public void remove(RandomPlaylist randomPlaylist) {
+        if (serviceMain != null) {
+            serviceMain.removePlaylist(randomPlaylist);
+        }
+    }
+
+    public List<AudioUri> getAllSongs() {
+        if (serviceMain != null) {
+            return serviceMain.getAllSongs();
+        }
+        return null;
+    }
+
+    public AudioUri getCurrentSong() {
+        if (serviceMain != null) {
+            return serviceMain.getCurrentSong();
+        }
+        return null;
+    }
+
+    public void stopAndPreparePrevious() {
+        if (serviceMain != null) {
+            serviceMain.stopAndPreparePrevious();
+        }
+    }
+
+    public void setMaxPercent(double maxPercent) {
+        if (serviceMain != null) {
+            serviceMain.setMaxPercent(maxPercent);
+        }
+    }
+
+    public double getMaxPercent() {
+        if (serviceMain != null) {
+            return serviceMain.getMaxPercent();
+        }
+        return -1;
+    }
+
+    public double getPercentChangeUp() {
+        if (serviceMain != null) {
+            return serviceMain.getPercentChangeUp();
+        }
+        return -1;
+    }
+
+    public double getPercentChangeDown() {
+        if (serviceMain != null) {
+            return serviceMain.getPercentChangeDown();
+        }
+        return -1;
+    }
+
+    public void setPercentChangeUp(double percentChangeUp) {
+        if (serviceMain != null) {
+            serviceMain.setPercentChangeUp(percentChangeUp);
+        }
+    }
+
+    public void setPercentChangeDown(double percentChangeDown) {
+        if (serviceMain != null) {
+            serviceMain.setPercentChangeDown(percentChangeDown);
+        }
+    }
+
+    public void setSongToAddToQueue(AudioUri audioUri) {
+        songToAddToQueue = audioUri;
+    }
+
+    public void hideKeyboard(View view) {
+        InputMethodManager imm = (InputMethodManager)
+                getSystemService(AppCompatActivity.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+    }
+
+    public boolean shuffling() {
+        if (serviceMain != null) {
+            return serviceMain.shuffling();
+        }
+        return true;
+    }
+
+    public void shuffling(boolean shuffling) {
+        if (serviceMain != null) {
+            serviceMain.shuffling(shuffling);
+        }
+    }
+
+    public boolean loopingOne() {
+        if (serviceMain != null) {
+            return serviceMain.loopingOne();
+        }
+        return false;
+    }
+
+    public void loopingOne(boolean loopingOne) {
+        if (serviceMain != null) {
+            serviceMain.loopingOne(loopingOne);
+        }
+    }
+
+    public boolean looping() {
+        if (serviceMain != null) {
+            return serviceMain.looping();
+        }
+        return false;
+    }
+
+    public void looping(boolean looping) {
+        if (serviceMain != null) {
+            serviceMain.looping(looping);
+        }
+    }
+
+    public RandomPlaylist getCurrentPlaylist() {
+        if (serviceMain != null) {
+            return serviceMain.getCurrentPlaylist();
+        }
+        return null;
+    }
+
+    public void setUserPickedPlaylistToMasterPlaylist() {
+        if (serviceMain != null) {
+            serviceMain.setUserPickedPlaylistToMasterPlaylist();
+        }
+    }
+
+    public boolean containsDirectoryPlaylists(long mediaStoreUriID) {
+        if (serviceMain != null) {
+            return serviceMain.containsDirectoryPlaylists(mediaStoreUriID);
+        }
+        return false;
+    }
+
+    public RandomPlaylist getDirectoryPlaylist(long mediaStoreUriID) {
+        if (serviceMain != null) {
+            return serviceMain.getDirectoryPlaylist(mediaStoreUriID);
+        }
+        return null;
+    }
+
+    public void shouldStart(boolean shouldStart) {
+        if (serviceMain != null) {
+            serviceMain.shouldStart(shouldStart);
+        }
+    }
+
+    public void removeUserPickedSong(AudioUri audioURI) {
+        if (serviceMain != null) {
+            serviceMain.removeUserPickedSong(audioURI);
+        }
+    }
+
 
 }

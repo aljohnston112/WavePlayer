@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<RecyclerViewAdapterSelectSongs.ViewHolder> {
 
@@ -35,11 +36,8 @@ public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<Recycle
         final ConstraintLayout linearLayout =
                 holder.songView.findViewById(R.id.linear_layout_song_name);
         ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
-        if (activityMain != null && activityMain.serviceMain != null) {
-            ArrayList<AudioURI> allSongs =
-                    new ArrayList<>(activityMain.serviceMain.uriAudioURILinkedHashMap.values());
-            ArrayList<AudioURI> userPickedSongs =
-                    activityMain.serviceMain.userPickedSongs;
+            List<AudioUri> allSongs = activityMain.getAllSongs();
+            List<AudioUri> userPickedSongs = activityMain.getUserPickedSongs();
             if (userPickedSongs.contains(allSongs.get(position))) {
                 allSongs.get(position).setSelected(true);
                 holder.textViewSongName.setBackgroundColor(Color.parseColor("#575757"));
@@ -53,13 +51,11 @@ public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<Recycle
             holder.textViewSongName.setText(allSongs.get(position).title);
         }
 
-    }
-
     @Override
     public int getItemCount() {
         ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
         if(activityMain != null) {
-            return activityMain.serviceMain.uriAudioURILinkedHashMap.size();
+            return activityMain.getAllSongs().size();
         }
         return -1;
     }
@@ -68,7 +64,7 @@ public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<Recycle
 
         public final View songView;
         public final TextView textViewSongName;
-        public AudioURI audioURI;
+        public AudioUri audioURI;
 
         public ViewHolder(final View view) {
             super(view);
@@ -87,12 +83,12 @@ public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<Recycle
                             audioURI.setSelected(false);
                             textViewSongName.setBackgroundColor(Color.parseColor("#000000"));
                             constraintLayout.setBackgroundColor(Color.parseColor("#000000"));
-                            activityMain.serviceMain.userPickedSongs.remove(audioURI);
+                            activityMain.removeUserPickedSong(audioURI);
                         } else {
                             audioURI.setSelected(true);
                             textViewSongName.setBackgroundColor(Color.parseColor("#575757"));
                             constraintLayout.setBackgroundColor(Color.parseColor("#575757"));
-                            activityMain.serviceMain.userPickedSongs.add(audioURI);
+                            activityMain.addUserPickedSong(audioURI);
                         }
                     }
                 });

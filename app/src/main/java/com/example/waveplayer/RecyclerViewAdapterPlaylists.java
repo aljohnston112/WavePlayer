@@ -65,7 +65,7 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
                 if (position != RecyclerView.NO_POSITION) {
                     ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
                     if (activityMain != null) {
-                        activityMain.serviceMain.userPickedPlaylist = holder.randomPlaylist;
+                        activityMain.setUserPickedPlaylist(holder.randomPlaylist);
                     }
                     NavHostFragment.findNavController(fragment).navigate(
                             FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentPlaylist());

@@ -46,32 +46,35 @@ public class OnCreateContextMenuListenerPlaylists implements View.OnCreateContex
         if (activityMain != null) {
             Bundle bundle = new Bundle();
             bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST, randomPlaylist);
-            bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, activityMain.serviceMain.playlists);
+            bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, activityMain.getPlaylists());
             bundle.putSerializable(BUNDLE_KEY_IS_SONG, false);
             DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist
-                    = new DialogFragmentAddToPlaylist(activityMain);
+                    = new DialogFragmentAddToPlaylist();
             dialogFragmentAddToPlaylist.setArguments(bundle);
-            dialogFragmentAddToPlaylist.show(fragment.getParentFragmentManager(), fragment.getTag());
+            dialogFragmentAddToPlaylist.show(
+                    fragment.getParentFragmentManager(), fragment.getTag());
         }
     }
 
     private void contextMenuAddToQueue() {
         ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
         if (activityMain != null) {
-            if (activityMain.serviceMain.songInProgress()) {
-                for (AudioURI audioURI : randomPlaylist.getProbFun().getProbMap().keySet()) {
-                    activityMain.serviceMain.addToQueue(audioURI.getUri());
+            if (activityMain.songInProgress()) {
+                for (AudioUri audioURI : randomPlaylist.getAudioUris()) {
+                    activityMain.addToQueue(audioURI.getUri());
                 }
             } else {
-                if(activityMain.serviceMain.songQueue.isEmpty()){
-                    activityMain.serviceMain.currentPlaylist = randomPlaylist;
+                if(activityMain.songQueueIsEmpty()){
+                    activityMain.setCurrentPlaylist(randomPlaylist);
                 }
-                for (AudioURI audioURI : randomPlaylist.getProbFun().getProbMap().keySet()) {
-                    activityMain.serviceMain.addToQueue(audioURI.getUri());
+                for (AudioUri audioURI : randomPlaylist.getAudioUris()) {
+                    activityMain.addToQueue(audioURI.getUri());
                 }
-                activityMain.serviceMain.playNextInQueue();
+                activityMain.shuffling(false);
+                activityMain.looping(false);
+                activityMain.loopingOne(false);
                 activityMain.showSongPane();
-                activityMain.updateUI();
+                activityMain.playNext();
             }
         }
     }

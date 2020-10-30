@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 public class RunnableSeekBarUpdater implements Runnable {
 
-    final MediaPlayerWURI mediaPlayerWURI;
+    final MediaPlayerWUri mediaPlayerWURI;
 
     final SeekBar seekBar;
 
@@ -19,7 +19,7 @@ public class RunnableSeekBarUpdater implements Runnable {
     final Locale locale;
 
     public RunnableSeekBarUpdater(
-            MediaPlayerWURI mediaPlayerWURI, SeekBar seekBar, TextView textViewCurrentTime, int milliSeconds, Locale locale) {
+            MediaPlayerWUri mediaPlayerWURI, SeekBar seekBar, TextView textViewCurrentTime, int milliSeconds, Locale locale) {
         this.mediaPlayerWURI = mediaPlayerWURI;
         this.seekBar = seekBar;
         this.textViewCurrentTime = textViewCurrentTime;
@@ -34,7 +34,7 @@ public class RunnableSeekBarUpdater implements Runnable {
             public void run() {
                 if (mediaPlayerWURI.isPlaying()) {
                     int currentMilliseconds = mediaPlayerWURI.getCurrentPosition();
-                    seekBar.setProgress(currentMilliseconds+2);
+                    seekBar.setProgress(currentMilliseconds);
                     final String currentTime = String.format(locale,
                             "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(currentMilliseconds),
                             TimeUnit.MILLISECONDS.toMinutes(currentMilliseconds) -
