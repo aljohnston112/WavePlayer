@@ -64,7 +64,7 @@
             android:id="@+id/action_fragmentPlaylist_to_fragmentSong"
             app:destination="@id/fragmentSong" />
         <action
-            android:id="@+id/action_fragmentPlaylist_to_FragmentSelectSongs"
+            android:id="@+id/action_fragmentPlaylist_to_FragmentEditPlaylist"
             app:destination="@id/fragmentEditPlaylist" />
     </fragment>
     <fragment

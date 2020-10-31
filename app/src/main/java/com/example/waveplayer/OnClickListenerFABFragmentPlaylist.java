@@ -1,9 +1,7 @@
 package com.example.waveplayer;
 
-import android.os.Build;
 import android.view.View;
 
-import androidx.annotation.RequiresApi;
 import androidx.navigation.fragment.NavHostFragment;
 
 public class OnClickListenerFABFragmentPlaylist implements View.OnClickListener {
@@ -17,8 +15,8 @@ public class OnClickListenerFABFragmentPlaylist implements View.OnClickListener 
         @Override
         public void onClick(View view) {
             ((ActivityMain)fragmentPlaylist.getActivity()).clearUserPickedSongs();
-            NavHostFragment.findNavController(fragmentPlaylist)
-                    .navigate(FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSelectSongs());
+            NavHostFragment.findNavController(fragmentPlaylist).navigate(
+                    FragmentPlaylistDirections.actionFragmentPlaylistToFragmentEditPlaylist());
         }
 
 }

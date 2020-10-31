@@ -8,29 +8,28 @@ import java.util.List;
 
 public class OnClickListenerFABFragmentEditPlaylist implements View.OnClickListener {
 
-    FragmentEditPlaylist fragmentEditPlaylist;
+    private final FragmentEditPlaylist fragmentEditPlaylist;
 
-    RandomPlaylist userPickedPlaylist;
+    private final RandomPlaylist userPickedPlaylist;
 
-    final EditText editTextPlaylistName;
+    private final EditText editTextPlaylistName;
 
-    final ArrayList<AudioUri> finalPlaylistSongs;
+    private final List<AudioUri> userPickedSongs;
 
-    OnClickListenerFABFragmentEditPlaylist(RandomPlaylist userPickedPlaylist,
-                                           FragmentEditPlaylist fragmentEditPlaylist,
-                                           ArrayList<AudioUri> finalPlaylistSongs,
-                                           EditText editTextPlaylistName) {
+    OnClickListenerFABFragmentEditPlaylist(FragmentEditPlaylist fragmentEditPlaylist,
+                                           RandomPlaylist userPickedPlaylist,
+                                           EditText editTextPlaylistName,
+                                           List<AudioUri> userPickedSongs) {
         this.userPickedPlaylist = userPickedPlaylist;
         this.editTextPlaylistName = editTextPlaylistName;
         this.fragmentEditPlaylist = fragmentEditPlaylist;
-        this.finalPlaylistSongs = finalPlaylistSongs;
+        this.userPickedSongs = userPickedSongs;
     }
 
     @Override
     public void onClick(View view) {
         ActivityMain activityMain = (ActivityMain) fragmentEditPlaylist.getActivity();
         int playlistIndex = indexOfPlaylistWName(editTextPlaylistName.getText().toString());
-        List<AudioUri> userPickedSongs = activityMain.getUserPickedSongs();
         if (userPickedSongs.size() == 0) {
             activityMain.showToast(R.string.not_enough_songs_for_playlist);
         } else if (editTextPlaylistName.length() == 0) {
@@ -54,7 +53,7 @@ public class OnClickListenerFABFragmentEditPlaylist implements View.OnClickListe
             if (userPickedPlaylist.getName().equals(
                     editTextPlaylistName.getText().toString()) || !names.contains(editTextPlaylistName.getText().toString())) {
                 userPickedPlaylist.setName(editTextPlaylistName.getText().toString());
-                for (AudioUri audioURI : finalPlaylistSongs) {
+                for (AudioUri audioURI : userPickedPlaylist.getAudioUris()) {
                     if (!userPickedSongs.contains(audioURI)) {
                         userPickedPlaylist.remove(audioURI);
                     }
@@ -83,6 +82,5 @@ public class OnClickListenerFABFragmentEditPlaylist implements View.OnClickListe
         }
         return playlistIndex;
     }
-
 
 }

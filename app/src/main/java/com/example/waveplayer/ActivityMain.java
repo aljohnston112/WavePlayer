@@ -99,6 +99,10 @@ public class ActivityMain extends AppCompatActivity {
 
     private AudioUri songToAddToQueue;
 
+    public void setSongToAddToQueue(AudioUri audioUri) {
+        songToAddToQueue = audioUri;
+    }
+
     private RandomPlaylist playlistToAddToQueue;
 
     public void setPlaylistToAddToQueue(RandomPlaylist randomPlaylist) {
@@ -186,6 +190,13 @@ public class ActivityMain extends AppCompatActivity {
             }
         }
         Log.v(TAG, "onRequestPermissionsResult end");
+    }
+
+    public List<AudioUri> getAllSongs() {
+        if (serviceMain != null) {
+            return serviceMain.getAllSongs();
+        }
+        return null;
     }
 
     void setUpBroadcastReceivers() {
@@ -625,7 +636,7 @@ public class ActivityMain extends AppCompatActivity {
             Canvas canvas = new Canvas(bitmapSongArt);
             drawableSongArt.draw(canvas);
             Bitmap bitmapSongArtResized = FragmentPaneSong.getResizedBitmap(
-                            bitmapSongArt, songArtWidth, songArtHeight);
+                    bitmapSongArt, songArtWidth, songArtHeight);
             bitmapSongArt.recycle();
             return bitmapSongArtResized;
         }
@@ -671,6 +682,17 @@ public class ActivityMain extends AppCompatActivity {
         }
     }
 
+    public void hideKeyboard(View view) {
+        InputMethodManager imm = (InputMethodManager)
+                getSystemService(AppCompatActivity.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+    }
+
+    public void showToast(int idMessage) {
+        Toast toast = Toast.makeText(getApplicationContext(), idMessage, Toast.LENGTH_LONG);
+        toast.show();
+    }
+
     // endregion UI
 
     // region playbackControls
@@ -684,7 +706,7 @@ public class ActivityMain extends AppCompatActivity {
     public void addToQueueAndPlay(AudioUri audioURI) {
         Log.v(TAG, "addToQueueAndPlay start");
         if (serviceMain != null) {
-            serviceMain.addToQueueAndPlay(audioURI);
+            serviceMain.addToQueueAndPlay(audioURI.getUri());
         }
         updateUI();
         Log.v(TAG, "addToQueueAndPlay end");
@@ -774,6 +796,20 @@ public class ActivityMain extends AppCompatActivity {
         }
     }
 
+    public RandomPlaylist getDirectoryPlaylist(long mediaStoreUriID) {
+        if (serviceMain != null) {
+            return serviceMain.getDirectoryPlaylist(mediaStoreUriID);
+        }
+        return null;
+    }
+
+    public boolean containsDirectoryPlaylist(long mediaStoreUriID) {
+        if (serviceMain != null) {
+            return serviceMain.containsDirectoryPlaylist(mediaStoreUriID);
+        }
+        return false;
+    }
+
     public void removePlaylist(RandomPlaylist randomPlaylist) {
         if (serviceMain != null) {
             serviceMain.removePlaylist(randomPlaylist);
@@ -792,6 +828,20 @@ public class ActivityMain extends AppCompatActivity {
         }
     }
 
+    public AudioUri getCurrentSong() {
+        if (serviceMain != null) {
+            return serviceMain.getCurrentSong();
+        }
+        return null;
+    }
+
+    public RandomPlaylist getCurrentPlaylist() {
+        if (serviceMain != null) {
+            return serviceMain.getCurrentPlaylist();
+        }
+        return null;
+    }
+
     public RandomPlaylist getUserPickedPlaylist() {
         if (serviceMain != null) {
             return serviceMain.getUserPickedPlaylist();
@@ -799,7 +849,12 @@ public class ActivityMain extends AppCompatActivity {
         return null;
     }
 
-    // TODO check usages of all methods below
+    public void setUserPickedPlaylistToMasterPlaylist() {
+        if (serviceMain != null) {
+            serviceMain.setUserPickedPlaylistToMasterPlaylist();
+        }
+    }
+
     public void setUserPickedPlaylist(RandomPlaylist randomPlaylist) {
         if (serviceMain != null) {
             serviceMain.setUserPickedPlaylist(randomPlaylist);
@@ -819,6 +874,12 @@ public class ActivityMain extends AppCompatActivity {
         }
     }
 
+    public void removeUserPickedSong(AudioUri audioURI) {
+        if (serviceMain != null) {
+            serviceMain.removeUserPickedSong(audioURI);
+        }
+    }
+
     public void clearUserPickedSongs() {
         if (serviceMain != null) {
             serviceMain.clearUserPickedSongs();
@@ -828,6 +889,103 @@ public class ActivityMain extends AppCompatActivity {
     public void fragmentSongVisible(boolean fragmentSongVisible) {
         if (serviceMain != null) {
             serviceMain.fragmentSongVisible(fragmentSongVisible);
+        }
+    }
+
+    public void stopAndPreparePrevious() {
+        if (serviceMain != null) {
+            serviceMain.stopAndPreparePrevious();
+        }
+    }
+
+    public void setMaxPercent(double maxPercent) {
+        if (serviceMain != null) {
+            serviceMain.setMaxPercent(maxPercent);
+        }
+    }
+
+    public double getMaxPercent() {
+        if (serviceMain != null) {
+            return serviceMain.getMaxPercent();
+        }
+        return -1;
+    }
+
+    public void setPercentChangeUp(double percentChangeUp) {
+        if (serviceMain != null) {
+            serviceMain.setPercentChangeUp(percentChangeUp);
+        }
+    }
+
+    public double getPercentChangeUp() {
+        if (serviceMain != null) {
+            return serviceMain.getPercentChangeUp();
+        }
+        return -1;
+    }
+
+    public void setPercentChangeDown(double percentChangeDown) {
+        if (serviceMain != null) {
+            serviceMain.setPercentChangeDown(percentChangeDown);
+        }
+    }
+
+    public double getPercentChangeDown() {
+        if (serviceMain != null) {
+            return serviceMain.getPercentChangeDown();
+        }
+        return -1;
+    }
+
+    public boolean shuffling() {
+        if (serviceMain != null) {
+            return serviceMain.shuffling();
+        }
+        return true;
+    }
+
+    public void shuffling(boolean shuffling) {
+        if (serviceMain != null) {
+            serviceMain.shuffling(shuffling);
+        }
+    }
+
+    public boolean loopingOne() {
+        if (serviceMain != null) {
+            return serviceMain.loopingOne();
+        }
+        return false;
+    }
+
+    public void loopingOne(boolean loopingOne) {
+        if (serviceMain != null) {
+            serviceMain.loopingOne(loopingOne);
+        }
+    }
+
+    public boolean looping() {
+        if (serviceMain != null) {
+            return serviceMain.looping();
+        }
+        return false;
+    }
+
+    public void looping(boolean looping) {
+        if (serviceMain != null) {
+            serviceMain.looping(looping);
+        }
+    }
+
+    public void navigateTo(int id) {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        if (fragmentManager != null) {
+            Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
+            if (fragment != null) {
+                NavController navController = NavHostFragment.findNavController(fragment);
+                if (navController != null) {
+                    navController.navigate(id);
+                }
+            }
         }
     }
 
@@ -896,182 +1054,16 @@ public class ActivityMain extends AppCompatActivity {
         return bundle;
     }
 
-    public void navigateTo(int id) {
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        if (fragmentManager != null) {
-            Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
-            if (fragment != null) {
-                NavController navController = NavHostFragment.findNavController(fragment);
-                if (navController != null) {
-                    navController.navigate(id);
-                }
-            }
-        }
-    }
-
-    public void showToast(int idMessage) {
-        Toast toast = Toast.makeText(getApplicationContext(), idMessage, Toast.LENGTH_LONG);
-        toast.show();
-    }
-
     public void saveFile() {
         if (serviceMain != null) {
             serviceMain.saveFile();
         }
     }
 
-    public void remove(RandomPlaylist randomPlaylist) {
-        if (serviceMain != null) {
-            serviceMain.removePlaylist(randomPlaylist);
+    public void clearQueue() {
+        if(serviceMain != null){
+            serviceMain.clearSongQueue();
         }
     }
-
-    public List<AudioUri> getAllSongs() {
-        if (serviceMain != null) {
-            return serviceMain.getAllSongs();
-        }
-        return null;
-    }
-
-    public AudioUri getCurrentSong() {
-        if (serviceMain != null) {
-            return serviceMain.getCurrentSong();
-        }
-        return null;
-    }
-
-    public void stopAndPreparePrevious() {
-        if (serviceMain != null) {
-            serviceMain.stopAndPreparePrevious();
-        }
-    }
-
-    public void setMaxPercent(double maxPercent) {
-        if (serviceMain != null) {
-            serviceMain.setMaxPercent(maxPercent);
-        }
-    }
-
-    public double getMaxPercent() {
-        if (serviceMain != null) {
-            return serviceMain.getMaxPercent();
-        }
-        return -1;
-    }
-
-    public double getPercentChangeUp() {
-        if (serviceMain != null) {
-            return serviceMain.getPercentChangeUp();
-        }
-        return -1;
-    }
-
-    public double getPercentChangeDown() {
-        if (serviceMain != null) {
-            return serviceMain.getPercentChangeDown();
-        }
-        return -1;
-    }
-
-    public void setPercentChangeUp(double percentChangeUp) {
-        if (serviceMain != null) {
-            serviceMain.setPercentChangeUp(percentChangeUp);
-        }
-    }
-
-    public void setPercentChangeDown(double percentChangeDown) {
-        if (serviceMain != null) {
-            serviceMain.setPercentChangeDown(percentChangeDown);
-        }
-    }
-
-    public void setSongToAddToQueue(AudioUri audioUri) {
-        songToAddToQueue = audioUri;
-    }
-
-    public void hideKeyboard(View view) {
-        InputMethodManager imm = (InputMethodManager)
-                getSystemService(AppCompatActivity.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-    }
-
-    public boolean shuffling() {
-        if (serviceMain != null) {
-            return serviceMain.shuffling();
-        }
-        return true;
-    }
-
-    public void shuffling(boolean shuffling) {
-        if (serviceMain != null) {
-            serviceMain.shuffling(shuffling);
-        }
-    }
-
-    public boolean loopingOne() {
-        if (serviceMain != null) {
-            return serviceMain.loopingOne();
-        }
-        return false;
-    }
-
-    public void loopingOne(boolean loopingOne) {
-        if (serviceMain != null) {
-            serviceMain.loopingOne(loopingOne);
-        }
-    }
-
-    public boolean looping() {
-        if (serviceMain != null) {
-            return serviceMain.looping();
-        }
-        return false;
-    }
-
-    public void looping(boolean looping) {
-        if (serviceMain != null) {
-            serviceMain.looping(looping);
-        }
-    }
-
-    public RandomPlaylist getCurrentPlaylist() {
-        if (serviceMain != null) {
-            return serviceMain.getCurrentPlaylist();
-        }
-        return null;
-    }
-
-    public void setUserPickedPlaylistToMasterPlaylist() {
-        if (serviceMain != null) {
-            serviceMain.setUserPickedPlaylistToMasterPlaylist();
-        }
-    }
-
-    public boolean containsDirectoryPlaylists(long mediaStoreUriID) {
-        if (serviceMain != null) {
-            return serviceMain.containsDirectoryPlaylists(mediaStoreUriID);
-        }
-        return false;
-    }
-
-    public RandomPlaylist getDirectoryPlaylist(long mediaStoreUriID) {
-        if (serviceMain != null) {
-            return serviceMain.getDirectoryPlaylist(mediaStoreUriID);
-        }
-        return null;
-    }
-
-    public void shouldStart(boolean shouldStart) {
-        if (serviceMain != null) {
-            serviceMain.shouldStart(shouldStart);
-        }
-    }
-
-    public void removeUserPickedSong(AudioUri audioURI) {
-        if (serviceMain != null) {
-            serviceMain.removeUserPickedSong(audioURI);
-        }
-    }
-
 
 }

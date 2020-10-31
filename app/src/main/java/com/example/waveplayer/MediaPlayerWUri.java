@@ -24,7 +24,7 @@ public class MediaPlayerWUri {
         public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
             synchronized (mediaPlayerWURI) {
                 serviceMain.releaseMediaPlayers();
-                serviceMain.addToQueueAndPlay(serviceMain.getCurrentSong());
+                serviceMain.addToQueueAndPlay(serviceMain.getCurrentSong().getUri());
                 return false;
             }
         }

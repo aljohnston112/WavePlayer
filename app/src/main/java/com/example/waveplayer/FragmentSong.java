@@ -43,7 +43,6 @@ public class FragmentSong extends Fragment {
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ActivityMain activityMain = ((ActivityMain) getActivity());
-        activityMain.fragmentSongVisible(true);
         activityMain.isSong(true);
         activityMain.setActionBarTitle(getResources().getString(R.string.now_playing));
         activityMain.showFab(false);
@@ -99,11 +98,8 @@ public class FragmentSong extends Fragment {
     }
 
     public void notifyServiceConnected() {
-        ActivityMain activityMain = ((ActivityMain) getActivity());
-        activityMain.fragmentSongVisible(true);
         updateUI();
         setUpButtons();
-        activityMain.setSongToAddToQueue(activityMain.getCurrentSong());
     }
 
     @SuppressLint("ClickableViewAccessibility")

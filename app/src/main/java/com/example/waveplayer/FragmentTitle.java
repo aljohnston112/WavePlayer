@@ -69,19 +69,18 @@ public class FragmentTitle extends Fragment {
             public void onReceive(Context context, Intent intent) {
                 if (uriUserPicked != null) {
                     if (!audioUris.isEmpty()) {
-                        if (!activityMain.containsDirectoryPlaylists(mediaStoreUriID)) {
-                            RandomPlaylist randomPlaylist = new RandomPlaylist(
+                        RandomPlaylist randomPlaylist =
+                                activityMain.getDirectoryPlaylist(mediaStoreUriID);
+                        if (!activityMain.containsDirectoryPlaylist(mediaStoreUriID)) {
+                            randomPlaylist = new RandomPlaylist(
                                     uriUserPicked.getPath(), audioUris, activityMain.getMaxPercent(),
                                     false, mediaStoreUriID);
                             activityMain.addDirectoryPlaylist(mediaStoreUriID, randomPlaylist);
                         } else {
-                            RandomPlaylist randomPlaylist =
-                                    activityMain.getDirectoryPlaylist(mediaStoreUriID);
                             addNewSongs(randomPlaylist);
                             removeMissingSongs(randomPlaylist);
                         }
-                        activityMain.setUserPickedPlaylist(
-                                activityMain.getDirectoryPlaylist(mediaStoreUriID));
+                        activityMain.setUserPickedPlaylist(randomPlaylist);
                     }
                     NavHostFragment.findNavController(FragmentTitle.this)
                             .navigate(actionFragmentTitleToFragmentPlaylist());

@@ -14,11 +14,11 @@ public class ItemTouchListenerPlaylist extends ItemTouchHelper.Callback {
 
     ActivityMain activityMain;
 
-    RecyclerView recyclerView;
-
-    boolean isDirectoryPlaylist;
-
     UndoListenerPlaylistRemoved undoListenerPlaylistRemoved;
+
+    public ItemTouchListenerPlaylist(ActivityMain activityMain) {
+        this.activityMain = activityMain;
+    }
 
     @Override
     public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
@@ -40,13 +40,14 @@ public class ItemTouchListenerPlaylist extends ItemTouchHelper.Callback {
                     viewHolder.getAdapterPosition(), target.getAdapterPosition());
             recyclerViewAdapter.notifyItemMoved(
                     viewHolder.getAdapterPosition(), target.getAdapterPosition());
+            activityMain.saveFile();
         }
         return true;
     }
 
     @Override
     public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-        recyclerView = activityMain.findViewById(R.id.recycler_view_playlist_list);
+        RecyclerView recyclerView = activityMain.findViewById(R.id.recycler_view_playlist_list);
         RecyclerViewAdapterPlaylists recyclerViewAdapter =
                 (RecyclerViewAdapterPlaylists) recyclerView.getAdapter();
         if (recyclerViewAdapter != null) {
@@ -56,6 +57,8 @@ public class ItemTouchListenerPlaylist extends ItemTouchHelper.Callback {
             activityMain.removePlaylist(randomPlaylist);
             recyclerViewAdapter.notifyItemRemoved(position);
             activityMain.saveFile();
+            boolean isDirectoryPlaylist = activityMain.containsDirectoryPlaylist(
+                    randomPlaylist.mediaStoreUriID);
             Snackbar snackbar = Snackbar.make(
                     activityMain.findViewById(R.id.coordinatorLayoutActivityMain),
                     R.string.playlist_deleted, BaseTransientBottomBar.LENGTH_LONG);

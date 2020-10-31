@@ -117,7 +117,7 @@ public class FragmentPlaylists extends Fragment {
             RecyclerViewAdapterPlaylists recyclerViewAdapter =
                     new RecyclerViewAdapterPlaylists(this, activityMain.getPlaylists());
             recyclerView.setAdapter(recyclerViewAdapter);
-            itemTouchListenerPlaylist = new ItemTouchListenerPlaylist();
+            itemTouchListenerPlaylist = new ItemTouchListenerPlaylist(activityMain);
             itemTouchHelper = new ItemTouchHelper(itemTouchListenerPlaylist);
             itemTouchHelper.attachToRecyclerView(recyclerView);
             //setUp = true;

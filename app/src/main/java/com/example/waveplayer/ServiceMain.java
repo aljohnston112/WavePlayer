@@ -62,9 +62,126 @@ public class ServiceMain extends Service {
     private final static String NOTIFICATION_CHANNEL_ID = "PinkyPlayer";
     private static final String MASTER_PLAYLIST_NAME = "MASTER_PLAYLIST_NAME";
 
-    public static final Random random = new Random();
+    private static final Random random = new Random();
     public static final Object lock = new Object();
+
     // TODO make fragments communicate
+
+    // region settings
+
+    private double maxPercent = 0.1;
+
+    public double getMaxPercent() {
+        return maxPercent;
+    }
+
+    public void setMaxPercent(double maxPercent) {
+        this.maxPercent = maxPercent;
+        masterPlaylist.setMaxPercent(maxPercent);
+        for (RandomPlaylist randomPlaylist : playlists) {
+            randomPlaylist.setMaxPercent(maxPercent);
+        }
+        for (RandomPlaylist randomPlaylist : directoryPlaylists.values()) {
+            randomPlaylist.setMaxPercent(maxPercent);
+        }
+    }
+
+    private double percentChangeUp = 0.1;
+
+    public double getPercentChangeUp() {
+        return percentChangeUp;
+    }
+
+    public void setPercentChangeUp(double percentChangeUp) {
+        this.percentChangeUp = percentChangeUp;
+    }
+
+    private double percentChangeDown = 0.5;
+
+    public double getPercentChangeDown() {
+        return percentChangeDown;
+    }
+
+    public void setPercentChangeDown(double percentChangeDown) {
+        this.percentChangeDown = percentChangeDown;
+    }
+
+    // endregion settings
+
+    private final HashMap<Uri, MediaPlayerWUri> uriMediaPlayerWUriHashMap = new HashMap<>();
+
+    // TODO organize usages
+    private MediaPlayerWUri getCurrentMediaPlayerWUri() {
+        if (currentSong != null) {
+            return uriMediaPlayerWUriHashMap.get(currentSong.getUri());
+        }
+        return null;
+    }
+
+    private MediaPlayerWUri getMediaPlayerWUri(Uri uri) {
+        return uriMediaPlayerWUriHashMap.get(uri);
+    }
+
+    private final LinkedHashMap<Uri, AudioUri> uriAudioURILinkedHashMap = new LinkedHashMap<>();
+
+    // region playlists
+
+    private RandomPlaylist masterPlaylist;
+
+    public List<AudioUri> getAllSongs() {
+        return masterPlaylist.getAudioUris();
+    }
+
+    private final ArrayList<RandomPlaylist> playlists = new ArrayList<>();
+
+    public ArrayList<RandomPlaylist> getPlaylists() {
+        return playlists;
+    }
+
+    public void addPlaylist(RandomPlaylist randomPlaylist) {
+        playlists.add(randomPlaylist);
+    }
+
+    public void addPlaylist(int position, RandomPlaylist randomPlaylist) {
+        playlists.add(position, randomPlaylist);
+    }
+
+    public void removePlaylist(RandomPlaylist randomPlaylist) {
+        directoryPlaylists.remove(randomPlaylist.mediaStoreUriID);
+        playlists.remove(randomPlaylist);
+    }
+
+    public RandomPlaylist getCurrentPlaylist() {
+        return currentPlaylist;
+    }
+
+    private TreeMap<Long, RandomPlaylist> directoryPlaylists =
+            new TreeMap<>(new ComparableLongsSerializable());
+
+    static class ComparableLongsSerializable implements Serializable, Comparator<Long> {
+        @Override
+        public int compare(Long o1, Long o2) {
+            return o1.compareTo(o2);
+        }
+    }
+
+    public boolean containsDirectoryPlaylist(long mediaStoreUriID) {
+        return directoryPlaylists.get(mediaStoreUriID) != null;
+    }
+
+    public void addDirectoryPlaylist(long uriID, RandomPlaylist randomPlaylist) {
+        directoryPlaylists.put(uriID, randomPlaylist);
+        addPlaylist(randomPlaylist);
+    }
+
+    public RandomPlaylist getDirectoryPlaylist(long mediaStoreUriID) {
+        return directoryPlaylists.get(mediaStoreUriID);
+    }
+
+    // endregion playlists
+
+    // region userPickedPlaylist
+
     private RandomPlaylist userPickedPlaylist;
 
     public RandomPlaylist getUserPickedPlaylist() {
@@ -79,6 +196,10 @@ public class ServiceMain extends Service {
         this.userPickedPlaylist = userPickedPlaylist;
     }
 
+    // endregion userPickedPlaylist
+
+    // region userPickedSongs
+
     private final List<AudioUri> userPickedSongs = new ArrayList<>();
 
     public List<AudioUri> getUserPickedSongs() {
@@ -89,117 +210,15 @@ public class ServiceMain extends Service {
         userPickedSongs.add(audioURI);
     }
 
-    public void clearUserPickedSongs() {
-        userPickedSongs.clear();
-    }
-
-    // Settings
-    private double maxPercent = 0.1;
-    public double getMaxPercent() {
-        return maxPercent;
-    }
-    public void setMaxPercent(double maxPercent) {
-        this.maxPercent = maxPercent;
-        masterPlaylist.setMaxPercent(maxPercent);
-        for(RandomPlaylist randomPlaylist : playlists){
-            randomPlaylist.setMaxPercent(maxPercent);
-        }
-        for(RandomPlaylist randomPlaylist : directoryPlaylists.values()){
-            randomPlaylist.setMaxPercent(maxPercent);
-        }
-    }
-
-    private double percentChangeUp = 0.1;
-    public double getPercentChangeUp() {
-        return percentChangeUp;
-    }
-    public void setPercentChangeUp(double percentChangeUp) {
-        this.percentChangeUp = percentChangeUp;
-    }
-
-    private double percentChangeDown = 0.5;
-    public double getPercentChangeDown() {
-        return percentChangeDown;
-    }
-    public void setPercentChangeDown(double percentChangeDown) {
-        this.percentChangeDown = percentChangeDown;
-    }
-
-    private final HashMap<Uri, MediaPlayerWUri> uriMediaPlayerWURIHashMap = new HashMap<>();
-    private final LinkedHashMap<Uri, AudioUri> uriAudioURILinkedHashMap = new LinkedHashMap<>();
-
-    private RandomPlaylist masterPlaylist;
-
-    public List<AudioUri> getAllSongs() {
-        return masterPlaylist.getAudioUris();
-    }
-
-    private final ArrayList<RandomPlaylist> playlists = new ArrayList<>();
-    private TreeMap<Long, RandomPlaylist> directoryPlaylists = new TreeMap<>(new ComparableLongsSerializable());
-
-    public ArrayList<RandomPlaylist> getPlaylists() {
-        return playlists;
-    }
-
-    public void addPlaylist(RandomPlaylist randomPlaylist) {
-        playlists.add(randomPlaylist);
-    }
-
-    public void addPlaylist(int position, RandomPlaylist randomPlaylist) {
-        playlists.add(position, randomPlaylist);
-    }
-
-    public boolean containsDirectoryPlaylists(long mediaStoreUriID) {
-        return directoryPlaylists.get(mediaStoreUriID) != null;
-    }
-
-    public void addDirectoryPlaylist(long uriID, RandomPlaylist randomPlaylist) {
-        directoryPlaylists.put(uriID, randomPlaylist);
-        addPlaylist(randomPlaylist);
-    }
-
-    public void removePlaylist(RandomPlaylist randomPlaylist) {
-        directoryPlaylists.remove(randomPlaylist.mediaStoreUriID);
-        playlists.remove(randomPlaylist);
-    }
-
-    public RandomPlaylist getCurrentPlaylist() {
-        return currentPlaylist;
-    }
-
-    public RandomPlaylist getDirectoryPlaylist(long mediaStoreUriID) {
-        return directoryPlaylists.get(mediaStoreUriID);
-    }
-
-    public void shouldStart(boolean shouldStart) {
-    }
-
-    public boolean playlistHasNext() {
-        return currentPlaylistIterator.hasNext();
-    }
-
-    public void playNextInPlaylist() {
-        if (playlistHasNext()) {
-            addToQueueAndPlay(currentPlaylistIterator.next().getUri());
-        } else if (looping) {
-            currentPlaylistIterator = currentPlaylistArray.listIterator(0);
-            addToQueueAndPlay(currentPlaylistIterator.next().getUri());
-        } else {
-            isPlaying = false;
-            songInProgress = false;
-        }
-    }
-
     public void removeUserPickedSong(AudioUri audioURI) {
         userPickedSongs.remove(audioURI);
     }
 
-    static class ComparableLongsSerializable implements Serializable, Comparator<Long> {
-        @Override
-        public int compare(Long o1, Long o2) {
-            return o1.compareTo(o2);
-        }
+    public void clearUserPickedSongs() {
+        userPickedSongs.clear();
     }
+
+    // endregion userPickedSongs
 
     private RandomPlaylist currentPlaylist;
     private ArrayList<AudioUri> currentPlaylistArray;
@@ -221,6 +240,7 @@ public class ServiceMain extends Service {
 
     private final LinkedList<Uri> songQueue = new LinkedList<>();
     private ListIterator<Uri> songQueueIterator;
+
     public boolean songQueueIsEmpty() {
         return songQueue.size() == 0;
     }
@@ -232,12 +252,11 @@ public class ServiceMain extends Service {
     }
 
     public int getCurrentTime() {
-        MediaPlayerWUri mediaPlayerWURI =
-                uriMediaPlayerWURIHashMap.get(currentSong.getUri());
+        MediaPlayerWUri mediaPlayerWURI = getCurrentMediaPlayerWUri();
         if (mediaPlayerWURI != null) {
             return mediaPlayerWURI.getCurrentPosition();
         } else {
-            return 0;
+            return -1;
         }
     }
 
@@ -264,25 +283,31 @@ public class ServiceMain extends Service {
     }
 
     private boolean shuffling = true;
+
     public boolean shuffling() {
         return shuffling;
     }
+
     public void shuffling(boolean shuffling) {
         this.shuffling = shuffling;
     }
 
     private boolean looping = false;
+
     public boolean looping() {
         return looping;
     }
+
     public void looping(boolean looping) {
         this.looping = looping;
     }
 
     private boolean loopingOne = false;
+
     public boolean loopingOne() {
         return loopingOne;
     }
+
     public void loopingOne(boolean loopingOne) {
         this.loopingOne = loopingOne;
     }
@@ -296,7 +321,7 @@ public class ServiceMain extends Service {
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
         scheduledExecutorService.scheduleAtFixedRate(
                 new RunnableSeekBarUpdater(
-                        uriMediaPlayerWURIHashMap.get(currentSong.getUri()),
+                        getCurrentMediaPlayerWUri(),
                         seekBar, textViewCurrent, maxMillis,
                         getResources().getConfiguration().locale),
                 0L, 1L, TimeUnit.SECONDS);
@@ -313,7 +338,7 @@ public class ServiceMain extends Service {
             broadcastReceiverNotificationButtonsForServiceMainButtons =
             new BroadcastReceiverNotificationButtonsForServiceMain(this);
 
-    private  final MediaPlayer.OnCompletionListener onCompletionListener =
+    private final MediaPlayer.OnCompletionListener onCompletionListener =
             new MediaPlayerOnCompletionListener(this);
 
     private RemoteViews remoteViewsNotificationLayout;
@@ -322,16 +347,18 @@ public class ServiceMain extends Service {
 
     private int songPaneArtHeight;
 
-    public int getSongPaneArtHeight(){
+    public int getSongPaneArtHeight() {
         return songPaneArtHeight;
     }
+
     public void setSongPaneArtHeight(int songArtHeight) {
-        this.songPaneArtHeight = songPaneArtHeight;
+        this.songPaneArtHeight = songArtHeight;
     }
+
     private boolean serviceStarted = false;
     private boolean haveAudioFocus = false;
     private boolean saveFileLoaded = false;
-    private  boolean audioFilesLoaded = false;
+    private boolean audioFilesLoaded = false;
 
     private final IBinder serviceMainBinder = new ServiceMainBinder();
 
@@ -622,7 +649,7 @@ public class ServiceMain extends Service {
     public void releaseMediaPlayers() {
         Log.v(TAG, "Releasing MediaPlayers");
         synchronized (this) {
-            Iterator<MediaPlayerWUri> iterator = uriMediaPlayerWURIHashMap.values().iterator();
+            Iterator<MediaPlayerWUri> iterator = uriMediaPlayerWUriHashMap.values().iterator();
             MediaPlayerWUri mediaPlayerWURI;
             while (iterator.hasNext()) {
                 mediaPlayerWURI = iterator.next();
@@ -654,9 +681,9 @@ public class ServiceMain extends Service {
                             removeMissingSongs(newURIs);
                         } else {
                             masterPlaylist = new RandomPlaylist(
-                                    MASTER_PLAYLIST_NAME, new ArrayList<>(uriAudioURILinkedHashMap.values()),
-                                    maxPercent,
-                                    true, -1);
+                                    MASTER_PLAYLIST_NAME, new ArrayList<>(
+                                    uriAudioURILinkedHashMap.values()),
+                                    maxPercent, true, -1);
                         }
                         currentPlaylist = masterPlaylist;
                         songQueueIterator = songQueue.listIterator();
@@ -673,7 +700,7 @@ public class ServiceMain extends Service {
             if (!newURIs.contains(audioURI.getUri())) {
                 masterPlaylist.remove(audioURI);
                 uriAudioURILinkedHashMap.remove(audioURI.getUri());
-                uriMediaPlayerWURIHashMap.remove(audioURI.getUri());
+                uriMediaPlayerWUriHashMap.remove(audioURI.getUri());
             }
         }
     }
@@ -715,140 +742,130 @@ public class ServiceMain extends Service {
 
     // region mediaControls
 
+    public void onCompletion() {
+        playNext();
+    }
+
     public void pauseOrPlay() {
         Log.v(TAG, "pauseOrPlay started");
         if (currentSong != null) {
-            MediaPlayerWUri mediaPlayerWURI = uriMediaPlayerWURIHashMap.get(currentSong.getUri());
+            MediaPlayerWUri mediaPlayerWURI = getCurrentMediaPlayerWUri();
             if (mediaPlayerWURI != null) {
                 if (mediaPlayerWURI.isPrepared && mediaPlayerWURI.isPlaying()) {
                     mediaPlayerWURI.pause();
                     isPlaying = false;
                 } else {
-                    if (haveAudioFocus) {
+                    if (requestAudioFocus()) {
                         mediaPlayerWURI.shouldStart(true);
                         isPlaying = true;
                         songInProgress = true;
-                    } else {
-                        if (requestAudioFocus()) {
-                            mediaPlayerWURI.shouldStart(true);
-                            isPlaying = true;
-                            songInProgress = true;
-                        }
                     }
                 }
             }
-        } else {
+        } else if (!isPlaying) {
             playNext();
         }
         updateNotification();
         Log.v(TAG, "pauseOrPlay ended");
     }
 
-    void playNext() {
-        Log.v(TAG, "playNext started");
-        if (currentSong != null) {
-            currentPlaylist.bad(getCurrentSong(), percentChangeDown);
-            if (loopingOne) {
-                MediaPlayerWUri mediaPlayerWURI = uriMediaPlayerWURIHashMap.get(currentSong.getUri());
-                if (mediaPlayerWURI != null) {
-                    mediaPlayerWURI.seekTo(0);
-                    addToQueueAtCurrentIndex(currentSong.getUri());
-                } else {
-                    play(currentSong.getUri());
+    public boolean playNextInQueue(boolean addNew) {
+        if (songQueueIterator.hasNext()) {
+            playAndMakeIfNeeded(songQueueIterator.next());
+        } else if (looping) {
+            if (shuffling) {
+                songQueueIterator = songQueue.listIterator();
+                if (songQueueIterator.hasNext()) {
+                    playAndMakeIfNeeded(songQueueIterator.next());
                 }
-                saveFile();
-                return;
+            } else {
+                return false;
+            }
+        } else if (addNew) {
+            if (shuffling) {
+                addToQueueAndPlay(currentPlaylist.next(random).getUri());
+            } else {
+                return false;
             }
         }
-        stopAndPreparePrevious();
-        if (!shuffling) {
-            if(currentPlaylistIterator == null){
-                currentPlaylistIterator = currentPlaylist.getAudioUris().listIterator();
+        return true;
+    }
+
+    public boolean playPreviousInQueue() {
+        if (songQueueIterator.hasPrevious()) {
+            Uri uri = songQueueIterator.previous();
+            if (songQueueIterator.hasPrevious()) {
+                playAndMakeIfNeeded(songQueueIterator.previous());
+                songQueueIterator.next();
+            } else if (looping) {
+                if (shuffling) {
+                    songQueueIterator = songQueue.listIterator(songQueue.size());
+                    if (songQueueIterator.hasPrevious()) {
+                        playAndMakeIfNeeded(songQueueIterator.previous());
+                        songQueueIterator.next();
+                    } else {
+                        return false;
+                    }
+                }
+            } else {
+                seekTo(0);
             }
+            return true;
+        }
+        return false;
+    }
+
+    public void playNextInPlaylist() {
+        if (currentPlaylistIterator.hasNext()) {
+            playAndMakeIfNeeded(currentPlaylistIterator.next().getUri());
+        } else if (looping) {
+            currentPlaylistIterator = currentPlaylistArray.listIterator();
             if (currentPlaylistIterator.hasNext()) {
-                addToQueueAndPlay(currentPlaylistIterator.next().getUri());
-            } else if (looping) {
-                currentPlaylistIterator = currentPlaylistArray.listIterator(0);
-                addToQueueAndPlay(currentPlaylistIterator.next().getUri());
-            } else {
-                isPlaying = false;
-                songInProgress = false;
-            }
-        } else {
-            if (songQueueIterator.hasNext()) {
-                playNextInQueue(false);
-            } else if (looping) {
-                songQueueIterator = songQueue.listIterator(0);
-                play(songQueueIterator.next());
-            } else {
-                addToQueueAndPlay(currentPlaylist.next(random));
+                playAndMakeIfNeeded(currentPlaylistIterator.next().getUri());
             }
         }
-        Log.v(TAG, "playNext ended");
+    }
+
+    public void playPreviousInPlaylist() {
+        if (currentPlaylistIterator.hasPrevious()) {
+            playAndMakeIfNeeded(currentPlaylistIterator.previous().getUri());
+        } else if (looping) {
+            currentPlaylistIterator = currentPlaylistArray.listIterator(currentPlaylistArray.size());
+            if (currentPlaylistIterator.hasPrevious()) {
+                playAndMakeIfNeeded(currentPlaylistIterator.previous().getUri());
+            }
+        }
+    }
+
+    public void playNext() {
+        if (loopingOne) {
+            playLoopingOne();
+        } else if (!playNextInQueue(true)) {
+            playNextInPlaylist();
+        }
     }
 
     public void playPrevious() {
-        Log.v(TAG, "playPrevious started");
-        if (currentSong != null) {
-            if (loopingOne) {
-                MediaPlayerWUri mediaPlayerWURI = uriMediaPlayerWURIHashMap.get(currentSong.getUri());
-                if (mediaPlayerWURI != null) {
-                    mediaPlayerWURI.seekTo(0);
-                } else {
-                    play(currentSong.getUri());
-                }
-                return;
-            }
+        if (loopingOne) {
+            playLoopingOne();
+        } else if (!playPreviousInQueue()) {
+            playPreviousInPlaylist();
         }
-        stopAndPreparePrevious();
-        if (!shuffling) {
-            if (currentPlaylistIterator.hasPrevious()) {
-                currentPlaylistIterator.previous();
-                if (currentPlaylistIterator.hasPrevious()) {
-                    addToQueueAndPlay(currentPlaylistIterator.previous().getUri());
-                } else if (looping) {
-                    currentPlaylistIterator = currentPlaylistArray.listIterator(
-                            currentPlaylistArray.size() - 1);
-                    addToQueueAndPlay(currentPlaylistIterator.next().getUri());
-                    return;
-                } else {
-                    currentPlaylistIterator.next();
-                }
-            } else {
-                MediaPlayerWUri mediaPlayerWURI = uriMediaPlayerWURIHashMap.get(currentSong.getUri());
-                if (mediaPlayerWURI != null) {
-                    mediaPlayerWURI.seekTo(0);
-                }
-            }
-            return;
-        }
-        Uri uri = null;
-        if (songQueueIterator.hasPrevious()) {
-            uri = songQueueIterator.previous();
-            if (songQueueIterator.hasPrevious()) {
-                playPrevousInQueue();
-                return;
-            } else if (looping) {
-                songQueueIterator = songQueue.listIterator(songQueue.size() - 2);
-                play(songQueueIterator.next());
-                songQueueIterator.next();
-            } else if (uri != null) {
-                play(uri);
-                songQueueIterator.next();
-            }
-        }
-        Log.v(TAG, "playPrevious ended");
     }
 
-    void addToQueueAndPlay(AudioUri audioURI) {
-        Log.v(TAG, "addToQueueAndPlay started");
-        addToQueueAndPlay(audioURI.getUri());
-        Log.v(TAG, "addToQueueAndPlay ended");
+    void playLoopingOne() {
+        MediaPlayerWUri mediaPlayerWURI = getCurrentMediaPlayerWUri();
+        if (mediaPlayerWURI != null) {
+            mediaPlayerWURI.seekTo(0);
+            // TODO make a setting?
+            //addToQueueAtCurrentIndex(currentSong.getUri());
+        } else {
+            playAndMakeIfNeeded(currentSong.getUri());
+        }
     }
 
     public void addToQueueAndPlay(Uri uri) {
-        stopAndPreparePrevious();
-        play(uri);
+        playAndMakeIfNeeded(uri);
         songQueueIterator = null;
         songQueue.add(uri);
         songQueueIterator = songQueue.listIterator(songQueue.lastIndexOf(uri));
@@ -862,97 +879,75 @@ public class ServiceMain extends Service {
         songQueueIterator = songQueue.listIterator(pos);
     }
 
-    void addToQueueAtCurrentIndex(Uri uri) {
-        songQueueIterator.add(uri);
-    }
-
     public void clearSongQueue() {
         songQueueIterator = null;
         songQueue.clear();
         songQueueIterator = songQueue.listIterator();
     }
 
-    private void play(MediaPlayerWUri mediaPlayerWURI) {
+    private void playAndMakeIfNeeded(MediaPlayerWUri mediaPlayerWURI) {
         Log.v(TAG, "play started");
-        if (haveAudioFocus) {
+        stopCurrentSong();
+        if (requestAudioFocus()) {
             mediaPlayerWURI.shouldStart(true);
             isPlaying = true;
             songInProgress = true;
-        } else {
-            if (requestAudioFocus()) {
-                mediaPlayerWURI.shouldStart(true);
-                isPlaying = true;
-                songInProgress = true;
-            }
         }
         currentSong = mediaPlayerWURI.audioURI;
+        updateNotification();
         if (currentPlaylistArray != null) {
             int i = currentPlaylistArray.indexOf(mediaPlayerWURI.audioURI);
             currentPlaylistIterator = currentPlaylistArray.listIterator(i + 1);
         }
-        updateNotification();
         Log.v(TAG, "play ended");
     }
 
-    void play(Uri uri) {
-        MediaPlayerWUri mediaPlayerWURI = uriMediaPlayerWURIHashMap.get(uri);
+    private void stopCurrentSong() {
+        if(currentSong != null) {
+            MediaPlayerWUri mediaPlayerWURI = getMediaPlayerWUri(currentSong.getUri());
+            if (mediaPlayerWURI != null) {
+                if (mediaPlayerWURI.isPrepared && mediaPlayerWURI.isPlaying()) {
+                    mediaPlayerWURI.stop();
+                    mediaPlayerWURI.prepareAsync();
+                }
+            } else {
+                releaseMediaPlayers();
+            }
+            songInProgress = false;
+            isPlaying = false;
+        }
+    }
+
+    void playAndMakeIfNeeded(Uri uri) {
+        MediaPlayerWUri mediaPlayerWURI = getMediaPlayerWUri(uri);
         if (mediaPlayerWURI != null) {
-            play(mediaPlayerWURI);
+            playAndMakeIfNeeded(mediaPlayerWURI);
         } else {
             makeMediaPlayerWURIAndPlay(uriAudioURILinkedHashMap.get(uri));
         }
     }
 
-    void playNextInQueue(boolean addNew) {
-        Log.v(TAG, "playNextInQueue started");
-        if (songQueueIterator.hasNext()) {
-            Uri uri = songQueueIterator.next();
-            MediaPlayerWUri mediaPlayerWURI = uriMediaPlayerWURIHashMap.get(uri);
-            if (mediaPlayerWURI != null) {
-                play(mediaPlayerWURI);
-            } else {
-                makeMediaPlayerWURIAndPlay(uriAudioURILinkedHashMap.get(uri));
-            }
-        } else if (looping) {
-            songQueueIterator = songQueue.listIterator(0);
-            play(songQueueIterator.next());
-        } else if(addNew){
-            addToQueueAndPlay(currentPlaylist.next(ServiceMain.random));
-        }
-
-
-        Log.v(TAG, "playNextInQueue ended");
-    }
-
-    private void playPrevousInQueue() {
-        Log.v(TAG, "playPreviousInQueue started");
-        Uri uri = songQueueIterator.previous();
-        play(uri);
-        songQueueIterator.next();
-        Log.v(TAG, "playPreviousInQueue ended");
-    }
-
     public void seekTo(int progress) {
-        MediaPlayerWUri mediaPlayerWUri = uriMediaPlayerWURIHashMap.get(currentSong.getUri());
-        if(mediaPlayerWUri != null){
+        MediaPlayerWUri mediaPlayerWUri = getCurrentMediaPlayerWUri();
+        if (mediaPlayerWUri != null) {
             mediaPlayerWUri.seekTo(progress);
         }
     }
-    private MediaPlayerWUri makeMediaPlayerWURIAndPlay(AudioUri audioURI) {
+
+    private void makeMediaPlayerWURIAndPlay(AudioUri audioURI) {
         Log.v(TAG, "makeMediaPlayerWURIAndPlay started");
         MediaPlayerWUri mediaPlayerWURI =
                 new CallableCreateMediaPlayerWURI(this, audioURI).call();
-        uriMediaPlayerWURIHashMap.put(mediaPlayerWURI.audioURI.getUri(), mediaPlayerWURI);
-        play(mediaPlayerWURI);
+        uriMediaPlayerWUriHashMap.put(mediaPlayerWURI.audioURI.getUri(), mediaPlayerWURI);
+        playAndMakeIfNeeded(mediaPlayerWURI);
         Log.v(TAG, "makeMediaPlayerWURIAndPlay ended");
-        return mediaPlayerWURI;
     }
 
     void stopAndPreparePrevious() {
         Log.v(TAG, "stopPreviousAndPrepare started");
         if (songQueueIterator.hasPrevious()) {
             final MediaPlayerWUri mediaPlayerWURI =
-                    uriMediaPlayerWURIHashMap.get(songQueueIterator.previous());
+                    getMediaPlayerWUri(songQueueIterator.previous());
             songQueueIterator.next();
             if (mediaPlayerWURI != null) {
                 if (mediaPlayerWURI.isPrepared && mediaPlayerWURI.isPlaying()) {

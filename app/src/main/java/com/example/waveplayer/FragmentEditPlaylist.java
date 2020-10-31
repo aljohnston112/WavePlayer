@@ -65,22 +65,21 @@ public class FragmentEditPlaylist extends Fragment {
         activityMain.setFABText(R.string.fab_save);
         activityMain.showFab(true);
         final EditText finalEditTextPlaylistName = view.findViewById(R.id.editTextPlaylistName);
-        ArrayList<AudioUri> playlistSongs = new ArrayList<>();
         RandomPlaylist userPickedPlaylist = activityMain.getUserPickedPlaylist();
+        List<AudioUri> userPickedSongs = activityMain.getUserPickedSongs();
         // userPickedPlaylist is null when user is making a new playlist
         if (userPickedPlaylist != null) {
-            List<AudioUri> userPickedSongs = activityMain.getUserPickedSongs();
             // userPickedSongs.isEmpty() when the user is editing a playlist
             if (userPickedSongs.isEmpty()) {
                 userPickedSongs.addAll(userPickedPlaylist.getAudioUris());
             }
-            playlistSongs = new ArrayList<>(userPickedPlaylist.getAudioUris());
             finalEditTextPlaylistName.setText(userPickedPlaylist.getName());
         }
-        final ArrayList<AudioUri> finalPlaylistSongs = playlistSongs;
         onClickListenerFABFragmentEditPlaylist = new OnClickListenerFABFragmentEditPlaylist(
-                userPickedPlaylist, this, finalPlaylistSongs,
-                finalEditTextPlaylistName);
+                this,
+                userPickedPlaylist,
+                finalEditTextPlaylistName,
+                userPickedSongs);
         activityMain.setFabOnClickListener(onClickListenerFABFragmentEditPlaylist);
     }
 

@@ -17,25 +17,7 @@ public class MediaPlayerOnCompletionListener implements MediaPlayer.OnCompletion
         Log.v(ServiceMain.TAG, "Media player: " +
                 mediaPlayer.hashCode() +
                 " onCompletion started");
-        if (serviceMain.getCurrentSong() != null) {
-            if (serviceMain.loopingOne()) {
-                serviceMain.seekTo(0);
-                serviceMain.shouldStart(true);
-                serviceMain.saveFile();
-                return;
-            }
-        }
-        if ((!serviceMain.shuffling() && !serviceMain.playlistHasNext() &&
-                !serviceMain.looping())) {
-            serviceMain.shutDownSeekBarUpdater();
-        }
-        serviceMain.stopAndPreparePrevious();
-        if (!serviceMain.shuffling()) {
-            serviceMain.playNextInPlaylist();
-        } else {
-            serviceMain.playNextInQueue(true);
-        }
-
+        serviceMain.onCompletion();
         sendBroadcastOnCompletion();
         Log.v(ServiceMain.TAG, "Media player: " +
                 mediaPlayer.hashCode() +

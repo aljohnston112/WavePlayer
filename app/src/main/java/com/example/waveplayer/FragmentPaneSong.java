@@ -46,7 +46,6 @@ public class FragmentPaneSong extends Fragment {
         ActivityMain activityMain = ((ActivityMain) getActivity());
         View view = getView();
         if (view.getVisibility() == View.VISIBLE) {
-            activityMain.fragmentSongVisible(false);
             activityMain.updateUI();
         }
     }

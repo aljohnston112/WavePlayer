@@ -13,17 +13,12 @@ class ItemTouchListenerSong extends ItemTouchHelper.Callback {
 
     private final ActivityMain activityMain;
 
-    private final RecyclerViewAdapterSongs recyclerViewAdapterSongsList;
-
     private final RandomPlaylist userPickedPlaylist;
 
     private UndoListenerSongRemoved undoListenerSongRemoved;
 
-    public ItemTouchListenerSong(ActivityMain activityMain,
-                                 RecyclerViewAdapterSongs recyclerViewAdapterSongsList,
-                                 RandomPlaylist userPickedPlaylist) {
+    public ItemTouchListenerSong(ActivityMain activityMain, RandomPlaylist userPickedPlaylist) {
         this.activityMain = activityMain;
-        this.recyclerViewAdapterSongsList = recyclerViewAdapterSongsList;
         this.userPickedPlaylist = userPickedPlaylist;
     }
 
@@ -54,22 +49,25 @@ class ItemTouchListenerSong extends ItemTouchHelper.Callback {
     @Override
     public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
         int position = viewHolder.getAdapterPosition();
-        AudioUri audioURI = recyclerViewAdapterSongsList.getAudioUris().get(position);
+        RecyclerView recyclerView = activityMain.findViewById(R.id.recycler_view_song_list);
+        RecyclerViewAdapterSongs recyclerViewAdapterSongs =
+                (RecyclerViewAdapterSongs) recyclerView.getAdapter();
+        AudioUri audioURI = recyclerViewAdapterSongs.getAudioUris().get(position);
         double probability = userPickedPlaylist.getProbability(audioURI);
         if (userPickedPlaylist.size() == 1) {
-            activityMain.remove(userPickedPlaylist);
+            activityMain.removePlaylist(userPickedPlaylist);
             activityMain.setUserPickedPlaylist(null);
         } else {
             userPickedPlaylist.remove(audioURI);
         }
-        recyclerViewAdapterSongsList.getAudioUris().remove(position);
-        recyclerViewAdapterSongsList.notifyItemRemoved(position);
+        recyclerViewAdapterSongs.getAudioUris().remove(position);
+        recyclerViewAdapterSongs.notifyItemRemoved(position);
         activityMain.saveFile();
         Snackbar snackbar = Snackbar.make(
                 activityMain.findViewById(R.id.coordinatorLayoutActivityMain),
                 R.string.song_removed, BaseTransientBottomBar.LENGTH_LONG);
         undoListenerSongRemoved = new UndoListenerSongRemoved(userPickedPlaylist,
-                recyclerViewAdapterSongsList,
+                recyclerViewAdapterSongs,
                 audioURI, probability, position);
         snackbar.setAction(R.string.undo, undoListenerSongRemoved);
         snackbar.show();
@@ -77,7 +75,7 @@ class ItemTouchListenerSong extends ItemTouchHelper.Callback {
 
     private void swapSongPositions(int oldPosition, int newPosition) {
         userPickedPlaylist.swapSongPositions(oldPosition, newPosition);
-
+        activityMain.saveFile();
     }
 
 }
