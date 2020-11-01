@@ -17,7 +17,7 @@ public class MediaPlayerOnCompletionListener implements MediaPlayer.OnCompletion
         Log.v(ServiceMain.TAG, "Media player: " +
                 mediaPlayer.hashCode() +
                 " onCompletion started");
-        serviceMain.onCompletion();
+        serviceMain.playNext();
         sendBroadcastOnCompletion();
         Log.v(ServiceMain.TAG, "Media player: " +
                 mediaPlayer.hashCode() +

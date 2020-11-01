@@ -82,6 +82,7 @@ public class FragmentTitle extends Fragment {
                         }
                         activityMain.setUserPickedPlaylist(randomPlaylist);
                     }
+                    activityMain.saveFile();
                     NavHostFragment.findNavController(FragmentTitle.this)
                             .navigate(actionFragmentTitleToFragmentPlaylist());
                 }

@@ -5,6 +5,7 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
@@ -14,7 +15,10 @@ import android.util.Size;
 
 import androidx.annotation.Nullable;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 
 public final class AudioUri implements Comparable<AudioUri>, Serializable {
@@ -84,45 +88,31 @@ public final class AudioUri implements Comparable<AudioUri>, Serializable {
 
     // TODO does not work correctly
 
-    public static Bitmap getThumbnail(AudioUri audioURI, Context context) {
-        Log.v(TAG, "getThumbnail start");
-        Bitmap thumbnail = null;
+    public static Bitmap getThumbnail(AudioUri audioURI, Context context){
+        Bitmap bitmap = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             try {
-                thumbnail = context.getContentResolver().loadThumbnail(
+                bitmap = context.getContentResolver().loadThumbnail(
                         audioURI.getUri(), new Size(128, 128), null);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         } else {
+            MediaMetadataRetriever mmr = new MediaMetadataRetriever();
             try {
-                thumbnail = MediaStore.Images.Media.getBitmap(context.getContentResolver(), audioURI.getUri());
-            } catch (IOException e) {
-                Log.e(TAG, "getThumbnail failed");
+                mmr.setDataSource(context.getContentResolver().openFileDescriptor(
+                        audioURI.getUri(), "r").getFileDescriptor());
+            } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
-        }
-        Log.v(TAG, "getThumbnail end");
-        return thumbnail;
-    }
-
-    private static String getImageRealPath(ContentResolver contentResolver, Uri uri) {
-        String ret = "";
-        try(Cursor cursor = contentResolver.query(
-                uri, null, null, null, null)) {
-            if (cursor != null) {
-                boolean moveToFirst = cursor.moveToFirst();
-                if (moveToFirst) {
-                    String columnName = MediaStore.Images.Media.DATA;
-                    if (uri == MediaStore.Images.Media.EXTERNAL_CONTENT_URI) {
-                        columnName = MediaStore.Images.Media.DATA;
-                    }
-                    int imageColumnIndex = cursor.getColumnIndex(columnName);
-                    ret = cursor.getString(imageColumnIndex);
-                }
+            InputStream inputStream = null;
+            if (mmr.getEmbeddedPicture() != null) {
+                inputStream = new ByteArrayInputStream(mmr.getEmbeddedPicture());
             }
+            mmr.release();
+            bitmap = BitmapFactory.decodeStream(inputStream);
         }
-        return ret;
+        return bitmap;
     }
 
     @Override

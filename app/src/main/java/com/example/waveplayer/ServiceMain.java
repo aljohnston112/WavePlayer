@@ -10,6 +10,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -220,6 +223,8 @@ public class ServiceMain extends Service {
 
     // endregion userPickedSongs
 
+    // region currentPlaylist
+
     private RandomPlaylist currentPlaylist;
     private ArrayList<AudioUri> currentPlaylistArray;
     private ListIterator<AudioUri> currentPlaylistIterator;
@@ -237,6 +242,10 @@ public class ServiceMain extends Service {
     public void clearProbabilities() {
         currentPlaylist.clearProbabilities();
     }
+
+    // endregion currentPlaylist
+
+    // region currentSongQueue
 
     private final LinkedList<Uri> songQueue = new LinkedList<>();
     private ListIterator<Uri> songQueueIterator;
@@ -272,15 +281,9 @@ public class ServiceMain extends Service {
         return songInProgress;
     }
 
-    private boolean fragmentSongVisible = false;
+    // endregion currentSongQueue
 
-    public void fragmentSongVisible(boolean fragmentSongVisible) {
-        this.fragmentSongVisible = fragmentSongVisible;
-    }
-
-    public boolean fragmentSongVisible() {
-        return fragmentSongVisible;
-    }
+    // region playbackLogic
 
     private boolean shuffling = true;
 
@@ -312,6 +315,8 @@ public class ServiceMain extends Service {
         this.loopingOne = loopingOne;
     }
 
+    // endregion playbackLogic
+
     private ExecutorService executorService = Executors.newSingleThreadExecutor();
     // For updating the SeekBar
     private ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -334,7 +339,7 @@ public class ServiceMain extends Service {
         }
     }
 
-    private BroadcastReceiverNotificationButtonsForServiceMain
+    private final BroadcastReceiverNotificationButtonsForServiceMain
             broadcastReceiverNotificationButtonsForServiceMainButtons =
             new BroadcastReceiverNotificationButtonsForServiceMain(this);
 
@@ -345,6 +350,18 @@ public class ServiceMain extends Service {
     private NotificationCompat.Builder notificationCompatBuilder;
     private Notification notification;
 
+    // region ActivityMainUI
+
+    private boolean fragmentSongVisible = false;
+
+    public void fragmentSongVisible(boolean fragmentSongVisible) {
+        this.fragmentSongVisible = fragmentSongVisible;
+    }
+
+    public boolean fragmentSongVisible() {
+        return fragmentSongVisible;
+    }
+
     private int songPaneArtHeight;
 
     public int getSongPaneArtHeight() {
@@ -354,6 +371,18 @@ public class ServiceMain extends Service {
     public void setSongPaneArtHeight(int songArtHeight) {
         this.songPaneArtHeight = songArtHeight;
     }
+
+    private int songPaneArtWidth;
+
+    public int getSongPaneArtWidth() {
+        return songPaneArtWidth;
+    }
+
+    public void setSongPaneArtWidth(int songArtWidth) {
+        this.songPaneArtWidth = songArtWidth;
+    }
+
+    // endregion ActivityMainUI
 
     private boolean serviceStarted = false;
     private boolean haveAudioFocus = false;
@@ -475,10 +504,12 @@ public class ServiceMain extends Service {
         Log.v(TAG, "onStartCommand started");
         if (!serviceStarted) {
             Log.v(TAG, "onStartCommand setting up service");
+            // TODO remove before release?
             Toast.makeText(getApplicationContext(), "PinkyPlayer starting", Toast.LENGTH_SHORT).show();
             setUpNotificationBuilder();
             setUpBroadCastsForNotificationButtons();
             notification = notificationCompatBuilder.build();
+            updateNotification();
             startForeground(NOTIFICATION_CHANNEL_ID.hashCode(), notification);
             Log.v(TAG, "onStartCommand done setting up service");
         } else {
@@ -499,17 +530,11 @@ public class ServiceMain extends Service {
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setStyle(new NotificationCompat.DecoratedCustomViewStyle());
         remoteViewsNotificationLayout = new RemoteViews(getPackageName(), R.layout.pane_notification);
-        if (currentSong != null) {
-            remoteViewsNotificationLayout.setTextViewText(
-                    R.id.textViewNotificationSongPaneSongName, currentSong.title);
-        } else {
-            remoteViewsNotificationLayout.setTextViewText(
-                    R.id.textViewNotificationSongPaneSongName, NOTIFICATION_CHANNEL_ID);
-        }
         notificationCompatBuilder.setCustomContentView(remoteViewsNotificationLayout);
+        // TODO try to open songpane
         Intent notificationIntent = new Intent(getApplicationContext(), ActivityMain.class);
-        PendingIntent pendingIntent =
-                PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                getApplicationContext(), 0, notificationIntent, 0);
         notificationCompatBuilder.setContentIntent(pendingIntent);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             int importance = NotificationManager.IMPORTANCE_LOW;
@@ -528,7 +553,6 @@ public class ServiceMain extends Service {
         updateNotificationSongName();
         updateNotificationPlayButton();
         updateSongArt();
-        // TODO update song art
         notification.contentView = remoteViewsNotificationLayout;
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -537,10 +561,16 @@ public class ServiceMain extends Service {
     }
 
     private void updateSongArt() {
+        // TODO update song art backgorund
         if (currentSong != null) {
-            // imageViewNotificationSongPaneSongArt
-            remoteViewsNotificationLayout.setImageViewBitmap(R.id.imageViewNotificationSongPaneSongArt,
-                    AudioUri.getThumbnail(currentSong, getApplicationContext()));
+            Bitmap bitmap = AudioUri.getThumbnail(currentSong, getApplicationContext());
+            if (bitmap != null) {
+                remoteViewsNotificationLayout.setImageViewBitmap(R.id.imageViewNotificationSongPaneSongArt,
+                        bitmap);
+            } else {
+                remoteViewsNotificationLayout.setImageViewResource(
+                        R.id.imageViewNotificationSongPaneSongArt, R.drawable.music_note_black_48dp);
+            }
         } else {
             remoteViewsNotificationLayout.setImageViewResource(
                     R.id.imageViewNotificationSongPaneSongArt, R.drawable.music_note_black_48dp);
@@ -623,6 +653,7 @@ public class ServiceMain extends Service {
     @Override
     public void onDestroy() {
         Log.v(TAG, "onDestroy started");
+        // TODO remove on release?
         Toast.makeText(this, "PinkyPlayer done", Toast.LENGTH_SHORT).show();
         Log.v(TAG, "onDestroy ended");
     }
@@ -631,16 +662,21 @@ public class ServiceMain extends Service {
     public void onTaskRemoved(Intent rootIntent) {
         Log.v(TAG, "onTaskRemoved started");
         super.onTaskRemoved(rootIntent);
-        destroy();
+        taskRemoved();
         Log.v(TAG, "onTaskRemoved ended");
     }
 
-    public void destroy() {
+    public void taskRemoved() {
         Log.v(TAG, "destroy started");
         if (isPlaying) {
             pauseOrPlay();
         }
         releaseMediaPlayers();
+        shutDownSeekBarUpdater();
+        if (executorService != null) {
+            executorService.shutdown();
+            executorService = null;
+        }
         unregisterReceiver(broadcastReceiverNotificationButtonsForServiceMainButtons);
         stopSelf();
         Log.v(TAG, "destroy ended");
@@ -741,10 +777,6 @@ public class ServiceMain extends Service {
     }
 
     // region mediaControls
-
-    public void onCompletion() {
-        playNext();
-    }
 
     public void pauseOrPlay() {
         Log.v(TAG, "pauseOrPlay started");
@@ -885,6 +917,15 @@ public class ServiceMain extends Service {
         songQueueIterator = songQueue.listIterator();
     }
 
+    void playAndMakeIfNeeded(Uri uri) {
+        MediaPlayerWUri mediaPlayerWURI = getMediaPlayerWUri(uri);
+        if (mediaPlayerWURI != null) {
+            playAndMakeIfNeeded(mediaPlayerWURI);
+        } else {
+            makeMediaPlayerWURIAndPlay(uriAudioURILinkedHashMap.get(uri));
+        }
+    }
+
     private void playAndMakeIfNeeded(MediaPlayerWUri mediaPlayerWURI) {
         Log.v(TAG, "play started");
         stopCurrentSong();
@@ -903,7 +944,7 @@ public class ServiceMain extends Service {
     }
 
     private void stopCurrentSong() {
-        if(currentSong != null) {
+        if (currentSong != null) {
             MediaPlayerWUri mediaPlayerWURI = getMediaPlayerWUri(currentSong.getUri());
             if (mediaPlayerWURI != null) {
                 if (mediaPlayerWURI.isPrepared && mediaPlayerWURI.isPlaying()) {
@@ -915,15 +956,6 @@ public class ServiceMain extends Service {
             }
             songInProgress = false;
             isPlaying = false;
-        }
-    }
-
-    void playAndMakeIfNeeded(Uri uri) {
-        MediaPlayerWUri mediaPlayerWURI = getMediaPlayerWUri(uri);
-        if (mediaPlayerWURI != null) {
-            playAndMakeIfNeeded(mediaPlayerWURI);
-        } else {
-            makeMediaPlayerWURIAndPlay(uriAudioURILinkedHashMap.get(uri));
         }
     }
 
@@ -992,13 +1024,55 @@ public class ServiceMain extends Service {
         if (haveAudioFocus) {
             return true;
         }
+        // TODO
         AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        int result = audioManager.requestAudioFocus(new AudioManager.OnAudioFocusChangeListener() {
-            @Override
-            public void onAudioFocusChange(int i) {
+        AudioManager.OnAudioFocusChangeListener onAudioFocusChangeListener =
+                new AudioManager.OnAudioFocusChangeListener() {
+                    final Object lock = new Object();
+                    boolean mResumeOnFocusGain = false;
 
-            }
-        }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+                    @Override
+                    public void onAudioFocusChange(int i) {
+                        switch (i) {
+                            case AudioManager.AUDIOFOCUS_GAIN:
+                                if (mResumeOnFocusGain) {
+                                    synchronized (lock) {
+                                        mResumeOnFocusGain = false;
+                                    }
+                                    if (!isPlaying) {
+                                        pauseOrPlay();
+                                    }
+                                }
+                                break;
+                            case AudioManager.AUDIOFOCUS_LOSS:
+                                synchronized (lock) {
+                                    mResumeOnFocusGain = false;
+                                }
+                                if (isPlaying) {
+                                    pauseOrPlay();
+                                }
+                                break;
+                        }
+                    }
+                };
+        int result;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build();
+            AudioFocusRequest audioFocusRequest = new AudioFocusRequest.Builder(
+                    AudioManager.AUDIOFOCUS_GAIN)
+                    .setAudioAttributes(audioAttributes)
+                    .setAcceptsDelayedFocusGain(true)
+                    .setWillPauseWhenDucked(true)
+                    .setOnAudioFocusChangeListener(onAudioFocusChangeListener)
+                    .build();
+            result = audioManager.requestAudioFocus(audioFocusRequest);
+        } else {
+            result = audioManager.requestAudioFocus(
+                    onAudioFocusChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+        }
         haveAudioFocus = result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
         Log.v(TAG, "Done requesting audio focus");
         return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;

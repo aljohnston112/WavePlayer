@@ -53,7 +53,11 @@ public class ActivityMain extends AppCompatActivity {
     // TODO help page
     // TODO check for leaks
     // TODO warn user about resetting probabilities
-
+    // TODO songpanesongart is not displaying the bitmap
+    // TODO swap layouts to change background color for the imageview in the notification
+    // TODO create a backup file somewhere 
+    // TODO allow user to create backup
+    
     // TODO AFTER RELEASE
     // Open current song in folder as a menu action
     // Setting to not keep playing after queue is done
@@ -526,8 +530,12 @@ public class ActivityMain extends AppCompatActivity {
             if (bitmap == null) {
                 imageViewSongArt.setImageDrawable(ResourcesCompat.getDrawable(
                         getResources(), R.drawable.music_note_black_48dp, null));
+                imageViewSongArt.setBackgroundColor(
+                        getResources().getColor(R.color.colorPrimary));
             } else {
                 imageViewSongArt.setImageBitmap(bitmap);
+                imageViewSongArt.setBackgroundColor(
+                        getResources().getColor(R.color.colorOnPrimary));
             }
         }
     }
@@ -586,11 +594,8 @@ public class ActivityMain extends AppCompatActivity {
 
     private void updateSongPaneArt() {
         int songArtHeight = getSongArtHeight();
-        if (songArtHeight > 0) {
-            @SuppressWarnings("SuspiciousNameCombination")
-            int songArtWidth = songArtHeight;
-            setImageViewSongPaneArt(songArtWidth, songArtHeight);
-        }
+        int songArtWidth = getSongArtWidth();
+        setImageViewSongPaneArt(songArtWidth, songArtHeight);
     }
 
     private int getSongArtHeight() {
@@ -603,6 +608,20 @@ public class ActivityMain extends AppCompatActivity {
                 songArtHeight = serviceMain.getSongPaneArtHeight();
             }
             return songArtHeight;
+        }
+        return -1;
+    }
+
+    private int getSongArtWidth() {
+        ImageView imageViewSongPaneSongArt = findViewById(R.id.imageViewSongPaneSongArt);
+        if (imageViewSongPaneSongArt != null && serviceMain != null) {
+            int songArtWidth = imageViewSongPaneSongArt.getMeasuredWidth();
+            if (songArtWidth > 0) {
+                serviceMain.setSongPaneArtWidth(songArtWidth);
+            } else {
+                songArtWidth = serviceMain.getSongPaneArtWidth();
+            }
+            return songArtWidth;
         }
         return -1;
     }
@@ -1057,12 +1076,6 @@ public class ActivityMain extends AppCompatActivity {
     public void saveFile() {
         if (serviceMain != null) {
             serviceMain.saveFile();
-        }
-    }
-
-    public void clearQueue() {
-        if(serviceMain != null){
-            serviceMain.clearSongQueue();
         }
     }
 
