@@ -347,8 +347,11 @@ public class ServiceMain extends Service {
             new MediaPlayerOnCompletionListener(this);
 
     private RemoteViews remoteViewsNotificationLayout;
+    private RemoteViews remoteViewsNotificationLayoutWithoutArt;
+    private RemoteViews remoteViewsNotificationLayoutWithArt;
     private NotificationCompat.Builder notificationCompatBuilder;
     private Notification notification;
+    private boolean hasArt = false;
 
     // region ActivityMainUI
 
@@ -529,8 +532,14 @@ public class ServiceMain extends Service {
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setStyle(new NotificationCompat.DecoratedCustomViewStyle());
-        remoteViewsNotificationLayout = new RemoteViews(getPackageName(), R.layout.pane_notification);
+        remoteViewsNotificationLayout =
+                new RemoteViews(getPackageName(), R.layout.pane_notification);
+        remoteViewsNotificationLayoutWithoutArt =
+                new RemoteViews(getPackageName(), R.layout.pane_notification_without_art);
+        remoteViewsNotificationLayoutWithArt =
+                new RemoteViews(getPackageName(), R.layout.pane_notification_with_art);
         notificationCompatBuilder.setCustomContentView(remoteViewsNotificationLayout);
+
         // TODO try to open songpane
         Intent notificationIntent = new Intent(getApplicationContext(), ActivityMain.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(
@@ -553,6 +562,14 @@ public class ServiceMain extends Service {
         updateNotificationSongName();
         updateNotificationPlayButton();
         updateSongArt();
+        remoteViewsNotificationLayout.removeAllViews(R.id.pane_notification_linear_layout);
+        if(hasArt){
+            remoteViewsNotificationLayout.addView(
+                    R.id.pane_notification_linear_layout, remoteViewsNotificationLayoutWithArt);
+        } else {
+            remoteViewsNotificationLayout.addView(
+                    R.id.pane_notification_linear_layout, remoteViewsNotificationLayoutWithoutArt);
+        }
         notification.contentView = remoteViewsNotificationLayout;
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -565,35 +582,46 @@ public class ServiceMain extends Service {
         if (currentSong != null) {
             Bitmap bitmap = AudioUri.getThumbnail(currentSong, getApplicationContext());
             if (bitmap != null) {
-                remoteViewsNotificationLayout.setImageViewBitmap(R.id.imageViewNotificationSongPaneSongArt,
-                        bitmap);
+                remoteViewsNotificationLayoutWithArt.setImageViewBitmap(
+                        R.id.imageViewNotificationSongPaneSongArtWArt, bitmap);
+                hasArt = true;
             } else {
-                remoteViewsNotificationLayout.setImageViewResource(
+                remoteViewsNotificationLayoutWithoutArt.setImageViewResource(
                         R.id.imageViewNotificationSongPaneSongArt, R.drawable.music_note_black_48dp);
+                hasArt = false;
             }
         } else {
-            remoteViewsNotificationLayout.setImageViewResource(
+            remoteViewsNotificationLayoutWithoutArt.setImageViewResource(
                     R.id.imageViewNotificationSongPaneSongArt, R.drawable.music_note_black_48dp);
+            hasArt = false;
         }
     }
 
     private void updateNotificationSongName() {
         if (currentSong != null) {
-            remoteViewsNotificationLayout.setTextViewText(
+            remoteViewsNotificationLayoutWithoutArt.setTextViewText(
                     R.id.textViewNotificationSongPaneSongName, currentSong.title);
+            remoteViewsNotificationLayoutWithArt.setTextViewText(
+                    R.id.textViewNotificationSongPaneSongNameWArt, currentSong.title);
         } else {
-            remoteViewsNotificationLayout.setTextViewText(
+            remoteViewsNotificationLayoutWithoutArt.setTextViewText(
                     R.id.textViewNotificationSongPaneSongName, NOTIFICATION_CHANNEL_ID);
+            remoteViewsNotificationLayoutWithArt.setTextViewText(
+                    R.id.textViewNotificationSongPaneSongNameWArt, NOTIFICATION_CHANNEL_ID);
         }
     }
 
     void updateNotificationPlayButton() {
         if (isPlaying) {
-            remoteViewsNotificationLayout.setImageViewResource(
+            remoteViewsNotificationLayoutWithoutArt.setImageViewResource(
                     R.id.imageButtonNotificationSongPanePlayPause, R.drawable.pause_black_24dp);
+            remoteViewsNotificationLayoutWithArt.setImageViewResource(
+                    R.id.imageButtonNotificationSongPanePlayPauseWArt, R.drawable.pause_black_24dp);
         } else {
-            remoteViewsNotificationLayout.setImageViewResource(
+            remoteViewsNotificationLayoutWithoutArt.setImageViewResource(
                     R.id.imageButtonNotificationSongPanePlayPause, R.drawable.play_arrow_black_24dp);
+            remoteViewsNotificationLayoutWithArt.setImageViewResource(
+                    R.id.imageButtonNotificationSongPanePlayPauseWArt, R.drawable.play_arrow_black_24dp);
         }
     }
 
@@ -610,8 +638,10 @@ public class ServiceMain extends Service {
         intentNext.addCategory(Intent.CATEGORY_DEFAULT);
         PendingIntent pendingIntentNext = PendingIntent.getBroadcast(
                 getApplicationContext(), 0, intentNext, PendingIntent.FLAG_UPDATE_CURRENT);
-        remoteViewsNotificationLayout.setOnClickPendingIntent(
+        remoteViewsNotificationLayoutWithoutArt.setOnClickPendingIntent(
                 R.id.imageButtonNotificationSongPaneNext, pendingIntentNext);
+        remoteViewsNotificationLayoutWithArt.setOnClickPendingIntent(
+                R.id.imageButtonNotificationSongPaneNextWArt, pendingIntentNext);
     }
 
     private void setUpBroadcastPlayPause() {
@@ -619,8 +649,10 @@ public class ServiceMain extends Service {
         intentPlayPause.addCategory(Intent.CATEGORY_DEFAULT);
         PendingIntent pendingIntentPlayPause = PendingIntent.getBroadcast(
                 getApplicationContext(), 0, intentPlayPause, PendingIntent.FLAG_UPDATE_CURRENT);
-        remoteViewsNotificationLayout.setOnClickPendingIntent(
+        remoteViewsNotificationLayoutWithoutArt.setOnClickPendingIntent(
                 R.id.imageButtonNotificationSongPanePlayPause, pendingIntentPlayPause);
+        remoteViewsNotificationLayoutWithArt.setOnClickPendingIntent(
+                R.id.imageButtonNotificationSongPanePlayPauseWArt, pendingIntentPlayPause);
     }
 
     private void setUpBroadcastPrevious() {
@@ -628,8 +660,10 @@ public class ServiceMain extends Service {
         intentPrev.addCategory(Intent.CATEGORY_DEFAULT);
         PendingIntent pendingIntentPrev = PendingIntent.getBroadcast(
                 getApplicationContext(), 0, intentPrev, PendingIntent.FLAG_UPDATE_CURRENT);
-        remoteViewsNotificationLayout.setOnClickPendingIntent(
+        remoteViewsNotificationLayoutWithoutArt.setOnClickPendingIntent(
                 R.id.imageButtonNotificationSongPanePrev, pendingIntentPrev);
+        remoteViewsNotificationLayoutWithArt.setOnClickPendingIntent(
+                R.id.imageButtonNotificationSongPanePrevWArt, pendingIntentPrev);
     }
 
     // endregion onStartCommand
@@ -889,6 +923,7 @@ public class ServiceMain extends Service {
         MediaPlayerWUri mediaPlayerWURI = getCurrentMediaPlayerWUri();
         if (mediaPlayerWURI != null) {
             mediaPlayerWURI.seekTo(0);
+            mediaPlayerWURI.shouldStart(true);
             // TODO make a setting?
             //addToQueueAtCurrentIndex(currentSong.getUri());
         } else {
