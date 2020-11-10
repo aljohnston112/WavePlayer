@@ -20,11 +20,11 @@ public class OnDestinationChangedListenerPanes
     public void onDestinationChanged(@NonNull NavController controller,
                                      @NonNull final NavDestination destination,
                                      @Nullable Bundle arguments) {
+        activityMain.updateUI();
         if (destination.getId() != R.id.fragmentSong) {
             if(activityMain.songInProgress()) {
                 activityMain.fragmentSongVisible(false);
                 activityMain.showSongPane();
-                activityMain.updateUI();
             }
         } else {
             activityMain.fragmentSongVisible(true);

@@ -365,7 +365,7 @@ public class ServiceMain extends Service {
         return fragmentSongVisible;
     }
 
-    private int songPaneArtHeight;
+    private int songPaneArtHeight = 1;
 
     public int getSongPaneArtHeight() {
         return songPaneArtHeight;
@@ -375,7 +375,7 @@ public class ServiceMain extends Service {
         this.songPaneArtHeight = songArtHeight;
     }
 
-    private int songPaneArtWidth;
+    private int songPaneArtWidth = 1;
 
     public int getSongPaneArtWidth() {
         return songPaneArtWidth;
@@ -559,6 +559,9 @@ public class ServiceMain extends Service {
     public void updateNotification() {
         String string = "Updating the notification";
         Log.v(TAG, string);
+        setUpNotificationBuilder();
+        setUpBroadCastsForNotificationButtons();
+        notification = notificationCompatBuilder.build();
         updateNotificationSongName();
         updateNotificationPlayButton();
         updateSongArt();
@@ -582,6 +585,7 @@ public class ServiceMain extends Service {
         if (currentSong != null) {
             Bitmap bitmap = AudioUri.getThumbnail(currentSong, getApplicationContext());
             if (bitmap != null) {
+                FragmentPaneSong.getResizedBitmap(bitmap, songPaneArtWidth, songPaneArtHeight);
                 remoteViewsNotificationLayoutWithArt.setImageViewBitmap(
                         R.id.imageViewNotificationSongPaneSongArtWArt, bitmap);
                 hasArt = true;

@@ -54,8 +54,7 @@ public class ActivityMain extends AppCompatActivity {
     // TODO check for leaks
     // TODO warn user about resetting probabilities
     // TODO songpanesongart is not displaying the bitmap
-    // TODO swap layouts to change background color for the imageview in the notification
-    // TODO create a backup file somewhere 
+    // TODO create a backup file somewhere
     // TODO allow user to create backup
     
     // TODO AFTER RELEASE
@@ -523,20 +522,44 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     private void updateSongArt() {
-        ImageView imageViewSongArt = findViewById(R.id.image_view_song_art);
+        final ImageView imageViewSongArt = findViewById(R.id.image_view_song_art);
+
         if (imageViewSongArt != null && serviceMain != null) {
-            Bitmap bitmap =
-                    AudioUri.getThumbnail(serviceMain.getCurrentSong(), getApplicationContext());
-            if (bitmap == null) {
-                imageViewSongArt.setImageDrawable(ResourcesCompat.getDrawable(
-                        getResources(), R.drawable.music_note_black_48dp, null));
-                imageViewSongArt.setBackgroundColor(
-                        getResources().getColor(R.color.colorPrimary));
-            } else {
-                imageViewSongArt.setImageBitmap(bitmap);
-                imageViewSongArt.setBackgroundColor(
-                        getResources().getColor(R.color.colorOnPrimary));
-            }
+            imageViewSongArt.post(new Runnable() {
+                          public void run() {
+                              Bitmap bitmap =
+                                      AudioUri.getThumbnail(serviceMain.getCurrentSong(), getApplicationContext());
+                              if (bitmap == null) {
+                                  imageViewSongArt.setImageDrawable(ResourcesCompat.getDrawable(
+                                          getResources(), R.drawable.music_note_black_48dp, null));
+                                  imageViewSongArt.setBackgroundColor(
+                                          getResources().getColor(R.color.colorPrimary));
+                              } else {
+                                  int songArtHeight = imageViewSongArt.getHeight();
+                                  if (songArtHeight < 1) {
+                                      songArtHeight = bitmap.getHeight();
+                                  }
+                                  int songArtWidth = imageViewSongArt.getWidth();
+                                  if (songArtWidth < 1) {
+                                      songArtWidth = bitmap.getWidth();
+                                  }
+                                  if(songArtWidth > songArtHeight){
+                                      songArtWidth = songArtHeight;
+                                  } else{
+                                      songArtHeight = songArtWidth;
+                                  }
+                                  Bitmap bitmap2 = FragmentPaneSong.getResizedBitmap(bitmap, songArtWidth, songArtHeight);
+                                  if(bitmap2 != null) {
+                                      imageViewSongArt.setImageBitmap(bitmap2);
+                                  } else {
+                                      imageViewSongArt.setImageBitmap(bitmap);
+                                  }
+                                  imageViewSongArt.setBackgroundColor(
+                                          getResources().getColor(R.color.colorOnPrimary));
+                              }
+                          }
+                      }
+            );
         }
     }
 
@@ -601,7 +624,7 @@ public class ActivityMain extends AppCompatActivity {
     private int getSongArtHeight() {
         ImageView imageViewSongPaneSongArt = findViewById(R.id.imageViewSongPaneSongArt);
         if (imageViewSongPaneSongArt != null && serviceMain != null) {
-            int songArtHeight = imageViewSongPaneSongArt.getMeasuredHeight();
+            int songArtHeight = imageViewSongPaneSongArt.getHeight();
             if (songArtHeight > 0) {
                 serviceMain.setSongPaneArtHeight(songArtHeight);
             } else {
@@ -615,7 +638,7 @@ public class ActivityMain extends AppCompatActivity {
     private int getSongArtWidth() {
         ImageView imageViewSongPaneSongArt = findViewById(R.id.imageViewSongPaneSongArt);
         if (imageViewSongPaneSongArt != null && serviceMain != null) {
-            int songArtWidth = imageViewSongPaneSongArt.getMeasuredWidth();
+            int songArtWidth = imageViewSongPaneSongArt.getWidth();
             if (songArtWidth > 0) {
                 serviceMain.setSongPaneArtWidth(songArtWidth);
             } else {
@@ -628,6 +651,11 @@ public class ActivityMain extends AppCompatActivity {
 
     private void setImageViewSongPaneArt(int songArtWidth, int songArtHeight) {
         ImageView imageViewSongPaneSongArt = findViewById(R.id.imageViewSongPaneSongArt);
+        if(songArtWidth > songArtHeight){
+            songArtWidth = songArtHeight;
+        } else{
+            songArtHeight = songArtWidth;
+        }
         if (imageViewSongPaneSongArt != null && serviceMain != null) {
             Bitmap bitmapSongArt = AudioUri.getThumbnail(
                     serviceMain.getCurrentSong(), getApplicationContext());

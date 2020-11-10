@@ -86,8 +86,6 @@ public final class AudioUri implements Comparable<AudioUri>, Serializable {
        // Log.v(TAG, "AudioURI constructed");
     }
 
-    // TODO does not work correctly
-
     public static Bitmap getThumbnail(AudioUri audioURI, Context context){
         Bitmap bitmap = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
