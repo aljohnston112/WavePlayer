@@ -86,12 +86,12 @@ public final class AudioUri implements Comparable<AudioUri>, Serializable {
        // Log.v(TAG, "AudioURI constructed");
     }
 
-    public static Bitmap getThumbnail(AudioUri audioURI, Context context){
+    public static Bitmap getThumbnail(AudioUri audioURI, int width, int height, Context context){
         Bitmap bitmap = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             try {
                 bitmap = context.getContentResolver().loadThumbnail(
-                        audioURI.getUri(), new Size(128, 128), null);
+                        audioURI.getUri(), new Size(width, height), null);
             } catch (IOException e) {
                 e.printStackTrace();
             }

@@ -528,8 +528,6 @@ public class ActivityMain extends AppCompatActivity {
         if (imageViewSongArt != null && serviceMain != null) {
             imageViewSongArt.post(new Runnable() {
                           public void run() {
-                              Bitmap bitmap =
-                                      AudioUri.getThumbnail(serviceMain.getCurrentSong(), getApplicationContext());
                               int songArtHeight = imageViewSongArt.getHeight();
                               int songArtWidth = imageViewSongArt.getWidth();
                               if(songArtWidth > songArtHeight){
@@ -537,6 +535,9 @@ public class ActivityMain extends AppCompatActivity {
                               } else{
                                   songArtHeight = songArtWidth;
                               }
+                              Bitmap bitmap =
+                                      AudioUri.getThumbnail(serviceMain.getCurrentSong(),
+                                              songArtWidth, songArtHeight, getApplicationContext());
                               if (bitmap == null) {
                                   Drawable drawable = ResourcesCompat.getDrawable(getResources(),
                                           R.drawable.music_note_black_48dp, null);
@@ -552,17 +553,8 @@ public class ActivityMain extends AppCompatActivity {
                                       bitmapDrawable.recycle();
                                       imageViewSongArt.setImageBitmap(bitmapResized);
                                   }
-                                  imageViewSongArt.setBackgroundColor(
-                                          getResources().getColor(R.color.colorOnPrimary));
                               } else {
-                                  Bitmap bitmap2 = FragmentPaneSong.getResizedBitmap(bitmap, songArtWidth, songArtHeight);
-                                  if(bitmap2 != null) {
-                                      imageViewSongArt.setImageBitmap(bitmap2);
-                                  } else {
                                       imageViewSongArt.setImageBitmap(bitmap);
-                                  }
-                                  imageViewSongArt.setBackgroundColor(
-                                          getResources().getColor(R.color.colorOnPrimary));
                               }
                           }
                       }
@@ -665,11 +657,9 @@ public class ActivityMain extends AppCompatActivity {
         }
         if (imageViewSongPaneSongArt != null && serviceMain != null) {
             Bitmap bitmapSongArt = AudioUri.getThumbnail(
-                    serviceMain.getCurrentSong(), getApplicationContext());
+                    serviceMain.getCurrentSong(), songArtWidth, songArtHeight, getApplicationContext());
             if (bitmapSongArt != null) {
-                Bitmap bitmapSongArtResized = FragmentPaneSong.getResizedBitmap(
-                        bitmapSongArt, songArtWidth, songArtHeight);
-                imageViewSongPaneSongArt.setImageBitmap(bitmapSongArtResized);
+                imageViewSongPaneSongArt.setImageBitmap(bitmapSongArt);
             } else {
                 Bitmap defaultBitmap = getDefaultBitmap(songArtWidth, songArtHeight);
                 if (defaultBitmap != null) {
