@@ -7,6 +7,7 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -47,6 +48,7 @@ import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_
 import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG;
 import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_IS_SONG;
 import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_PLAYLISTS;
+import static com.example.waveplayer.FragmentPaneSong.getResizedBitmap;
 
 public class ActivityMain extends AppCompatActivity {
 
@@ -523,31 +525,36 @@ public class ActivityMain extends AppCompatActivity {
 
     private void updateSongArt() {
         final ImageView imageViewSongArt = findViewById(R.id.image_view_song_art);
-
         if (imageViewSongArt != null && serviceMain != null) {
             imageViewSongArt.post(new Runnable() {
                           public void run() {
                               Bitmap bitmap =
                                       AudioUri.getThumbnail(serviceMain.getCurrentSong(), getApplicationContext());
+                              int songArtHeight = imageViewSongArt.getHeight();
+                              int songArtWidth = imageViewSongArt.getWidth();
+                              if(songArtWidth > songArtHeight){
+                                  songArtWidth = songArtHeight;
+                              } else{
+                                  songArtHeight = songArtWidth;
+                              }
                               if (bitmap == null) {
-                                  imageViewSongArt.setImageDrawable(ResourcesCompat.getDrawable(
-                                          getResources(), R.drawable.music_note_black_48dp, null));
+                                  Drawable drawable = ResourcesCompat.getDrawable(getResources(),
+                                          R.drawable.music_note_black_48dp, null);
+                                  if (drawable != null) {
+                                      drawable.setBounds(0, 0, songArtWidth, songArtHeight);
+                                      Bitmap bitmapDrawable = Bitmap.createBitmap(songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888);
+                                      Canvas canvas = new Canvas(bitmapDrawable);
+                                      Paint paint = new Paint();
+                                      paint.setColor(getResources().getColor(R.color.colorPrimary));
+                                      canvas.drawRect(0, 0, songArtWidth, songArtHeight, paint);
+                                      drawable.draw(canvas);
+                                      Bitmap bitmapResized = getResizedBitmap(bitmapDrawable, songArtWidth, songArtHeight);
+                                      bitmapDrawable.recycle();
+                                      imageViewSongArt.setImageBitmap(bitmapResized);
+                                  }
                                   imageViewSongArt.setBackgroundColor(
-                                          getResources().getColor(R.color.colorPrimary));
+                                          getResources().getColor(R.color.colorOnPrimary));
                               } else {
-                                  int songArtHeight = imageViewSongArt.getHeight();
-                                  if (songArtHeight < 1) {
-                                      songArtHeight = bitmap.getHeight();
-                                  }
-                                  int songArtWidth = imageViewSongArt.getWidth();
-                                  if (songArtWidth < 1) {
-                                      songArtWidth = bitmap.getWidth();
-                                  }
-                                  if(songArtWidth > songArtHeight){
-                                      songArtWidth = songArtHeight;
-                                  } else{
-                                      songArtHeight = songArtWidth;
-                                  }
                                   Bitmap bitmap2 = FragmentPaneSong.getResizedBitmap(bitmap, songArtWidth, songArtHeight);
                                   if(bitmap2 != null) {
                                       imageViewSongArt.setImageBitmap(bitmap2);
