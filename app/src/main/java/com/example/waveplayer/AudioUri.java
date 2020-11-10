@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 
+import static com.example.waveplayer.FragmentPaneSong.getResizedBitmap;
+
 public final class AudioUri implements Comparable<AudioUri>, Serializable {
 
     transient static final String TAG = "AudioURI";
@@ -109,6 +111,9 @@ public final class AudioUri implements Comparable<AudioUri>, Serializable {
             }
             mmr.release();
             bitmap = BitmapFactory.decodeStream(inputStream);
+            if(bitmap != null) {
+                bitmap = getResizedBitmap(bitmap, width, height);
+            }
         }
         return bitmap;
     }

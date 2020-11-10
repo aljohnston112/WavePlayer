@@ -615,9 +615,7 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     private void updateSongPaneArt() {
-        int songArtHeight = getSongArtHeight();
-        int songArtWidth = getSongArtWidth();
-        setImageViewSongPaneArt(songArtWidth, songArtHeight);
+        setImageViewSongPaneArt();
     }
 
     private int getSongArtHeight() {
@@ -648,24 +646,27 @@ public class ActivityMain extends AppCompatActivity {
         return -1;
     }
 
-    private void setImageViewSongPaneArt(int songArtWidth, int songArtHeight) {
-        ImageView imageViewSongPaneSongArt = findViewById(R.id.imageViewSongPaneSongArt);
-        if(songArtWidth > songArtHeight){
-            songArtWidth = songArtHeight;
-        } else{
-            songArtHeight = songArtWidth;
-        }
+    private void setImageViewSongPaneArt() {
+        final ImageView imageViewSongPaneSongArt = findViewById(R.id.imageViewSongPaneSongArt);
         if (imageViewSongPaneSongArt != null && serviceMain != null) {
-            Bitmap bitmapSongArt = AudioUri.getThumbnail(
-                    serviceMain.getCurrentSong(), songArtWidth, songArtHeight, getApplicationContext());
-            if (bitmapSongArt != null) {
-                imageViewSongPaneSongArt.setImageBitmap(bitmapSongArt);
-            } else {
-                Bitmap defaultBitmap = getDefaultBitmap(songArtWidth, songArtHeight);
-                if (defaultBitmap != null) {
-                    imageViewSongPaneSongArt.setImageBitmap(defaultBitmap);
+            imageViewSongPaneSongArt.post(new Runnable() {
+                @Override
+                public void run() {
+                    int songArtHeight;
+                    int songArtWidth = getSongArtWidth();
+                        songArtHeight =songArtWidth;
+                    Bitmap bitmapSongArt = AudioUri.getThumbnail(
+                            serviceMain.getCurrentSong(), songArtWidth, songArtHeight, getApplicationContext());
+                    if (bitmapSongArt != null) {
+                        imageViewSongPaneSongArt.setImageBitmap(bitmapSongArt);
+                    } else {
+                        Bitmap defaultBitmap = getDefaultBitmap(songArtWidth, songArtHeight);
+                        if (defaultBitmap != null) {
+                            imageViewSongPaneSongArt.setImageBitmap(defaultBitmap);
+                        }
+                    }
                 }
-            }
+            });
         }
     }
 

@@ -583,7 +583,7 @@ public class ServiceMain extends Service {
     private void updateSongArt() {
         // TODO update song art backgorund
         if (currentSong != null) {
-            Bitmap bitmap = AudioUri.getThumbnail(currentSong, 50, 50, getApplicationContext());
+            Bitmap bitmap = AudioUri.getThumbnail(currentSong, 92, 92, getApplicationContext());
             if (bitmap != null) {
                 FragmentPaneSong.getResizedBitmap(bitmap, songPaneArtWidth, songPaneArtHeight);
                 remoteViewsNotificationLayoutWithArt.setImageViewBitmap(

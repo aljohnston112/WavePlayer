@@ -20,7 +20,7 @@ public class OnLayoutChangeListenerSongPane implements View.OnLayoutChangeListen
 
     @Override
     public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-        setUpSongArt(v);
+        //setUpSongArt(v);
         setUpPrev(v);
         setUpPlay(v);
         setUpNext(v);
@@ -33,7 +33,7 @@ public class OnLayoutChangeListenerSongPane implements View.OnLayoutChangeListen
         int width = height;
         Drawable drawable = ResourcesCompat.getDrawable(
                 fragmentPaneSong.getResources(), R.drawable.skip_next_black_24dp, null);
-        if (drawable != null) {
+        if (drawable != null && width > 0) {
             drawable.setBounds(0, 0, width, height);
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
@@ -58,7 +58,7 @@ public class OnLayoutChangeListenerSongPane implements View.OnLayoutChangeListen
             drawable = ResourcesCompat.getDrawable(
                     fragmentPaneSong.getResources(), R.drawable.play_arrow_black_24dp, null);
         }
-        if (drawable != null) {
+        if (drawable != null && width > 0) {
             drawable.setBounds(0, 0, width, height);
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
@@ -76,7 +76,7 @@ public class OnLayoutChangeListenerSongPane implements View.OnLayoutChangeListen
         int width = height;
         Drawable drawable = ResourcesCompat.getDrawable(
                 fragmentPaneSong.getResources(), R.drawable.skip_previous_black_24dp, null);
-        if (drawable != null) {
+        if (drawable != null && width > 0) {
             drawable.setBounds(0, 0, width, height);
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
@@ -94,7 +94,7 @@ public class OnLayoutChangeListenerSongPane implements View.OnLayoutChangeListen
         int width = height;
         Drawable drawableSongArt = ResourcesCompat.getDrawable(
                 fragmentPaneSong.getResources(), R.drawable.music_note_black_48dp, null);
-        if (drawableSongArt != null) {
+        if (drawableSongArt != null && width > 0) {
             drawableSongArt.setBounds(0, 0, width, height);
             Bitmap bitmapSongArt = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmapSongArt);
