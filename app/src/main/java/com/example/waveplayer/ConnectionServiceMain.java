@@ -19,10 +19,6 @@ public class ConnectionServiceMain implements ServiceConnection {
         Log.v(ActivityMain.TAG, "onServiceConnected started");
         ServiceMain.ServiceMainBinder binder = (ServiceMain.ServiceMainBinder) service;
         activityMain.setServiceMain(binder.getService());
-        activityMain.askForExternalStoragePermissionAndFetchMediaFiles();
-        activityMain.setUpBroadcastReceivers();
-        activityMain.setUpSongPane();
-        activityMain.updateUI();
         sendBroadcast();
         Log.v(ActivityMain.TAG, "onServiceConnected ended");
     }
@@ -40,8 +36,7 @@ public class ConnectionServiceMain implements ServiceConnection {
     @Override
     public void onServiceDisconnected(ComponentName arg0) {
         Log.v(ActivityMain.TAG, "onServiceDisconnected start");
-        activityMain.unregisterReceivers();
-        activityMain.removeListeners();
+        activityMain.serviceDisconnected();
         activityMain = null;
     }
 

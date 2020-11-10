@@ -83,13 +83,10 @@ public class FragmentEditPlaylist extends Fragment {
         activityMain.setFabOnClickListener(onClickListenerFABFragmentEditPlaylist);
     }
 
-    void popBackStackAndHideKeyboard(View view) {
+    void popBackStack(View view) {
         NavController navController = NavHostFragment.findNavController(
                 FragmentEditPlaylist.this);
         navController.popBackStack();
-        InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(
-                AppCompatActivity.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
     private void setUpBroadcastReceiverServiceConnected(final View view) {

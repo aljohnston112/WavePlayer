@@ -88,36 +88,6 @@ public final class AudioUri implements Comparable<AudioUri>, Serializable {
        // Log.v(TAG, "AudioURI constructed");
     }
 
-    public static Bitmap getThumbnail(AudioUri audioURI, int width, int height, Context context){
-        Bitmap bitmap = null;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            try {
-                bitmap = context.getContentResolver().loadThumbnail(
-                        audioURI.getUri(), new Size(width, height), null);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else {
-            MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-            try {
-                mmr.setDataSource(context.getContentResolver().openFileDescriptor(
-                        audioURI.getUri(), "r").getFileDescriptor());
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-            InputStream inputStream = null;
-            if (mmr.getEmbeddedPicture() != null) {
-                inputStream = new ByteArrayInputStream(mmr.getEmbeddedPicture());
-            }
-            mmr.release();
-            bitmap = BitmapFactory.decodeStream(inputStream);
-            if(bitmap != null) {
-                bitmap = getResizedBitmap(bitmap, width, height);
-            }
-        }
-        return bitmap;
-    }
-
     @Override
     public int compareTo(AudioUri o) {
        // Log.v(TAG, "compareTo start");

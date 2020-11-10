@@ -44,7 +44,8 @@ public class OnClickListenerFABFragmentEditPlaylist implements View.OnClickListe
             }
             userPickedSongs.clear();
             activityMain.saveFile();
-            fragmentEditPlaylist.popBackStackAndHideKeyboard(view);
+            fragmentEditPlaylist.popBackStack(view);
+            activityMain.hideKeyboard(view);
         } else {
             ArrayList<String> names = new ArrayList<>();
             for (RandomPlaylist randomPlaylist : activityMain.getPlaylists()) {
@@ -63,7 +64,8 @@ public class OnClickListenerFABFragmentEditPlaylist implements View.OnClickListe
                     audioURI.setSelected(false);
                 }
                 activityMain.saveFile();
-                fragmentEditPlaylist.popBackStackAndHideKeyboard(view);
+                fragmentEditPlaylist.popBackStack(view);
+                activityMain.hideKeyboard(view);
             } else {
                 activityMain.showToast(R.string.duplicate_name_playlist);
             }

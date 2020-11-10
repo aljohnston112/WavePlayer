@@ -18,10 +18,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 public class FragmentSelectSongs extends Fragment {
 
-    ActivityMain activityMain;
-
-    View view;
-
     BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
     boolean setUp = false;
@@ -38,8 +34,8 @@ public class FragmentSelectSongs extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        activityMain = ((ActivityMain) getActivity());
-        view = inflater.inflate(R.layout.recycler_view_song_list, container, false);
+        ActivityMain activityMain = ((ActivityMain) getActivity());
+        View view = inflater.inflate(R.layout.recycler_view_song_list, container, false);
         onClickListenerFABFragmentSelectSongs = new OnClickListenerFABFragmentSelectSongs(this);
         if (activityMain != null) {
             activityMain.setActionBarTitle(getResources().getString(R.string.select_songs));
@@ -58,17 +54,11 @@ public class FragmentSelectSongs extends Fragment {
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        this.view = view;
-        hideKeyboard();
-    }
-
-    private void hideKeyboard() {
-        InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(
-                AppCompatActivity.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        ((ActivityMain)getActivity()).hideKeyboard(view);
     }
 
     private void setupFAB() {
+        ActivityMain activityMain = ((ActivityMain) getActivity());
         activityMain.setFabImage(R.drawable.ic_check_white_24dp);
         activityMain.setFABText(R.string.fab_done);
         activityMain.showFab(true);
@@ -77,6 +67,8 @@ public class FragmentSelectSongs extends Fragment {
 
     private void setUpRecyclerView() {
         if (!setUp) {
+            ActivityMain activityMain = ((ActivityMain) getActivity());
+            View view = getView();
             recyclerViewSongList = view.findViewById(R.id.recycler_view_song_list);
             recyclerViewSongList.setLayoutManager(
                     new LinearLayoutManager(recyclerViewSongList.getContext()));
@@ -91,6 +83,7 @@ public class FragmentSelectSongs extends Fragment {
     }
 
     private void setUpBroadcastReceiverServiceConnected() {
+        ActivityMain activityMain = ((ActivityMain) getActivity());
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -107,12 +100,11 @@ public class FragmentSelectSongs extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        ActivityMain activityMain = ((ActivityMain) getActivity());
         recyclerViewSongList.setAdapter(null);
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
         broadcastReceiverOnServiceConnected = null;
         onClickListenerFABFragmentSelectSongs = null;
-        view = null;
-        activityMain = null;
     }
 
 }

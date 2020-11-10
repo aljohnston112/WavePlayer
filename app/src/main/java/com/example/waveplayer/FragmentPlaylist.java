@@ -56,7 +56,7 @@ public class FragmentPlaylist extends Fragment {
         setUpToolbar();
         updateFAB();
         setUpRecyclerView(randomPlaylist);
-        hideKeyBoard();
+        activityMain.hideKeyboard(view);
     }
 
     private void setUpToolbar() {
@@ -136,13 +136,6 @@ public class FragmentPlaylist extends Fragment {
             }
         };
         activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
-    }
-
-    private void hideKeyBoard() {
-        ActivityMain activityMain = ((ActivityMain) getActivity());
-        InputMethodManager imm = (InputMethodManager)
-                activityMain.getSystemService(AppCompatActivity.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(getView().getWindowToken(), 0);
     }
 
     @Override

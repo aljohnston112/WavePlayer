@@ -58,7 +58,6 @@ public class FragmentPlaylists extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        hideKeyBoard();
         updateMainContent();
         setUpBroadcastReceiverOnServiceConnected();
         setUpBroadcastReceiverServiceOnOptionsMenuCreated();
@@ -66,6 +65,7 @@ public class FragmentPlaylists extends Fragment {
 
     private void updateMainContent() {
         ActivityMain activityMain = ((ActivityMain) getActivity());
+        activityMain.hideKeyboard(getView());
         activityMain.setActionBarTitle(getResources().getString(R.string.playlists));
         updateFAB();
         setUpRecyclerView();
@@ -90,13 +90,6 @@ public class FragmentPlaylists extends Fragment {
                 searchView.setOnQueryTextListener(onQueryTextListenerSearch);
             }
         }
-    }
-
-    private void hideKeyBoard() {
-        ActivityMain activityMain = ((ActivityMain) getActivity());
-        View view = getView();
-        InputMethodManager imm = (InputMethodManager) activityMain.getSystemService(AppCompatActivity.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
     private void updateFAB() {

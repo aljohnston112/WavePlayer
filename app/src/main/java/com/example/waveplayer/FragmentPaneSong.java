@@ -76,8 +76,7 @@ public class FragmentPaneSong extends Fragment {
         float scaleHeight = ((float) newHeight) / height;
         Matrix matrix = new Matrix();
         matrix.postScale(scaleWidth, scaleHeight);
-        return Bitmap.createBitmap(
-                bm, 0, 0, width, height, matrix, false);
+        return Bitmap.createScaledBitmap(bm, newWidth, newHeight, true);
     }
 
     @Override

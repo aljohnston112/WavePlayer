@@ -28,10 +28,6 @@ public class FragmentSongs extends Fragment {
 
     public static final String NAME = "FragmentSongs";
 
-    ActivityMain activityMain;
-
-    View view;
-
     BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
     BroadcastReceiver broadcastReceiverOptionsMenuCreated;
@@ -48,12 +44,12 @@ public class FragmentSongs extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        view = inflater.inflate(R.layout.recycler_view_song_list, container, false);
-        activityMain = ((ActivityMain) getActivity());
+        View view = inflater.inflate(R.layout.recycler_view_song_list, container, false);
+        ActivityMain activityMain = ((ActivityMain) getActivity());
         if (activityMain != null) {
             activityMain.setUserPickedPlaylistToMasterPlaylist();
         }
-        hideKeyBoard();
+        activityMain.hideKeyboard(view);
         updateMainContent();
         setUpRecyclerView();
         setUpBroadcastReceiverServiceConnected();
@@ -67,12 +63,14 @@ public class FragmentSongs extends Fragment {
     }
 
     private void updateMainContent() {
+        ActivityMain activityMain = ((ActivityMain) getActivity());
         activityMain.setActionBarTitle(getResources().getString(R.string.songs));
         activityMain.showFab(false);
         setUpToolbar();
     }
 
     private void setUpToolbar() {
+        ActivityMain activityMain = ((ActivityMain) getActivity());
         Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
         Menu menu = toolbar.getMenu();
         if (menu != null) {
@@ -90,13 +88,8 @@ public class FragmentSongs extends Fragment {
         }
     }
 
-    private void hideKeyBoard() {
-        InputMethodManager imm = (InputMethodManager)
-                activityMain.getSystemService(AppCompatActivity.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-    }
-
     private void setUpBroadcastReceiverServiceConnected() {
+        final ActivityMain activityMain = ((ActivityMain) getActivity());
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -113,6 +106,7 @@ public class FragmentSongs extends Fragment {
     }
 
     private void setUpBroadcastReceiverOnOptionsMenuCreated() {
+        ActivityMain activityMain = ((ActivityMain) getActivity());
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -129,6 +123,8 @@ public class FragmentSongs extends Fragment {
 
     private void setUpRecyclerView() {
         if (!setUp) {
+            ActivityMain activityMain = ((ActivityMain) getActivity());
+            View view = getView();
             RecyclerView recyclerViewSongs = view.findViewById(R.id.recycler_view_song_list);
             RecyclerViewAdapterSongs recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(
                     this, new ArrayList<>(activityMain.getAllSongs()));
@@ -142,7 +138,9 @@ public class FragmentSongs extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        hideKeyBoard();
+        ActivityMain activityMain = ((ActivityMain) getActivity());
+        View view = getView();
+        activityMain.hideKeyboard(view);
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
         broadcastReceiverOnServiceConnected = null;
         activityMain.unregisterReceiver(broadcastReceiverOptionsMenuCreated);
@@ -162,8 +160,6 @@ public class FragmentSongs extends Fragment {
         }
         onQueryTextListenerSearch = null;
         setUp = false;
-        view = null;
-        activityMain = null;
     }
 
 }

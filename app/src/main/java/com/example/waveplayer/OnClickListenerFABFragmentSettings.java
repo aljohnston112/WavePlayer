@@ -52,9 +52,8 @@ public class OnClickListenerFABFragmentSettings implements View.OnClickListener 
             e.printStackTrace();
         }
         if (nSongs < 1) {
-            Toast toast = Toast.makeText(
-                    fragmentSettings.getContext(), R.string.max_percent_error, Toast.LENGTH_LONG);
-            toast.show();
+            ActivityMain activityMain = (ActivityMain) fragmentSettings.getActivity();
+            activityMain.showToast(R.string.max_percent_error);
             nSongs = -1;
         }
         return nSongs;
@@ -68,9 +67,8 @@ public class OnClickListenerFABFragmentSettings implements View.OnClickListener 
             e.printStackTrace();
         }
         if (percentChangeUp < 1 || percentChangeUp > 100) {
-            Toast toast = Toast.makeText(fragmentSettings.getContext(),
-                    R.string.percent_change_error, Toast.LENGTH_LONG);
-            toast.show();
+            ActivityMain activityMain = (ActivityMain) fragmentSettings.getActivity();
+            activityMain.showToast(R.string.percent_change_error);
             percentChangeUp = -1;
         }
         return percentChangeUp;
@@ -85,13 +83,7 @@ public class OnClickListenerFABFragmentSettings implements View.OnClickListener 
             e.printStackTrace();
         }
         if (percentChangeDown < 1 || percentChangeDown > 100) {
-            Toast toast = Toast.makeText(fragmentSettings.getContext(),
-                    R.string.percent_change_error, Toast.LENGTH_LONG);
-            toast.getView().getBackground().setColorFilter(
-                    activityMain.getResources().getColor(R.color.colorPrimary), PorterDuff.Mode.SRC_IN);
-            TextView text = toast.getView().findViewById(android.R.id.message);
-            text.setTextSize(16);
-            toast.show();
+            activityMain.showToast(R.string.percent_change_error);
             percentChangeDown = -1;
         }
         return percentChangeDown;

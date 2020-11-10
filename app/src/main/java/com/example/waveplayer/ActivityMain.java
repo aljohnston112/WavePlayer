@@ -1,19 +1,23 @@
 package com.example.waveplayer;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Size;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -40,6 +44,10 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -77,7 +85,32 @@ public class ActivityMain extends AppCompatActivity {
     private ServiceMain serviceMain;
 
     public void setServiceMain(ServiceMain serviceMain) {
+        Log.v(TAG, "setServiceMain started");
         this.serviceMain = serviceMain;
+        setUpAfterServiceConnection();
+        Log.v(TAG, "setServiceMain ended");
+    }
+
+    private void setUpAfterServiceConnection() {
+        Log.v(TAG, "setUpAfterServiceConnection started");
+        askForExternalStoragePermissionAndFetchMediaFiles();
+        setUpBroadcastReceivers();
+        setUpSongPane();
+        updateUI();
+        runnableSongArtUpdater = new RunnableSongArtUpdater(
+                serviceMain, (ImageView) findViewById(R.id.image_view_song_art));
+        runnableSongPaneArtUpdater = new RunnableSongPaneArtUpdater(
+                serviceMain, (ImageView) findViewById(R.id.imageViewSongPaneSongArt));
+        Log.v(TAG, "setUpAfterServiceConnection ended");
+    }
+
+    public void serviceDisconnected() {
+        Log.v(TAG, "serviceDisconnected started");
+        unregisterReceivers();
+        removeListeners();
+        runnableSongArtUpdater = null;
+        runnableSongPaneArtUpdater = null;
+        Log.v(TAG, "serviceDisconnected end");
     }
 
     private ServiceConnection connectionServiceMain;
@@ -94,24 +127,36 @@ public class ActivityMain extends AppCompatActivity {
 
     private OnSeekBarChangeListener onSeekBarChangeListener;
 
+    private Runnable runnableUIUpdate;
+
+    private RunnableSongArtUpdater runnableSongArtUpdater;
+
+    private RunnableSongPaneArtUpdater runnableSongPaneArtUpdater;
+
     public final Object lock = new Object();
 
     private boolean isSong;
 
     public void isSong(boolean isSong) {
+        Log.v(TAG, "isSong started");
         this.isSong = isSong;
+        Log.v(TAG, "isSong ended");
     }
 
     private AudioUri songToAddToQueue;
 
     public void setSongToAddToQueue(AudioUri audioUri) {
+        Log.v(TAG, "setSongToAddToQueue started");
         songToAddToQueue = audioUri;
+        Log.v(TAG, "setSongToAddToQueue ened");
     }
 
     private RandomPlaylist playlistToAddToQueue;
 
     public void setPlaylistToAddToQueue(RandomPlaylist randomPlaylist) {
+        Log.v(TAG, "setPlaylistToAddToQueue started");
         this.playlistToAddToQueue = randomPlaylist;
+        Log.v(TAG, "setPlaylistToAddToQueue ended");
     }
 
     // region lifecycle
@@ -132,10 +177,22 @@ public class ActivityMain extends AppCompatActivity {
 
     @Override
     protected void onStart() {
+        Log.v(TAG, "onStart started");
         super.onStart();
         startAndBindServiceMain();
         onSeekBarChangeListener = new OnSeekBarChangeListener(this);
         setUpActionBar();
+        runnableUIUpdate = new Runnable() {
+            @Override
+            public void run() {
+                Log.v(TAG, "updating UI");
+                updateSongUI();
+                updateSongPaneUI();
+                updatePlayButtons();
+                Log.v(TAG, "done updating UI");
+            }
+        };
+        Log.v(TAG, "onStart ended");
     }
 
     private void startAndBindServiceMain() {
@@ -172,7 +229,6 @@ public class ActivityMain extends AppCompatActivity {
         } else {
             serviceMain.getAudioFiles();
         }
-
         Log.v(TAG, "Done making sure there is external storage permission");
     }
 
@@ -198,9 +254,12 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     public List<AudioUri> getAllSongs() {
+        Log.v(TAG, "getAllSongs started");
         if (serviceMain != null) {
+            Log.v(TAG, "getAllSongs ended");
             return serviceMain.getAllSongs();
         }
+        Log.v(TAG, "getAllSongs default end");
         return null;
     }
 
@@ -303,6 +362,7 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     private void setUpDestinationChangedListenerForPaneSong() {
+        Log.v(TAG, "setUpDestinationChangedListenerForPaneSong started");
         onDestinationChangedListenerPanes = new OnDestinationChangedListenerPanes(this);
         FragmentManager fragmentManager = getSupportFragmentManager();
         Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
@@ -310,6 +370,7 @@ public class ActivityMain extends AppCompatActivity {
             NavHostFragment.findNavController(fragment).addOnDestinationChangedListener(
                     onDestinationChangedListenerPanes);
         }
+        Log.v(TAG, "setUpDestinationChangedListenerForPaneSong ended");
     }
 
     private void setUpActionBar() {
@@ -324,11 +385,11 @@ public class ActivityMain extends AppCompatActivity {
         }
         centerActionBarTitleAndSetTextSize();
         setUpDestinationChangedListenerForToolbar();
-        Log.v(TAG, "ActionBar set up");
+        Log.v(TAG, "Done setting up ActionBar");
     }
 
     private void centerActionBarTitleAndSetTextSize() {
-        Log.v(TAG, "sending runnable to center the ActionBar title");
+        Log.v(TAG, "Centering the ActionBar title");
         ArrayList<View> textViews = new ArrayList<>();
         getWindow().getDecorView().findViewsWithText(textViews, getTitle(), View.FIND_VIEWS_WITH_TEXT);
         if (!textViews.isEmpty()) {
@@ -351,6 +412,7 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     private void setUpDestinationChangedListenerForToolbar() {
+        Log.v(TAG, "setUpDestinationChangedListenerForToolbar started");
         onDestinationChangedListenerToolbar = new OnDestinationChangedListenerToolbar(this);
         FragmentManager fragmentManager = getSupportFragmentManager();
         Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
@@ -358,12 +420,14 @@ public class ActivityMain extends AppCompatActivity {
             NavHostFragment.findNavController(fragment).addOnDestinationChangedListener(
                     onDestinationChangedListenerToolbar);
         }
+        Log.v(TAG, "setUpDestinationChangedListenerForToolbar ended");
     }
 
     // endregion onStart
 
     @Override
     protected void onStop() {
+        Log.v(TAG, "onStop started");
         super.onStop();
         getApplicationContext().unbindService(connectionServiceMain);
         connectionServiceMain = null;
@@ -375,23 +439,27 @@ public class ActivityMain extends AppCompatActivity {
         }
         onDestinationChangedListenerToolbar = null;
         onSeekBarChangeListener = null;
-
+        runnableUIUpdate = null;
         ExtendedFloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(null);
         SeekBar seekBar = findViewById(R.id.seekBar);
         if (seekBar != null) {
             seekBar.setOnSeekBarChangeListener(null);
         }
+        Log.v(TAG, "onStop ended");
     }
 
     public void unregisterReceivers() {
+        Log.v(TAG, "unregisterReceivers started");
         unregisterReceiver(broadcastReceiverOnCompletion);
         broadcastReceiverOnCompletion = null;
         unregisterReceiver(broadcastReceiverNotificationButtonsForActivityMain);
         broadcastReceiverNotificationButtonsForActivityMain = null;
+        Log.v(TAG, "unregisterReceivers ended");
     }
 
     public void removeListeners() {
+        Log.v(TAG, "removeListeners started");
         FragmentManager fragmentManager = getSupportFragmentManager();
         Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
         if (fragment != null) {
@@ -405,12 +473,15 @@ public class ActivityMain extends AppCompatActivity {
         findViewById(R.id.textViewSongPaneSongName).setOnClickListener(null);
         findViewById(R.id.imageViewSongPaneSongArt).setOnClickListener(null);
         onClickListenerSongPane = null;
+        Log.v(TAG, "removeListeners ended");
     }
 
     @Override
     protected void onResume() {
+        Log.v(TAG, "onResume started");
         super.onResume();
         updateUI();
+        Log.v(TAG, "onResume ended");
     }
 
     @Override
@@ -441,17 +512,21 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "showing or hiding FAB");
         ExtendedFloatingActionButton fab = findViewById(R.id.fab);
         if (show) {
+            Log.v(TAG, "showing FAB");
             fab.show();
         } else {
+            Log.v(TAG, "hiding FAB");
             fab.hide();
         }
         Log.v(TAG, "done showing or hiding FAB");
     }
 
     public void setFABText(int id) {
+        Log.v(TAG, "setFABText start");
         ExtendedFloatingActionButton fab;
         fab = findViewById(R.id.fab);
         fab.setText(id);
+        Log.v(TAG, "setFABText end");
     }
 
     public void setFabImage(int id) {
@@ -471,31 +546,27 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     public void updateUI() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                updateSongUI();
-                updateSongPaneUI();
-                updatePlayButtons();
-            }
-        });
+        Log.v(TAG, "sending Runnable to update UI");
+        runOnUiThread(runnableUIUpdate);
+        Log.v(TAG, "Done sending Runnable to update UI");
     }
 
     // region updateSongUI
 
     private void updateSongUI() {
-        Log.v(TAG, "Updating the song UI");
+        Log.v(TAG, "updateSongUI start");
         if (serviceMain != null
                 && serviceMain.fragmentSongVisible() && serviceMain.getCurrentSong() != null) {
             updateSeekBar();
             updateSongArt();
             updateSongName();
             updateTextViewTimes();
-            Log.v(TAG, "done updating the song UI");
         }
+        Log.v(TAG, "updateSongUI end");
     }
 
     private void updateSeekBar() {
+        Log.v(TAG, "updateSeekBar start");
         SeekBar seekBar = findViewById(R.id.seekBar);
         if (seekBar != null && serviceMain != null) {
             final int maxMillis = serviceMain.getCurrentSong().getDuration(getApplicationContext());
@@ -504,16 +575,21 @@ public class ActivityMain extends AppCompatActivity {
             seekBar.setOnSeekBarChangeListener(onSeekBarChangeListener);
             setUpSeekBarUpdater(maxMillis);
         }
+        Log.v(TAG, "updateSeekBar end");
     }
 
     private int getCurrentTime() {
+        Log.v(TAG, "getCurrentTime start");
         if (serviceMain != null) {
+            Log.v(TAG, "getCurrentTime end");
             return serviceMain.getCurrentTime();
         }
+        Log.v(TAG, "getCurrentTime default end");
         return -1;
     }
 
     private void setUpSeekBarUpdater(int maxMillis) {
+        Log.v(TAG, "setUpSeekBarUpdater start");
         SeekBar seekBar = findViewById(R.id.seekBar);
         TextView textViewCurrent = findViewById(R.id.editTextCurrentTime);
         if (seekBar != null && textViewCurrent != null) {
@@ -521,55 +597,29 @@ public class ActivityMain extends AppCompatActivity {
                 serviceMain.updateSeekBarUpdater(seekBar, textViewCurrent, maxMillis);
             }
         }
+        Log.v(TAG, "setUpSeekBarUpdater end");
     }
 
     private void updateSongArt() {
+        Log.v(TAG, "updateSongArt start");
         final ImageView imageViewSongArt = findViewById(R.id.image_view_song_art);
         if (imageViewSongArt != null && serviceMain != null) {
-            imageViewSongArt.post(new Runnable() {
-                          public void run() {
-                              int songArtHeight = imageViewSongArt.getHeight();
-                              int songArtWidth = imageViewSongArt.getWidth();
-                              if(songArtWidth > songArtHeight){
-                                  songArtWidth = songArtHeight;
-                              } else{
-                                  songArtHeight = songArtWidth;
-                              }
-                              Bitmap bitmap =
-                                      AudioUri.getThumbnail(serviceMain.getCurrentSong(),
-                                              songArtWidth, songArtHeight, getApplicationContext());
-                              if (bitmap == null) {
-                                  Drawable drawable = ResourcesCompat.getDrawable(getResources(),
-                                          R.drawable.music_note_black_48dp, null);
-                                  if (drawable != null) {
-                                      drawable.setBounds(0, 0, songArtWidth, songArtHeight);
-                                      Bitmap bitmapDrawable = Bitmap.createBitmap(songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888);
-                                      Canvas canvas = new Canvas(bitmapDrawable);
-                                      Paint paint = new Paint();
-                                      paint.setColor(getResources().getColor(R.color.colorPrimary));
-                                      canvas.drawRect(0, 0, songArtWidth, songArtHeight, paint);
-                                      drawable.draw(canvas);
-                                      Bitmap bitmapResized = getResizedBitmap(bitmapDrawable, songArtWidth, songArtHeight);
-                                      bitmapDrawable.recycle();
-                                      imageViewSongArt.setImageBitmap(bitmapResized);
-                                  }
-                              } else {
-                                      imageViewSongArt.setImageBitmap(bitmap);
-                              }
-                          }
-                      }
-            );
+            imageViewSongArt.post(runnableSongArtUpdater);
         }
+        Log.v(TAG, "updateSongArt end");
     }
 
     private void updateSongName() {
+        Log.v(TAG, "updateSongName start");
         TextView textViewSongName = findViewById(R.id.text_view_song_name);
         if (textViewSongName != null && serviceMain != null) {
             textViewSongName.setText(serviceMain.getCurrentSong().title);
         }
+        Log.v(TAG, "updateSongName end");
     }
 
     private void updateTextViewTimes() {
+        Log.v(TAG, "updateTextViewTimes start");
         final int maxMillis = serviceMain.getCurrentSong().getDuration(getApplicationContext());
         final String stringEndTime = formatMillis(maxMillis);
         String stringCurrentTime = formatMillis(getCurrentTime());
@@ -581,9 +631,11 @@ public class ActivityMain extends AppCompatActivity {
         if (textViewEnd != null) {
             textViewEnd.setText(stringEndTime);
         }
+        Log.v(TAG, "updateTextViewTimes end");
     }
 
     private String formatMillis(int millis) {
+        Log.v(TAG, "formatMillis start and end");
         return String.format(getResources().getConfiguration().locale,
                 "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(millis),
                 TimeUnit.MILLISECONDS.toMinutes(millis) -
@@ -608,84 +660,21 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     private void updateSongPaneName() {
+        Log.v(TAG, "updateSongPaneName start");
         TextView textViewSongPaneSongName = findViewById(R.id.textViewSongPaneSongName);
         if (textViewSongPaneSongName != null && serviceMain != null) {
             textViewSongPaneSongName.setText(serviceMain.getCurrentSong().title);
         }
+        Log.v(TAG, "updateSongPaneName end");
     }
 
     private void updateSongPaneArt() {
-        setImageViewSongPaneArt();
-    }
-
-    private int getSongArtHeight() {
-        ImageView imageViewSongPaneSongArt = findViewById(R.id.imageViewSongPaneSongArt);
-        if (imageViewSongPaneSongArt != null && serviceMain != null) {
-            int songArtHeight = imageViewSongPaneSongArt.getHeight();
-            if (songArtHeight > 0) {
-                serviceMain.setSongPaneArtHeight(songArtHeight);
-            } else {
-                songArtHeight = serviceMain.getSongPaneArtHeight();
-            }
-            return songArtHeight;
-        }
-        return -1;
-    }
-
-    private int getSongArtWidth() {
-        ImageView imageViewSongPaneSongArt = findViewById(R.id.imageViewSongPaneSongArt);
-        if (imageViewSongPaneSongArt != null && serviceMain != null) {
-            int songArtWidth = imageViewSongPaneSongArt.getWidth();
-            if (songArtWidth > 0) {
-                serviceMain.setSongPaneArtWidth(songArtWidth);
-            } else {
-                songArtWidth = serviceMain.getSongPaneArtWidth();
-            }
-            return songArtWidth;
-        }
-        return -1;
-    }
-
-    private void setImageViewSongPaneArt() {
+        Log.v(TAG, "updateSongPaneArt start");
         final ImageView imageViewSongPaneSongArt = findViewById(R.id.imageViewSongPaneSongArt);
         if (imageViewSongPaneSongArt != null && serviceMain != null) {
-            imageViewSongPaneSongArt.post(new Runnable() {
-                @Override
-                public void run() {
-                    int songArtHeight;
-                    int songArtWidth = getSongArtWidth();
-                        songArtHeight =songArtWidth;
-                    Bitmap bitmapSongArt = AudioUri.getThumbnail(
-                            serviceMain.getCurrentSong(), songArtWidth, songArtHeight, getApplicationContext());
-                    if (bitmapSongArt != null) {
-                        imageViewSongPaneSongArt.setImageBitmap(bitmapSongArt);
-                    } else {
-                        Bitmap defaultBitmap = getDefaultBitmap(songArtWidth, songArtHeight);
-                        if (defaultBitmap != null) {
-                            imageViewSongPaneSongArt.setImageBitmap(defaultBitmap);
-                        }
-                    }
-                }
-            });
+            imageViewSongPaneSongArt.post(runnableSongPaneArtUpdater);
         }
-    }
-
-    private Bitmap getDefaultBitmap(int songArtWidth, int songArtHeight) {
-        Drawable drawableSongArt = ResourcesCompat.getDrawable(
-                getResources(), R.drawable.music_note_black_48dp, null);
-        if (drawableSongArt != null) {
-            Bitmap bitmapSongArt;
-            drawableSongArt.setBounds(0, 0, songArtWidth, songArtHeight);
-            bitmapSongArt = Bitmap.createBitmap(
-                    songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(bitmapSongArt);
-            drawableSongArt.draw(canvas);
-            Bitmap bitmapSongArtResized = FragmentPaneSong.getResizedBitmap(
-                    bitmapSongArt, songArtWidth, songArtHeight);
-            bitmapSongArt.recycle();
-            return bitmapSongArtResized;
-        }
-        return null;
+        Log.v(TAG, "updateSongPaneArt end");
     }
 
     // endregion updateSongPaneUI
@@ -698,6 +687,7 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     private void updateSongPlayButton() {
+        Log.v(TAG, "updateSongPlayButton start");
         ImageButton imageButtonPlayPause = findViewById(R.id.imageButtonPlayPause);
         if (imageButtonPlayPause != null) {
             if (serviceMain != null) {
@@ -710,9 +700,11 @@ public class ActivityMain extends AppCompatActivity {
                 }
             }
         }
+        Log.v(TAG, "updateSongPlayButton end");
     }
 
     private void updateSongPanePlayButton() {
+        Log.v(TAG, "updateSongPanePlayButton start");
         ImageButton imageButtonSongPanePlayPause = findViewById(R.id.imageButtonSongPanePlayPause);
         if (imageButtonSongPanePlayPause != null) {
             if (serviceMain != null) {
@@ -725,17 +717,26 @@ public class ActivityMain extends AppCompatActivity {
                 }
             }
         }
+        Log.v(TAG, "updateSongPanePlayButton end");
     }
 
     public void hideKeyboard(View view) {
+        Log.v(TAG, "hideKeyboard start");
         InputMethodManager imm = (InputMethodManager)
                 getSystemService(AppCompatActivity.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        Log.v(TAG, "hideKeyboard end");
     }
 
     public void showToast(int idMessage) {
+        Log.v(TAG, "showToast start");
         Toast toast = Toast.makeText(getApplicationContext(), idMessage, Toast.LENGTH_LONG);
+        toast.getView().getBackground().setColorFilter(
+                getResources().getColor(R.color.colorPrimary), PorterDuff.Mode.SRC_IN);
+        TextView text = toast.getView().findViewById(android.R.id.message);
+        text.setTextSize(16);
         toast.show();
+        Log.v(TAG, "showToast end");
     }
 
     // endregion UI
@@ -743,9 +744,11 @@ public class ActivityMain extends AppCompatActivity {
     // region playbackControls
 
     public void addToQueue(Uri uri) {
+        Log.v(TAG, "addToQueue start");
         if (serviceMain != null) {
             serviceMain.addToQueue(uri);
         }
+        Log.v(TAG, "addToQueue end");
     }
 
     public void addToQueueAndPlay(AudioUri audioURI) {
@@ -785,243 +788,332 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     public void seekTo(int progress) {
+        Log.v(TAG, "seekTo start");
         if (serviceMain != null) {
             serviceMain.seekTo(progress);
             if (!serviceMain.isPlaying()) {
                 pauseOrPlay();
             }
         }
+        Log.v(TAG, "seekTo end");
     }
 
     // endregion playbackControls
 
     public boolean songInProgress() {
+        Log.v(TAG, "songInProgress start");
         if (serviceMain != null) {
+            Log.v(TAG, "songInProgress end");
             return serviceMain.songInProgress();
         }
+        Log.v(TAG, "songInProgress default end");
         return false;
     }
 
     public boolean isPlaying() {
+        Log.v(TAG, "isPlaying start");
         if (serviceMain != null) {
+            Log.v(TAG, "isPlaying end");
             return serviceMain.isPlaying();
         }
+        Log.v(TAG, "isPlaying default end");
         return false;
     }
 
     public boolean songQueueIsEmpty() {
+        Log.v(TAG, "songQueueIsEmpty start");
         if (serviceMain != null) {
+            Log.v(TAG, "songQueueIsEmpty end");
             return serviceMain.songQueueIsEmpty();
         }
+        Log.v(TAG, "songQueueIsEmpty default end");
         return false;
     }
 
     public ArrayList<RandomPlaylist> getPlaylists() {
+        Log.v(TAG, "getPlaylists start");
         if (serviceMain != null) {
+            Log.v(TAG, "getPlaylists end");
             return serviceMain.getPlaylists();
         }
+        Log.v(TAG, "getPlaylists default end");
         return null;
     }
 
     public void addPlaylist(RandomPlaylist randomPlaylist) {
+        Log.v(TAG, "addPlaylist start");
         if (serviceMain != null) {
             serviceMain.addPlaylist(randomPlaylist);
         }
+        Log.v(TAG, "addPlaylist end");
     }
 
     public void addPlaylist(int position, RandomPlaylist randomPlaylist) {
+        Log.v(TAG, "addPlaylist w/ position start");
         if (serviceMain != null) {
             serviceMain.addPlaylist(position, randomPlaylist);
         }
+        Log.v(TAG, "addPlaylist w/ position end");
     }
 
     public void addDirectoryPlaylist(long uriID, RandomPlaylist randomPlaylist) {
+        Log.v(TAG, "addDirectoryPlaylist start");
         if (serviceMain != null) {
             serviceMain.addDirectoryPlaylist(uriID, randomPlaylist);
         }
+        Log.v(TAG, "addDirectoryPlaylist end");
     }
 
     public RandomPlaylist getDirectoryPlaylist(long mediaStoreUriID) {
+        Log.v(TAG, "getDirectoryPlaylist start");
         if (serviceMain != null) {
+            Log.v(TAG, "getDirectoryPlaylist end");
             return serviceMain.getDirectoryPlaylist(mediaStoreUriID);
         }
+        Log.v(TAG, "getDirectoryPlaylist default end");
         return null;
     }
 
     public boolean containsDirectoryPlaylist(long mediaStoreUriID) {
+        Log.v(TAG, "containsDirectoryPlaylist start");
         if (serviceMain != null) {
+            Log.v(TAG, "containsDirectoryPlaylist end");
             return serviceMain.containsDirectoryPlaylist(mediaStoreUriID);
         }
+        Log.v(TAG, "containsDirectoryPlaylist default end");
         return false;
     }
 
     public void removePlaylist(RandomPlaylist randomPlaylist) {
+        Log.v(TAG, "removePlaylist start");
         if (serviceMain != null) {
             serviceMain.removePlaylist(randomPlaylist);
         }
+        Log.v(TAG, "removePlaylist end");
     }
 
     public void setCurrentPlaylistToMaster() {
+        Log.v(TAG, "setCurrentPlaylistToMaster start");
         if (serviceMain != null) {
             serviceMain.setCurrentPlaylistToMaster();
         }
+        Log.v(TAG, "setCurrentPlaylistToMaster end");
     }
 
     public void setCurrentPlaylist(RandomPlaylist userPickedPlaylist) {
+        Log.v(TAG, "setCurrentPlaylist start");
         if (serviceMain != null) {
             serviceMain.setCurrentPlaylist(userPickedPlaylist);
         }
+        Log.v(TAG, "setCurrentPlaylist end");
     }
 
     public AudioUri getCurrentSong() {
+        Log.v(TAG, "getCurrentSong start");
         if (serviceMain != null) {
+            Log.v(TAG, "getCurrentSong end");
             return serviceMain.getCurrentSong();
         }
+        Log.v(TAG, "getCurrentSong default end");
         return null;
     }
 
     public RandomPlaylist getCurrentPlaylist() {
+        Log.v(TAG, "getCurrentPlaylist start");
         if (serviceMain != null) {
+            Log.v(TAG, "getCurrentPlaylist end");
             return serviceMain.getCurrentPlaylist();
         }
+        Log.v(TAG, "getCurrentPlaylist default end");
         return null;
     }
 
     public RandomPlaylist getUserPickedPlaylist() {
+        Log.v(TAG, "getUserPickedPlaylist start");
         if (serviceMain != null) {
+            Log.v(TAG, "getUserPickedPlaylist end");
             return serviceMain.getUserPickedPlaylist();
         }
+        Log.v(TAG, "getUserPickedPlaylist default end");
         return null;
     }
 
     public void setUserPickedPlaylistToMasterPlaylist() {
+        Log.v(TAG, "setUserPickedPlaylistToMasterPlaylist start");
         if (serviceMain != null) {
             serviceMain.setUserPickedPlaylistToMasterPlaylist();
         }
+        Log.v(TAG, "setUserPickedPlaylistToMasterPlaylist end");
     }
 
     public void setUserPickedPlaylist(RandomPlaylist randomPlaylist) {
+        Log.v(TAG, "setUserPickedPlaylist start");
         if (serviceMain != null) {
             serviceMain.setUserPickedPlaylist(randomPlaylist);
         }
+        Log.v(TAG, "setUserPickedPlaylist end");
     }
 
     public List<AudioUri> getUserPickedSongs() {
+        Log.v(TAG, "getUserPickedSongs start");
         if (serviceMain != null) {
+            Log.v(TAG, "getUserPickedSongs end");
             return serviceMain.getUserPickedSongs();
         }
+        Log.v(TAG, "getUserPickedSongs default end");
         return null;
     }
 
     public void addUserPickedSong(AudioUri audioURI) {
+        Log.v(TAG, "addUserPickedSong start");
         if (serviceMain != null) {
             serviceMain.addUserPickedSong(audioURI);
         }
+        Log.v(TAG, "addUserPickedSong end");
     }
 
     public void removeUserPickedSong(AudioUri audioURI) {
+        Log.v(TAG, "removeUserPickedSong start");
         if (serviceMain != null) {
             serviceMain.removeUserPickedSong(audioURI);
         }
+        Log.v(TAG, "removeUserPickedSong end");
     }
 
     public void clearUserPickedSongs() {
+        Log.v(TAG, "clearUserPickedSongs start");
         if (serviceMain != null) {
             serviceMain.clearUserPickedSongs();
         }
+        Log.v(TAG, "clearUserPickedSongs end");
     }
 
     public void fragmentSongVisible(boolean fragmentSongVisible) {
+        Log.v(TAG, "fragmentSongVisible start");
         if (serviceMain != null) {
             serviceMain.fragmentSongVisible(fragmentSongVisible);
         }
+        Log.v(TAG, "fragmentSongVisible end");
     }
 
     public void stopAndPreparePrevious() {
+        Log.v(TAG, "stopAndPreparePrevious start");
         if (serviceMain != null) {
             serviceMain.stopAndPreparePrevious();
         }
+        Log.v(TAG, "stopAndPreparePrevious end");
     }
 
     public void setMaxPercent(double maxPercent) {
+        Log.v(TAG, "setMaxPercent start");
         if (serviceMain != null) {
             serviceMain.setMaxPercent(maxPercent);
         }
+        Log.v(TAG, "setMaxPercent end");
     }
 
     public double getMaxPercent() {
+        Log.v(TAG, "getMaxPercent start");
         if (serviceMain != null) {
+            Log.v(TAG, "getMaxPercent end");
             return serviceMain.getMaxPercent();
         }
+        Log.v(TAG, "getMaxPercent default end");
         return -1;
     }
 
     public void setPercentChangeUp(double percentChangeUp) {
+        Log.v(TAG, "setPercentChangeUp start");
         if (serviceMain != null) {
             serviceMain.setPercentChangeUp(percentChangeUp);
         }
+        Log.v(TAG, "setPercentChangeUp end");
     }
 
     public double getPercentChangeUp() {
+        Log.v(TAG, "getPercentChangeUp start");
         if (serviceMain != null) {
+            Log.v(TAG, "getPercentChangeUp end");
             return serviceMain.getPercentChangeUp();
         }
+        Log.v(TAG, "getPercentChangeUp default end");
         return -1;
     }
 
     public void setPercentChangeDown(double percentChangeDown) {
+        Log.v(TAG, "setPercentChangeDown start");
         if (serviceMain != null) {
             serviceMain.setPercentChangeDown(percentChangeDown);
         }
+        Log.v(TAG, "setPercentChangeDown end");
     }
 
     public double getPercentChangeDown() {
+        Log.v(TAG, "getPercentChangeDown start");
         if (serviceMain != null) {
+            Log.v(TAG, "getPercentChangeDown end");
             return serviceMain.getPercentChangeDown();
         }
+        Log.v(TAG, "getPercentChangeDown default end");
         return -1;
     }
 
     public boolean shuffling() {
+        Log.v(TAG, "shuffling start");
         if (serviceMain != null) {
+            Log.v(TAG, "shuffling end");
             return serviceMain.shuffling();
         }
+        Log.v(TAG, "shuffling default end");
         return true;
     }
 
     public void shuffling(boolean shuffling) {
+        Log.v(TAG, "set shuffling start");
         if (serviceMain != null) {
             serviceMain.shuffling(shuffling);
         }
+        Log.v(TAG, "set shuffling end");
     }
 
     public boolean loopingOne() {
+        Log.v(TAG, "loopingOne start");
         if (serviceMain != null) {
+            Log.v(TAG, "loopingOne end");
             return serviceMain.loopingOne();
         }
+        Log.v(TAG, "loopingOne default end");
         return false;
     }
 
     public void loopingOne(boolean loopingOne) {
+        Log.v(TAG, "set loopingOne start");
         if (serviceMain != null) {
             serviceMain.loopingOne(loopingOne);
         }
+        Log.v(TAG, "set loopingOne end");
     }
 
     public boolean looping() {
+        Log.v(TAG, "looping start");
         if (serviceMain != null) {
+            Log.v(TAG, "looping end");
             return serviceMain.looping();
         }
+        Log.v(TAG, "loopingOne default end");
         return false;
     }
 
     public void looping(boolean looping) {
+        Log.v(TAG, "set looping start");
         if (serviceMain != null) {
             serviceMain.looping(looping);
         }
+        Log.v(TAG, "set looping end");
     }
 
     public void navigateTo(int id) {
+        Log.v(TAG, "navigateTo start");
         FragmentManager fragmentManager = getSupportFragmentManager();
         if (fragmentManager != null) {
             Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
@@ -1032,6 +1124,7 @@ public class ActivityMain extends AppCompatActivity {
                 }
             }
         }
+        Log.v(TAG, "navigateTo end");
     }
 
     @Override
@@ -1044,11 +1137,13 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     private void sendBroadcastOnOptionsMenuCreated() {
+        Log.v(TAG, "sendBroadcastOnOptionsMenuCreated start");
         Intent intent = new Intent();
         intent.addCategory(Intent.CATEGORY_DEFAULT);
         intent.setAction(getResources().getString(
                 R.string.broadcast_receiver_on_create_options_menu));
         sendBroadcast(intent);
+        Log.v(TAG, "sendBroadcastOnOptionsMenuCreated end");
     }
 
     @Override
@@ -1090,19 +1185,55 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     private Bundle loadBundleForAddToPlaylist(boolean isSong) {
+        Log.v(TAG, "loadBundleForAddToPlaylist start");
         Bundle bundle = new Bundle();
         bundle.putBoolean(BUNDLE_KEY_IS_SONG, isSong);
         bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, serviceMain.getCurrentSong());
         bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, serviceMain.getPlaylists());
         bundle.putSerializable(
                 BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST, serviceMain.getUserPickedPlaylist());
+        Log.v(TAG, "loadBundleForAddToPlaylist end");
         return bundle;
     }
 
     public void saveFile() {
+        Log.v(TAG, "saveFile start");
         if (serviceMain != null) {
             serviceMain.saveFile();
         }
+        Log.v(TAG, "saveFile end");
+    }
+
+    public static Bitmap getThumbnail(AudioUri audioURI, int width, int height, Context context) {
+        Log.v(TAG, "getThumbnail start");
+        Bitmap bitmap = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            try {
+                bitmap = context.getContentResolver().loadThumbnail(
+                        audioURI.getUri(), new Size(width, height), null);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+            try {
+                mmr.setDataSource(context.getContentResolver().openFileDescriptor(
+                        audioURI.getUri(), "r").getFileDescriptor());
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            InputStream inputStream = null;
+            if (mmr.getEmbeddedPicture() != null) {
+                inputStream = new ByteArrayInputStream(mmr.getEmbeddedPicture());
+            }
+            mmr.release();
+            bitmap = BitmapFactory.decodeStream(inputStream);
+            if (bitmap != null) {
+                return getResizedBitmap(bitmap, width, height);
+            }
+        }
+        Log.v(TAG, "getThumbnail end");
+        return bitmap;
     }
 
 }
