@@ -329,7 +329,7 @@ public class ServiceMain extends Service {
     private boolean songInProgress = false;
 
     public boolean songInProgress() {
-        Log.v(TAG, "songInProgress start and end");
+        // Log.v(TAG, "songInProgress start and end");
         return songInProgress;
     }
 
@@ -476,10 +476,10 @@ public class ServiceMain extends Service {
         super.onCreate();
         if (!saveFileLoaded) {
             Log.v(TAG, "onCreate is loading");
+            loadSaveFile();
             setUpBroadCastReceivers();
             // setUpExceptionSaver();
             // logLastThrownException();
-            loadSaveFile();
             Log.v(TAG, "onCreate done loading");
         } else {
             Log.v(TAG, "onCreate already loaded");
@@ -583,10 +583,8 @@ public class ServiceMain extends Service {
             Log.v(TAG, "onStartCommand setting up service");
             // TODO remove before release?
             Toast.makeText(getApplicationContext(), "PinkyPlayer starting", Toast.LENGTH_SHORT).show();
-            setUpNotificationBuilder();
-            setUpBroadCastsForNotificationButtons();
-            notification = notificationCompatBuilder.build();
             updateNotification();
+            notification = notificationCompatBuilder.build();
             startForeground(NOTIFICATION_CHANNEL_ID.hashCode(), notification);
             Log.v(TAG, "onStartCommand done setting up service");
         } else {
@@ -601,17 +599,18 @@ public class ServiceMain extends Service {
         Log.v(TAG, "Setting up notification builder");
         notificationCompatBuilder = new NotificationCompat.Builder(
                 getApplicationContext(), NOTIFICATION_CHANNEL_ID)
+                .setOngoing(true)
                 .setSmallIcon(R.drawable.music_note_black_48dp)
                 .setContentTitle(NOTIFICATION_CHANNEL_ID)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setStyle(new NotificationCompat.DecoratedCustomViewStyle());
-        remoteViewsNotificationLayout =
-                new RemoteViews(getPackageName(), R.layout.pane_notification);
         remoteViewsNotificationLayoutWithoutArt =
                 new RemoteViews(getPackageName(), R.layout.pane_notification_without_art);
         remoteViewsNotificationLayoutWithArt =
                 new RemoteViews(getPackageName(), R.layout.pane_notification_with_art);
+        remoteViewsNotificationLayout =
+                new RemoteViews(getPackageName(), R.layout.pane_notification);
         notificationCompatBuilder.setCustomContentView(remoteViewsNotificationLayout);
 
         // TODO try to open songpane

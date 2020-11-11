@@ -24,13 +24,13 @@ public class ConnectionServiceMain implements ServiceConnection {
     }
 
     private void sendBroadcast() {
-        Log.v(ActivityMain.TAG, "Sending Broadcast onCompletion");
+        Log.v(ActivityMain.TAG, "Sending Broadcast onServiceConnected");
         Intent intent = new Intent();
         intent.addCategory(Intent.CATEGORY_DEFAULT);
         intent.setAction(activityMain.getResources().getString(
                 R.string.broadcast_receiver_action_service_connected));
         activityMain.sendBroadcast(intent);
-        Log.v(ActivityMain.TAG, "Done sending Broadcast onCompletion");
+        Log.v(ActivityMain.TAG, "Done sending Broadcast onServiceConnected");
     }
 
     @Override

@@ -74,7 +74,8 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                         if (holder.audioURI.equals(activityMain.getCurrentSong())) {
                             activityMain.seekTo(0);
                         } else {
-                            activityMain.stopAndPreparePrevious();
+                            // TODO ???
+                            //activityMain.stopAndPreparePrevious();
                         }
                         if (fragment instanceof FragmentSongs) {
                             activityMain.setCurrentPlaylistToMaster();

@@ -19,11 +19,15 @@ public class OnLayoutChangeListenerSongPane implements View.OnLayoutChangeListen
     }
 
     @Override
-    public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-        //setUpSongArt(v);
-        setUpPrev(v);
-        setUpPlay(v);
-        setUpNext(v);
+    public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                               int oldLeft, int oldTop, int oldRight, int oldBottom) {
+        ActivityMain activityMain = ((ActivityMain)fragmentPaneSong.getActivity());
+        if(activityMain.findViewById(R.id.fragmentSongPane).getVisibility() == View.VISIBLE &&
+                !((ActivityMain)fragmentPaneSong.getActivity()).fragmentSongVisible()) {
+            setUpPrev(v);
+            setUpPlay(v);
+            setUpNext(v);
+        }
     }
 
     private void setUpNext(View view) {
@@ -84,24 +88,6 @@ public class OnLayoutChangeListenerSongPane implements View.OnLayoutChangeListen
             Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
             bitmap.recycle();
             imageView.setImageBitmap(bitmapResized);
-        }
-    }
-
-    private void setUpSongArt(View view) {
-        ImageView imageViewSongArt = view.findViewById(R.id.imageViewSongPaneSongArt);
-        int height = imageViewSongArt.getMeasuredHeight();
-        //noinspection SuspiciousNameCombination
-        int width = height;
-        Drawable drawableSongArt = ResourcesCompat.getDrawable(
-                fragmentPaneSong.getResources(), R.drawable.music_note_black_48dp, null);
-        if (drawableSongArt != null && width > 0) {
-            drawableSongArt.setBounds(0, 0, width, height);
-            Bitmap bitmapSongArt = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(bitmapSongArt);
-            drawableSongArt.draw(canvas);
-            Bitmap bitmapSongArtResized = getResizedBitmap(bitmapSongArt, width, height);
-            bitmapSongArt.recycle();
-            imageViewSongArt.setImageBitmap(bitmapSongArtResized);
         }
     }
 

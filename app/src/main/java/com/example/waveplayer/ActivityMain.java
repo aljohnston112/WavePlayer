@@ -66,7 +66,7 @@ public class ActivityMain extends AppCompatActivity {
     // TODO songpanesongart is not displaying the bitmap
     // TODO create a backup file somewhere
     // TODO allow user to create backup
-    
+
     // TODO AFTER RELEASE
     // Open current song in folder as a menu action
     // Setting to not keep playing after queue is done
@@ -96,7 +96,6 @@ public class ActivityMain extends AppCompatActivity {
         askForExternalStoragePermissionAndFetchMediaFiles();
         setUpBroadcastReceivers();
         setUpSongPane();
-        updateUI();
         runnableSongArtUpdater = new RunnableSongArtUpdater(this);
         runnableSongPaneArtUpdater = new RunnableSongPaneArtUpdater(this);
         Log.v(TAG, "setUpAfterServiceConnection ended");
@@ -176,7 +175,6 @@ public class ActivityMain extends AppCompatActivity {
     @Override
     protected void onStart() {
         Log.v(TAG, "onStart started");
-        super.onStart();
         startAndBindServiceMain();
         onSeekBarChangeListener = new OnSeekBarChangeListener(this);
         setUpActionBar();
@@ -190,6 +188,7 @@ public class ActivityMain extends AppCompatActivity {
                 Log.v(TAG, "done updating UI");
             }
         };
+        super.onStart();
         Log.v(TAG, "onStart ended");
     }
 
@@ -314,38 +313,44 @@ public class ActivityMain extends AppCompatActivity {
 
     void hideSongPane() {
         Log.v(TAG, "sending runnable to hide song pane");
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Log.v(TAG, "hiding song pane");
-                findViewById(R.id.fragmentSongPane).setVisibility(View.INVISIBLE);
-                ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
-                ConstraintSet constraintSet = new ConstraintSet();
-                constraintSet.clone(constraintLayout);
-                constraintSet.connect(R.id.fab, ConstraintSet.BOTTOM, R.id.constraintMain, ConstraintSet.BOTTOM);
-                constraintSet.applyTo(constraintLayout);
-                Log.v(TAG, "done hiding song pane");
-            }
-        });
+        final View fragmentPaneSong = findViewById(R.id.fragmentSongPane);
+        if (fragmentPaneSong.getVisibility() != View.INVISIBLE) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Log.v(TAG, "hiding song pane");
+                    fragmentPaneSong.setVisibility(View.INVISIBLE);
+                    ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
+                    ConstraintSet constraintSet = new ConstraintSet();
+                    constraintSet.clone(constraintLayout);
+                    constraintSet.connect(R.id.fab, ConstraintSet.BOTTOM, R.id.constraintMain, ConstraintSet.BOTTOM);
+                    constraintSet.applyTo(constraintLayout);
+                    Log.v(TAG, "done hiding song pane");
+                }
+            });
+        }
         Log.v(TAG, "done sending runnable to hide song pane");
     }
 
     void showSongPane() {
         Log.v(TAG, "sending runnable to show song pane");
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Log.v(TAG, "showing song pane");
-                findViewById(R.id.fragmentSongPane).setVisibility(View.VISIBLE);
-                ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
-                ConstraintSet constraintSet = new ConstraintSet();
-                constraintSet.clone(constraintLayout);
-                constraintSet.connect(R.id.fab, ConstraintSet.BOTTOM, R.id.fragmentSongPane, ConstraintSet.TOP);
-                constraintSet.applyTo(constraintLayout);
-                updateUI();
-                Log.v(TAG, "done showing song pane");
-            }
-        });
+        final View fragmentPaneSong = findViewById(R.id.fragmentSongPane);
+        if (fragmentPaneSong.getVisibility() != View.INVISIBLE) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Log.v(TAG, "showing song pane");
+                    findViewById(R.id.fragmentSongPane).setVisibility(View.VISIBLE);
+                    ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
+                    ConstraintSet constraintSet = new ConstraintSet();
+                    constraintSet.clone(constraintLayout);
+                    constraintSet.connect(R.id.fab, ConstraintSet.BOTTOM, R.id.fragmentSongPane, ConstraintSet.TOP);
+                    constraintSet.applyTo(constraintLayout);
+                    updateUI();
+                    Log.v(TAG, "done showing song pane");
+                }
+            });
+        }
         Log.v(TAG, "done sending runnable to show song pane");
     }
 
@@ -546,7 +551,7 @@ public class ActivityMain extends AppCompatActivity {
 
     public void updateUI() {
         Log.v(TAG, "sending Runnable to update UI");
-        if(runnableUIUpdate != null) {
+        if (runnableUIUpdate != null) {
             runOnUiThread(runnableUIUpdate);
         }
         Log.v(TAG, "Done sending Runnable to update UI");
@@ -558,10 +563,13 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "updateSongUI start");
         if (serviceMain != null
                 && serviceMain.fragmentSongVisible() && serviceMain.getCurrentSong() != null) {
+            Log.v(TAG, "updating SongUI");
             updateSeekBar();
             updateSongArt();
             updateSongName();
             updateTextViewTimes();
+        } else {
+            Log.v(TAG, "Not updating SongUI");
         }
         Log.v(TAG, "updateSongUI end");
     }
@@ -650,14 +658,17 @@ public class ActivityMain extends AppCompatActivity {
     // region updateSongPaneUI
 
     private void updateSongPaneUI() {
-        Log.v(TAG, "updating the song pane UI");
+        Log.v(TAG, "updateSongPaneUI start");
         if (serviceMain != null
                 && !serviceMain.fragmentSongVisible() && serviceMain.getCurrentSong() != null
                 && serviceMain.songInProgress()) {
+            Log.v(TAG, "updating the song pane UI");
             updateSongPaneName();
             updateSongPaneArt();
+        } else {
+            Log.v(TAG, "not updating the song pane UI");
         }
-        Log.v(TAG, "done updating the song pane UI");
+        Log.v(TAG, "updateSongPaneUI end");
     }
 
     private void updateSongPaneName() {
@@ -690,16 +701,17 @@ public class ActivityMain extends AppCompatActivity {
     private void updateSongPlayButton() {
         Log.v(TAG, "updateSongPlayButton start");
         ImageButton imageButtonPlayPause = findViewById(R.id.imageButtonPlayPause);
-        if (imageButtonPlayPause != null) {
-            if (serviceMain != null) {
-                if (serviceMain.isPlaying()) {
-                    imageButtonPlayPause.setImageDrawable(ResourcesCompat.getDrawable(
-                            getResources(), R.drawable.pause_black_24dp, null));
-                } else {
-                    imageButtonPlayPause.setImageDrawable(ResourcesCompat.getDrawable(
-                            getResources(), R.drawable.play_arrow_black_24dp, null));
-                }
+        if (serviceMain != null && fragmentSongVisible() && imageButtonPlayPause != null) {
+            Log.v(TAG, "updating SongPlayButton");
+            if (serviceMain.isPlaying()) {
+                imageButtonPlayPause.setImageDrawable(ResourcesCompat.getDrawable(
+                        getResources(), R.drawable.pause_black_24dp, null));
+            } else {
+                imageButtonPlayPause.setImageDrawable(ResourcesCompat.getDrawable(
+                        getResources(), R.drawable.play_arrow_black_24dp, null));
             }
+        } else {
+            Log.v(TAG, "not updating SongPlayButton");
         }
         Log.v(TAG, "updateSongPlayButton end");
     }
@@ -707,16 +719,20 @@ public class ActivityMain extends AppCompatActivity {
     private void updateSongPanePlayButton() {
         Log.v(TAG, "updateSongPanePlayButton start");
         ImageButton imageButtonSongPanePlayPause = findViewById(R.id.imageButtonSongPanePlayPause);
-        if (imageButtonSongPanePlayPause != null) {
-            if (serviceMain != null) {
-                if (serviceMain.isPlaying()) {
-                    imageButtonSongPanePlayPause.setImageDrawable(ResourcesCompat.getDrawable(
-                            getResources(), R.drawable.pause_black_24dp, null));
-                } else {
-                    imageButtonSongPanePlayPause.setImageDrawable(ResourcesCompat.getDrawable(
-                            getResources(), R.drawable.play_arrow_black_24dp, null));
-                }
+        View fragmentPaneSong = findViewById(R.id.fragmentSongPane);
+        if (serviceMain != null && !fragmentSongVisible() &&
+                fragmentPaneSong.getVisibility() == View.VISIBLE &&
+                imageButtonSongPanePlayPause != null) {
+            Log.v(TAG, "updating SongPanePlayButton");
+            if (serviceMain.isPlaying()) {
+                imageButtonSongPanePlayPause.setImageDrawable(ResourcesCompat.getDrawable(
+                        getResources(), R.drawable.pause_black_24dp, null));
+            } else {
+                imageButtonSongPanePlayPause.setImageDrawable(ResourcesCompat.getDrawable(
+                        getResources(), R.drawable.play_arrow_black_24dp, null));
             }
+        } else {
+            Log.v(TAG, "Not updating SongPanePlayButton");
         }
         Log.v(TAG, "updateSongPanePlayButton end");
     }
@@ -989,12 +1005,22 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "clearUserPickedSongs end");
     }
 
-    public void fragmentSongVisible(boolean fragmentSongVisible) {
+    boolean fragmentSongVisible() {
         Log.v(TAG, "fragmentSongVisible start");
+        if (serviceMain != null) {
+            Log.v(TAG, "fragmentSongVisible end");
+            return serviceMain.fragmentSongVisible();
+        }
+        Log.v(TAG, "fragmentSongVisible default end");
+        return false;
+    }
+
+    public void fragmentSongVisible(boolean fragmentSongVisible) {
+        Log.v(TAG, "set fragmentSongVisible start");
         if (serviceMain != null) {
             serviceMain.fragmentSongVisible(fragmentSongVisible);
         }
-        Log.v(TAG, "fragmentSongVisible end");
+        Log.v(TAG, "set fragmentSongVisible end");
     }
 
     public void stopAndPreparePrevious() {
@@ -1239,7 +1265,7 @@ public class ActivityMain extends AppCompatActivity {
 
     public void setSongPaneArtHeight(int songArtHeight) {
         Log.v(TAG, "setSongPaneArtHeight start");
-        if(serviceMain != null){
+        if (serviceMain != null) {
             serviceMain.setSongPaneArtHeight(songArtHeight);
         }
         Log.v(TAG, "setSongPaneArtHeight end");
@@ -1247,7 +1273,7 @@ public class ActivityMain extends AppCompatActivity {
 
     public int getSongPaneArtHeight() {
         Log.v(TAG, "getSongPaneArtHeight start");
-        if(serviceMain != null){
+        if (serviceMain != null) {
             Log.v(TAG, "getSongPaneArtHeight end");
             return serviceMain.getSongPaneArtHeight();
         }
@@ -1257,7 +1283,7 @@ public class ActivityMain extends AppCompatActivity {
 
     public void setSongPaneArtWidth(int songArtWidth) {
         Log.v(TAG, "setSongPaneArtWidth start");
-        if(serviceMain != null){
+        if (serviceMain != null) {
             serviceMain.setSongPaneArtWidth(songArtWidth);
         }
         Log.v(TAG, "setSongPaneArtWidth end");
@@ -1265,12 +1291,12 @@ public class ActivityMain extends AppCompatActivity {
 
     public int getSongPaneArtWidth() {
         Log.v(TAG, "getSongPaneArtWidth start");
-        if(serviceMain != null){
+        if (serviceMain != null) {
             Log.v(TAG, "getSongPaneArtWidth end");
             return serviceMain.getSongPaneArtWidth();
         }
         Log.v(TAG, "getSongPaneArtWidth default end");
         return -1;
     }
-    
+
 }

@@ -20,13 +20,15 @@ public class OnLayoutChangeListenerFragmentSongButtons implements View.OnLayoutC
 
     @Override
     public void onLayoutChange(View view, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-        setUpGood(view);
-        setUpBad(view);
-        setUpShuffle(view);
-        setUpPrev(view);
-        setUpPlay(view);
-        setUpNext(view);
-        setUpLoop(view);
+        if(activityMain.fragmentSongVisible()) {
+            setUpGood(view);
+            setUpBad(view);
+            setUpShuffle(view);
+            setUpPrev(view);
+            setUpPlay(view);
+            setUpNext(view);
+            setUpLoop(view);
+        }
     }
 
     private void setUpGood(View view) {

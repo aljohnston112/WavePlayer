@@ -12,7 +12,7 @@ public class OnDestinationChangedListenerPanes
 
     private final ActivityMain activityMain;
 
-    public OnDestinationChangedListenerPanes(ActivityMain activityMain){
+    public OnDestinationChangedListenerPanes(ActivityMain activityMain) {
         this.activityMain = activityMain;
     }
 
@@ -20,15 +20,17 @@ public class OnDestinationChangedListenerPanes
     public void onDestinationChanged(@NonNull NavController controller,
                                      @NonNull final NavDestination destination,
                                      @Nullable Bundle arguments) {
-        activityMain.updateUI();
         if (destination.getId() != R.id.fragmentSong) {
-            if(activityMain.songInProgress()) {
+            if (activityMain.songInProgress()) {
                 activityMain.fragmentSongVisible(false);
                 activityMain.showSongPane();
+            } else {
+                activityMain.updateUI();
             }
         } else {
             activityMain.fragmentSongVisible(true);
             activityMain.hideSongPane();
+            activityMain.updateUI();
         }
 
     }
