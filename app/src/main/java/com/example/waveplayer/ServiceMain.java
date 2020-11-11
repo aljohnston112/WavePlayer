@@ -75,10 +75,12 @@ public class ServiceMain extends Service {
     private double maxPercent = 0.1;
 
     public double getMaxPercent() {
+        Log.v(TAG, "getMaxPercent start and end");
         return maxPercent;
     }
 
     public void setMaxPercent(double maxPercent) {
+        Log.v(TAG, "setMaxPercent start");
         this.maxPercent = maxPercent;
         masterPlaylist.setMaxPercent(maxPercent);
         for (RandomPlaylist randomPlaylist : playlists) {
@@ -87,26 +89,33 @@ public class ServiceMain extends Service {
         for (RandomPlaylist randomPlaylist : directoryPlaylists.values()) {
             randomPlaylist.setMaxPercent(maxPercent);
         }
+        Log.v(TAG, "setMaxPercent end");
     }
 
     private double percentChangeUp = 0.1;
 
     public double getPercentChangeUp() {
+        Log.v(TAG, "getPercentChangeUp start and end");
         return percentChangeUp;
     }
 
     public void setPercentChangeUp(double percentChangeUp) {
+        Log.v(TAG, "setPercentChangeUp start");
         this.percentChangeUp = percentChangeUp;
+        Log.v(TAG, "setPercentChangeUp end");
     }
 
     private double percentChangeDown = 0.5;
 
     public double getPercentChangeDown() {
+        Log.v(TAG, "getPercentChangeDown start and end");
         return percentChangeDown;
     }
 
     public void setPercentChangeDown(double percentChangeDown) {
+        Log.v(TAG, "setPercentChangeDown start");
         this.percentChangeDown = percentChangeDown;
+        Log.v(TAG, "setPercentChangeDown end");
     }
 
     // endregion settings
@@ -115,13 +124,17 @@ public class ServiceMain extends Service {
 
     // TODO organize usages
     private MediaPlayerWUri getCurrentMediaPlayerWUri() {
+        Log.v(TAG, "getCurrentMediaPlayerWUri start");
         if (currentSong != null) {
+            Log.v(TAG, "getCurrentMediaPlayerWUri end");
             return uriMediaPlayerWUriHashMap.get(currentSong.getUri());
         }
+        Log.v(TAG, "getCurrentMediaPlayerWUri default end");
         return null;
     }
 
     private MediaPlayerWUri getMediaPlayerWUri(Uri uri) {
+        Log.v(TAG, "getMediaPlayerWUri start and end");
         return uriMediaPlayerWUriHashMap.get(uri);
     }
 
@@ -132,29 +145,38 @@ public class ServiceMain extends Service {
     private RandomPlaylist masterPlaylist;
 
     public List<AudioUri> getAllSongs() {
+        Log.v(TAG, "getAllSongs start and end");
         return masterPlaylist.getAudioUris();
     }
 
     private final ArrayList<RandomPlaylist> playlists = new ArrayList<>();
 
     public ArrayList<RandomPlaylist> getPlaylists() {
+        Log.v(TAG, "getPlaylists start and end");
         return playlists;
     }
 
     public void addPlaylist(RandomPlaylist randomPlaylist) {
+        Log.v(TAG, "addPlaylist start");
         playlists.add(randomPlaylist);
+        Log.v(TAG, "addPlaylist end");
     }
 
     public void addPlaylist(int position, RandomPlaylist randomPlaylist) {
+        Log.v(TAG, "addPlaylist w/ position start");
         playlists.add(position, randomPlaylist);
+        Log.v(TAG, "addPlaylist w/ position end");
     }
 
     public void removePlaylist(RandomPlaylist randomPlaylist) {
+        Log.v(TAG, "removePlaylist start");
         directoryPlaylists.remove(randomPlaylist.mediaStoreUriID);
         playlists.remove(randomPlaylist);
+        Log.v(TAG, "removePlaylist end");
     }
 
     public RandomPlaylist getCurrentPlaylist() {
+        Log.v(TAG, "getCurrentPlaylist start and end");
         return currentPlaylist;
     }
 
@@ -164,20 +186,25 @@ public class ServiceMain extends Service {
     static class ComparableLongsSerializable implements Serializable, Comparator<Long> {
         @Override
         public int compare(Long o1, Long o2) {
+            Log.v(TAG, "compare start and end");
             return o1.compareTo(o2);
         }
     }
 
     public boolean containsDirectoryPlaylist(long mediaStoreUriID) {
+        Log.v(TAG, "containsDirectoryPlaylist start and end");
         return directoryPlaylists.get(mediaStoreUriID) != null;
     }
 
     public void addDirectoryPlaylist(long uriID, RandomPlaylist randomPlaylist) {
+        Log.v(TAG, "addDirectoryPlaylist start");
         directoryPlaylists.put(uriID, randomPlaylist);
         addPlaylist(randomPlaylist);
+        Log.v(TAG, "addDirectoryPlaylist end");
     }
 
     public RandomPlaylist getDirectoryPlaylist(long mediaStoreUriID) {
+        Log.v(TAG, "getDirectoryPlaylist start and end");
         return directoryPlaylists.get(mediaStoreUriID);
     }
 
@@ -188,15 +215,20 @@ public class ServiceMain extends Service {
     private RandomPlaylist userPickedPlaylist;
 
     public RandomPlaylist getUserPickedPlaylist() {
+        Log.v(TAG, "getUserPickedPlaylist start and end");
         return userPickedPlaylist;
     }
 
     public void setUserPickedPlaylistToMasterPlaylist() {
+        Log.v(TAG, "setUserPickedPlaylistToMasterPlaylist start");
         userPickedPlaylist = masterPlaylist;
+        Log.v(TAG, "setUserPickedPlaylistToMasterPlaylist end");
     }
 
     public void setUserPickedPlaylist(RandomPlaylist userPickedPlaylist) {
+        Log.v(TAG, "setUserPickedPlaylist start");
         this.userPickedPlaylist = userPickedPlaylist;
+        Log.v(TAG, "setUserPickedPlaylist end");
     }
 
     // endregion userPickedPlaylist
@@ -206,19 +238,26 @@ public class ServiceMain extends Service {
     private final List<AudioUri> userPickedSongs = new ArrayList<>();
 
     public List<AudioUri> getUserPickedSongs() {
+        Log.v(TAG, "getUserPickedSongs start and end");
         return userPickedSongs;
     }
 
     public void addUserPickedSong(AudioUri audioURI) {
+        Log.v(TAG, "addUserPickedSong start");
         userPickedSongs.add(audioURI);
+        Log.v(TAG, "addUserPickedSong end");
     }
 
     public void removeUserPickedSong(AudioUri audioURI) {
+        Log.v(TAG, "removeUserPickedSong start");
         userPickedSongs.remove(audioURI);
+        Log.v(TAG, "removeUserPickedSong end");
     }
 
     public void clearUserPickedSongs() {
+        Log.v(TAG, "clearUserPickedSongs start");
         userPickedSongs.clear();
+        Log.v(TAG, "clearUserPickedSongs end");
     }
 
     // endregion userPickedSongs
@@ -230,17 +269,23 @@ public class ServiceMain extends Service {
     private ListIterator<AudioUri> currentPlaylistIterator;
 
     public void setCurrentPlaylistToMaster() {
+        Log.v(TAG, "setCurrentPlaylistToMaster start");
         setCurrentPlaylist(masterPlaylist);
+        Log.v(TAG, "setCurrentPlaylistToMaster end");
     }
 
     public void setCurrentPlaylist(RandomPlaylist currentPlaylist) {
+        Log.v(TAG, "setCurrentPlaylist start");
         this.currentPlaylist = currentPlaylist;
         currentPlaylistArray = currentPlaylist.getAudioUris();
         clearSongQueue();
+        Log.v(TAG, "setCurrentPlaylist end");
     }
 
     public void clearProbabilities() {
+        Log.v(TAG, "clearProbabilities start");
         currentPlaylist.clearProbabilities();
+        Log.v(TAG, "clearProbabilities end");
     }
 
     // endregion currentPlaylist
@@ -251,20 +296,25 @@ public class ServiceMain extends Service {
     private ListIterator<Uri> songQueueIterator;
 
     public boolean songQueueIsEmpty() {
+        Log.v(TAG, "songQueueIsEmpty start and end");
         return songQueue.size() == 0;
     }
 
     private AudioUri currentSong;
 
     public AudioUri getCurrentSong() {
+        Log.v(TAG, "getCurrentSong start and end");
         return currentSong;
     }
 
     public int getCurrentTime() {
+        Log.v(TAG, "getCurrentTime start");
         MediaPlayerWUri mediaPlayerWURI = getCurrentMediaPlayerWUri();
         if (mediaPlayerWURI != null) {
+            Log.v(TAG, "getCurrentTime end");
             return mediaPlayerWURI.getCurrentPosition();
         } else {
+            Log.v(TAG, "getCurrentTime default end");
             return -1;
         }
     }
@@ -272,12 +322,14 @@ public class ServiceMain extends Service {
     private boolean isPlaying = false;
 
     public boolean isPlaying() {
+        Log.v(TAG, "isPlaying start and end");
         return isPlaying;
     }
 
     private boolean songInProgress = false;
 
     public boolean songInProgress() {
+        Log.v(TAG, "songInProgress start and end");
         return songInProgress;
     }
 
@@ -288,31 +340,40 @@ public class ServiceMain extends Service {
     private boolean shuffling = true;
 
     public boolean shuffling() {
+        Log.v(TAG, "shuffling start and end");
         return shuffling;
     }
 
     public void shuffling(boolean shuffling) {
+        Log.v(TAG, "set shuffling start");
         this.shuffling = shuffling;
+        Log.v(TAG, "set shuffling end");
     }
 
     private boolean looping = false;
 
     public boolean looping() {
+        Log.v(TAG, "looping start and end");
         return looping;
     }
 
     public void looping(boolean looping) {
+        Log.v(TAG, "set looping start");
         this.looping = looping;
+        Log.v(TAG, "set looping end");
     }
 
     private boolean loopingOne = false;
 
     public boolean loopingOne() {
+        Log.v(TAG, "loopingOne start and end");
         return loopingOne;
     }
 
     public void loopingOne(boolean loopingOne) {
+        Log.v(TAG, "set loopingOne start");
         this.loopingOne = loopingOne;
+        Log.v(TAG, "set loopingOne end");
     }
 
     // endregion playbackLogic
@@ -322,6 +383,7 @@ public class ServiceMain extends Service {
     private ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
     public void updateSeekBarUpdater(SeekBar seekBar, TextView textViewCurrent, int maxMillis) {
+        Log.v(TAG, "updateSeekBarUpdater start");
         shutDownSeekBarUpdater();
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
         scheduledExecutorService.scheduleAtFixedRate(
@@ -330,13 +392,16 @@ public class ServiceMain extends Service {
                         seekBar, textViewCurrent, maxMillis,
                         getResources().getConfiguration().locale),
                 0L, 1L, TimeUnit.SECONDS);
+        Log.v(TAG, "updateSeekBarUpdater end");
     }
 
     public void shutDownSeekBarUpdater() {
+        Log.v(TAG, "shutDownSeekBarUpdater start");
         if (scheduledExecutorService != null) {
             scheduledExecutorService.shutdown();
             scheduledExecutorService = null;
         }
+        Log.v(TAG, "shutDownSeekBarUpdater end");
     }
 
     private final BroadcastReceiverNotificationButtonsForServiceMain
@@ -358,31 +423,40 @@ public class ServiceMain extends Service {
     private boolean fragmentSongVisible = false;
 
     public void fragmentSongVisible(boolean fragmentSongVisible) {
+        Log.v(TAG, "fragmentSongVisible start");
         this.fragmentSongVisible = fragmentSongVisible;
+        Log.v(TAG, "fragmentSongVisible end");
     }
 
     public boolean fragmentSongVisible() {
+        Log.v(TAG, "fragmentSongVisible start and end");
         return fragmentSongVisible;
     }
 
     private int songPaneArtHeight = 1;
 
     public int getSongPaneArtHeight() {
+        Log.v(TAG, "getSongPaneArtHeight start and end");
         return songPaneArtHeight;
     }
 
     public void setSongPaneArtHeight(int songArtHeight) {
+        Log.v(TAG, "setSongPaneArtHeight start");
         this.songPaneArtHeight = songArtHeight;
+        Log.v(TAG, "setSongPaneArtHeight end");
     }
 
     private int songPaneArtWidth = 1;
 
     public int getSongPaneArtWidth() {
+        Log.v(TAG, "getSongPaneArtWidth start and end");
         return songPaneArtWidth;
     }
 
     public void setSongPaneArtWidth(int songArtWidth) {
+        Log.v(TAG, "setSongPaneArtWidth start");
         this.songPaneArtWidth = songArtWidth;
+        Log.v(TAG, "setSongPaneArtWidth end");
     }
 
     // endregion ActivityMainUI
@@ -398,8 +472,8 @@ public class ServiceMain extends Service {
 
     @Override
     public void onCreate() {
-        super.onCreate();
         Log.v(TAG, "onCreate started");
+        super.onCreate();
         if (!saveFileLoaded) {
             Log.v(TAG, "onCreate is loading");
             setUpBroadCastReceivers();
@@ -581,6 +655,7 @@ public class ServiceMain extends Service {
     }
 
     private void updateSongArt() {
+        Log.v(TAG, "updateSongArt for notification start");
         // TODO update song art backgorund
         if (currentSong != null) {
             Bitmap bitmap = ActivityMain.getThumbnail(currentSong, 92, 92, getApplicationContext());
@@ -599,9 +674,11 @@ public class ServiceMain extends Service {
                     R.id.imageViewNotificationSongPaneSongArt, R.drawable.music_note_black_48dp);
             hasArt = false;
         }
+        Log.v(TAG, "updateSongArt for notification end");
     }
 
     private void updateNotificationSongName() {
+        Log.v(TAG, "updateNotificationSongName start");
         if (currentSong != null) {
             remoteViewsNotificationLayoutWithoutArt.setTextViewText(
                     R.id.textViewNotificationSongPaneSongName, currentSong.title);
@@ -613,9 +690,11 @@ public class ServiceMain extends Service {
             remoteViewsNotificationLayoutWithArt.setTextViewText(
                     R.id.textViewNotificationSongPaneSongNameWArt, NOTIFICATION_CHANNEL_ID);
         }
+        Log.v(TAG, "updateNotificationSongName end");
     }
 
     void updateNotificationPlayButton() {
+        Log.v(TAG, "updateNotificationPlayButton start");
         if (isPlaying) {
             remoteViewsNotificationLayoutWithoutArt.setImageViewResource(
                     R.id.imageButtonNotificationSongPanePlayPause, R.drawable.pause_black_24dp);
@@ -627,6 +706,7 @@ public class ServiceMain extends Service {
             remoteViewsNotificationLayoutWithArt.setImageViewResource(
                     R.id.imageButtonNotificationSongPanePlayPauseWArt, R.drawable.play_arrow_black_24dp);
         }
+        Log.v(TAG, "updateNotificationPlayButton end");
     }
 
     private void setUpBroadCastsForNotificationButtons() {
@@ -840,6 +920,7 @@ public class ServiceMain extends Service {
     }
 
     public boolean playNextInQueue(boolean addNew) {
+        Log.v(TAG, "playNextInQueue started");
         if (songQueueIterator.hasNext()) {
             playAndMakeIfNeeded(songQueueIterator.next());
         } else if (looping) {
@@ -849,19 +930,23 @@ public class ServiceMain extends Service {
                     playAndMakeIfNeeded(songQueueIterator.next());
                 }
             } else {
+                Log.v(TAG, "playNextInQueue end");
                 return false;
             }
         } else if (addNew) {
             if (shuffling) {
                 addToQueueAndPlay(currentPlaylist.next(random).getUri());
             } else {
+                Log.v(TAG, "playNextInQueue end");
                 return false;
             }
         }
+        Log.v(TAG, "playNextInQueue end");
         return true;
     }
 
     public boolean playPreviousInQueue() {
+        Log.v(TAG, "playPreviousInQueue started");
         if (songQueueIterator.hasPrevious()) {
             Uri uri = songQueueIterator.previous();
             if (songQueueIterator.hasPrevious()) {
@@ -874,18 +959,22 @@ public class ServiceMain extends Service {
                         playAndMakeIfNeeded(songQueueIterator.previous());
                         songQueueIterator.next();
                     } else {
+                        Log.v(TAG, "playPreviousInQueue end");
                         return false;
                     }
                 }
             } else {
                 seekTo(0);
             }
+            Log.v(TAG, "playPreviousInQueue end");
             return true;
         }
+        Log.v(TAG, "playPreviousInQueue end");
         return false;
     }
 
     public void playNextInPlaylist() {
+        Log.v(TAG, "playNextInPlaylist started");
         if (currentPlaylistIterator.hasNext()) {
             playAndMakeIfNeeded(currentPlaylistIterator.next().getUri());
         } else if (looping) {
@@ -894,9 +983,11 @@ public class ServiceMain extends Service {
                 playAndMakeIfNeeded(currentPlaylistIterator.next().getUri());
             }
         }
+        Log.v(TAG, "playNextInPlaylist end");
     }
 
     public void playPreviousInPlaylist() {
+        Log.v(TAG, "playPreviousInPlaylist started");
         if (currentPlaylistIterator.hasPrevious()) {
             playAndMakeIfNeeded(currentPlaylistIterator.previous().getUri());
         } else if (looping) {
@@ -905,25 +996,31 @@ public class ServiceMain extends Service {
                 playAndMakeIfNeeded(currentPlaylistIterator.previous().getUri());
             }
         }
+        Log.v(TAG, "playPreviousInPlaylist end");
     }
 
     public void playNext() {
+        Log.v(TAG, "playNext started");
         if (loopingOne) {
             playLoopingOne();
         } else if (!playNextInQueue(true)) {
             playNextInPlaylist();
         }
+        Log.v(TAG, "playNext end");
     }
 
     public void playPrevious() {
+        Log.v(TAG, "playPrevious started");
         if (loopingOne) {
             playLoopingOne();
         } else if (!playPreviousInQueue()) {
             playPreviousInPlaylist();
         }
+        Log.v(TAG, "playPrevious end");
     }
 
     void playLoopingOne() {
+        Log.v(TAG, "playLoopingOne started");
         MediaPlayerWUri mediaPlayerWURI = getCurrentMediaPlayerWUri();
         if (mediaPlayerWURI != null) {
             mediaPlayerWURI.seekTo(0);
@@ -933,40 +1030,49 @@ public class ServiceMain extends Service {
         } else {
             playAndMakeIfNeeded(currentSong.getUri());
         }
+        Log.v(TAG, "playLoopingOne end");
     }
 
     public void addToQueueAndPlay(Uri uri) {
+        Log.v(TAG, "addToQueueAndPlay started");
         playAndMakeIfNeeded(uri);
         songQueueIterator = null;
         songQueue.add(uri);
         songQueueIterator = songQueue.listIterator(songQueue.lastIndexOf(uri));
         songQueueIterator.next();
+        Log.v(TAG, "addToQueueAndPlay end");
     }
 
     public void addToQueue(Uri uri) {
+        Log.v(TAG, "addToQueue started");
         int pos = songQueueIterator.nextIndex();
         songQueueIterator = null;
         songQueue.add(uri);
         songQueueIterator = songQueue.listIterator(pos);
+        Log.v(TAG, "addToQueue end");
     }
 
     public void clearSongQueue() {
+        Log.v(TAG, "clearSongQueue started");
         songQueueIterator = null;
         songQueue.clear();
         songQueueIterator = songQueue.listIterator();
+        Log.v(TAG, "clearSongQueue end");
     }
 
     void playAndMakeIfNeeded(Uri uri) {
+        Log.v(TAG, "playAndMakeIfNeeded w/ Uri started");
         MediaPlayerWUri mediaPlayerWURI = getMediaPlayerWUri(uri);
         if (mediaPlayerWURI != null) {
             playAndMakeIfNeeded(mediaPlayerWURI);
         } else {
             makeMediaPlayerWURIAndPlay(uriAudioURILinkedHashMap.get(uri));
         }
+        Log.v(TAG, "playAndMakeIfNeeded w/ Uri end");
     }
 
     private void playAndMakeIfNeeded(MediaPlayerWUri mediaPlayerWURI) {
-        Log.v(TAG, "play started");
+        Log.v(TAG, "playAndMakeIfNeeded started");
         stopCurrentSong();
         if (requestAudioFocus()) {
             mediaPlayerWURI.shouldStart(true);
@@ -979,10 +1085,11 @@ public class ServiceMain extends Service {
             int i = currentPlaylistArray.indexOf(mediaPlayerWURI.audioURI);
             currentPlaylistIterator = currentPlaylistArray.listIterator(i + 1);
         }
-        Log.v(TAG, "play ended");
+        Log.v(TAG, "playAndMakeIfNeeded ended");
     }
 
     private void stopCurrentSong() {
+        Log.v(TAG, "stopCurrentSong started");
         if (currentSong != null) {
             MediaPlayerWUri mediaPlayerWURI = getMediaPlayerWUri(currentSong.getUri());
             if (mediaPlayerWURI != null) {
@@ -996,13 +1103,16 @@ public class ServiceMain extends Service {
             songInProgress = false;
             isPlaying = false;
         }
+        Log.v(TAG, "stopCurrentSong end");
     }
 
     public void seekTo(int progress) {
+        Log.v(TAG, "seekTo started");
         MediaPlayerWUri mediaPlayerWUri = getCurrentMediaPlayerWUri();
         if (mediaPlayerWUri != null) {
             mediaPlayerWUri.seekTo(progress);
         }
+        Log.v(TAG, "seekTo end");
     }
 
     private void makeMediaPlayerWURIAndPlay(AudioUri audioURI) {
