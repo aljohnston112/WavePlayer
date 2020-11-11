@@ -12,43 +12,43 @@ import static com.example.waveplayer.FragmentPaneSong.getResizedBitmap;
 
 public class RunnableSongArtUpdater implements Runnable {
 
-    ServiceMain serviceMain;
+    ActivityMain activityMain;
 
-    ImageView imageViewSongArt;
-
-    public RunnableSongArtUpdater(ServiceMain serviceMain, ImageView imageViewSongArt) {
-        this.serviceMain = serviceMain;
-        this.imageViewSongArt = imageViewSongArt;
+    public RunnableSongArtUpdater(ActivityMain activityMain) {
+        this.activityMain = activityMain;
     }
 
     public void run() {
-        int songArtHeight = imageViewSongArt.getHeight();
-        int songArtWidth = imageViewSongArt.getWidth();
-        if (songArtWidth > songArtHeight) {
-            songArtWidth = songArtHeight;
-        } else {
-            songArtHeight = songArtWidth;
-        }
-        Bitmap bitmap =
-                ActivityMain.getThumbnail(serviceMain.getCurrentSong(),
-                        songArtWidth, songArtHeight, serviceMain.getApplicationContext());
-        if (bitmap == null) {
-            Drawable drawable = ResourcesCompat.getDrawable(imageViewSongArt.getResources(),
-                    R.drawable.music_note_black_48dp, null);
-            if (drawable != null) {
-                drawable.setBounds(0, 0, songArtWidth, songArtHeight);
-                Bitmap bitmapDrawable = Bitmap.createBitmap(songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888);
-                Canvas canvas = new Canvas(bitmapDrawable);
-                Paint paint = new Paint();
-                paint.setColor(imageViewSongArt.getResources().getColor(R.color.colorPrimary));
-                canvas.drawRect(0, 0, songArtWidth, songArtHeight, paint);
-                drawable.draw(canvas);
-                Bitmap bitmapResized = getResizedBitmap(bitmapDrawable, songArtWidth, songArtHeight);
-                bitmapDrawable.recycle();
-                imageViewSongArt.setImageBitmap(bitmapResized);
+        ImageView imageViewSongArt = activityMain.findViewById(R.id.image_view_song_art);
+        if(imageViewSongArt != null) {
+            int songArtHeight = imageViewSongArt.getHeight();
+            int songArtWidth = imageViewSongArt.getWidth();
+            if (songArtWidth > songArtHeight) {
+                songArtWidth = songArtHeight;
+            } else {
+                songArtHeight = songArtWidth;
             }
-        } else {
-            imageViewSongArt.setImageBitmap(bitmap);
+            Bitmap bitmap = ActivityMain.getThumbnail(activityMain.getCurrentSong(),
+                    songArtWidth, songArtHeight, activityMain.getApplicationContext());
+            if (bitmap == null) {
+                Drawable drawable = ResourcesCompat.getDrawable(imageViewSongArt.getResources(),
+                        R.drawable.music_note_black_48dp, null);
+                if (drawable != null) {
+                    drawable.setBounds(0, 0, songArtWidth, songArtHeight);
+                    Bitmap bitmapDrawable = Bitmap.createBitmap(songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888);
+                    Canvas canvas = new Canvas(bitmapDrawable);
+                    Paint paint = new Paint();
+                    paint.setColor(imageViewSongArt.getResources().getColor(R.color.colorPrimary));
+                    canvas.drawRect(0, 0, songArtWidth, songArtHeight, paint);
+                    drawable.draw(canvas);
+                    Bitmap bitmapResized = getResizedBitmap(bitmapDrawable, songArtWidth, songArtHeight);
+                    bitmapDrawable.recycle();
+                    imageViewSongArt.setImageBitmap(bitmapResized);
+                }
+            } else {
+                imageViewSongArt.setImageBitmap(bitmap);
+            }
         }
     }
+
 }

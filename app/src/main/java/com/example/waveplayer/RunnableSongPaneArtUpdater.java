@@ -9,13 +9,10 @@ import androidx.core.content.res.ResourcesCompat;
 
 public class RunnableSongPaneArtUpdater implements Runnable {
 
-    ServiceMain serviceMain;
+    ActivityMain activityMain;
 
-    ImageView imageViewSongPaneSongArt;
-
-    public RunnableSongPaneArtUpdater(ServiceMain serviceMain, ImageView imageViewSongPaneSongArt) {
-        this.serviceMain = serviceMain;
-        this.imageViewSongPaneSongArt = imageViewSongPaneSongArt;
+    public RunnableSongPaneArtUpdater(ActivityMain activityMain) {
+        this.activityMain = activityMain;
     }
 
     @Override
@@ -24,24 +21,28 @@ public class RunnableSongPaneArtUpdater implements Runnable {
         int songArtWidth = getSongArtWidth();
         songArtHeight = songArtWidth;
         Bitmap bitmapSongArt = ActivityMain.getThumbnail(
-                serviceMain.getCurrentSong(), songArtWidth, songArtHeight, serviceMain.getApplicationContext());
-        if (bitmapSongArt != null) {
-            imageViewSongPaneSongArt.setImageBitmap(bitmapSongArt);
-        } else {
-            Bitmap defaultBitmap = getDefaultBitmap(songArtWidth, songArtHeight);
-            if (defaultBitmap != null) {
-                imageViewSongPaneSongArt.setImageBitmap(defaultBitmap);
+                activityMain.getCurrentSong(), songArtWidth, songArtHeight, activityMain.getApplicationContext());
+        ImageView imageViewSongPaneSongArt = activityMain.findViewById(R.id.imageViewSongPaneSongArt);
+        if(imageViewSongPaneSongArt != null) {
+            if (bitmapSongArt != null) {
+                imageViewSongPaneSongArt.setImageBitmap(bitmapSongArt);
+            } else {
+                Bitmap defaultBitmap = getDefaultBitmap(songArtWidth, songArtHeight);
+                if (defaultBitmap != null) {
+                    imageViewSongPaneSongArt.setImageBitmap(defaultBitmap);
+                }
             }
         }
     }
 
     private int getSongArtHeight() {
-        if (imageViewSongPaneSongArt != null && serviceMain != null) {
+        ImageView imageViewSongPaneSongArt = activityMain.findViewById(R.id.imageViewSongPaneSongArt);
+        if (imageViewSongPaneSongArt != null) {
             int songArtHeight = imageViewSongPaneSongArt.getHeight();
             if (songArtHeight > 0) {
-                serviceMain.setSongPaneArtHeight(songArtHeight);
+                activityMain.setSongPaneArtHeight(songArtHeight);
             } else {
-                songArtHeight = serviceMain.getSongPaneArtHeight();
+                songArtHeight = activityMain.getSongPaneArtHeight();
             }
             return songArtHeight;
         }
@@ -49,12 +50,13 @@ public class RunnableSongPaneArtUpdater implements Runnable {
     }
 
     private int getSongArtWidth() {
-        if (imageViewSongPaneSongArt != null && serviceMain != null) {
+        ImageView imageViewSongPaneSongArt = activityMain.findViewById(R.id.imageViewSongPaneSongArt);
+        if (imageViewSongPaneSongArt != null) {
             int songArtWidth = imageViewSongPaneSongArt.getWidth();
             if (songArtWidth > 0) {
-                serviceMain.setSongPaneArtWidth(songArtWidth);
+                activityMain.setSongPaneArtWidth(songArtWidth);
             } else {
-                songArtWidth = serviceMain.getSongPaneArtWidth();
+                songArtWidth = activityMain.getSongPaneArtWidth();
             }
             return songArtWidth;
         }
@@ -62,22 +64,24 @@ public class RunnableSongPaneArtUpdater implements Runnable {
     }
 
     private Bitmap getDefaultBitmap(int songArtWidth, int songArtHeight) {
-        Drawable drawableSongArt = ResourcesCompat.getDrawable(
-                imageViewSongPaneSongArt.getResources(), R.drawable.music_note_black_48dp, null);
-        if (drawableSongArt != null) {
-            Bitmap bitmapSongArt;
-            drawableSongArt.setBounds(0, 0, songArtWidth, songArtHeight);
-            bitmapSongArt = Bitmap.createBitmap(
-                    songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(bitmapSongArt);
-            drawableSongArt.draw(canvas);
-            Bitmap bitmapSongArtResized = FragmentPaneSong.getResizedBitmap(
-                    bitmapSongArt, songArtWidth, songArtHeight);
-            bitmapSongArt.recycle();
-            return bitmapSongArtResized;
+        ImageView imageViewSongPaneSongArt = activityMain.findViewById(R.id.imageViewSongPaneSongArt);
+        if(imageViewSongPaneSongArt != null) {
+            Drawable drawableSongArt = ResourcesCompat.getDrawable(
+                    imageViewSongPaneSongArt.getResources(), R.drawable.music_note_black_48dp, null);
+            if (drawableSongArt != null) {
+                Bitmap bitmapSongArt;
+                drawableSongArt.setBounds(0, 0, songArtWidth, songArtHeight);
+                bitmapSongArt = Bitmap.createBitmap(
+                        songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888);
+                Canvas canvas = new Canvas(bitmapSongArt);
+                drawableSongArt.draw(canvas);
+                Bitmap bitmapSongArtResized = FragmentPaneSong.getResizedBitmap(
+                        bitmapSongArt, songArtWidth, songArtHeight);
+                bitmapSongArt.recycle();
+                return bitmapSongArtResized;
+            }
         }
         return null;
     }
-
 
 }

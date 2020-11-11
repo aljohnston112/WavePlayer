@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class FragmentSongs extends Fragment {
 
@@ -51,15 +52,15 @@ public class FragmentSongs extends Fragment {
         }
         activityMain.hideKeyboard(view);
         updateMainContent();
-        setUpRecyclerView();
-        setUpBroadcastReceiverServiceConnected();
-        setUpBroadcastReceiverOnOptionsMenuCreated();
         return view;
     }
 
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        setUpRecyclerView();
+        setUpBroadcastReceiverServiceConnected();
+        setUpBroadcastReceiverOnOptionsMenuCreated();
     }
 
     private void updateMainContent() {
@@ -126,12 +127,15 @@ public class FragmentSongs extends Fragment {
             ActivityMain activityMain = ((ActivityMain) getActivity());
             View view = getView();
             RecyclerView recyclerViewSongs = view.findViewById(R.id.recycler_view_song_list);
-            RecyclerViewAdapterSongs recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(
-                    this, new ArrayList<>(activityMain.getAllSongs()));
-            recyclerViewSongs.setLayoutManager(
-                    new LinearLayoutManager(recyclerViewSongs.getContext()));
-            recyclerViewSongs.setAdapter(recyclerViewAdapterSongs);
-            setUp = true;
+            List<AudioUri> songs = activityMain.getAllSongs();
+            if(songs != null) {
+                RecyclerViewAdapterSongs recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(
+                        this, new ArrayList<>(songs));
+                recyclerViewSongs.setLayoutManager(
+                        new LinearLayoutManager(recyclerViewSongs.getContext()));
+                recyclerViewSongs.setAdapter(recyclerViewAdapterSongs);
+                setUp = true;
+            }
         }
     }
 

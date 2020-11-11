@@ -97,10 +97,8 @@ public class ActivityMain extends AppCompatActivity {
         setUpBroadcastReceivers();
         setUpSongPane();
         updateUI();
-        runnableSongArtUpdater = new RunnableSongArtUpdater(
-                serviceMain, (ImageView) findViewById(R.id.image_view_song_art));
-        runnableSongPaneArtUpdater = new RunnableSongPaneArtUpdater(
-                serviceMain, (ImageView) findViewById(R.id.imageViewSongPaneSongArt));
+        runnableSongArtUpdater = new RunnableSongArtUpdater(this);
+        runnableSongPaneArtUpdater = new RunnableSongPaneArtUpdater(this);
         Log.v(TAG, "setUpAfterServiceConnection ended");
     }
 
@@ -344,6 +342,7 @@ public class ActivityMain extends AppCompatActivity {
                 constraintSet.clone(constraintLayout);
                 constraintSet.connect(R.id.fab, ConstraintSet.BOTTOM, R.id.fragmentSongPane, ConstraintSet.TOP);
                 constraintSet.applyTo(constraintLayout);
+                updateUI();
                 Log.v(TAG, "done showing song pane");
             }
         });
@@ -547,7 +546,9 @@ public class ActivityMain extends AppCompatActivity {
 
     public void updateUI() {
         Log.v(TAG, "sending Runnable to update UI");
-        runOnUiThread(runnableUIUpdate);
+        if(runnableUIUpdate != null) {
+            runOnUiThread(runnableUIUpdate);
+        }
         Log.v(TAG, "Done sending Runnable to update UI");
     }
 
@@ -1236,4 +1237,40 @@ public class ActivityMain extends AppCompatActivity {
         return bitmap;
     }
 
+    public void setSongPaneArtHeight(int songArtHeight) {
+        Log.v(TAG, "setSongPaneArtHeight start");
+        if(serviceMain != null){
+            serviceMain.setSongPaneArtHeight(songArtHeight);
+        }
+        Log.v(TAG, "setSongPaneArtHeight end");
+    }
+
+    public int getSongPaneArtHeight() {
+        Log.v(TAG, "getSongPaneArtHeight start");
+        if(serviceMain != null){
+            Log.v(TAG, "getSongPaneArtHeight end");
+            return serviceMain.getSongPaneArtHeight();
+        }
+        Log.v(TAG, "getSongPaneArtHeight default end");
+        return -1;
+    }
+
+    public void setSongPaneArtWidth(int songArtWidth) {
+        Log.v(TAG, "setSongPaneArtWidth start");
+        if(serviceMain != null){
+            serviceMain.setSongPaneArtWidth(songArtWidth);
+        }
+        Log.v(TAG, "setSongPaneArtWidth end");
+    }
+
+    public int getSongPaneArtWidth() {
+        Log.v(TAG, "getSongPaneArtWidth start");
+        if(serviceMain != null){
+            Log.v(TAG, "getSongPaneArtWidth end");
+            return serviceMain.getSongPaneArtWidth();
+        }
+        Log.v(TAG, "getSongPaneArtWidth default end");
+        return -1;
+    }
+    
 }
