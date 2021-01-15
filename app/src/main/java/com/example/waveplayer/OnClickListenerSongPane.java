@@ -9,9 +9,9 @@ import androidx.navigation.fragment.NavHostFragment;
 
 public class OnClickListenerSongPane implements View.OnClickListener {
 
-    // TODO does not appear to work
+    // TODO does not appear to work (resized to different dimensions)
 
-    ActivityMain activityMain;
+    private final ActivityMain activityMain;
 
     public OnClickListenerSongPane(ActivityMain activityMain) {
         this.activityMain = activityMain;

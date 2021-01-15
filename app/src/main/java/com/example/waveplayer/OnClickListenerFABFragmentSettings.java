@@ -11,11 +11,11 @@ import androidx.navigation.fragment.NavHostFragment;
 
 public class OnClickListenerFABFragmentSettings implements View.OnClickListener {
 
-    final FragmentSettings fragmentSettings;
+    private final FragmentSettings fragmentSettings;
 
-    final EditText editTextNSongs;
-    final EditText editTextPercentChangeDown;
-    final EditText editTextPercentChangeUp;
+    private final EditText editTextNSongs;
+    private final EditText editTextPercentChangeDown;
+    private final EditText editTextPercentChangeUp;
 
     OnClickListenerFABFragmentSettings(FragmentSettings fragmentSettings, EditText editTextNSongs,
                                        EditText editTextPercentChangeDown, EditText editTextPercentChangeUp) {
@@ -75,7 +75,7 @@ public class OnClickListenerFABFragmentSettings implements View.OnClickListener 
     }
 
     private int getPercentChangeDown() {
-        ActivityMain activityMain = fragmentSettings.activityMain;
+        ActivityMain activityMain = (ActivityMain) fragmentSettings.getActivity();
         int percentChangeDown = -1;
         try {
             percentChangeDown = Integer.parseInt(editTextPercentChangeDown.getText().toString());

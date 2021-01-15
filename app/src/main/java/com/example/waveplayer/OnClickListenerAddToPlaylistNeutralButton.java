@@ -4,10 +4,10 @@ import android.content.DialogInterface;
 
 public class OnClickListenerAddToPlaylistNeutralButton implements DialogInterface.OnClickListener {
 
-    final ActivityMain activityMain;
-    final boolean isSong;
-    final AudioUri audioURI;
-    final RandomPlaylist randomPlaylist;
+    private final ActivityMain activityMain;
+    private final boolean isSong;
+    private final AudioUri audioURI;
+    private final RandomPlaylist randomPlaylist;
 
     private OnClickListenerAddToPlaylistNeutralButton() {
         throw new UnsupportedOperationException();

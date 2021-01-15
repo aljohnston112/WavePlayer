@@ -1,33 +1,25 @@
 package com.example.waveplayer;
 
-import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
-import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
-import android.os.Build;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.util.Size;
 
 import androidx.annotation.Nullable;
 
-import java.io.ByteArrayInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.Serializable;
-
-import static com.example.waveplayer.FragmentPaneSong.getResizedBitmap;
+import java.util.Calendar;
+import java.util.Random;
 
 public final class AudioUri implements Comparable<AudioUri>, Serializable {
 
     transient static final String TAG = "AudioURI";
 
     transient private Uri uri;
+
+    NestedProbMap nestProbMap = new NestedProbMap();
 
     public final String displayName;
 
@@ -77,7 +69,8 @@ public final class AudioUri implements Comparable<AudioUri>, Serializable {
         isSelected = selected;
     }
 
-    public AudioUri(Uri uri, String data, String displayName, String artist, String title, long id) {
+    public AudioUri(Uri uri,
+                    String data, String displayName, String artist, String title, long id) {
         //Log.v(TAG, "AudioURI constructing");
         this.uri = uri;
         this.displayName = displayName;
@@ -85,14 +78,31 @@ public final class AudioUri implements Comparable<AudioUri>, Serializable {
         this.title = title;
         this.id = id;
         this.data = data;
-       // Log.v(TAG, "AudioURI constructed");
+
+        // Log.v(TAG, "AudioURI constructed");
     }
 
-    @Override
+    public boolean shouldPlay(Random random) {
+        return nestProbMap.outcome(random);
+    }
+
+    public boolean bad(double percent) {
+        return nestProbMap.bad(percent);
+    }
+
+    public boolean good(double percent) {
+        return nestProbMap.good(percent);
+    }
+
+    public void clearProbabilities() {
+        nestProbMap.clearProbabilities();
+    }
+
+        @Override
     public int compareTo(AudioUri o) {
-       // Log.v(TAG, "compareTo start");
+        // Log.v(TAG, "compareTo start");
         int h = title.compareTo(o.title);
-       // Log.v(TAG, "compareTo end");
+        // Log.v(TAG, "compareTo end");
         return h;
     }
 
@@ -102,7 +112,7 @@ public final class AudioUri implements Comparable<AudioUri>, Serializable {
         if (uri == null) {
             this.uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
         }
-       // Log.v(TAG, "equals end");
+        // Log.v(TAG, "equals end");
         return obj instanceof AudioUri && uri.equals(((AudioUri) obj).getUri());
     }
 

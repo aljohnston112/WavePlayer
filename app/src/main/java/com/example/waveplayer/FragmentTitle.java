@@ -29,15 +29,15 @@ public class FragmentTitle extends Fragment {
 
     public static final int REQUEST_CODE_OPEN_FOLDER = 9367;
 
-    BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
+    private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
-    OnClickListenerFragmentTitleButtons onClickListenerFragmentTitleButtons;
+    private OnClickListenerFragmentTitleButtons onClickListenerFragmentTitleButtons;
 
-    Uri uriUserPicked;
+    private Uri uriUserPickedFolder;
 
-    long mediaStoreUriID;
+    private long mediaStoreUriID;
 
-    List<AudioUri> audioUris;
+    private List<AudioUri> audioUris;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -46,13 +46,13 @@ public class FragmentTitle extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        audioUris = new ArrayList<>();
         return inflater.inflate(R.layout.fragment_title, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        audioUris = new ArrayList<>();
         updateMainContent();
         setUpButtons();
         setUpBroadCastReceiver();
@@ -67,13 +67,13 @@ public class FragmentTitle extends Fragment {
         broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if (uriUserPicked != null) {
+                if (uriUserPickedFolder != null) {
                     if (!audioUris.isEmpty()) {
                         RandomPlaylist randomPlaylist =
                                 activityMain.getDirectoryPlaylist(mediaStoreUriID);
                         if (!activityMain.containsDirectoryPlaylist(mediaStoreUriID)) {
                             randomPlaylist = new RandomPlaylist(
-                                    uriUserPicked.getPath(), audioUris, activityMain.getMaxPercent(),
+                                    uriUserPickedFolder.getPath(), audioUris, activityMain.getMaxPercent(),
                                     false, mediaStoreUriID);
                             activityMain.addDirectoryPlaylist(mediaStoreUriID, randomPlaylist);
                         } else {
@@ -133,13 +133,13 @@ public class FragmentTitle extends Fragment {
             Uri uri;
             if (resultData != null) {
                 uri = resultData.getData();
-                this.uriUserPicked = uri;
-                traverseDirectoryEntries(uri);
+                this.uriUserPickedFolder = uri;
+                getFilesFromDirRecursive(uri);
             }
         }
     }
 
-    void traverseDirectoryEntries(Uri rootUri) {
+    void getFilesFromDirRecursive(Uri rootUri) {
         Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
                 rootUri, DocumentsContract.getTreeDocumentId(rootUri));
         getFiles(childrenUri, rootUri);
@@ -166,7 +166,7 @@ public class FragmentTitle extends Fragment {
                     String docId = cursor.getString(0);
                     String mime = cursor.getString(1);
                     String displayName = cursor.getString(nameCol);
-                    if (isDirectory(mime)) {
+                    if (DocumentsContract.Document.MIME_TYPE_DIR.equals(mime)) {
                         Uri newNode = DocumentsContract.buildChildDocumentsUriUsingTree(
                                 rootUri, docId);
                         getFiles(newNode, rootUri);
@@ -176,10 +176,6 @@ public class FragmentTitle extends Fragment {
                 }
             }
         }
-    }
-
-    private static boolean isDirectory(String mimeType) {
-        return DocumentsContract.Document.MIME_TYPE_DIR.equals(mimeType);
     }
 
     private AudioUri getAudioUri(String displayName) {
@@ -222,7 +218,7 @@ public class FragmentTitle extends Fragment {
         View view = getView();
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
         broadcastReceiverOnServiceConnected = null;
-        uriUserPicked = null;
+        uriUserPickedFolder = null;
         for (int i = 0; i < audioUris.size(); i++) {
             audioUris.set(i, null);
         }

@@ -7,7 +7,7 @@ import androidx.navigation.fragment.NavHostFragment;
 
 public class OnClickListenerFABFragmentSelectSongs implements View.OnClickListener {
 
-    final FragmentSelectSongs fragmentSelectSongs;
+    private final FragmentSelectSongs fragmentSelectSongs;
 
     OnClickListenerFABFragmentSelectSongs(FragmentSelectSongs fragmentSelectSongs) {
         this.fragmentSelectSongs = fragmentSelectSongs;
@@ -15,8 +15,7 @@ public class OnClickListenerFABFragmentSelectSongs implements View.OnClickListen
 
     @Override
     public void onClick(View view) {
-        NavController navController =
-                NavHostFragment.findNavController(fragmentSelectSongs);
+        NavController navController = NavHostFragment.findNavController(fragmentSelectSongs);
         navController.popBackStack();
     }
 

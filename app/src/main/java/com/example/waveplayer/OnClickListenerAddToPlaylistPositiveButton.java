@@ -6,12 +6,12 @@ import java.util.List;
 
 public class OnClickListenerAddToPlaylistPositiveButton implements DialogInterface.OnClickListener {
 
-    final List<RandomPlaylist> randomPlaylists;
-    final List<Integer> selectedPlaylistIndices;
+    private final List<RandomPlaylist> randomPlaylists;
+    private final List<Integer> selectedPlaylistIndices;
 
-    final boolean isSong;
-    final AudioUri audioURI;
-    final RandomPlaylist randomPlaylist;
+    private final boolean isSong;
+    private final AudioUri audioURI;
+    private final RandomPlaylist randomPlaylist;
 
     private OnClickListenerAddToPlaylistPositiveButton() {
         throw new UnsupportedOperationException();

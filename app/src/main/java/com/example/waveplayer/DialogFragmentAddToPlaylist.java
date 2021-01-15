@@ -57,7 +57,7 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
         for (RandomPlaylist randomPlaylist : randomPlaylists) {
             titles.add(randomPlaylist.getName());
         }
-        String[] titlesArray = new String[titles.size()];
+        String[] titlesArray =  new String[titles.size()];
         int i = 0;
         for (String title : titles) {
             titlesArray[i++] = title;

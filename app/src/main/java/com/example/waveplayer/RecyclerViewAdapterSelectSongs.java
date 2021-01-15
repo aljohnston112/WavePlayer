@@ -13,19 +13,23 @@ import androidx.fragment.app.Fragment;
 
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<RecyclerViewAdapterSelectSongs.ViewHolder> {
 
     private final Fragment fragment;
 
-    List<AudioUri> allSongs;
+    private List<AudioUri> allSongs;
 
     public RecyclerViewAdapterSelectSongs(Fragment fragment) {
         this.fragment = fragment;
         ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
         allSongs = activityMain.getAllSongs();
+    }
+
+    public void updateList(List<AudioUri> songs) {
+        this.allSongs = songs;
+        notifyDataSetChanged();
     }
 
     @NonNull

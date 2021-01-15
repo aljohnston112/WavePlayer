@@ -6,21 +6,22 @@ import java.util.ArrayList;
 
 public class UndoListenerSongRemoved implements View.OnClickListener {
 
-    ActivityMain activityMain;
+    private final ActivityMain activityMain;
 
-    RandomPlaylist userPickedPlaylist;
+    private final RandomPlaylist userPickedPlaylist;
 
-    RecyclerViewAdapterSongs recyclerViewAdapter;
+    private final RecyclerViewAdapterSongs recyclerViewAdapter;
 
-    AudioUri audioURI;
+    private final AudioUri audioURI;
 
-    double probability;
+    private final double probability;
 
-    int position;
+    private final int position;
 
-    UndoListenerSongRemoved( RandomPlaylist userPickedPlaylist,
+    UndoListenerSongRemoved(ActivityMain activityMain, RandomPlaylist userPickedPlaylist,
                              RecyclerViewAdapterSongs recyclerViewAdapter, AudioUri audioURI,
                             double probability, int position) {
+        this.activityMain = activityMain;
         this.userPickedPlaylist = userPickedPlaylist;
         this.recyclerViewAdapter = recyclerViewAdapter;
         this.audioURI = audioURI;

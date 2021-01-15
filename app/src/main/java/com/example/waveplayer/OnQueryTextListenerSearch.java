@@ -8,9 +8,9 @@ import java.util.List;
 
 public class OnQueryTextListenerSearch implements SearchView.OnQueryTextListener {
 
-    final ActivityMain activityMain;
+    private final ActivityMain activityMain;
 
-    final String constructorFragment;
+    private final String constructorFragment;
 
     public OnQueryTextListenerSearch(ActivityMain activityMain, String constructorFragment) {
         this.activityMain = activityMain;
@@ -24,7 +24,6 @@ public class OnQueryTextListenerSearch implements SearchView.OnQueryTextListener
 
     @Override
     public boolean onQueryTextChange(String newText) {
-        // if(activityMain.searchInProgress) {
         switch (constructorFragment) {
             case FragmentSongs.NAME: {
                 RecyclerView recyclerViewSongs = activityMain.findViewById(R.id.recycler_view_song_list);
@@ -88,7 +87,7 @@ public class OnQueryTextListenerSearch implements SearchView.OnQueryTextListener
                 return true;
             }
         }
-        // }
         return false;
     }
+
 }

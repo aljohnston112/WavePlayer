@@ -12,9 +12,7 @@ import java.util.List;
 
 public class ItemTouchListenerPlaylist extends ItemTouchHelper.Callback {
 
-    ActivityMain activityMain;
-
-    UndoListenerPlaylistRemoved undoListenerPlaylistRemoved;
+    private final ActivityMain activityMain;
 
     public ItemTouchListenerPlaylist(ActivityMain activityMain) {
         this.activityMain = activityMain;
@@ -62,7 +60,7 @@ public class ItemTouchListenerPlaylist extends ItemTouchHelper.Callback {
             Snackbar snackbar = Snackbar.make(
                     activityMain.findViewById(R.id.coordinatorLayoutActivityMain),
                     R.string.playlist_deleted, BaseTransientBottomBar.LENGTH_LONG);
-            undoListenerPlaylistRemoved = new UndoListenerPlaylistRemoved(
+            UndoListenerPlaylistRemoved undoListenerPlaylistRemoved = new UndoListenerPlaylistRemoved(
                     activityMain, recyclerViewAdapter, randomPlaylist, position,
                     isDirectoryPlaylist, randomPlaylist.mediaStoreUriID);
             snackbar.setAction(R.string.undo, undoListenerPlaylistRemoved);

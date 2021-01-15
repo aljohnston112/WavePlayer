@@ -19,11 +19,11 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
 
     public List<RandomPlaylist> randomPlaylists;
 
-    OnCreateContextMenuListenerPlaylists onCreateContextMenuListenerPlaylists;
+    private OnCreateContextMenuListenerPlaylists onCreateContextMenuListenerPlaylists;
 
-    View.OnClickListener onClickListenerHandle;
+    private View.OnClickListener onClickListenerHandle;
 
-    View.OnClickListener onClickListenerViewHolder;
+    private View.OnClickListener onClickListenerViewHolder;
 
     public RecyclerViewAdapterPlaylists(Fragment fragment, List<RandomPlaylist> items) {
         this.fragment = fragment;
@@ -93,7 +93,7 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
         return randomPlaylists.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
 
         final public View playlistView;
         final public TextView textViewPlaylistName;

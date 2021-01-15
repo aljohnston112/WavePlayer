@@ -13,8 +13,8 @@ import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_PLAY
 
 public class OnCreateContextMenuListenerSongs implements View.OnCreateContextMenuListener {
 
-    final Fragment fragment;
-    final AudioUri audioURI;
+    private final Fragment fragment;
+    private final AudioUri audioURI;
 
     OnCreateContextMenuListenerSongs(Fragment fragment, AudioUri audioURI) {
         this.fragment = fragment;

@@ -63,9 +63,10 @@ public class ActivityMain extends AppCompatActivity {
     // TODO help page
     // TODO check for leaks
     // TODO warn user about resetting probabilities
-    // TODO songpanesongart is not displaying the bitmap
+    // TODO lower probabilities without resetting
     // TODO create a backup file somewhere
     // TODO allow user to create backup
+    // TODO start shuffle from user picked playlist when play button in notification is tapped
 
     // TODO AFTER RELEASE
     // Open current song in folder as a menu action
@@ -335,7 +336,7 @@ public class ActivityMain extends AppCompatActivity {
     void showSongPane() {
         Log.v(TAG, "sending runnable to show song pane");
         final View fragmentPaneSong = findViewById(R.id.fragmentSongPane);
-        if (fragmentPaneSong.getVisibility() != View.INVISIBLE) {
+        if (fragmentPaneSong.getVisibility() != View.VISIBLE) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -564,13 +565,13 @@ public class ActivityMain extends AppCompatActivity {
         if (serviceMain != null
                 && serviceMain.fragmentSongVisible() && serviceMain.getCurrentSong() != null) {
             Log.v(TAG, "updating SongUI");
-            updateSeekBar();
             updateSongArt();
             updateSongName();
             updateTextViewTimes();
         } else {
             Log.v(TAG, "Not updating SongUI");
         }
+        updateSeekBar();
         Log.v(TAG, "updateSongUI end");
     }
 
@@ -578,11 +579,17 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "updateSeekBar start");
         SeekBar seekBar = findViewById(R.id.seekBar);
         if (seekBar != null && serviceMain != null) {
-            final int maxMillis = serviceMain.getCurrentSong().getDuration(getApplicationContext());
+            AudioUri audioUri = serviceMain.getCurrentSong();
+            final int maxMillis;
+            if(audioUri != null) {
+                maxMillis = audioUri.getDuration(getApplicationContext());
+            } else {
+                maxMillis = 9999;
+            }
             seekBar.setMax(maxMillis);
             seekBar.setProgress(getCurrentTime());
             seekBar.setOnSeekBarChangeListener(onSeekBarChangeListener);
-            setUpSeekBarUpdater(maxMillis);
+            setUpSeekBarUpdater();
         }
         Log.v(TAG, "updateSeekBar end");
     }
@@ -597,13 +604,13 @@ public class ActivityMain extends AppCompatActivity {
         return -1;
     }
 
-    private void setUpSeekBarUpdater(int maxMillis) {
+    private void setUpSeekBarUpdater() {
         Log.v(TAG, "setUpSeekBarUpdater start");
         SeekBar seekBar = findViewById(R.id.seekBar);
         TextView textViewCurrent = findViewById(R.id.editTextCurrentTime);
         if (seekBar != null && textViewCurrent != null) {
             if (serviceMain != null) {
-                serviceMain.updateSeekBarUpdater(seekBar, textViewCurrent, maxMillis);
+                serviceMain.updateSeekBarUpdater(seekBar, textViewCurrent);
             }
         }
         Log.v(TAG, "setUpSeekBarUpdater end");

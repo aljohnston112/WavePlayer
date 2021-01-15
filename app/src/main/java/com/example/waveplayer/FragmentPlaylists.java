@@ -32,18 +32,12 @@ public class FragmentPlaylists extends Fragment {
 
     public static final String NAME = "FragmentPlaylists";
 
-    BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
-    BroadcastReceiver broadcastReceiverOptionsMenuCreated;
-
-    OnClickListenerFABFragmentPlaylists onClickListenerFABFragmentPlaylists;
+    private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
+    private BroadcastReceiver broadcastReceiverOptionsMenuCreated;
+    private OnClickListenerFABFragmentPlaylists onClickListenerFABFragmentPlaylists;
     private OnQueryTextListenerSearch onQueryTextListenerSearch;
-    ItemTouchHelper itemTouchHelper;
-    ItemTouchListenerPlaylist itemTouchListenerPlaylist;
-    UndoListenerPlaylistRemoved undoListenerPlaylistRemoved;
-
-    RecyclerView recyclerView;
-
-    boolean setUp = false;
+    private ItemTouchHelper itemTouchHelper;
+    private ItemTouchListenerPlaylist itemTouchListenerPlaylist;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -63,6 +57,12 @@ public class FragmentPlaylists extends Fragment {
         setUpBroadcastReceiverServiceOnOptionsMenuCreated();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateFAB();
+    }
+
     private void updateMainContent() {
         ActivityMain activityMain = ((ActivityMain) getActivity());
         activityMain.hideKeyboard(getView());
@@ -72,22 +72,20 @@ public class FragmentPlaylists extends Fragment {
         setUpToolbar();
     }
 
-
     private void setUpToolbar() {
         ActivityMain activityMain = ((ActivityMain) getActivity());
         Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
-        Menu menu = toolbar.getMenu();
-        if (menu != null) {
-            /*
-            menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(true);
-            menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(true);
-
-             */
-            MenuItem itemSearch = menu.findItem(R.id.action_search);
-            if (itemSearch != null) {
-                onQueryTextListenerSearch = new OnQueryTextListenerSearch(activityMain, NAME);
-                SearchView searchView = (SearchView) (itemSearch.getActionView());
-                searchView.setOnQueryTextListener(onQueryTextListenerSearch);
+        if (toolbar != null) {
+            Menu menu = toolbar.getMenu();
+            if (menu != null) {
+                menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(true);
+                menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(true);
+                MenuItem itemSearch = menu.findItem(R.id.action_search);
+                if (itemSearch != null) {
+                    onQueryTextListenerSearch = new OnQueryTextListenerSearch(activityMain, NAME);
+                    SearchView searchView = (SearchView) (itemSearch.getActionView());
+                    searchView.setOnQueryTextListener(onQueryTextListenerSearch);
+                }
             }
         }
     }
@@ -104,17 +102,14 @@ public class FragmentPlaylists extends Fragment {
     private void setUpRecyclerView() {
         ActivityMain activityMain = ((ActivityMain) getActivity());
         View view = getView();
-        if (!setUp) {
-            recyclerView = view.findViewById(R.id.recycler_view_playlist_list);
-            recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
-            RecyclerViewAdapterPlaylists recyclerViewAdapter =
-                    new RecyclerViewAdapterPlaylists(this, activityMain.getPlaylists());
-            recyclerView.setAdapter(recyclerViewAdapter);
-            itemTouchListenerPlaylist = new ItemTouchListenerPlaylist(activityMain);
-            itemTouchHelper = new ItemTouchHelper(itemTouchListenerPlaylist);
-            itemTouchHelper.attachToRecyclerView(recyclerView);
-            //setUp = true;
-        }
+        RecyclerView recyclerView = view.findViewById(R.id.recycler_view_playlist_list);
+        recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
+        RecyclerViewAdapterPlaylists recyclerViewAdapter =
+                new RecyclerViewAdapterPlaylists(this, activityMain.getPlaylists());
+        recyclerView.setAdapter(recyclerViewAdapter);
+        itemTouchListenerPlaylist = new ItemTouchListenerPlaylist(activityMain);
+        itemTouchHelper = new ItemTouchHelper(itemTouchListenerPlaylist);
+        itemTouchHelper.attachToRecyclerView(recyclerView);
     }
 
     private void setUpBroadcastReceiverOnServiceConnected() {
@@ -141,12 +136,6 @@ public class FragmentPlaylists extends Fragment {
         broadcastReceiverOptionsMenuCreated = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                /*
-                Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
-                Menu menu = toolbar.getMenu();
-                menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(true);
-
-                 */
                 setUpToolbar();
             }
         };
@@ -163,23 +152,18 @@ public class FragmentPlaylists extends Fragment {
         broadcastReceiverOptionsMenuCreated = null;
         onQueryTextListenerSearch = null;
         Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
-        Menu menu = toolbar.getMenu();
-        if (menu != null) {
-            /*
-            menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(true);
-            menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(true);
-
-             */
-            MenuItem itemSearch = menu.findItem(R.id.action_search);
-            SearchView searchView = (SearchView) (itemSearch.getActionView());
-            searchView.onActionViewCollapsed();
+        if (toolbar != null) {
+            Menu menu = toolbar.getMenu();
+            if (menu != null) {
+                MenuItem itemSearch = menu.findItem(R.id.action_search);
+                SearchView searchView = (SearchView) (itemSearch.getActionView());
+                searchView.onActionViewCollapsed();
+            }
         }
-        setUp = false;
         onClickListenerFABFragmentPlaylists = null;
         itemTouchHelper.attachToRecyclerView(null);
         itemTouchListenerPlaylist = null;
         itemTouchHelper = null;
-        undoListenerPlaylistRemoved = null;
     }
 
 }

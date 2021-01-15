@@ -12,7 +12,7 @@ import static com.example.waveplayer.FragmentPaneSong.getResizedBitmap;
 
 public class OnLayoutChangeListenerFragmentSongButtons implements View.OnLayoutChangeListener {
 
-    final ActivityMain activityMain;
+    private final ActivityMain activityMain;
 
     OnLayoutChangeListenerFragmentSongButtons(ActivityMain activityMain){
         this.activityMain = activityMain;

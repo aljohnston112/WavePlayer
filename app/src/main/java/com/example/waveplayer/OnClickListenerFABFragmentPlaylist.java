@@ -6,7 +6,7 @@ import androidx.navigation.fragment.NavHostFragment;
 
 public class OnClickListenerFABFragmentPlaylist implements View.OnClickListener {
 
-    final FragmentPlaylist fragmentPlaylist;
+    private final FragmentPlaylist fragmentPlaylist;
 
     OnClickListenerFABFragmentPlaylist(FragmentPlaylist fragmentPlaylist){
         this.fragmentPlaylist = fragmentPlaylist;

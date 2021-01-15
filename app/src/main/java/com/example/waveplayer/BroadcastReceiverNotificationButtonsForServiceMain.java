@@ -7,7 +7,7 @@ import android.util.Log;
 
 public class BroadcastReceiverNotificationButtonsForServiceMain extends BroadcastReceiver {
 
-    ServiceMain serviceMain;
+    private ServiceMain serviceMain;
 
     BroadcastReceiverNotificationButtonsForServiceMain(ServiceMain serviceMain) {
         this.serviceMain = serviceMain;
@@ -17,7 +17,7 @@ public class BroadcastReceiverNotificationButtonsForServiceMain extends Broadcas
         Log.v(ActivityMain.TAG, "BroadcastReceiverNotificationForServiceMainMediaControls start");
         synchronized (ServiceMain.lock) {
             String action = intent.getAction();
-            if (action != null && serviceMain != null) {
+            if (action != null) {
                 switch (action) {
                     case "Next":
                         serviceMain.playNext();

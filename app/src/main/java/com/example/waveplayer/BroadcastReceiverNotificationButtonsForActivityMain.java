@@ -16,7 +16,7 @@ public class BroadcastReceiverNotificationButtonsForActivityMain extends Broadca
     public void onReceive(Context context, Intent intent) {
         Log.v(ActivityMain.TAG, "BroadcastReceiverNotificationButtonsForActivityMain start");
         String action = intent.getAction();
-        if (action != null && activityMain != null) {
+        if (action != null) {
             if (action.equals(activityMain.getResources().getString(
                     R.string.broadcast_receiver_action_next)) ||
                     action.equals(activityMain.getResources().getString(

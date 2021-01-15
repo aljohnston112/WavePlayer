@@ -30,6 +30,7 @@ class ProbFun<T extends Comparable<T>> implements Serializable {
 
     // The set of elements to be picked from, mapped to the probabilities of getting picked
     protected Map<T, Double> probabilityMap;
+
     public ArrayList<T> getKeys() {
         return new ArrayList<>(this.probabilityMap.keySet());
     }
@@ -392,4 +393,5 @@ class ProbFun<T extends Comparable<T>> implements Serializable {
         }
         probabilityMap = swappedMap;
     }
+
 }

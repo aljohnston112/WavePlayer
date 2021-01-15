@@ -15,8 +15,6 @@ class ItemTouchListenerSong extends ItemTouchHelper.Callback {
 
     private final RandomPlaylist userPickedPlaylist;
 
-    private UndoListenerSongRemoved undoListenerSongRemoved;
-
     public ItemTouchListenerSong(ActivityMain activityMain, RandomPlaylist userPickedPlaylist) {
         this.activityMain = activityMain;
         this.userPickedPlaylist = userPickedPlaylist;
@@ -66,7 +64,8 @@ class ItemTouchListenerSong extends ItemTouchHelper.Callback {
         Snackbar snackbar = Snackbar.make(
                 activityMain.findViewById(R.id.coordinatorLayoutActivityMain),
                 R.string.song_removed, BaseTransientBottomBar.LENGTH_LONG);
-        undoListenerSongRemoved = new UndoListenerSongRemoved(userPickedPlaylist,
+        UndoListenerSongRemoved undoListenerSongRemoved = new UndoListenerSongRemoved(
+                activityMain, userPickedPlaylist,
                 recyclerViewAdapterSongs,
                 audioURI, probability, position);
         snackbar.setAction(R.string.undo, undoListenerSongRemoved);

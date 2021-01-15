@@ -6,7 +6,7 @@ import android.util.Log;
 
 public class MediaPlayerOnCompletionListener implements MediaPlayer.OnCompletionListener {
 
-    ServiceMain serviceMain;
+    private final ServiceMain serviceMain;
 
     MediaPlayerOnCompletionListener(ServiceMain serviceMain) {
         this.serviceMain = serviceMain;

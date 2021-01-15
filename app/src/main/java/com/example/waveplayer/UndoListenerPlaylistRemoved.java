@@ -4,12 +4,12 @@ import android.view.View;
 
 public class UndoListenerPlaylistRemoved implements View.OnClickListener {
 
-    ActivityMain activityMain;
-    RecyclerViewAdapterPlaylists recyclerViewAdapter;
-    RandomPlaylist randomPlaylist;
-    int position;
-    boolean isDirectoryPlaylist;
-    long uriID;
+    private final ActivityMain activityMain;
+    private final RecyclerViewAdapterPlaylists recyclerViewAdapter;
+    private final RandomPlaylist randomPlaylist;
+    private final int position;
+    private final boolean isDirectoryPlaylist;
+    private final long uriID;
 
     UndoListenerPlaylistRemoved(ActivityMain activityMain,
                                 RecyclerViewAdapterPlaylists recyclerViewAdapter,
@@ -33,4 +33,5 @@ public class UndoListenerPlaylistRemoved implements View.OnClickListener {
         recyclerViewAdapter.notifyItemInserted(position);
         activityMain.saveFile();
     }
+
 }

@@ -7,24 +7,22 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class FragmentSelectSongs extends Fragment {
 
-    BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
+    private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
-    boolean setUp = false;
+    private OnClickListenerFABFragmentSelectSongs onClickListenerFABFragmentSelectSongs;
 
-    OnClickListenerFABFragmentSelectSongs onClickListenerFABFragmentSelectSongs;
+    private RecyclerView recyclerViewSongList;
 
-    RecyclerView recyclerViewSongList;
+    // TODO search functionality
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -34,52 +32,47 @@ public class FragmentSelectSongs extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        ActivityMain activityMain = ((ActivityMain) getActivity());
-        View view = inflater.inflate(R.layout.recycler_view_song_list, container, false);
-        onClickListenerFABFragmentSelectSongs = new OnClickListenerFABFragmentSelectSongs(this);
-        if (activityMain != null) {
-            activityMain.setActionBarTitle(getResources().getString(R.string.select_songs));
-        }
-        setupFAB();
-        setUpBroadcastReceiverServiceConnected();
-        return view;
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        setUpRecyclerView();
+        return inflater.inflate(R.layout.recycler_view_song_list, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ((ActivityMain)getActivity()).hideKeyboard(view);
+        ActivityMain activityMain = ((ActivityMain) getActivity());
+        activityMain.hideKeyboard(view);
+        activityMain.setActionBarTitle(getResources().getString(R.string.select_songs));
+        updateFAB();
+        setUpRecyclerView();
+        setUpBroadcastReceiverServiceConnected();
     }
 
-    private void setupFAB() {
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateFAB();
+    }
+
+    private void updateFAB() {
         ActivityMain activityMain = ((ActivityMain) getActivity());
         activityMain.setFabImage(R.drawable.ic_check_white_24dp);
         activityMain.setFABText(R.string.fab_done);
         activityMain.showFab(true);
+        onClickListenerFABFragmentSelectSongs = new OnClickListenerFABFragmentSelectSongs(this);
         activityMain.setFabOnClickListener(onClickListenerFABFragmentSelectSongs);
     }
 
     private void setUpRecyclerView() {
-        if (!setUp) {
-            ActivityMain activityMain = ((ActivityMain) getActivity());
-            View view = getView();
-            recyclerViewSongList = view.findViewById(R.id.recycler_view_song_list);
-            recyclerViewSongList.setLayoutManager(
-                    new LinearLayoutManager(recyclerViewSongList.getContext()));
-            for (AudioUri audioURI : activityMain.getUserPickedSongs()) {
-                audioURI.setSelected(true);
-            }
-            RecyclerViewAdapterSelectSongs recyclerViewAdapterSelectSongs =
-                    new RecyclerViewAdapterSelectSongs(this);
-            recyclerViewSongList.setAdapter(recyclerViewAdapterSelectSongs);
-            setUp = true;
+        ActivityMain activityMain = ((ActivityMain) getActivity());
+        View view = getView();
+        recyclerViewSongList = view.findViewById(R.id.recycler_view_song_list);
+        recyclerViewSongList.setLayoutManager(
+                new LinearLayoutManager(recyclerViewSongList.getContext()));
+        for (AudioUri audioURI : activityMain.getUserPickedSongs()) {
+            audioURI.setSelected(true);
         }
+        RecyclerViewAdapterSelectSongs recyclerViewAdapterSelectSongs =
+                new RecyclerViewAdapterSelectSongs(this);
+        recyclerViewSongList.setAdapter(recyclerViewAdapterSelectSongs);
     }
 
     private void setUpBroadcastReceiverServiceConnected() {

@@ -22,16 +22,12 @@ import java.util.List;
 
 public class FragmentEditPlaylist extends Fragment {
 
-    ActivityMain activityMain;
+    private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
-    View view;
-
-    BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
-
-    OnClickListenerFragmentEditPlaylistButtonSelectSongs
+    private OnClickListenerFragmentEditPlaylistButtonSelectSongs
             onClickListenerFragmentEditPlaylistButtonSelectSongs;
 
-    OnClickListenerFABFragmentEditPlaylist onClickListenerFABFragmentEditPlaylist;
+    private OnClickListenerFABFragmentEditPlaylist onClickListenerFABFragmentEditPlaylist;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -41,26 +37,31 @@ public class FragmentEditPlaylist extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        view = inflater.inflate(R.layout.fragment_edit_playlist, container, false);
-        onClickListenerFragmentEditPlaylistButtonSelectSongs =
-                new OnClickListenerFragmentEditPlaylistButtonSelectSongs(this);
-        activityMain = ((ActivityMain) getActivity());
-        if (activityMain != null) {
-            activityMain.setActionBarTitle(getResources().getString(R.string.edit_playlist));
-        }
-        updateFAB(view);
-        view.findViewById(R.id.buttonEditSongs).setOnClickListener(
-                onClickListenerFragmentEditPlaylistButtonSelectSongs);
-        setUpBroadcastReceiverServiceConnected(view);
-        return view;
+        return inflater.inflate(R.layout.fragment_edit_playlist, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        ActivityMain activityMain = ((ActivityMain) getActivity());
+        activityMain.setActionBarTitle(getResources().getString(R.string.edit_playlist));
+        updateFAB();
+        onClickListenerFragmentEditPlaylistButtonSelectSongs =
+                new OnClickListenerFragmentEditPlaylistButtonSelectSongs(this);
+        view.findViewById(R.id.buttonEditSongs).setOnClickListener(
+                onClickListenerFragmentEditPlaylistButtonSelectSongs);
+        setUpBroadcastReceiverServiceConnected();
     }
 
-    private void updateFAB(View view) {
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateFAB();
+    }
+
+    private void updateFAB() {
+        ActivityMain activityMain = ((ActivityMain) getActivity());
+        View view = getView();
         activityMain.setFabImage(R.drawable.ic_check_black_24dp);
         activityMain.setFABText(R.string.fab_save);
         activityMain.showFab(true);
@@ -83,13 +84,8 @@ public class FragmentEditPlaylist extends Fragment {
         activityMain.setFabOnClickListener(onClickListenerFABFragmentEditPlaylist);
     }
 
-    void popBackStack(View view) {
-        NavController navController = NavHostFragment.findNavController(
-                FragmentEditPlaylist.this);
-        navController.popBackStack();
-    }
-
-    private void setUpBroadcastReceiverServiceConnected(final View view) {
+    private void setUpBroadcastReceiverServiceConnected() {
+        ActivityMain activityMain = ((ActivityMain) getActivity());
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -97,7 +93,7 @@ public class FragmentEditPlaylist extends Fragment {
         broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                updateFAB(view);
+                updateFAB();
             }
         };
         activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
@@ -106,12 +102,19 @@ public class FragmentEditPlaylist extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        ActivityMain activityMain = ((ActivityMain) getActivity());
+        View view = getView();
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
         view.findViewById(R.id.buttonEditSongs).setOnClickListener(null);
         onClickListenerFragmentEditPlaylistButtonSelectSongs = null;
         onClickListenerFABFragmentEditPlaylist = null;
-        activityMain = null;
-        view = null;
+    }
+
+    // TODO move?
+    void popBackStack() {
+        NavController navController = NavHostFragment.findNavController(
+                FragmentEditPlaylist.this);
+        navController.popBackStack();
     }
 
 }

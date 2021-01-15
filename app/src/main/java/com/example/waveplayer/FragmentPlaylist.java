@@ -28,16 +28,16 @@ public class FragmentPlaylist extends Fragment {
 
     public static final String NAME = "FragmentPlaylist";
 
-    BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
+    private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
-    BroadcastReceiver broadcastReceiverOptionsMenuCreated;
+    private BroadcastReceiver broadcastReceiverOptionsMenuCreated;
 
-    RecyclerView recyclerViewSongList;
+    private RecyclerView recyclerViewSongList;
 
-    OnClickListenerFABFragmentPlaylist onClickListenerFABFragmentPlaylist;
-    OnQueryTextListenerSearch onQueryTextListenerSearch;
-    ItemTouchListenerSong itemTouchListenerSong;
-    ItemTouchHelper itemTouchHelper;
+    private OnClickListenerFABFragmentPlaylist onClickListenerFABFragmentPlaylist;
+    private OnQueryTextListenerSearch onQueryTextListenerSearch;
+    private ItemTouchListenerSong itemTouchListenerSong;
+    private ItemTouchHelper itemTouchHelper;
 
     @Override
     public View onCreateView(
@@ -49,31 +49,39 @@ public class FragmentPlaylist extends Fragment {
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ActivityMain activityMain = ((ActivityMain) getActivity());
-        activityMain.isSong(false);
-        RandomPlaylist randomPlaylist = activityMain.getUserPickedPlaylist();
-        activityMain.setPlaylistToAddToQueue(randomPlaylist);
-        setUpBroadCastReceivers(randomPlaylist);
+        activityMain.hideKeyboard(view);
         setUpToolbar();
         updateFAB();
+        RandomPlaylist randomPlaylist = activityMain.getUserPickedPlaylist();
         setUpRecyclerView(randomPlaylist);
-        activityMain.hideKeyboard(view);
+        activityMain.isSong(false);
+        activityMain.setPlaylistToAddToQueue(randomPlaylist);
+        setUpBroadCastReceivers(randomPlaylist);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateFAB();
     }
 
     private void setUpToolbar() {
         ActivityMain activityMain = ((ActivityMain) getActivity());
         Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
-        Menu menu = toolbar.getMenu();
-        if (menu != null) {
-            menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(true);
-            menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).setVisible(true);
-            menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).setVisible(true);
-            menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(true);
-            MenuItem itemSearch = menu.findItem(R.id.action_search);
-            if (itemSearch != null) {
-                onQueryTextListenerSearch = new OnQueryTextListenerSearch(activityMain, NAME);
-                SearchView searchView = (SearchView) (itemSearch.getActionView());
-                searchView.setOnQueryTextListener(null);
-                searchView.setOnQueryTextListener(onQueryTextListenerSearch);
+        if(toolbar != null) {
+            Menu menu = toolbar.getMenu();
+            if (menu != null) {
+                menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(true);
+                menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).setVisible(true);
+                menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).setVisible(true);
+                menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(true);
+                MenuItem itemSearch = menu.findItem(R.id.action_search);
+                if (itemSearch != null) {
+                    onQueryTextListenerSearch = new OnQueryTextListenerSearch(activityMain, NAME);
+                    SearchView searchView = (SearchView) (itemSearch.getActionView());
+                    searchView.setOnQueryTextListener(null);
+                    searchView.setOnQueryTextListener(onQueryTextListenerSearch);
+                }
             }
         }
     }
@@ -149,11 +157,13 @@ public class FragmentPlaylist extends Fragment {
         broadcastReceiverOptionsMenuCreated = null;
         onQueryTextListenerSearch = null;
         Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
-        Menu menu = toolbar.getMenu();
-        if (menu != null) {
-            MenuItem itemSearch = menu.findItem(R.id.action_search);
-            SearchView searchView = (SearchView) (itemSearch.getActionView());
-            searchView.onActionViewCollapsed();
+        if(toolbar != null) {
+            Menu menu = toolbar.getMenu();
+            if (menu != null) {
+                MenuItem itemSearch = menu.findItem(R.id.action_search);
+                SearchView searchView = (SearchView) (itemSearch.getActionView());
+                searchView.onActionViewCollapsed();
+            }
         }
         itemTouchHelper.attachToRecyclerView(null);
         itemTouchListenerSong = null;

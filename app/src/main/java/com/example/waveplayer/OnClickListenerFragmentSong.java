@@ -5,7 +5,7 @@ import android.widget.ImageButton;
 
 public class OnClickListenerFragmentSong implements View.OnClickListener {
 
-    ActivityMain activityMain;
+    private final ActivityMain activityMain;
 
     public OnClickListenerFragmentSong(ActivityMain activityMain) {
         this.activityMain = activityMain;
@@ -15,13 +15,19 @@ public class OnClickListenerFragmentSong implements View.OnClickListener {
     public void onClick(View v) {
         synchronized (activityMain.lock) {
             if (v.getId() == R.id.button_thumb_down) {
-                activityMain.getCurrentPlaylist().bad(
-                        activityMain.getCurrentSong(), activityMain.getPercentChangeDown());
-                activityMain.saveFile();
+                AudioUri audioUri = activityMain.getCurrentSong();
+                if(audioUri != null) {
+                    activityMain.getCurrentPlaylist().bad(
+                            audioUri, activityMain.getPercentChangeDown());
+                    activityMain.saveFile();
+                }
             } else if (v.getId() == R.id.button_thumb_up) {
-                activityMain.getCurrentPlaylist().good(
-                        activityMain.getCurrentSong(), activityMain.getPercentChangeUp());
-                activityMain.saveFile();
+                AudioUri audioUri = activityMain.getCurrentSong();
+                if(audioUri != null) {
+                    activityMain.getCurrentPlaylist().good(
+                            audioUri, activityMain.getPercentChangeUp());
+                    activityMain.saveFile();
+                }
             } else if (v.getId() == R.id.imageButtonShuffle) {
                 ImageButton imageButton = (ImageButton)v;
                 if(activityMain.shuffling()){

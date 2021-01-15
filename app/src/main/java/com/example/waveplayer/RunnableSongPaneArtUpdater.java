@@ -9,7 +9,7 @@ import androidx.core.content.res.ResourcesCompat;
 
 public class RunnableSongPaneArtUpdater implements Runnable {
 
-    ActivityMain activityMain;
+    private final ActivityMain activityMain;
 
     public RunnableSongPaneArtUpdater(ActivityMain activityMain) {
         this.activityMain = activityMain;

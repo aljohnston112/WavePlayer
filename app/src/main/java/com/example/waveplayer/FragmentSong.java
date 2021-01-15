@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -16,17 +17,18 @@ import android.widget.ImageButton;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 
 public class FragmentSong extends Fragment {
 
-    BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
-    BroadcastReceiver broadcastReceiverOptionsMenuCreated;
+    private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
+    private BroadcastReceiver broadcastReceiverOptionsMenuCreated;
 
-    OnClickListenerFragmentSong onClickListenerFragmentSong;
-    OnTouchListenerFragmentSongButtons onTouchListenerFragmentSongButtons;
-    OnLayoutChangeListenerFragmentSongButtons onLayoutChangeListenerFragmentSongButtons;
+    private OnClickListenerFragmentSong onClickListenerFragmentSong;
+    private OnTouchListenerFragmentSongButtons onTouchListenerFragmentSongButtons;
+    private OnLayoutChangeListenerFragmentSongButtons onLayoutChangeListenerFragmentSongButtons;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -43,25 +45,16 @@ public class FragmentSong extends Fragment {
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ActivityMain activityMain = ((ActivityMain) getActivity());
-        activityMain.isSong(true);
+        activityMain.hideKeyboard(view);
         activityMain.setActionBarTitle(getResources().getString(R.string.now_playing));
+        setUpToolbar();
         activityMain.showFab(false);
-        activityMain.setSongToAddToQueue(activityMain.getCurrentSong());
-        hideKeyBoard();
         setUpButtons();
-        updateUI();
+        activityMain.updateUI();
+        activityMain.isSong(true);
+        activityMain.setSongToAddToQueue(activityMain.getCurrentSong());
         setUpBroadcastReceiverServiceConnected();
         setUpBroadcastReceiverServiceOnOptionsMenuCreated();
-    }
-
-    private void updateUI(){
-        ActivityMain activityMain = ((ActivityMain) getActivity());
-        activityMain.updateUI();
-    }
-
-    private void hideKeyBoard() {
-        ActivityMain activityMain = ((ActivityMain) getActivity());
-        activityMain.hideKeyboard(getView());
     }
 
     private void setUpBroadcastReceiverServiceOnOptionsMenuCreated() {
@@ -73,17 +66,26 @@ public class FragmentSong extends Fragment {
         broadcastReceiverOptionsMenuCreated = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
-                Menu menu = toolbar.getMenu();
-                menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).setVisible(true);
-                menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).setVisible(true);
+               setUpToolbar();
             }
         };
         activityMain.registerReceiver(broadcastReceiverOptionsMenuCreated, filterComplete);
     }
 
-    private void setUpBroadcastReceiverServiceConnected() {
+    private void setUpToolbar() {
         ActivityMain activityMain = ((ActivityMain) getActivity());
+        Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
+        if (toolbar != null) {
+            Menu menu = toolbar.getMenu();
+            if (menu != null) {
+                menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).setVisible(true);
+                menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).setVisible(true);
+            }
+        }
+    }
+
+    private void setUpBroadcastReceiverServiceConnected() {
+        final ActivityMain activityMain = ((ActivityMain) getActivity());
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -91,15 +93,11 @@ public class FragmentSong extends Fragment {
         broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                notifyServiceConnected();
+                activityMain.updateUI();
+                setUpButtons();
             }
         };
         activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
-    }
-
-    public void notifyServiceConnected() {
-        updateUI();
-        setUpButtons();
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -134,7 +132,6 @@ public class FragmentSong extends Fragment {
             } else {
                 buttonShuffle.setImageResource(R.drawable.ic_shuffle_white_24dp);
             }
-
             if (activityMain.loopingOne()) {
                 buttonLoop.setImageResource(R.drawable.repeat_one_black_24dp);
             } else if (activityMain.looping()) {

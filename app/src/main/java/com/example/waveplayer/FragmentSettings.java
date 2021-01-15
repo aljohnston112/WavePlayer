@@ -12,7 +12,7 @@ import androidx.fragment.app.Fragment;
 
 public class FragmentSettings extends Fragment {
 
-    OnClickListenerFABFragmentSettings onClickListenerFABFragmentSettings;
+    private OnClickListenerFABFragmentSettings onClickListenerFABFragmentSettings;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -29,6 +29,12 @@ public class FragmentSettings extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         updateMainContent();
         loadSettings();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateFAB();
     }
 
     private void updateMainContent() {

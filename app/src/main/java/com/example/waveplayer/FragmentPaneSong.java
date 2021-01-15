@@ -16,9 +16,9 @@ import android.view.ViewGroup;
 
 public class FragmentPaneSong extends Fragment {
 
-    BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
+    private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
-    OnLayoutChangeListenerSongPane onLayoutChangeListenerSongPane;
+    private OnLayoutChangeListenerSongPane onLayoutChangeListenerSongPane;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -29,15 +29,14 @@ public class FragmentPaneSong extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_pane_song, container, false);
-        onLayoutChangeListenerSongPane = new OnLayoutChangeListenerSongPane(this);
-        view.addOnLayoutChangeListener(onLayoutChangeListenerSongPane);
-        return view;
+        return inflater.inflate(R.layout.fragment_pane_song, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        onLayoutChangeListenerSongPane = new OnLayoutChangeListenerSongPane(this);
+        view.addOnLayoutChangeListener(onLayoutChangeListenerSongPane);
         updateUI();
         setUpBroadcastReceiver();
     }
@@ -59,16 +58,13 @@ public class FragmentPaneSong extends Fragment {
         broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                notifyServiceConnected();
+                updateUI();
             }
         };
         activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
     }
 
-    public void notifyServiceConnected() {
-        updateUI();
-    }
-
+    // TODO move
     public static Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
         int width = bm.getWidth();
         int height = bm.getHeight();

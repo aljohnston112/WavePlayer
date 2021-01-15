@@ -382,21 +382,31 @@ public class ServiceMain extends Service {
     // For updating the SeekBar
     private ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
-    public void updateSeekBarUpdater(SeekBar seekBar, TextView textViewCurrent, int maxMillis) {
+    private RunnableSeekBarUpdater runnableSeekBarUpdater;
+
+    public void updateSeekBarUpdater(SeekBar seekBar, TextView textViewCurrent) {
         Log.v(TAG, "updateSeekBarUpdater start");
         shutDownSeekBarUpdater();
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-        scheduledExecutorService.scheduleAtFixedRate(
-                new RunnableSeekBarUpdater(
-                        getCurrentMediaPlayerWUri(),
-                        seekBar, textViewCurrent, maxMillis,
-                        getResources().getConfiguration().locale),
-                0L, 1L, TimeUnit.SECONDS);
+        MediaPlayerWUri mediaPlayerWUri = getCurrentMediaPlayerWUri();
+        if(mediaPlayerWUri != null) {
+            runnableSeekBarUpdater = new RunnableSeekBarUpdater(
+                    mediaPlayerWUri,
+                    seekBar, textViewCurrent,
+                    getResources().getConfiguration().locale);
+            scheduledExecutorService.scheduleAtFixedRate(
+                    runnableSeekBarUpdater, 0L, 1L, TimeUnit.SECONDS);
+        }
+
         Log.v(TAG, "updateSeekBarUpdater end");
     }
 
     public void shutDownSeekBarUpdater() {
         Log.v(TAG, "shutDownSeekBarUpdater start");
+        if(runnableSeekBarUpdater != null) {
+            runnableSeekBarUpdater.shutDown();
+            runnableSeekBarUpdater = null;
+        }
         if (scheduledExecutorService != null) {
             scheduledExecutorService.shutdown();
             scheduledExecutorService = null;
@@ -408,7 +418,7 @@ public class ServiceMain extends Service {
             broadcastReceiverNotificationButtonsForServiceMainButtons =
             new BroadcastReceiverNotificationButtonsForServiceMain(this);
 
-    private final MediaPlayer.OnCompletionListener onCompletionListener =
+    final MediaPlayer.OnCompletionListener onCompletionListener =
             new MediaPlayerOnCompletionListener(this);
 
     private RemoteViews remoteViewsNotificationLayout;
@@ -900,12 +910,12 @@ public class ServiceMain extends Service {
         if (currentSong != null) {
             MediaPlayerWUri mediaPlayerWURI = getCurrentMediaPlayerWUri();
             if (mediaPlayerWURI != null) {
-                if (mediaPlayerWURI.isPrepared && mediaPlayerWURI.isPlaying()) {
+                if (mediaPlayerWURI.isPrepared() && mediaPlayerWURI.isPlaying()) {
                     mediaPlayerWURI.pause();
                     isPlaying = false;
                 } else {
                     if (requestAudioFocus()) {
-                        mediaPlayerWURI.shouldStart(true);
+                        mediaPlayerWURI.shouldPlay(true);
                         isPlaying = true;
                         songInProgress = true;
                     }
@@ -1023,7 +1033,7 @@ public class ServiceMain extends Service {
         MediaPlayerWUri mediaPlayerWURI = getCurrentMediaPlayerWUri();
         if (mediaPlayerWURI != null) {
             mediaPlayerWURI.seekTo(0);
-            mediaPlayerWURI.shouldStart(true);
+            mediaPlayerWURI.shouldPlay(true);
             // TODO make a setting?
             //addToQueueAtCurrentIndex(currentSong.getUri());
         } else {
@@ -1065,7 +1075,10 @@ public class ServiceMain extends Service {
         if (mediaPlayerWURI != null) {
             playAndMakeIfNeeded(mediaPlayerWURI);
         } else {
-            makeMediaPlayerWURIAndPlay(uriAudioURILinkedHashMap.get(uri));
+            AudioUri audioUri = uriAudioURILinkedHashMap.get(uri);
+            if(audioUri != null) {
+                makeMediaPlayerWURIAndPlay(audioUri);
+            }
         }
         Log.v(TAG, "playAndMakeIfNeeded w/ Uri end");
     }
@@ -1074,7 +1087,7 @@ public class ServiceMain extends Service {
         Log.v(TAG, "playAndMakeIfNeeded started");
         stopCurrentSong();
         if (requestAudioFocus()) {
-            mediaPlayerWURI.shouldStart(true);
+            mediaPlayerWURI.shouldPlay(true);
             isPlaying = true;
             songInProgress = true;
         }
@@ -1092,7 +1105,7 @@ public class ServiceMain extends Service {
         if (currentSong != null) {
             MediaPlayerWUri mediaPlayerWURI = getMediaPlayerWUri(currentSong.getUri());
             if (mediaPlayerWURI != null) {
-                if (mediaPlayerWURI.isPrepared && mediaPlayerWURI.isPlaying()) {
+                if (mediaPlayerWURI.isPrepared() && mediaPlayerWURI.isPlaying()) {
                     mediaPlayerWURI.stop();
                     mediaPlayerWURI.prepareAsync();
                 }
@@ -1130,7 +1143,7 @@ public class ServiceMain extends Service {
                     getMediaPlayerWUri(songQueueIterator.previous());
             songQueueIterator.next();
             if (mediaPlayerWURI != null) {
-                if (mediaPlayerWURI.isPrepared && mediaPlayerWURI.isPlaying()) {
+                if (mediaPlayerWURI.isPrepared() && mediaPlayerWURI.isPlaying()) {
                     mediaPlayerWURI.stop();
                     mediaPlayerWURI.prepareAsync();
                 }

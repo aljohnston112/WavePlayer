@@ -6,7 +6,7 @@ import androidx.navigation.fragment.NavHostFragment;
 
 public class OnClickListenerFragmentEditPlaylistButtonSelectSongs implements View.OnClickListener {
 
-    FragmentEditPlaylist fragmentEditPlaylist;
+    private FragmentEditPlaylist fragmentEditPlaylist;
 
     OnClickListenerFragmentEditPlaylistButtonSelectSongs(FragmentEditPlaylist fragmentEditPlaylist){
         this.fragmentEditPlaylist = fragmentEditPlaylist;

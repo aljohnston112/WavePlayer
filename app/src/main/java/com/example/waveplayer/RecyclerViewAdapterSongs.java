@@ -73,9 +73,6 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                     if (activityMain != null) {
                         if (holder.audioURI.equals(activityMain.getCurrentSong())) {
                             activityMain.seekTo(0);
-                        } else {
-                            // TODO ???
-                            //activityMain.stopAndPreparePrevious();
                         }
                         if (fragment instanceof FragmentSongs) {
                             activityMain.setCurrentPlaylistToMaster();
@@ -113,7 +110,7 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
         return audioUris.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
 
         public final View songView;
         public final TextView textViewSongName;

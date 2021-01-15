@@ -82,11 +82,15 @@ public class RandomPlaylist implements Serializable {
     }
 
     public void good(AudioUri audioUri, double percent) {
-        probabilityFunction.good(audioUri, percent);
+        if(audioUri.good(percent)) {
+            probabilityFunction.good(audioUri, percent);
+        }
     }
 
     public void bad(AudioUri audioUri, double percent) {
-        probabilityFunction.bad(audioUri, percent);
+        if(audioUri.bad(percent)) {
+            probabilityFunction.bad(audioUri, percent);
+        }
     }
 
     public double getProbability(AudioUri audioUri){
@@ -94,11 +98,20 @@ public class RandomPlaylist implements Serializable {
     }
 
     public void clearProbabilities(){
+        for(AudioUri audioUri : probabilityFunction.getKeys()){
+            audioUri.clearProbabilities();
+        }
         probabilityFunction.clearProbabilities();
     }
 
     public AudioUri next(Random random) {
-        return probabilityFunction.fun(random);
+        AudioUri audioUri = null;
+        boolean next = false;
+        while(!next) {
+            audioUri = probabilityFunction.fun(random);
+            next = audioUri.shouldPlay(random);
+        }
+        return audioUri;
     }
 
     public int size() {

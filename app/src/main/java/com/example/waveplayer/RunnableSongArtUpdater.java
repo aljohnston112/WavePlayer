@@ -12,7 +12,7 @@ import static com.example.waveplayer.FragmentPaneSong.getResizedBitmap;
 
 public class RunnableSongArtUpdater implements Runnable {
 
-    ActivityMain activityMain;
+    private final ActivityMain activityMain;
 
     public RunnableSongArtUpdater(ActivityMain activityMain) {
         this.activityMain = activityMain;
