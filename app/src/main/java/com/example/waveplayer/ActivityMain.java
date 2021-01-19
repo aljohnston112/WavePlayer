@@ -8,8 +8,6 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
@@ -42,6 +40,9 @@ import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.example.waveplayer.fragments.fragment_pane_song.OnClickListenerSongPane;
+import com.example.waveplayer.random_playlist.AudioUri;
+import com.example.waveplayer.random_playlist.RandomPlaylist;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import java.io.ByteArrayInputStream;
@@ -56,7 +57,7 @@ import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_
 import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG;
 import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_IS_SONG;
 import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_PLAYLISTS;
-import static com.example.waveplayer.FragmentPaneSong.getResizedBitmap;
+import static com.example.waveplayer.fragments.fragment_pane_song.FragmentPaneSong.getResizedBitmap;
 
 public class ActivityMain extends AppCompatActivity {
 
@@ -72,7 +73,6 @@ public class ActivityMain extends AppCompatActivity {
     // Open current song in folder as a menu action
     // Setting to not keep playing after queue is done
 
-    static final String DEBUG_TAG = "debug";
     static final String TAG = "ActivityMain";
 
     private static final int REQUEST_CODE_PERMISSION_READ = 245083964;
@@ -333,7 +333,7 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "done sending runnable to hide song pane");
     }
 
-    void showSongPane() {
+    public void showSongPane() {
         Log.v(TAG, "sending runnable to show song pane");
         final View fragmentPaneSong = findViewById(R.id.fragmentSongPane);
         if (fragmentPaneSong.getVisibility() != View.VISIBLE) {
@@ -1012,7 +1012,7 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "clearUserPickedSongs end");
     }
 
-    boolean fragmentSongVisible() {
+    public boolean fragmentSongVisible() {
         Log.v(TAG, "fragmentSongVisible start");
         if (serviceMain != null) {
             Log.v(TAG, "fragmentSongVisible end");

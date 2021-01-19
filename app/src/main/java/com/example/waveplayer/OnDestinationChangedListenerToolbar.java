@@ -1,7 +1,6 @@
 package com.example.waveplayer;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 
 import androidx.annotation.NonNull;

@@ -7,7 +7,7 @@ import android.util.Log;
 
 public class BroadcastReceiverNotificationButtonsForServiceMain extends BroadcastReceiver {
 
-    private ServiceMain serviceMain;
+    private final ServiceMain serviceMain;
 
     BroadcastReceiverNotificationButtonsForServiceMain(ServiceMain serviceMain) {
         this.serviceMain = serviceMain;

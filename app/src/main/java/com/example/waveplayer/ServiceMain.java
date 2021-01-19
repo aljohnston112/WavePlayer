@@ -30,6 +30,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
+import com.example.waveplayer.fragments.fragment_pane_song.FragmentPaneSong;
+import com.example.waveplayer.random_playlist.AudioUri;
+import com.example.waveplayer.random_playlist.RandomPlaylist;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -894,7 +898,7 @@ public class ServiceMain extends Service {
             String data = cursor.getString(dataCol);
             Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
             if (!uriAudioURILinkedHashMap.containsKey(uri)) {
-                AudioUri audioURI = new AudioUri(uri, data, displayName, artist, title, id);
+                AudioUri audioURI = new AudioUri(uri, displayName, artist, title, id);
                 uriAudioURILinkedHashMap.put(uri, audioURI);
             }
             newURIs.add(uri);
@@ -957,7 +961,7 @@ public class ServiceMain extends Service {
     public boolean playPreviousInQueue() {
         Log.v(TAG, "playPreviousInQueue started");
         if (songQueueIterator.hasPrevious()) {
-            Uri uri = songQueueIterator.previous();
+            songQueueIterator.previous();
             if (songQueueIterator.hasPrevious()) {
                 playAndMakeIfNeeded(songQueueIterator.previous());
                 songQueueIterator.next();

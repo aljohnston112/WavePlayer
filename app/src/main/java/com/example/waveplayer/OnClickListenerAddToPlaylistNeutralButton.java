@@ -2,6 +2,9 @@ package com.example.waveplayer;
 
 import android.content.DialogInterface;
 
+import com.example.waveplayer.random_playlist.AudioUri;
+import com.example.waveplayer.random_playlist.RandomPlaylist;
+
 public class OnClickListenerAddToPlaylistNeutralButton implements DialogInterface.OnClickListener {
 
     private final ActivityMain activityMain;

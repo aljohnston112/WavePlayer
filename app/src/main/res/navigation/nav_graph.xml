@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/FragmentTitle"
-        android:name="com.example.waveplayer.FragmentTitle"
+        android:name="com.example.waveplayer.fragments.fragment_title.FragmentTitle"
         android:label="fragment_title"
         tools:layout="@layout/fragment_title">
 
@@ -26,12 +26,12 @@
     </fragment>
     <fragment
         android:id="@+id/FragmentSettings"
-        android:name="com.example.waveplayer.FragmentSettings"
+        android:name="com.example.waveplayer.fragments.fragment_settings.FragmentSettings"
         android:label="fragment_settings"
         tools:layout="@layout/fragment_settings" />
     <fragment
         android:id="@+id/FragmentPlaylists"
-        android:name="com.example.waveplayer.FragmentPlaylists"
+        android:name="com.example.waveplayer.fragments.fragment_playlists.FragmentPlaylists"
         android:label="fragment_playlist_list"
         tools:layout="@layout/recycler_view_playlist_list">
         <action
@@ -43,7 +43,7 @@
     </fragment>
     <fragment
         android:id="@+id/fragmentSongs"
-        android:name="com.example.waveplayer.FragmentSongs"
+        android:name="com.example.waveplayer.fragments.fragment_songs.FragmentSongs"
         android:label="fragment_songs_list"
         tools:layout="@layout/recycler_view_song_list" >
         <action
@@ -52,12 +52,12 @@
     </fragment>
     <fragment
         android:id="@+id/fragmentSong"
-        android:name="com.example.waveplayer.FragmentSong"
+        android:name="com.example.waveplayer.fragments.fragment_song.FragmentSong"
         android:label="fragment_song2"
         tools:layout="@layout/fragment_song" />
     <fragment
         android:id="@+id/fragmentPlaylist"
-        android:name="com.example.waveplayer.FragmentPlaylist"
+        android:name="com.example.waveplayer.fragments.fragment_playlist.FragmentPlaylist"
         android:label="fragment_playlist"
         tools:layout="@layout/fragment_playlist" >
         <action
@@ -69,11 +69,11 @@
     </fragment>
     <fragment
         android:id="@+id/FragmentSelectSongs"
-        android:name="com.example.waveplayer.FragmentSelectSongs"
+        android:name="com.example.waveplayer.fragments.fragment_select_songs.FragmentSelectSongs"
         android:label="fragment_select_song_list"/>
     <fragment
         android:id="@+id/fragmentEditPlaylist"
-        android:name="com.example.waveplayer.FragmentEditPlaylist"
+        android:name="com.example.waveplayer.fragments.fragment_edit_playlist.FragmentEditPlaylist"
         android:label="fragment_edit_playlist"
         tools:layout="@layout/fragment_edit_playlist" >
         <action

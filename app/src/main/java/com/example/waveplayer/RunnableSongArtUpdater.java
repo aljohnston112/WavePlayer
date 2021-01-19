@@ -8,7 +8,7 @@ import android.widget.ImageView;
 
 import androidx.core.content.res.ResourcesCompat;
 
-import static com.example.waveplayer.FragmentPaneSong.getResizedBitmap;
+import static com.example.waveplayer.fragments.fragment_pane_song.FragmentPaneSong.getResizedBitmap;
 
 public class RunnableSongArtUpdater implements Runnable {
 

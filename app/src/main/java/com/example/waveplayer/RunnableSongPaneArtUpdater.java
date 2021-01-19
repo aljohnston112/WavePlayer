@@ -7,6 +7,8 @@ import android.widget.ImageView;
 
 import androidx.core.content.res.ResourcesCompat;
 
+import com.example.waveplayer.fragments.fragment_pane_song.FragmentPaneSong;
+
 public class RunnableSongPaneArtUpdater implements Runnable {
 
     private final ActivityMain activityMain;

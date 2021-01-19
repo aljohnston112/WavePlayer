@@ -4,6 +4,8 @@ import android.media.MediaPlayer;
 import android.os.Build;
 import android.util.Log;
 
+import com.example.waveplayer.random_playlist.AudioUri;
+
 import static android.media.MediaPlayer.SEEK_CLOSEST;
 
 public class MediaPlayerWUri {
