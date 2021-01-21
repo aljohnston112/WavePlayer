@@ -39,7 +39,7 @@ public class UndoListenerSongRemoved implements View.OnClickListener {
         userPickedPlaylist.add(audioURI, probability);
         switchSongPosition(userPickedPlaylist,
                 userPickedPlaylist.size() - 1, position);
-        recyclerViewAdapter.updateList(new ArrayList<>(userPickedPlaylist.getAudioUris()));
+        recyclerViewAdapter.updateList(new ArrayList<>(userPickedPlaylist.getSongIDs()));
         recyclerViewAdapter.notifyDataSetChanged();
         activityMain.saveFile();
     }

@@ -66,14 +66,14 @@ public class OnCreateContextMenuListenerPlaylists implements View.OnCreateContex
         ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
         if (activityMain != null) {
             if (activityMain.songInProgress()) {
-                for (AudioUri audioURI : randomPlaylist.getAudioUris()) {
+                for (AudioUri audioURI : randomPlaylist.getSongIDs()) {
                     activityMain.addToQueue(audioURI.getUri());
                 }
             } else {
                 if(activityMain.songQueueIsEmpty()){
                     activityMain.setCurrentPlaylist(randomPlaylist);
                 }
-                for (AudioUri audioURI : randomPlaylist.getAudioUris()) {
+                for (AudioUri audioURI : randomPlaylist.getSongIDs()) {
                     activityMain.addToQueue(audioURI.getUri());
                 }
                 activityMain.shuffling(false);

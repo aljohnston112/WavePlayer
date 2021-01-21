@@ -34,7 +34,7 @@ public class OnClickListenerAddToPlaylistNeutralButton implements DialogInterfac
                 activityMain.addUserPickedSong(audioURI);
             }
             if (!isSong && randomPlaylist != null) {
-                for (AudioUri audioUriInPlaylist : randomPlaylist.getAudioUris()) {
+                for (AudioUri audioUriInPlaylist : randomPlaylist.getSongIDs()) {
                     activityMain.addUserPickedSong(audioUriInPlaylist);
                 }
             }

@@ -75,7 +75,7 @@ public class FragmentEditPlaylist extends Fragment {
         if (userPickedPlaylist != null) {
             // userPickedSongs.isEmpty() when the user is editing a playlist
             if (userPickedSongs.isEmpty()) {
-                userPickedSongs.addAll(userPickedPlaylist.getAudioUris());
+                userPickedSongs.addAll(userPickedPlaylist.getSongIDs());
             }
             finalEditTextPlaylistName.setText(userPickedPlaylist.getName());
         }

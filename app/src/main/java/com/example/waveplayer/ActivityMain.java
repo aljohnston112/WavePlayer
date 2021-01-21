@@ -1199,7 +1199,7 @@ public class ActivityMain extends AppCompatActivity {
                 serviceMain.addToQueue(songToAddToQueue.getUri());
 
             } else if (playlistToAddToQueue != null) {
-                for (AudioUri audioURI : playlistToAddToQueue.getAudioUris()) {
+                for (AudioUri audioURI : playlistToAddToQueue.getSongIDs()) {
                     serviceMain.addToQueue(audioURI.getUri());
                 }
                 if (serviceMain.songQueueIsEmpty()) {

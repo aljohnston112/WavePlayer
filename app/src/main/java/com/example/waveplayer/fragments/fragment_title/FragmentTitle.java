@@ -95,7 +95,7 @@ public class FragmentTitle extends Fragment {
             }
 
             private void removeMissingSongs(RandomPlaylist randomPlaylist) {
-                for (AudioUri audioURI : randomPlaylist.getAudioUris()) {
+                for (AudioUri audioURI : randomPlaylist.getSongIDs()) {
                     if (!audioUris.contains(audioURI)) {
                         randomPlaylist.remove(audioURI);
                         audioUris.remove(audioURI);
@@ -205,8 +205,7 @@ public class FragmentTitle extends Fragment {
                     this.mediaStoreUriID = id;
                     String title = cursor.getString(titleCol);
                     String artist = cursor.getString(artistCol);
-                    Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
-                    return new AudioUri(uri, displayName, artist, title, id);
+                    return new AudioUri(displayName, artist, title, id);
                 }
             }
         }

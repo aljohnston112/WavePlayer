@@ -5,7 +5,6 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -49,7 +48,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -65,154 +63,13 @@ public class ServiceMain extends Service {
 
     public static final String TAG = "ServiceMain";
     private static final String FILE_ERROR_LOG = "error";
-    private static final String FILE_SAVE = "playlists";
     private final static String NOTIFICATION_CHANNEL_ID = "PinkyPlayer";
-    private static final String MASTER_PLAYLIST_NAME = "MASTER_PLAYLIST_NAME";
 
-    private static final Random random = new Random();
     public static final Object lock = new Object();
 
+    private MediaController mediaController;
+
     // TODO make fragments communicate
-
-    // region settings
-
-    private double maxPercent = 0.1;
-
-    public double getMaxPercent() {
-        Log.v(TAG, "getMaxPercent start and end");
-        return maxPercent;
-    }
-
-    public void setMaxPercent(double maxPercent) {
-        Log.v(TAG, "setMaxPercent start");
-        this.maxPercent = maxPercent;
-        masterPlaylist.setMaxPercent(maxPercent);
-        for (RandomPlaylist randomPlaylist : playlists) {
-            randomPlaylist.setMaxPercent(maxPercent);
-        }
-        for (RandomPlaylist randomPlaylist : directoryPlaylists.values()) {
-            randomPlaylist.setMaxPercent(maxPercent);
-        }
-        Log.v(TAG, "setMaxPercent end");
-    }
-
-    private double percentChangeUp = 0.1;
-
-    public double getPercentChangeUp() {
-        Log.v(TAG, "getPercentChangeUp start and end");
-        return percentChangeUp;
-    }
-
-    public void setPercentChangeUp(double percentChangeUp) {
-        Log.v(TAG, "setPercentChangeUp start");
-        this.percentChangeUp = percentChangeUp;
-        Log.v(TAG, "setPercentChangeUp end");
-    }
-
-    private double percentChangeDown = 0.5;
-
-    public double getPercentChangeDown() {
-        Log.v(TAG, "getPercentChangeDown start and end");
-        return percentChangeDown;
-    }
-
-    public void setPercentChangeDown(double percentChangeDown) {
-        Log.v(TAG, "setPercentChangeDown start");
-        this.percentChangeDown = percentChangeDown;
-        Log.v(TAG, "setPercentChangeDown end");
-    }
-
-    // endregion settings
-
-    private final HashMap<Uri, MediaPlayerWUri> uriMediaPlayerWUriHashMap = new HashMap<>();
-
-    // TODO organize usages
-    private MediaPlayerWUri getCurrentMediaPlayerWUri() {
-        Log.v(TAG, "getCurrentMediaPlayerWUri start");
-        if (currentSong != null) {
-            Log.v(TAG, "getCurrentMediaPlayerWUri end");
-            return uriMediaPlayerWUriHashMap.get(currentSong.getUri());
-        }
-        Log.v(TAG, "getCurrentMediaPlayerWUri default end");
-        return null;
-    }
-
-    private MediaPlayerWUri getMediaPlayerWUri(Uri uri) {
-        Log.v(TAG, "getMediaPlayerWUri start and end");
-        return uriMediaPlayerWUriHashMap.get(uri);
-    }
-
-    private final LinkedHashMap<Uri, AudioUri> uriAudioURILinkedHashMap = new LinkedHashMap<>();
-
-    // region playlists
-
-    private RandomPlaylist masterPlaylist;
-
-    public List<AudioUri> getAllSongs() {
-        Log.v(TAG, "getAllSongs start and end");
-        return masterPlaylist.getAudioUris();
-    }
-
-    private final ArrayList<RandomPlaylist> playlists = new ArrayList<>();
-
-    public ArrayList<RandomPlaylist> getPlaylists() {
-        Log.v(TAG, "getPlaylists start and end");
-        return playlists;
-    }
-
-    public void addPlaylist(RandomPlaylist randomPlaylist) {
-        Log.v(TAG, "addPlaylist start");
-        playlists.add(randomPlaylist);
-        Log.v(TAG, "addPlaylist end");
-    }
-
-    public void addPlaylist(int position, RandomPlaylist randomPlaylist) {
-        Log.v(TAG, "addPlaylist w/ position start");
-        playlists.add(position, randomPlaylist);
-        Log.v(TAG, "addPlaylist w/ position end");
-    }
-
-    public void removePlaylist(RandomPlaylist randomPlaylist) {
-        Log.v(TAG, "removePlaylist start");
-        directoryPlaylists.remove(randomPlaylist.mediaStoreUriID);
-        playlists.remove(randomPlaylist);
-        Log.v(TAG, "removePlaylist end");
-    }
-
-    public RandomPlaylist getCurrentPlaylist() {
-        Log.v(TAG, "getCurrentPlaylist start and end");
-        return currentPlaylist;
-    }
-
-    private TreeMap<Long, RandomPlaylist> directoryPlaylists =
-            new TreeMap<>(new ComparableLongsSerializable());
-
-    static class ComparableLongsSerializable implements Serializable, Comparator<Long> {
-        @Override
-        public int compare(Long o1, Long o2) {
-            Log.v(TAG, "compare start and end");
-            return o1.compareTo(o2);
-        }
-    }
-
-    public boolean containsDirectoryPlaylist(long mediaStoreUriID) {
-        Log.v(TAG, "containsDirectoryPlaylist start and end");
-        return directoryPlaylists.get(mediaStoreUriID) != null;
-    }
-
-    public void addDirectoryPlaylist(long uriID, RandomPlaylist randomPlaylist) {
-        Log.v(TAG, "addDirectoryPlaylist start");
-        directoryPlaylists.put(uriID, randomPlaylist);
-        addPlaylist(randomPlaylist);
-        Log.v(TAG, "addDirectoryPlaylist end");
-    }
-
-    public RandomPlaylist getDirectoryPlaylist(long mediaStoreUriID) {
-        Log.v(TAG, "getDirectoryPlaylist start and end");
-        return directoryPlaylists.get(mediaStoreUriID);
-    }
-
-    // endregion playlists
 
     // region userPickedPlaylist
 
@@ -225,7 +82,7 @@ public class ServiceMain extends Service {
 
     public void setUserPickedPlaylistToMasterPlaylist() {
         Log.v(TAG, "setUserPickedPlaylistToMasterPlaylist start");
-        userPickedPlaylist = masterPlaylist;
+        userPickedPlaylist = mediaController.getMasterPlaylist();
         Log.v(TAG, "setUserPickedPlaylistToMasterPlaylist end");
     }
 
@@ -239,22 +96,22 @@ public class ServiceMain extends Service {
 
     // region userPickedSongs
 
-    private final List<AudioUri> userPickedSongs = new ArrayList<>();
+    private final List<Long> userPickedSongs = new ArrayList<>();
 
-    public List<AudioUri> getUserPickedSongs() {
+    public List<Long> getUserPickedSongs() {
         Log.v(TAG, "getUserPickedSongs start and end");
         return userPickedSongs;
     }
 
-    public void addUserPickedSong(AudioUri audioURI) {
+    public void addUserPickedSong(Long songId) {
         Log.v(TAG, "addUserPickedSong start");
-        userPickedSongs.add(audioURI);
+        userPickedSongs.add(songId);
         Log.v(TAG, "addUserPickedSong end");
     }
 
-    public void removeUserPickedSong(AudioUri audioURI) {
+    public void removeUserPickedSong(Long songID) {
         Log.v(TAG, "removeUserPickedSong start");
-        userPickedSongs.remove(audioURI);
+        userPickedSongs.remove(songID);
         Log.v(TAG, "removeUserPickedSong end");
     }
 
@@ -266,134 +123,17 @@ public class ServiceMain extends Service {
 
     // endregion userPickedSongs
 
-    // region currentPlaylist
-
-    private RandomPlaylist currentPlaylist;
-    private ArrayList<AudioUri> currentPlaylistArray;
-    private ListIterator<AudioUri> currentPlaylistIterator;
-
-    public void setCurrentPlaylistToMaster() {
-        Log.v(TAG, "setCurrentPlaylistToMaster start");
-        setCurrentPlaylist(masterPlaylist);
-        Log.v(TAG, "setCurrentPlaylistToMaster end");
-    }
-
-    public void setCurrentPlaylist(RandomPlaylist currentPlaylist) {
-        Log.v(TAG, "setCurrentPlaylist start");
-        this.currentPlaylist = currentPlaylist;
-        currentPlaylistArray = currentPlaylist.getAudioUris();
-        clearSongQueue();
-        Log.v(TAG, "setCurrentPlaylist end");
-    }
-
-    public void clearProbabilities() {
-        Log.v(TAG, "clearProbabilities start");
-        currentPlaylist.clearProbabilities();
-        Log.v(TAG, "clearProbabilities end");
-    }
-
-    // endregion currentPlaylist
-
-    // region currentSongQueue
-
-    private final LinkedList<Uri> songQueue = new LinkedList<>();
-    private ListIterator<Uri> songQueueIterator;
-
-    public boolean songQueueIsEmpty() {
-        Log.v(TAG, "songQueueIsEmpty start and end");
-        return songQueue.size() == 0;
-    }
-
-    private AudioUri currentSong;
-
-    public AudioUri getCurrentSong() {
-        Log.v(TAG, "getCurrentSong start and end");
-        return currentSong;
-    }
-
-    public int getCurrentTime() {
-        Log.v(TAG, "getCurrentTime start");
-        MediaPlayerWUri mediaPlayerWURI = getCurrentMediaPlayerWUri();
-        if (mediaPlayerWURI != null) {
-            Log.v(TAG, "getCurrentTime end");
-            return mediaPlayerWURI.getCurrentPosition();
-        } else {
-            Log.v(TAG, "getCurrentTime default end");
-            return -1;
-        }
-    }
-
-    private boolean isPlaying = false;
-
-    public boolean isPlaying() {
-        Log.v(TAG, "isPlaying start and end");
-        return isPlaying;
-    }
-
-    private boolean songInProgress = false;
-
-    public boolean songInProgress() {
-        // Log.v(TAG, "songInProgress start and end");
-        return songInProgress;
-    }
-
-    // endregion currentSongQueue
-
-    // region playbackLogic
-
-    private boolean shuffling = true;
-
-    public boolean shuffling() {
-        Log.v(TAG, "shuffling start and end");
-        return shuffling;
-    }
-
-    public void shuffling(boolean shuffling) {
-        Log.v(TAG, "set shuffling start");
-        this.shuffling = shuffling;
-        Log.v(TAG, "set shuffling end");
-    }
-
-    private boolean looping = false;
-
-    public boolean looping() {
-        Log.v(TAG, "looping start and end");
-        return looping;
-    }
-
-    public void looping(boolean looping) {
-        Log.v(TAG, "set looping start");
-        this.looping = looping;
-        Log.v(TAG, "set looping end");
-    }
-
-    private boolean loopingOne = false;
-
-    public boolean loopingOne() {
-        Log.v(TAG, "loopingOne start and end");
-        return loopingOne;
-    }
-
-    public void loopingOne(boolean loopingOne) {
-        Log.v(TAG, "set loopingOne start");
-        this.loopingOne = loopingOne;
-        Log.v(TAG, "set loopingOne end");
-    }
-
-    // endregion playbackLogic
-
-    private ExecutorService executorService = Executors.newSingleThreadExecutor();
     // For updating the SeekBar
     private ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
     private RunnableSeekBarUpdater runnableSeekBarUpdater;
 
-    public void updateSeekBarUpdater(SeekBar seekBar, TextView textViewCurrent) {
+    public void updateSeekBarUpdater(
+            MediaPlayerWUri mediaPlayerWUri, SeekBar seekBar, TextView textViewCurrent) {
         Log.v(TAG, "updateSeekBarUpdater start");
         shutDownSeekBarUpdater();
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-        MediaPlayerWUri mediaPlayerWUri = getCurrentMediaPlayerWUri();
-        if(mediaPlayerWUri != null) {
+        if (mediaPlayerWUri != null) {
             runnableSeekBarUpdater = new RunnableSeekBarUpdater(
                     mediaPlayerWUri,
                     seekBar, textViewCurrent,
@@ -401,13 +141,12 @@ public class ServiceMain extends Service {
             scheduledExecutorService.scheduleAtFixedRate(
                     runnableSeekBarUpdater, 0L, 1L, TimeUnit.SECONDS);
         }
-
         Log.v(TAG, "updateSeekBarUpdater end");
     }
 
     public void shutDownSeekBarUpdater() {
         Log.v(TAG, "shutDownSeekBarUpdater start");
-        if(runnableSeekBarUpdater != null) {
+        if (runnableSeekBarUpdater != null) {
             runnableSeekBarUpdater.shutDown();
             runnableSeekBarUpdater = null;
         }
@@ -421,9 +160,6 @@ public class ServiceMain extends Service {
     private final BroadcastReceiverNotificationButtonsForServiceMain
             broadcastReceiverNotificationButtonsForServiceMainButtons =
             new BroadcastReceiverNotificationButtonsForServiceMain(this);
-
-    final MediaPlayer.OnCompletionListener onCompletionListener =
-            new MediaPlayerOnCompletionListener(this);
 
     private RemoteViews remoteViewsNotificationLayout;
     private RemoteViews remoteViewsNotificationLayoutWithoutArt;
@@ -476,9 +212,6 @@ public class ServiceMain extends Service {
     // endregion ActivityMainUI
 
     private boolean serviceStarted = false;
-    private boolean haveAudioFocus = false;
-    private boolean saveFileLoaded = false;
-    private boolean audioFilesLoaded = false;
 
     private final IBinder serviceMainBinder = new ServiceMainBinder();
 
@@ -488,17 +221,12 @@ public class ServiceMain extends Service {
     public void onCreate() {
         Log.v(TAG, "onCreate started");
         super.onCreate();
-        if (!saveFileLoaded) {
-            Log.v(TAG, "onCreate is loading");
-            loadSaveFile();
-            setUpBroadCastReceivers();
-            // setUpExceptionSaver();
-            // logLastThrownException();
-            Log.v(TAG, "onCreate done loading");
-        } else {
-            Log.v(TAG, "onCreate already loaded");
-        }
-        Log.v(TAG, "onCreate ended");
+        Log.v(TAG, "onCreate is loading");
+        mediaController = MediaController.getInstance(this);
+        setUpBroadCastReceivers();
+        // setUpExceptionSaver();
+        // logLastThrownException();
+        Log.v(TAG, "onCreate done loading");
     }
 
     private void setUpBroadCastReceivers() {
@@ -562,30 +290,6 @@ public class ServiceMain extends Service {
         }
     }
 
-    private void loadSaveFile() {
-        Log.v(TAG, "Loading the save file");
-        File file = new File(getBaseContext().getFilesDir(), FILE_SAVE);
-        if (file.exists()) {
-            try (FileInputStream fileInputStream = getApplicationContext().openFileInput(FILE_SAVE);
-                 ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
-                maxPercent = objectInputStream.readDouble();
-                percentChangeUp = objectInputStream.readDouble();
-                percentChangeDown = objectInputStream.readDouble();
-                masterPlaylist = (RandomPlaylist) objectInputStream.readObject();
-                int playlistSize = objectInputStream.readInt();
-                for (int i = 0; i < playlistSize; i++) {
-                    playlists.add((RandomPlaylist) objectInputStream.readObject());
-                }
-                directoryPlaylists = (TreeMap<Long, RandomPlaylist>) objectInputStream.readObject();
-            } catch (ClassNotFoundException | IOException e) {
-                e.printStackTrace();
-                Log.e(TAG, "Error encountered while loading the save file");
-            }
-        }
-        saveFileLoaded = true;
-        Log.v(TAG, "Save file loaded");
-    }
-
     // endregion onCreate
 
     // region onStartCommand
@@ -634,7 +338,8 @@ public class ServiceMain extends Service {
         notificationCompatBuilder.setContentIntent(pendingIntent);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             int importance = NotificationManager.IMPORTANCE_LOW;
-            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_ID, importance);
+            NotificationChannel channel = new NotificationChannel(
+                    NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_ID, importance);
             String description = "Intelligent music player";
             channel.setDescription(description);
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
@@ -653,7 +358,7 @@ public class ServiceMain extends Service {
         updateNotificationPlayButton();
         updateSongArt();
         remoteViewsNotificationLayout.removeAllViews(R.id.pane_notification_linear_layout);
-        if(hasArt){
+        if (hasArt) {
             remoteViewsNotificationLayout.addView(
                     R.id.pane_notification_linear_layout, remoteViewsNotificationLayoutWithArt);
         } else {
@@ -669,9 +374,10 @@ public class ServiceMain extends Service {
 
     private void updateSongArt() {
         Log.v(TAG, "updateSongArt for notification start");
-        // TODO update song art backgorund
-        if (currentSong != null) {
-            Bitmap bitmap = ActivityMain.getThumbnail(currentSong, 92, 92, getApplicationContext());
+        // TODO update song art background
+        if (mediaController.getCurrentSong() != null) {
+            Bitmap bitmap = ActivityMain.getThumbnail(
+                    mediaController.getCurrentSong(), 92, 92, getApplicationContext());
             if (bitmap != null) {
                 FragmentPaneSong.getResizedBitmap(bitmap, songPaneArtWidth, songPaneArtHeight);
                 remoteViewsNotificationLayoutWithArt.setImageViewBitmap(
@@ -692,11 +398,11 @@ public class ServiceMain extends Service {
 
     private void updateNotificationSongName() {
         Log.v(TAG, "updateNotificationSongName start");
-        if (currentSong != null) {
+        if (mediaController.getCurrentSong() != null) {
             remoteViewsNotificationLayoutWithoutArt.setTextViewText(
-                    R.id.textViewNotificationSongPaneSongName, currentSong.title);
+                    R.id.textViewNotificationSongPaneSongName, mediaController.getCurrentSong().title);
             remoteViewsNotificationLayoutWithArt.setTextViewText(
-                    R.id.textViewNotificationSongPaneSongNameWArt, currentSong.title);
+                    R.id.textViewNotificationSongPaneSongNameWArt, mediaController.getCurrentSong().title);
         } else {
             remoteViewsNotificationLayoutWithoutArt.setTextViewText(
                     R.id.textViewNotificationSongPaneSongName, NOTIFICATION_CHANNEL_ID);
@@ -708,7 +414,7 @@ public class ServiceMain extends Service {
 
     void updateNotificationPlayButton() {
         Log.v(TAG, "updateNotificationPlayButton start");
-        if (isPlaying) {
+        if (mediaController.isPlaying()) {
             remoteViewsNotificationLayoutWithoutArt.setImageViewResource(
                     R.id.imageButtonNotificationSongPanePlayPause, R.drawable.pause_black_24dp);
             remoteViewsNotificationLayoutWithArt.setImageViewResource(
@@ -799,481 +505,16 @@ public class ServiceMain extends Service {
 
     public void taskRemoved() {
         Log.v(TAG, "destroy started");
-        if (isPlaying) {
-            pauseOrPlay();
+        if (mediaController.isPlaying()) {
+            mediaController.pauseOrPlay();
         }
-        releaseMediaPlayers();
+        mediaController.releaseMediaPlayers();
         shutDownSeekBarUpdater();
-        if (executorService != null) {
-            executorService.shutdown();
-            executorService = null;
-        }
         unregisterReceiver(broadcastReceiverNotificationButtonsForServiceMainButtons);
         stopSelf();
         Log.v(TAG, "destroy ended");
     }
 
-    public void releaseMediaPlayers() {
-        Log.v(TAG, "Releasing MediaPlayers");
-        synchronized (this) {
-            Iterator<MediaPlayerWUri> iterator = uriMediaPlayerWUriHashMap.values().iterator();
-            MediaPlayerWUri mediaPlayerWURI;
-            while (iterator.hasNext()) {
-                mediaPlayerWURI = iterator.next();
-                mediaPlayerWURI.release();
-                iterator.remove();
-            }
-        }
-        Log.v(TAG, "Done releasing MediaPlayers");
-    }
-
-    void getAudioFiles() {
-        Log.v(TAG, "Getting audio files");
-        if (!audioFilesLoaded) {
-            String[] projection = new String[]{
-                    MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DISPLAY_NAME, MediaStore.Audio.Media.IS_MUSIC,
-                    MediaStore.Audio.Media.ARTIST_ID, MediaStore.Audio.Media.TITLE, MediaStore.Images.Media.DATA
-            };
-            String selection = MediaStore.Audio.Media.IS_MUSIC + " != ?";
-            String[] selectionArgs = new String[]{"0"};
-            String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
-            try (Cursor cursor = getApplicationContext().getContentResolver().query(
-                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                    projection, selection, selectionArgs, sortOrder)) {
-                if (cursor != null) {
-                    List<Uri> newURIs = getURIs(cursor);
-                    if (!uriAudioURILinkedHashMap.isEmpty() && saveFileLoaded) {
-                        if (masterPlaylist != null) {
-                            addNewSongs();
-                            removeMissingSongs(newURIs);
-                        } else {
-                            masterPlaylist = new RandomPlaylist(
-                                    MASTER_PLAYLIST_NAME, new ArrayList<>(
-                                    uriAudioURILinkedHashMap.values()),
-                                    maxPercent, true, -1);
-                        }
-                        currentPlaylist = masterPlaylist;
-                        songQueueIterator = songQueue.listIterator();
-                    }
-                }
-            }
-            audioFilesLoaded = true;
-        }
-        Log.v(TAG, "Done getting audio files");
-    }
-
-    private void removeMissingSongs(List<Uri> newURIs) {
-        for (AudioUri audioURI : masterPlaylist.getAudioUris()) {
-            if (!newURIs.contains(audioURI.getUri())) {
-                masterPlaylist.remove(audioURI);
-                uriAudioURILinkedHashMap.remove(audioURI.getUri());
-                uriMediaPlayerWUriHashMap.remove(audioURI.getUri());
-            }
-        }
-    }
-
-    private void addNewSongs() {
-        for (AudioUri audioURIFromUriMap : uriAudioURILinkedHashMap.values()) {
-            if (audioURIFromUriMap != null) {
-                if (!masterPlaylist.contains(audioURIFromUriMap)) {
-                    masterPlaylist.add(audioURIFromUriMap);
-                }
-            }
-        }
-    }
-
-    private List<Uri> getURIs(Cursor cursor) {
-        Log.v(TAG, "Getting uris");
-        ArrayList<Uri> newURIs = new ArrayList<>();
-        int idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
-        int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
-        int titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE);
-        int artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST_ID);
-        int dataCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
-        while (cursor.moveToNext()) {
-            long id = cursor.getLong(idCol);
-            String displayName = cursor.getString(nameCol);
-            String title = cursor.getString(titleCol);
-            String artist = cursor.getString(artistCol);
-            String data = cursor.getString(dataCol);
-            Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
-            if (!uriAudioURILinkedHashMap.containsKey(uri)) {
-                AudioUri audioURI = new AudioUri(uri, displayName, artist, title, id);
-                uriAudioURILinkedHashMap.put(uri, audioURI);
-            }
-            newURIs.add(uri);
-        }
-        Log.v(TAG, "Done getting uris");
-        return newURIs;
-    }
-
     // region mediaControls
-
-    public void pauseOrPlay() {
-        Log.v(TAG, "pauseOrPlay started");
-        if (currentSong != null) {
-            MediaPlayerWUri mediaPlayerWURI = getCurrentMediaPlayerWUri();
-            if (mediaPlayerWURI != null) {
-                if (mediaPlayerWURI.isPrepared() && mediaPlayerWURI.isPlaying()) {
-                    mediaPlayerWURI.pause();
-                    isPlaying = false;
-                } else {
-                    if (requestAudioFocus()) {
-                        mediaPlayerWURI.shouldPlay(true);
-                        isPlaying = true;
-                        songInProgress = true;
-                    }
-                }
-            }
-        } else if (!isPlaying) {
-            playNext();
-        }
-        updateNotification();
-        Log.v(TAG, "pauseOrPlay ended");
-    }
-
-    public boolean playNextInQueue(boolean addNew) {
-        Log.v(TAG, "playNextInQueue started");
-        if (songQueueIterator.hasNext()) {
-            playAndMakeIfNeeded(songQueueIterator.next());
-        } else if (looping) {
-            if (shuffling) {
-                songQueueIterator = songQueue.listIterator();
-                if (songQueueIterator.hasNext()) {
-                    playAndMakeIfNeeded(songQueueIterator.next());
-                }
-            } else {
-                Log.v(TAG, "playNextInQueue end");
-                return false;
-            }
-        } else if (addNew) {
-            if (shuffling) {
-                addToQueueAndPlay(currentPlaylist.next(random).getUri());
-            } else {
-                Log.v(TAG, "playNextInQueue end");
-                return false;
-            }
-        }
-        Log.v(TAG, "playNextInQueue end");
-        return true;
-    }
-
-    public boolean playPreviousInQueue() {
-        Log.v(TAG, "playPreviousInQueue started");
-        if (songQueueIterator.hasPrevious()) {
-            songQueueIterator.previous();
-            if (songQueueIterator.hasPrevious()) {
-                playAndMakeIfNeeded(songQueueIterator.previous());
-                songQueueIterator.next();
-            } else if (looping) {
-                if (shuffling) {
-                    songQueueIterator = songQueue.listIterator(songQueue.size());
-                    if (songQueueIterator.hasPrevious()) {
-                        playAndMakeIfNeeded(songQueueIterator.previous());
-                        songQueueIterator.next();
-                    } else {
-                        Log.v(TAG, "playPreviousInQueue end");
-                        return false;
-                    }
-                }
-            } else {
-                seekTo(0);
-            }
-            Log.v(TAG, "playPreviousInQueue end");
-            return true;
-        }
-        Log.v(TAG, "playPreviousInQueue end");
-        return false;
-    }
-
-    public void playNextInPlaylist() {
-        Log.v(TAG, "playNextInPlaylist started");
-        if (currentPlaylistIterator.hasNext()) {
-            playAndMakeIfNeeded(currentPlaylistIterator.next().getUri());
-        } else if (looping) {
-            currentPlaylistIterator = currentPlaylistArray.listIterator();
-            if (currentPlaylistIterator.hasNext()) {
-                playAndMakeIfNeeded(currentPlaylistIterator.next().getUri());
-            }
-        }
-        Log.v(TAG, "playNextInPlaylist end");
-    }
-
-    public void playPreviousInPlaylist() {
-        Log.v(TAG, "playPreviousInPlaylist started");
-        if (currentPlaylistIterator.hasPrevious()) {
-            playAndMakeIfNeeded(currentPlaylistIterator.previous().getUri());
-        } else if (looping) {
-            currentPlaylistIterator = currentPlaylistArray.listIterator(currentPlaylistArray.size());
-            if (currentPlaylistIterator.hasPrevious()) {
-                playAndMakeIfNeeded(currentPlaylistIterator.previous().getUri());
-            }
-        }
-        Log.v(TAG, "playPreviousInPlaylist end");
-    }
-
-    public void playNext() {
-        Log.v(TAG, "playNext started");
-        if (loopingOne) {
-            playLoopingOne();
-        } else if (!playNextInQueue(true)) {
-            playNextInPlaylist();
-        }
-        Log.v(TAG, "playNext end");
-    }
-
-    public void playPrevious() {
-        Log.v(TAG, "playPrevious started");
-        if (loopingOne) {
-            playLoopingOne();
-        } else if (!playPreviousInQueue()) {
-            playPreviousInPlaylist();
-        }
-        Log.v(TAG, "playPrevious end");
-    }
-
-    void playLoopingOne() {
-        Log.v(TAG, "playLoopingOne started");
-        MediaPlayerWUri mediaPlayerWURI = getCurrentMediaPlayerWUri();
-        if (mediaPlayerWURI != null) {
-            mediaPlayerWURI.seekTo(0);
-            mediaPlayerWURI.shouldPlay(true);
-            // TODO make a setting?
-            //addToQueueAtCurrentIndex(currentSong.getUri());
-        } else {
-            playAndMakeIfNeeded(currentSong.getUri());
-        }
-        Log.v(TAG, "playLoopingOne end");
-    }
-
-    public void addToQueueAndPlay(Uri uri) {
-        Log.v(TAG, "addToQueueAndPlay started");
-        playAndMakeIfNeeded(uri);
-        songQueueIterator = null;
-        songQueue.add(uri);
-        songQueueIterator = songQueue.listIterator(songQueue.lastIndexOf(uri));
-        songQueueIterator.next();
-        Log.v(TAG, "addToQueueAndPlay end");
-    }
-
-    public void addToQueue(Uri uri) {
-        Log.v(TAG, "addToQueue started");
-        int pos = songQueueIterator.nextIndex();
-        songQueueIterator = null;
-        songQueue.add(uri);
-        songQueueIterator = songQueue.listIterator(pos);
-        Log.v(TAG, "addToQueue end");
-    }
-
-    public void clearSongQueue() {
-        Log.v(TAG, "clearSongQueue started");
-        songQueueIterator = null;
-        songQueue.clear();
-        songQueueIterator = songQueue.listIterator();
-        Log.v(TAG, "clearSongQueue end");
-    }
-
-    void playAndMakeIfNeeded(Uri uri) {
-        Log.v(TAG, "playAndMakeIfNeeded w/ Uri started");
-        MediaPlayerWUri mediaPlayerWURI = getMediaPlayerWUri(uri);
-        if (mediaPlayerWURI != null) {
-            playAndMakeIfNeeded(mediaPlayerWURI);
-        } else {
-            AudioUri audioUri = uriAudioURILinkedHashMap.get(uri);
-            if(audioUri != null) {
-                makeMediaPlayerWURIAndPlay(audioUri);
-            }
-        }
-        Log.v(TAG, "playAndMakeIfNeeded w/ Uri end");
-    }
-
-    private void playAndMakeIfNeeded(MediaPlayerWUri mediaPlayerWURI) {
-        Log.v(TAG, "playAndMakeIfNeeded started");
-        stopCurrentSong();
-        if (requestAudioFocus()) {
-            mediaPlayerWURI.shouldPlay(true);
-            isPlaying = true;
-            songInProgress = true;
-        }
-        currentSong = mediaPlayerWURI.audioURI;
-        updateNotification();
-        if (currentPlaylistArray != null) {
-            int i = currentPlaylistArray.indexOf(mediaPlayerWURI.audioURI);
-            currentPlaylistIterator = currentPlaylistArray.listIterator(i + 1);
-        }
-        Log.v(TAG, "playAndMakeIfNeeded ended");
-    }
-
-    private void stopCurrentSong() {
-        Log.v(TAG, "stopCurrentSong started");
-        if (currentSong != null) {
-            MediaPlayerWUri mediaPlayerWURI = getMediaPlayerWUri(currentSong.getUri());
-            if (mediaPlayerWURI != null) {
-                if (mediaPlayerWURI.isPrepared() && mediaPlayerWURI.isPlaying()) {
-                    mediaPlayerWURI.stop();
-                    mediaPlayerWURI.prepareAsync();
-                }
-            } else {
-                releaseMediaPlayers();
-            }
-            songInProgress = false;
-            isPlaying = false;
-        }
-        Log.v(TAG, "stopCurrentSong end");
-    }
-
-    public void seekTo(int progress) {
-        Log.v(TAG, "seekTo started");
-        MediaPlayerWUri mediaPlayerWUri = getCurrentMediaPlayerWUri();
-        if (mediaPlayerWUri != null) {
-            mediaPlayerWUri.seekTo(progress);
-        }
-        Log.v(TAG, "seekTo end");
-    }
-
-    private void makeMediaPlayerWURIAndPlay(AudioUri audioURI) {
-        Log.v(TAG, "makeMediaPlayerWURIAndPlay started");
-        MediaPlayerWUri mediaPlayerWURI =
-                new CallableCreateMediaPlayerWURI(this, audioURI).call();
-        uriMediaPlayerWUriHashMap.put(mediaPlayerWURI.audioURI.getUri(), mediaPlayerWURI);
-        playAndMakeIfNeeded(mediaPlayerWURI);
-        Log.v(TAG, "makeMediaPlayerWURIAndPlay ended");
-    }
-
-    void stopAndPreparePrevious() {
-        Log.v(TAG, "stopPreviousAndPrepare started");
-        if (songQueueIterator.hasPrevious()) {
-            final MediaPlayerWUri mediaPlayerWURI =
-                    getMediaPlayerWUri(songQueueIterator.previous());
-            songQueueIterator.next();
-            if (mediaPlayerWURI != null) {
-                if (mediaPlayerWURI.isPrepared() && mediaPlayerWURI.isPlaying()) {
-                    mediaPlayerWURI.stop();
-                    mediaPlayerWURI.prepareAsync();
-                }
-            } else {
-                releaseMediaPlayers();
-            }
-            songInProgress = false;
-            isPlaying = false;
-        }
-        Log.v(TAG, "stopPreviousAndPrepare ended");
-    }
-
-    public class CallableCreateMediaPlayerWURI implements Callable<MediaPlayerWUri> {
-
-        final ServiceMain serviceMain;
-
-        final AudioUri audioURI;
-
-        CallableCreateMediaPlayerWURI(ServiceMain serviceMain, AudioUri audioURI) {
-            this.serviceMain = serviceMain;
-            this.audioURI = audioURI;
-        }
-
-        @Override
-        public MediaPlayerWUri call() {
-            Log.v(TAG, "makeMediaPlayerWURI being made");
-            MediaPlayerWUri mediaPlayerWURI = new MediaPlayerWUri(
-                    serviceMain, MediaPlayer.create(
-                    getApplicationContext(), audioURI.getUri()), audioURI);
-            mediaPlayerWURI.setOnCompletionListener(onCompletionListener);
-            Log.v(TAG, "makeMediaPlayerWURI made");
-            return mediaPlayerWURI;
-        }
-
-    }
-
-    private boolean requestAudioFocus() {
-        Log.v(TAG, "Requesting audio focus");
-        if (haveAudioFocus) {
-            return true;
-        }
-        // TODO
-        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        AudioManager.OnAudioFocusChangeListener onAudioFocusChangeListener =
-                new AudioManager.OnAudioFocusChangeListener() {
-                    final Object lock = new Object();
-                    boolean mResumeOnFocusGain = false;
-
-                    @Override
-                    public void onAudioFocusChange(int i) {
-                        switch (i) {
-                            case AudioManager.AUDIOFOCUS_GAIN:
-                                if (mResumeOnFocusGain) {
-                                    synchronized (lock) {
-                                        mResumeOnFocusGain = false;
-                                    }
-                                    if (!isPlaying) {
-                                        pauseOrPlay();
-                                    }
-                                }
-                                break;
-                            case AudioManager.AUDIOFOCUS_LOSS:
-                                synchronized (lock) {
-                                    mResumeOnFocusGain = false;
-                                }
-                                if (isPlaying) {
-                                    pauseOrPlay();
-                                }
-                                break;
-                        }
-                    }
-                };
-        int result;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            AudioAttributes audioAttributes = new AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build();
-            AudioFocusRequest audioFocusRequest = new AudioFocusRequest.Builder(
-                    AudioManager.AUDIOFOCUS_GAIN)
-                    .setAudioAttributes(audioAttributes)
-                    .setAcceptsDelayedFocusGain(true)
-                    .setWillPauseWhenDucked(true)
-                    .setOnAudioFocusChangeListener(onAudioFocusChangeListener)
-                    .build();
-            result = audioManager.requestAudioFocus(audioFocusRequest);
-        } else {
-            result = audioManager.requestAudioFocus(
-                    onAudioFocusChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-        }
-        haveAudioFocus = result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
-        Log.v(TAG, "Done requesting audio focus");
-        return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
-    }
-
-    // endregion mediaControls
-
-    void saveFile() {
-        executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                Log.v(TAG, "saveFile started");
-                File file = new File(getBaseContext().getFilesDir(), FILE_SAVE);
-                //noinspection ResultOfMethodCallIgnored
-                file.delete();
-                try (FileOutputStream fos = getApplicationContext().openFileOutput(FILE_SAVE, Context.MODE_PRIVATE);
-                     ObjectOutputStream objectOutputStream = new ObjectOutputStream(fos)) {
-                    Log.v(TAG, "Creating save file");
-                    objectOutputStream.writeDouble(maxPercent);
-                    objectOutputStream.writeDouble(percentChangeUp);
-                    objectOutputStream.writeDouble(percentChangeDown);
-                    objectOutputStream.writeObject(masterPlaylist);
-                    objectOutputStream.writeInt(playlists.size());
-                    for (RandomPlaylist randomPlaylist : playlists) {
-                        objectOutputStream.writeObject(randomPlaylist);
-                    }
-                    objectOutputStream.writeObject(directoryPlaylists);
-                    objectOutputStream.flush();
-                    Log.v(TAG, "Save file created");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    Log.v(TAG, "Problem while trying to save file");
-                }
-                Log.v(TAG, "saveFile ended");
-            }
-        });
-    }
 
 }

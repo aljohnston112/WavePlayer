@@ -38,7 +38,7 @@ public class OnClickListenerAddToPlaylistPositiveButton implements DialogInterfa
             }
         }
         if (!isSong && randomPlaylist != null) {
-            for (AudioUri randomPlaylistAudioUri : randomPlaylist.getAudioUris()) {
+            for (AudioUri randomPlaylistAudioUri : randomPlaylist.getSongIDs()) {
                 for (int index : selectedPlaylistIndices) {
                     randomPlaylists.get(index).add(randomPlaylistAudioUri);
                 }

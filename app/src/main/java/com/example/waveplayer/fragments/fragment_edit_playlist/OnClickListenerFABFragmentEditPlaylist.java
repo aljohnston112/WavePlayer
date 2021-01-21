@@ -59,7 +59,7 @@ public class OnClickListenerFABFragmentEditPlaylist implements View.OnClickListe
             if (userPickedPlaylist.getName().equals(
                     editTextPlaylistName.getText().toString()) || !names.contains(editTextPlaylistName.getText().toString())) {
                 userPickedPlaylist.setName(editTextPlaylistName.getText().toString());
-                for (AudioUri audioURI : userPickedPlaylist.getAudioUris()) {
+                for (AudioUri audioURI : userPickedPlaylist.getSongIDs()) {
                     if (!userPickedSongs.contains(audioURI)) {
                         userPickedPlaylist.remove(audioURI);
                     }

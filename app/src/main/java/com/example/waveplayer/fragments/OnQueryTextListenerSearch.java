@@ -60,7 +60,7 @@ public class OnQueryTextListenerSearch implements SearchView.OnQueryTextListener
                 if (recyclerViewSongs != null) {
                     RecyclerViewAdapterSongs recyclerViewAdapterSongs =
                             (RecyclerViewAdapterSongs) recyclerViewSongs.getAdapter();
-                    List<AudioUri> audioUris = activityMain.getUserPickedPlaylist().getAudioUris();
+                    List<AudioUri> audioUris = activityMain.getUserPickedPlaylist().getSongIDs();
                     List<AudioUri> sifted = new ArrayList<>();
                     if (!newText.equals("")) {
                         for (AudioUri audioURI : audioUris) {

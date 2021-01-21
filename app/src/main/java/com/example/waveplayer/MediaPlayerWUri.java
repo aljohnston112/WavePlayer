@@ -1,5 +1,6 @@
 package com.example.waveplayer;
 
+import android.content.Context;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.util.Log;
@@ -16,9 +17,9 @@ public class MediaPlayerWUri {
 
     private MediaPlayer mediaPlayer;
 
-    final AudioUri audioURI;
+    final Long id;
 
-    private final ServiceMain serviceMain;
+    private final MediaController mediaController;
 
     private volatile boolean isPrepared = true;
 
@@ -30,10 +31,10 @@ public class MediaPlayerWUri {
 
     private volatile boolean shouldPlay = false;
 
-    MediaPlayerWUri(final ServiceMain serviceMain, MediaPlayer mediaPlayer, AudioUri audioURI){
-        this.serviceMain = serviceMain;
+    MediaPlayerWUri(final MediaController mediaController, MediaPlayer mediaPlayer, final Long id){
+        this.mediaController = mediaController;
         this.mediaPlayer = mediaPlayer;
-        this.audioURI = audioURI;
+        this.id = id;
         mediaPlayer.setOnPreparedListener(null);
         mediaPlayer.setOnErrorListener(null);
         MOnPreparedListener mOnPreparedListener = new MOnPreparedListener(this);
@@ -42,8 +43,8 @@ public class MediaPlayerWUri {
             @Override
             public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
                 synchronized (lock) {
-                    serviceMain.releaseMediaPlayers();
-                    serviceMain.addToQueueAndPlay(serviceMain.getCurrentSong().getUri());
+                    mediaController.releaseMediaPlayers();
+                    mediaController.addToQueueAndPlay(mediaController.getCurrentSong().getID());
                     return false;
                 }
             }
@@ -80,7 +81,7 @@ public class MediaPlayerWUri {
 
     public int getCurrentPosition(){
         synchronized (lock) {
-            if (isPrepared && serviceMain.songInProgress()) {
+            if (isPrepared && mediaController.songInProgress()) {
                 return mediaPlayer.getCurrentPosition();
             } else {
                 return -1;
@@ -116,17 +117,16 @@ public class MediaPlayerWUri {
         }
     }
 
-    public void seekTo(int millis){
+    public void seekTo(Context context, AudioUri audioUri, int millis){
         synchronized (lock) {
             if (isPrepared) {
-                String[] s = audioURI.displayName.split("\\.");
+                String[] s = audioUri.displayName.split("\\.");
                 if(s.length > 0) {
                     if(s[s.length - 1].toLowerCase().equals("mkv")){
                         mediaPlayer.reset();
                         mediaPlayer.release();
                         mediaPlayer = null;
-                        mediaPlayer = MediaPlayer.create(
-                                serviceMain.getApplicationContext(), audioURI.getUri());
+                        mediaPlayer = MediaPlayer.create(context, AudioUri.getUri(id));
                         mediaPlayer.setOnPreparedListener(null);
                         mediaPlayer.setOnErrorListener(null);
                         MOnPreparedListener mOnPreparedListener = new MOnPreparedListener(this);
@@ -135,14 +135,14 @@ public class MediaPlayerWUri {
                             @Override
                             public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
                                 synchronized (lock) {
-                                    serviceMain.releaseMediaPlayers();
-                                    serviceMain.addToQueueAndPlay(serviceMain.getCurrentSong().getUri());
+                                    mediaController.releaseMediaPlayers();
+                                    mediaController.addToQueueAndPlay(mediaController.getCurrentSong().getID());
                                     return false;
                                 }
                             }
                         };
                         mediaPlayer.setOnErrorListener(onErrorListener);
-                        setOnCompletionListener(serviceMain.onCompletionListener);
+                        setOnCompletionListener(mediaController.onCompletionListener);
                         this.shouldPlay = true;
                         return;
                     }

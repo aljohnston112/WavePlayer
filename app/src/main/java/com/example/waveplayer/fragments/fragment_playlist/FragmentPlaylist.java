@@ -109,7 +109,7 @@ public class FragmentPlaylist extends Fragment {
         recyclerViewSongList.setLayoutManager(
                 new LinearLayoutManager(recyclerViewSongList.getContext()));
         RecyclerViewAdapterSongs recyclerViewAdapterSongsList = new RecyclerViewAdapterSongs(
-                this, new ArrayList<>(userPickedPlaylist.getAudioUris()));
+                this, new ArrayList<>(userPickedPlaylist.getSongIDs()));
         recyclerViewSongList.setAdapter(recyclerViewAdapterSongsList);
         itemTouchListenerSong = new ItemTouchListenerSong(activityMain, userPickedPlaylist);
         itemTouchHelper = new ItemTouchHelper(itemTouchListenerSong);

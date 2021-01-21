@@ -26,7 +26,7 @@ public final class AudioUri implements Comparable<AudioUri>, Serializable {
 
     public final String title;
 
-    final long id;
+    public final long id;
 
     public Uri getUri() {
         Log.v(TAG, "getUri started");
@@ -35,6 +35,10 @@ public final class AudioUri implements Comparable<AudioUri>, Serializable {
         }
         Log.v(TAG, "getUri ended");
         return uri;
+    }
+
+    public static Uri getUri(Long songID) {
+        return ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, songID);
     }
 
     private int duration = -1;
@@ -66,9 +70,8 @@ public final class AudioUri implements Comparable<AudioUri>, Serializable {
         isSelected = selected;
     }
 
-    public AudioUri(Uri uri, String displayName, String artist, String title, long id) {
+    public AudioUri(String displayName, String artist, String title, long id) {
         //Log.v(TAG, "AudioURI constructing");
-        this.uri = uri;
         this.displayName = displayName;
         this.artist = artist;
         this.title = title;
@@ -118,4 +121,7 @@ public final class AudioUri implements Comparable<AudioUri>, Serializable {
         return uri.toString().hashCode();
     }
 
+    public Long getID() {
+        return id;
+    }
 }
