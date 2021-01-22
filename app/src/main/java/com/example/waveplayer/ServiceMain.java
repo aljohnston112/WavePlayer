@@ -69,70 +69,17 @@ public class ServiceMain extends Service {
 
     private MediaController mediaController;
 
-    // TODO make fragments communicate
-
-    // region userPickedPlaylist
-
-    private RandomPlaylist userPickedPlaylist;
-
-    public RandomPlaylist getUserPickedPlaylist() {
-        Log.v(TAG, "getUserPickedPlaylist start and end");
-        return userPickedPlaylist;
-    }
-
-    public void setUserPickedPlaylistToMasterPlaylist() {
-        Log.v(TAG, "setUserPickedPlaylistToMasterPlaylist start");
-        userPickedPlaylist = mediaController.getMasterPlaylist();
-        Log.v(TAG, "setUserPickedPlaylistToMasterPlaylist end");
-    }
-
-    public void setUserPickedPlaylist(RandomPlaylist userPickedPlaylist) {
-        Log.v(TAG, "setUserPickedPlaylist start");
-        this.userPickedPlaylist = userPickedPlaylist;
-        Log.v(TAG, "setUserPickedPlaylist end");
-    }
-
-    // endregion userPickedPlaylist
-
-    // region userPickedSongs
-
-    private final List<Long> userPickedSongs = new ArrayList<>();
-
-    public List<Long> getUserPickedSongs() {
-        Log.v(TAG, "getUserPickedSongs start and end");
-        return userPickedSongs;
-    }
-
-    public void addUserPickedSong(Long songId) {
-        Log.v(TAG, "addUserPickedSong start");
-        userPickedSongs.add(songId);
-        Log.v(TAG, "addUserPickedSong end");
-    }
-
-    public void removeUserPickedSong(Long songID) {
-        Log.v(TAG, "removeUserPickedSong start");
-        userPickedSongs.remove(songID);
-        Log.v(TAG, "removeUserPickedSong end");
-    }
-
-    public void clearUserPickedSongs() {
-        Log.v(TAG, "clearUserPickedSongs start");
-        userPickedSongs.clear();
-        Log.v(TAG, "clearUserPickedSongs end");
-    }
-
-    // endregion userPickedSongs
-
     // For updating the SeekBar
     private ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
     private RunnableSeekBarUpdater runnableSeekBarUpdater;
 
-    public void updateSeekBarUpdater(
-            MediaPlayerWUri mediaPlayerWUri, SeekBar seekBar, TextView textViewCurrent) {
+    public void updateSeekBarUpdater(SeekBar seekBar, TextView textViewCurrent) {
         Log.v(TAG, "updateSeekBarUpdater start");
         shutDownSeekBarUpdater();
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+        MediaPlayerWUri mediaPlayerWUri =
+                mediaController.getMediaPlayerWUri(mediaController.getCurrentSong().getID());
         if (mediaPlayerWUri != null) {
             runnableSeekBarUpdater = new RunnableSeekBarUpdater(
                     mediaPlayerWUri,
@@ -169,19 +116,6 @@ public class ServiceMain extends Service {
     private boolean hasArt = false;
 
     // region ActivityMainUI
-
-    private boolean fragmentSongVisible = false;
-
-    public void fragmentSongVisible(boolean fragmentSongVisible) {
-        Log.v(TAG, "fragmentSongVisible start");
-        this.fragmentSongVisible = fragmentSongVisible;
-        Log.v(TAG, "fragmentSongVisible end");
-    }
-
-    public boolean fragmentSongVisible() {
-        Log.v(TAG, "fragmentSongVisible start and end");
-        return fragmentSongVisible;
-    }
 
     private int songPaneArtHeight = 1;
 

@@ -3,7 +3,7 @@ package com.example.waveplayer.fragments.fragment_playlist;
 import android.view.View;
 
 import com.example.waveplayer.ActivityMain;
-import com.example.waveplayer.random_playlist.AudioUri;
+import com.example.waveplayer.Song;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 import com.example.waveplayer.fragments.RecyclerViewAdapterSongs;
 
@@ -17,29 +17,29 @@ public class UndoListenerSongRemoved implements View.OnClickListener {
 
     private final RecyclerViewAdapterSongs recyclerViewAdapter;
 
-    private final AudioUri audioURI;
+    private final Song song;
 
     private final double probability;
 
     private final int position;
 
     UndoListenerSongRemoved(ActivityMain activityMain, RandomPlaylist userPickedPlaylist,
-                             RecyclerViewAdapterSongs recyclerViewAdapter, AudioUri audioURI,
+                             RecyclerViewAdapterSongs recyclerViewAdapter, Song song,
                             double probability, int position) {
         this.activityMain = activityMain;
         this.userPickedPlaylist = userPickedPlaylist;
         this.recyclerViewAdapter = recyclerViewAdapter;
-        this.audioURI = audioURI;
+        this.song = song;
         this.probability = probability;
         this.position = position;
     }
 
     @Override
     public void onClick(View v) {
-        userPickedPlaylist.add(audioURI, probability);
+        userPickedPlaylist.add(song, probability);
         switchSongPosition(userPickedPlaylist,
                 userPickedPlaylist.size() - 1, position);
-        recyclerViewAdapter.updateList(new ArrayList<>(userPickedPlaylist.getSongIDs()));
+        recyclerViewAdapter.updateList(new ArrayList<>(userPickedPlaylist.getSongs()));
         recyclerViewAdapter.notifyDataSetChanged();
         activityMain.saveFile();
     }

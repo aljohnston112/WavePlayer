@@ -2,7 +2,6 @@ package com.example.waveplayer.fragments.fragment_title;
 
 import android.app.Activity;
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -18,9 +17,12 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.waveplayer.ActivityMain;
+import com.example.waveplayer.Song;
+import com.example.waveplayer.ViewModelUserPickedPlaylist;
 import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.R;
@@ -35,6 +37,8 @@ public class FragmentTitle extends Fragment {
 
     public static final int REQUEST_CODE_OPEN_FOLDER = 9367;
 
+    private ViewModelUserPickedPlaylist viewModelUserPickedPlaylist;
+
     private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
     private OnClickListenerFragmentTitleButtons onClickListenerFragmentTitleButtons;
@@ -43,7 +47,7 @@ public class FragmentTitle extends Fragment {
 
     private long mediaStoreUriID;
 
-    private List<AudioUri> audioUris;
+    private List<Song> songs;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -58,7 +62,9 @@ public class FragmentTitle extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        audioUris = new ArrayList<>();
+        viewModelUserPickedPlaylist =
+                new ViewModelProvider(requireActivity()).get(ViewModelUserPickedPlaylist.class);
+        songs = new ArrayList<>();
         updateMainContent();
         setUpButtons();
         setUpBroadCastReceiver();
@@ -74,19 +80,19 @@ public class FragmentTitle extends Fragment {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (uriUserPickedFolder != null) {
-                    if (!audioUris.isEmpty()) {
+                    if (!songs.isEmpty()) {
                         RandomPlaylist randomPlaylist =
-                                activityMain.getDirectoryPlaylist(mediaStoreUriID);
-                        if (!activityMain.containsDirectoryPlaylist(mediaStoreUriID)) {
+                                activityMain.getPlaylist(uriUserPickedFolder.getPath());
+                        if (randomPlaylist == null) {
                             randomPlaylist = new RandomPlaylist(
-                                    uriUserPickedFolder.getPath(), audioUris, activityMain.getMaxPercent(),
+                                    uriUserPickedFolder.getPath(), songs, activityMain.getMaxPercent(),
                                     false, mediaStoreUriID);
-                            activityMain.addDirectoryPlaylist(mediaStoreUriID, randomPlaylist);
+                            activityMain.addPlaylist(randomPlaylist);
                         } else {
                             addNewSongs(randomPlaylist);
                             removeMissingSongs(randomPlaylist);
                         }
-                        activityMain.setUserPickedPlaylist(randomPlaylist);
+                        viewModelUserPickedPlaylist.setUserPickedPlaylist(randomPlaylist);
                     }
                     activityMain.saveFile();
                     NavHostFragment.findNavController(FragmentTitle.this)
@@ -95,19 +101,19 @@ public class FragmentTitle extends Fragment {
             }
 
             private void removeMissingSongs(RandomPlaylist randomPlaylist) {
-                for (AudioUri audioURI : randomPlaylist.getSongIDs()) {
-                    if (!audioUris.contains(audioURI)) {
-                        randomPlaylist.remove(audioURI);
-                        audioUris.remove(audioURI);
+                for (Song song : randomPlaylist.getSongs()) {
+                    if (!songs.contains(song)) {
+                        randomPlaylist.remove(song);
+                        songs.remove(song);
                     }
                 }
             }
 
             private void addNewSongs(RandomPlaylist randomPlaylist) {
-                for (AudioUri audioURIFromUriMap : audioUris) {
-                    if (audioURIFromUriMap != null) {
-                        if (!randomPlaylist.contains(audioURIFromUriMap)) {
-                            randomPlaylist.add(audioURIFromUriMap);
+                for (Song song : songs) {
+                    if (song != null) {
+                        if (!randomPlaylist.contains(song)) {
+                            randomPlaylist.add(song);
                         }
                     }
                 }
@@ -177,14 +183,14 @@ public class FragmentTitle extends Fragment {
                                 rootUri, docId);
                         getFiles(newNode, rootUri);
                     } else {
-                        audioUris.add(getAudioUri(displayName));
+                        songs.add(getSong(displayName));
                     }
                 }
             }
         }
     }
 
-    private AudioUri getAudioUri(String displayName) {
+    private Song getSong(String displayName) {
         ActivityMain activityMain = ((ActivityMain) getActivity());
         ContentResolver contentResolver = activityMain.getContentResolver();
         String selection = MediaStore.Audio.Media.DISPLAY_NAME + " == ?";
@@ -205,7 +211,7 @@ public class FragmentTitle extends Fragment {
                     this.mediaStoreUriID = id;
                     String title = cursor.getString(titleCol);
                     String artist = cursor.getString(artistCol);
-                    return new AudioUri(displayName, artist, title, id);
+                    return new Song(id, title);
                 }
             }
         }
@@ -221,10 +227,10 @@ public class FragmentTitle extends Fragment {
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
         broadcastReceiverOnServiceConnected = null;
         uriUserPickedFolder = null;
-        for (int i = 0; i < audioUris.size(); i++) {
-            audioUris.set(i, null);
+        for (int i = 0; i < songs.size(); i++) {
+            songs.set(i, null);
         }
-        audioUris = null;
+        songs = null;
         view.findViewById(R.id.button_playlists).setOnClickListener(null);
         view.findViewById(R.id.button_songs).setOnClickListener(null);
         view.findViewById(R.id.button_settings).setOnClickListener(null);

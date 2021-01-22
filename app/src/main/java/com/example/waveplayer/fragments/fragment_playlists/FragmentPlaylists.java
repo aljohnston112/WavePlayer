@@ -16,18 +16,26 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.waveplayer.ActivityMain;
+import com.example.waveplayer.ViewModelUserPickedPlaylist;
+import com.example.waveplayer.ViewModelUserPickedSongs;
 import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.fragments.OnQueryTextListenerSearch;
 import com.example.waveplayer.R;
+import com.example.waveplayer.random_playlist.RandomPlaylist;
 
 public class FragmentPlaylists extends Fragment {
 
     public static final String NAME = "FragmentPlaylists";
+
+    private ViewModelUserPickedPlaylist viewModelUserPickedPlaylist;
+
+    private ViewModelUserPickedSongs viewModelUserPickedSongs;
 
     private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
     private BroadcastReceiver broadcastReceiverOptionsMenuCreated;
@@ -49,6 +57,10 @@ public class FragmentPlaylists extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        viewModelUserPickedPlaylist =
+                new ViewModelProvider(requireActivity()).get(ViewModelUserPickedPlaylist.class);
+        viewModelUserPickedSongs =
+                new ViewModelProvider(requireActivity()).get(ViewModelUserPickedSongs.class);
         updateMainContent();
         setUpBroadcastReceiverOnServiceConnected();
         setUpBroadcastReceiverServiceOnOptionsMenuCreated();
@@ -163,4 +175,11 @@ public class FragmentPlaylists extends Fragment {
         itemTouchHelper = null;
     }
 
+    public void setUserPickedPlaylist(RandomPlaylist randomPlaylist) {
+        viewModelUserPickedPlaylist.setUserPickedPlaylist(randomPlaylist);
+    }
+
+    public void clearUserPickedSongs() {
+        viewModelUserPickedSongs.clearUserPickedSongs();
+    }
 }

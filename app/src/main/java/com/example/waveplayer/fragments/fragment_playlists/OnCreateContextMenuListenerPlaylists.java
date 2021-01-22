@@ -8,6 +8,7 @@ import android.view.View;
 import androidx.fragment.app.Fragment;
 
 import com.example.waveplayer.ActivityMain;
+import com.example.waveplayer.Song;
 import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.DialogFragmentAddToPlaylist;
 import com.example.waveplayer.R;
@@ -66,15 +67,15 @@ public class OnCreateContextMenuListenerPlaylists implements View.OnCreateContex
         ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
         if (activityMain != null) {
             if (activityMain.songInProgress()) {
-                for (AudioUri audioURI : randomPlaylist.getSongIDs()) {
-                    activityMain.addToQueue(audioURI.getUri());
+                for (Song song : randomPlaylist.getSongs()) {
+                    activityMain.addToQueue(song.id);
                 }
             } else {
                 if(activityMain.songQueueIsEmpty()){
                     activityMain.setCurrentPlaylist(randomPlaylist);
                 }
-                for (AudioUri audioURI : randomPlaylist.getSongIDs()) {
-                    activityMain.addToQueue(audioURI.getUri());
+                for (Song song : randomPlaylist.getSongs()) {
+                    activityMain.addToQueue(song.id);
                 }
                 activityMain.shuffling(false);
                 activityMain.looping(false);

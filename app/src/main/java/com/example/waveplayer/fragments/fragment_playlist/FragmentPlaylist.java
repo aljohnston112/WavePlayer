@@ -16,11 +16,15 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.waveplayer.ActivityMain;
+import com.example.waveplayer.ViewModelUserPickedPlaylist;
+import com.example.waveplayer.ViewModelUserPickedSongs;
 import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.fragments.OnQueryTextListenerSearch;
 import com.example.waveplayer.R;
@@ -39,6 +43,10 @@ public class FragmentPlaylist extends Fragment {
 
     private RecyclerView recyclerViewSongList;
 
+    private ViewModelUserPickedPlaylist viewModelUserPickedPlaylist;
+
+    private ViewModelUserPickedSongs viewModelUserPickedSongs;
+
     private OnClickListenerFABFragmentPlaylist onClickListenerFABFragmentPlaylist;
     private OnQueryTextListenerSearch onQueryTextListenerSearch;
     private ItemTouchListenerSong itemTouchListenerSong;
@@ -53,11 +61,15 @@ public class FragmentPlaylist extends Fragment {
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        viewModelUserPickedPlaylist =
+                new ViewModelProvider(requireActivity()).get(ViewModelUserPickedPlaylist.class);
+        viewModelUserPickedSongs =
+                new ViewModelProvider(requireActivity()).get(ViewModelUserPickedSongs.class);
         ActivityMain activityMain = ((ActivityMain) getActivity());
         activityMain.hideKeyboard(view);
         setUpToolbar();
         updateFAB();
-        RandomPlaylist randomPlaylist = activityMain.getUserPickedPlaylist();
+        RandomPlaylist randomPlaylist = viewModelUserPickedPlaylist.getUserPickedPlaylist().getValue();
         setUpRecyclerView(randomPlaylist);
         activityMain.isSong(false);
         activityMain.setPlaylistToAddToQueue(randomPlaylist);
@@ -109,9 +121,9 @@ public class FragmentPlaylist extends Fragment {
         recyclerViewSongList.setLayoutManager(
                 new LinearLayoutManager(recyclerViewSongList.getContext()));
         RecyclerViewAdapterSongs recyclerViewAdapterSongsList = new RecyclerViewAdapterSongs(
-                this, new ArrayList<>(userPickedPlaylist.getSongIDs()));
+                this, new ArrayList<>(userPickedPlaylist.getSongs()));
         recyclerViewSongList.setAdapter(recyclerViewAdapterSongsList);
-        itemTouchListenerSong = new ItemTouchListenerSong(activityMain, userPickedPlaylist);
+        itemTouchListenerSong = new ItemTouchListenerSong(this, userPickedPlaylist);
         itemTouchHelper = new ItemTouchHelper(itemTouchListenerSong);
         itemTouchHelper.attachToRecyclerView(recyclerViewSongList);
     }
@@ -177,4 +189,15 @@ public class FragmentPlaylist extends Fragment {
         activityMain.setPlaylistToAddToQueue(null);
     }
 
+    public RandomPlaylist getUserPickedPlaylist() {
+        return viewModelUserPickedPlaylist.getUserPickedPlaylist().getValue();
+    }
+
+    public void setUserPickedPlaylist(RandomPlaylist randomPlaylist) {
+        viewModelUserPickedPlaylist.setUserPickedPlaylist(randomPlaylist);
+    }
+
+    public void clearUserPickedSongs() {
+        viewModelUserPickedSongs.clearUserPickedSongs();
+    }
 }

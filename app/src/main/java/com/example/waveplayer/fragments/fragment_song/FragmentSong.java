@@ -52,7 +52,7 @@ public class FragmentSong extends Fragment {
         setUpButtons();
         activityMain.updateUI();
         activityMain.isSong(true);
-        activityMain.setSongToAddToQueue(activityMain.getCurrentSong());
+        activityMain.setSongToAddToQueue(activityMain.getCurrentSong().getID());
         setUpBroadcastReceiverServiceConnected();
         setUpBroadcastReceiverServiceOnOptionsMenuCreated();
     }

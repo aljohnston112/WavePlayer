@@ -8,9 +8,9 @@ import android.view.View;
 import androidx.fragment.app.Fragment;
 
 import com.example.waveplayer.ActivityMain;
-import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.DialogFragmentAddToPlaylist;
 import com.example.waveplayer.R;
+import com.example.waveplayer.Song;
 
 import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG;
 import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_IS_SONG;
@@ -19,11 +19,11 @@ import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_PLAY
 public class OnCreateContextMenuListenerSongs implements View.OnCreateContextMenuListener {
 
     private final Fragment fragment;
-    private final AudioUri audioURI;
+    private final Song song;
 
-    OnCreateContextMenuListenerSongs(Fragment fragment, AudioUri audioURI) {
+    OnCreateContextMenuListenerSongs(Fragment fragment, Song song) {
         this.fragment = fragment;
-        this.audioURI = audioURI;
+        this.song = song;
     }
 
     @Override
@@ -50,7 +50,7 @@ public class OnCreateContextMenuListenerSongs implements View.OnCreateContextMen
         ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
         if (activityMain != null) {
             Bundle bundle = new Bundle();
-            bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, audioURI);
+            bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, song);
             bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, activityMain.getPlaylists());
             bundle.putBoolean(BUNDLE_KEY_IS_SONG, true);
             DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist =
@@ -64,10 +64,10 @@ public class OnCreateContextMenuListenerSongs implements View.OnCreateContextMen
         ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
         if (activityMain != null) {
             if (activityMain.songInProgress()) {
-                ((ActivityMain) fragment.getActivity()).addToQueue(audioURI.getUri());
+                ((ActivityMain) fragment.getActivity()).addToQueue(song.id);
             } else {
                 activityMain.showSongPane();
-                activityMain.addToQueueAndPlay(audioURI);
+                activityMain.addToQueueAndPlay(song.id);
             }
         }
     }

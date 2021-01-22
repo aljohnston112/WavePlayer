@@ -35,8 +35,8 @@ public class MediaData {
         return masterPlaylist;
     }
 
-    public List<Long> getAllSongs() {
-        return masterPlaylist.getSongIDs();
+    public List<Song> getAllSongs() {
+        return masterPlaylist.getSongs();
     }
 
     private final ArrayList<RandomPlaylist> playlists = new ArrayList<>();
@@ -60,7 +60,6 @@ public class MediaData {
     public static MediaData INSTANCE;
 
     private MediaData(Context context) {
-        loadMediaFiles(context);
         SaveFile.loadSaveFile(context, this);
     }
 
@@ -69,6 +68,10 @@ public class MediaData {
             INSTANCE = new MediaData(context);
         }
         return INSTANCE;
+    }
+
+    public double getMaxPercent() {
+        return settings.maxPercent;
     }
 
     public void setMaxPercent(double maxPercent) {
@@ -117,7 +120,7 @@ public class MediaData {
     }
 
     private void removeMissingSongs(List<Long> newSongIDs) {
-        for (Long songID : masterPlaylist.getSongIDs()) {
+        for (Long songID : masterPlaylist.getSongs()) {
             if (!newSongIDs.contains(songID)) {
                 masterPlaylist.remove(songID);
                 songIDToMediaPlayerWUriHashMap.remove(songID);
@@ -135,15 +138,14 @@ public class MediaData {
         }
     }
 
-    private void loadMediaFiles(Context context) {
-        List<Long> newURIs = AudioFileLoader.getAudioFiles(context);
-        if (newURIs != null) {
+    void loadMediaFiles(List<Long> newUris) {
+        if (newUris != null) {
             if (masterPlaylist != null) {
-                addNewSongs(newURIs);
-                removeMissingSongs(newURIs);
+                addNewSongs(newUris);
+                removeMissingSongs(newUris);
             } else {
                 masterPlaylist = new RandomPlaylist(
-                        MASTER_PLAYLIST_NAME, new ArrayList<>(newURIs),
+                        MASTER_PLAYLIST_NAME, new ArrayList<>(newUris),
                         settings.maxPercent, true, -1);
             }
         }

@@ -11,13 +11,18 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.waveplayer.ActivityMain;
+import com.example.waveplayer.Song;
+import com.example.waveplayer.ViewModelUserPickedSongs;
 import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.R;
+
+import java.util.List;
 
 public class FragmentSelectSongs extends Fragment {
 
@@ -26,6 +31,8 @@ public class FragmentSelectSongs extends Fragment {
     private OnClickListenerFABFragmentSelectSongs onClickListenerFABFragmentSelectSongs;
 
     private RecyclerView recyclerViewSongList;
+
+    private ViewModelUserPickedSongs viewModelUserPickedSongs;
 
     // TODO search functionality
 
@@ -43,6 +50,8 @@ public class FragmentSelectSongs extends Fragment {
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        viewModelUserPickedSongs =
+                new ViewModelProvider(requireActivity()).get(ViewModelUserPickedSongs.class);
         ActivityMain activityMain = ((ActivityMain) getActivity());
         activityMain.hideKeyboard(view);
         activityMain.setActionBarTitle(getResources().getString(R.string.select_songs));
@@ -72,8 +81,8 @@ public class FragmentSelectSongs extends Fragment {
         recyclerViewSongList = view.findViewById(R.id.recycler_view_song_list);
         recyclerViewSongList.setLayoutManager(
                 new LinearLayoutManager(recyclerViewSongList.getContext()));
-        for (AudioUri audioURI : activityMain.getUserPickedSongs()) {
-            audioURI.setSelected(true);
+        for (Song song : viewModelUserPickedSongs.getUserPickedSongs().getValue()) {
+            song.setSelected(true);
         }
         RecyclerViewAdapterSelectSongs recyclerViewAdapterSelectSongs =
                 new RecyclerViewAdapterSelectSongs(this);
@@ -105,4 +114,15 @@ public class FragmentSelectSongs extends Fragment {
         onClickListenerFABFragmentSelectSongs = null;
     }
 
+    public List<Song> getUserPickedSongs() {
+        return viewModelUserPickedSongs.getUserPickedSongs().getValue();
+    }
+
+    public void removeUserPickedSong(Song song) {
+        viewModelUserPickedSongs.removeUserPickedSong(song);
+    }
+
+    public void addUserPickedSong(Song song) {
+        viewModelUserPickedSongs.addUserPickedSong(song);
+    }
 }

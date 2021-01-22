@@ -20,7 +20,7 @@ public class SongQueue {
         songQueueIterator = songQueue.listIterator();
     }
 
-    public boolean songQueueIsEmpty() {
+    public boolean isEmpty() {
         return songQueue.size() == 0;
     }
 

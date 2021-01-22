@@ -9,6 +9,7 @@ import android.media.MediaPlayer;
 import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 
+import java.util.List;
 import java.util.Random;
 
 public class MediaController {
@@ -37,7 +38,7 @@ public class MediaController {
         currentPlaylist.clearProbabilities();
     }
     
-    private SongQueue songQueue = new SongQueue();
+    private final SongQueue songQueue = new SongQueue();
 
     private boolean isPlaying = false;
 
@@ -383,4 +384,23 @@ public class MediaController {
         return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
     }
 
+    public void loadMediaFiles(List<Long> newUris) {
+        mediaData.loadMediaFiles(newUris);
+    }
+
+    public List<Song> getAllSongs() {
+        return mediaData.getAllSongs();
+    }
+
+    MediaPlayerWUri getMediaPlayerWUri(Long songID) {
+        return mediaData.getMediaPlayerWUri(songID);
+    }
+
+    public void addToQueue(Long songID) {
+        songQueue.addToQueue(songID);
+    }
+
+    public boolean songQueueIsEmpty() {
+        return songQueue.isEmpty();
+    }
 }

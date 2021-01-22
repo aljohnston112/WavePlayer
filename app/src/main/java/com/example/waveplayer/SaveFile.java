@@ -20,10 +20,11 @@ public class SaveFile {
 
     private static final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-    public static void saveFile(final Context context, final MediaData mediaData) {
+    public static void saveFile(final Context context) {
         executorService.submit(new Runnable() {
             @Override
             public void run() {
+                MediaData mediaData = MediaData.getInstance(context);
                 File file = new File(context.getFilesDir(), FILE_SAVE);
                 file.delete();
                 try (FileOutputStream fos = context.openFileOutput(FILE_SAVE, Context.MODE_PRIVATE);

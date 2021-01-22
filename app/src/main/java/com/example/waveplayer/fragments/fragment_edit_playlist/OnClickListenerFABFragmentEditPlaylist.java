@@ -4,6 +4,7 @@ import android.view.View;
 import android.widget.EditText;
 
 import com.example.waveplayer.ActivityMain;
+import com.example.waveplayer.Song;
 import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.R;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
@@ -19,12 +20,12 @@ public class OnClickListenerFABFragmentEditPlaylist implements View.OnClickListe
 
     private final EditText editTextPlaylistName;
 
-    private final List<AudioUri> userPickedSongs;
+    private final List<Song> userPickedSongs;
 
     OnClickListenerFABFragmentEditPlaylist(FragmentEditPlaylist fragmentEditPlaylist,
                                            RandomPlaylist userPickedPlaylist,
                                            EditText editTextPlaylistName,
-                                           List<AudioUri> userPickedSongs) {
+                                           List<Song> userPickedSongs) {
         this.userPickedPlaylist = userPickedPlaylist;
         this.editTextPlaylistName = editTextPlaylistName;
         this.fragmentEditPlaylist = fragmentEditPlaylist;
@@ -44,8 +45,8 @@ public class OnClickListenerFABFragmentEditPlaylist implements View.OnClickListe
         } else if (userPickedPlaylist == null) {
             activityMain.addPlaylist(new RandomPlaylist(editTextPlaylistName.getText().toString(),
                     userPickedSongs, activityMain.getMaxPercent(), false, -1));
-            for (AudioUri audioURI : userPickedSongs) {
-                audioURI.setSelected(false);
+            for (Song song : userPickedSongs) {
+                song.setSelected(false);
             }
             userPickedSongs.clear();
             activityMain.saveFile();
@@ -59,14 +60,14 @@ public class OnClickListenerFABFragmentEditPlaylist implements View.OnClickListe
             if (userPickedPlaylist.getName().equals(
                     editTextPlaylistName.getText().toString()) || !names.contains(editTextPlaylistName.getText().toString())) {
                 userPickedPlaylist.setName(editTextPlaylistName.getText().toString());
-                for (AudioUri audioURI : userPickedPlaylist.getSongIDs()) {
-                    if (!userPickedSongs.contains(audioURI)) {
-                        userPickedPlaylist.remove(audioURI);
+                for (Song song : userPickedPlaylist.getSongs()) {
+                    if (!userPickedSongs.contains(song)) {
+                        userPickedPlaylist.remove(song);
                     }
                 }
-                for (AudioUri audioURI : userPickedSongs) {
-                    userPickedPlaylist.add(audioURI);
-                    audioURI.setSelected(false);
+                for (Song song : userPickedSongs) {
+                    userPickedPlaylist.add(song);
+                    song.setSelected(false);
                 }
                 activityMain.saveFile();
                 fragmentEditPlaylist.popBackStack();

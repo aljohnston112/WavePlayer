@@ -12,11 +12,14 @@ import android.widget.EditText;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.waveplayer.ActivityMain;
-import com.example.waveplayer.random_playlist.AudioUri;
+import com.example.waveplayer.Song;
+import com.example.waveplayer.ViewModelUserPickedPlaylist;
+import com.example.waveplayer.ViewModelUserPickedSongs;
 import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.R;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
@@ -24,6 +27,10 @@ import com.example.waveplayer.random_playlist.RandomPlaylist;
 import java.util.List;
 
 public class FragmentEditPlaylist extends Fragment {
+
+    private ViewModelUserPickedPlaylist viewModelUserPickedPlaylist;
+
+    private ViewModelUserPickedSongs viewModelUserPickedSongs;
 
     private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
@@ -46,6 +53,10 @@ public class FragmentEditPlaylist extends Fragment {
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        viewModelUserPickedPlaylist =
+                new ViewModelProvider(requireActivity()).get(ViewModelUserPickedPlaylist.class);
+        viewModelUserPickedSongs =
+                new ViewModelProvider(requireActivity()).get(ViewModelUserPickedSongs.class);
         ActivityMain activityMain = ((ActivityMain) getActivity());
         activityMain.setActionBarTitle(getResources().getString(R.string.edit_playlist));
         updateFAB();
@@ -69,13 +80,14 @@ public class FragmentEditPlaylist extends Fragment {
         activityMain.setFABText(R.string.fab_save);
         activityMain.showFab(true);
         final EditText finalEditTextPlaylistName = view.findViewById(R.id.editTextPlaylistName);
-        RandomPlaylist userPickedPlaylist = activityMain.getUserPickedPlaylist();
-        List<AudioUri> userPickedSongs = activityMain.getUserPickedSongs();
+        RandomPlaylist userPickedPlaylist = viewModelUserPickedPlaylist.getUserPickedPlaylist().getValue();
+        List<Song> userPickedSongs = viewModelUserPickedSongs.getUserPickedSongs().getValue();
         // userPickedPlaylist is null when user is making a new playlist
         if (userPickedPlaylist != null) {
             // userPickedSongs.isEmpty() when the user is editing a playlist
             if (userPickedSongs.isEmpty()) {
-                userPickedSongs.addAll(userPickedPlaylist.getSongIDs());
+                userPickedSongs.addAll(
+                        viewModelUserPickedPlaylist.getUserPickedPlaylist().getValue().getSongs());
             }
             finalEditTextPlaylistName.setText(userPickedPlaylist.getName());
         }

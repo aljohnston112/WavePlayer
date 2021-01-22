@@ -1,5 +1,7 @@
 package com.example.waveplayer.random_playlist;
 
+import com.example.waveplayer.Song;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -32,7 +34,7 @@ public class RandomPlaylist implements Serializable {
     }
 
     // The ProbFun that randomly picks the media to play
-    private final ProbFun<Long> probabilityFunction;
+    private final ProbFun<Song> probabilityFunction;
 
     public final long mediaStoreUriID;
 
@@ -47,11 +49,11 @@ public class RandomPlaylist implements Serializable {
      * @throws IllegalArgumentException if there is not at least one AudioURI in music.
      * @throws IllegalArgumentException if folder is not a directory.
      */
-    public RandomPlaylist(String name, List<Long> music, double maxPercent,
+    public RandomPlaylist(String name, List<Song> music, double maxPercent,
                           boolean comparable, long mediaStoreUriID) {
         if (music.isEmpty())
             throw new IllegalArgumentException("List music must contain at least one AudioURI");
-        Set<Long> files = new LinkedHashSet<>(music);
+        Set<Song> files = new LinkedHashSet<>(music);
         if (comparable) {
             probabilityFunction = new ProbFunTreeMap<>(files, maxPercent);
         } else {
@@ -62,24 +64,24 @@ public class RandomPlaylist implements Serializable {
         playlistIterator = playlistArray.listIterator();
     }
 
-    public ArrayList<Long> getSongIDs() {
+    public ArrayList<Song> getSongs() {
         return probabilityFunction.getKeys();
     }
 
-    public void add(Long songID) {
-        probabilityFunction.add(songID);
+    public void add(Song song) {
+        probabilityFunction.add(song);
     }
 
-    public void add(Long songID, double probability) {
-        probabilityFunction.add(songID, probability);
+    public void add(Song song, double probability) {
+        probabilityFunction.add(song, probability);
     }
 
-    public void remove(Long songID) {
-        probabilityFunction.remove(songID);
+    public void remove(Song song) {
+        probabilityFunction.remove(song);
     }
 
-    public boolean contains(Long songID) {
-        return probabilityFunction.contains(songID);
+    public boolean contains(Song song) {
+        return probabilityFunction.contains(song);
     }
 
     public void setMaxPercent(double maxPercent) {
@@ -104,8 +106,8 @@ public class RandomPlaylist implements Serializable {
          */
     }
 
-    public double getProbability(Long songID) {
-        return probabilityFunction.getProbability(songID);
+    public double getProbability(Song song) {
+        return probabilityFunction.getProbability(song);
     }
 
     public void clearProbabilities() {

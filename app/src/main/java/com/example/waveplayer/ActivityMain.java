@@ -11,7 +11,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -37,6 +36,7 @@ import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
@@ -85,6 +85,12 @@ public class ActivityMain extends AppCompatActivity {
 
     private ServiceMain serviceMain;
 
+    private MediaController mediaController;
+
+    private MediaData mediaData;
+
+    private ViewModelUserPickedPlaylist viewModelUserPickedPlaylist;
+
     public void setServiceMain(ServiceMain serviceMain) {
         Log.v(TAG, "setServiceMain started");
         this.serviceMain = serviceMain;
@@ -94,7 +100,10 @@ public class ActivityMain extends AppCompatActivity {
 
     private void setUpAfterServiceConnection() {
         Log.v(TAG, "setUpAfterServiceConnection started");
-        askForExternalStoragePermissionAndFetchMediaFiles();
+        mediaController = MediaController.getInstance(serviceMain);
+        mediaData = MediaData.getInstance(this);
+        askForReadExternalAndFillMediaController();
+        askForWriteExternal();
         setUpBroadcastReceivers();
         setUpSongPane();
         runnableSongArtUpdater = new RunnableSongArtUpdater(this);
@@ -141,11 +150,11 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "isSong ended");
     }
 
-    private AudioUri songToAddToQueue;
+    private Long songToAddToQueue;
 
-    public void setSongToAddToQueue(AudioUri audioUri) {
+    public void setSongToAddToQueue(Long songID) {
         Log.v(TAG, "setSongToAddToQueue started");
-        songToAddToQueue = audioUri;
+        songToAddToQueue = songID;
         Log.v(TAG, "setSongToAddToQueue ened");
     }
 
@@ -157,6 +166,19 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "setPlaylistToAddToQueue ended");
     }
 
+    private boolean fragmentSongVisible = false;
+
+    public void fragmentSongVisible(boolean fragmentSongVisible) {
+        Log.v(TAG, "fragmentSongVisible start");
+        this.fragmentSongVisible = fragmentSongVisible;
+        Log.v(TAG, "fragmentSongVisible end");
+    }
+
+    public boolean fragmentSongVisible() {
+        Log.v(TAG, "fragmentSongVisible start and end");
+        return fragmentSongVisible;
+    }
+
     // region lifecycle
 
     // region onCreate
@@ -166,6 +188,8 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "onCreate started");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        viewModelUserPickedPlaylist =
+                new ViewModelProvider(this).get(ViewModelUserPickedPlaylist.class);
         Log.v(TAG, "onCreate ended");
     }
 
@@ -207,8 +231,7 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "started and bound ServiceMain");
     }
 
-    void askForExternalStoragePermissionAndFetchMediaFiles() {
-        Log.v(TAG, "Making sure there is external storage permission");
+    void askForWriteExternal() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     != PackageManager.PERMISSION_GRANTED) {
@@ -216,18 +239,27 @@ public class ActivityMain extends AppCompatActivity {
                         new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                         REQUEST_CODE_PERMISSION_WRITE);
             }
+        }
+    }
+
+    void askForReadExternalAndFillMediaController() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
                     != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(
                         new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                         REQUEST_CODE_PERMISSION_READ);
             } else {
-                serviceMain.getAudioFiles();
+                getAudioFiles();
             }
         } else {
-            serviceMain.getAudioFiles();
+            getAudioFiles();
         }
-        Log.v(TAG, "Done making sure there is external storage permission");
+    }
+
+    private void getAudioFiles() {
+        List<Long> newURIs = AudioFileLoader.getAudioFiles(this);
+        mediaController.loadMediaFiles(newURIs);
     }
 
     @Override
@@ -235,30 +267,32 @@ public class ActivityMain extends AppCompatActivity {
             int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         Log.v(TAG, "onRequestPermissionsResult start");
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_CODE_PERMISSION_READ && grantResults.length > 0 &&
-                grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            serviceMain.getAudioFiles();
-        } else if (requestCode == REQUEST_CODE_PERMISSION_READ) {
-            Toast toast = Toast.makeText(getApplicationContext(),
-                    R.string.permission_needed, Toast.LENGTH_LONG);
-            toast.show();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (requestCode == REQUEST_CODE_PERMISSION_READ && grantResults.length > 0 &&
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getAudioFiles();
+            } else if (requestCode == REQUEST_CODE_PERMISSION_READ) {
+                Toast toast = Toast.makeText(getApplicationContext(),
+                        R.string.permission_read_needed, Toast.LENGTH_LONG);
+                toast.show();
+                requestPermissions(
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        REQUEST_CODE_PERMISSION_READ);
+            }
+            if (requestCode == REQUEST_CODE_PERMISSION_WRITE && grantResults.length > 0 &&
+                    grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                Toast toast = Toast.makeText(getApplicationContext(),
+                        R.string.permission_write_needed, Toast.LENGTH_LONG);
+                toast.show();
                 requestPermissions(
                         new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                         REQUEST_CODE_PERMISSION_READ);
             }
         }
-        Log.v(TAG, "onRequestPermissionsResult end");
     }
 
-    public List<AudioUri> getAllSongs() {
-        Log.v(TAG, "getAllSongs started");
-        if (serviceMain != null) {
-            Log.v(TAG, "getAllSongs ended");
-            return serviceMain.getAllSongs();
-        }
-        Log.v(TAG, "getAllSongs default end");
-        return null;
+    public List<Song> getAllSongs() {
+            return mediaController.getAllSongs();
     }
 
     void setUpBroadcastReceivers() {
@@ -494,7 +528,7 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "onPause started");
         super.onPause();
         if (serviceMain != null) {
-            serviceMain.saveFile();
+            SaveFile.saveFile(this);
             serviceMain.shutDownSeekBarUpdater();
         }
         Log.v(TAG, "onPause ended");
@@ -562,8 +596,7 @@ public class ActivityMain extends AppCompatActivity {
 
     private void updateSongUI() {
         Log.v(TAG, "updateSongUI start");
-        if (serviceMain != null
-                && serviceMain.fragmentSongVisible() && serviceMain.getCurrentSong() != null) {
+        if (fragmentSongVisible() && mediaController.getCurrentSong() != null) {
             Log.v(TAG, "updating SongUI");
             updateSongArt();
             updateSongName();
@@ -578,10 +611,10 @@ public class ActivityMain extends AppCompatActivity {
     private void updateSeekBar() {
         Log.v(TAG, "updateSeekBar start");
         SeekBar seekBar = findViewById(R.id.seekBar);
-        if (seekBar != null && serviceMain != null) {
-            AudioUri audioUri = serviceMain.getCurrentSong();
+        if (seekBar != null) {
+            AudioUri audioUri = mediaController.getCurrentSong();
             final int maxMillis;
-            if(audioUri != null) {
+            if (audioUri != null) {
                 maxMillis = audioUri.getDuration(getApplicationContext());
             } else {
                 maxMillis = 9999;
@@ -596,12 +629,8 @@ public class ActivityMain extends AppCompatActivity {
 
     private int getCurrentTime() {
         Log.v(TAG, "getCurrentTime start");
-        if (serviceMain != null) {
-            Log.v(TAG, "getCurrentTime end");
-            return serviceMain.getCurrentTime();
-        }
-        Log.v(TAG, "getCurrentTime default end");
-        return -1;
+        Log.v(TAG, "getCurrentTime end");
+            return mediaController.getCurrentTime();
     }
 
     private void setUpSeekBarUpdater() {
@@ -619,7 +648,7 @@ public class ActivityMain extends AppCompatActivity {
     private void updateSongArt() {
         Log.v(TAG, "updateSongArt start");
         final ImageView imageViewSongArt = findViewById(R.id.image_view_song_art);
-        if (imageViewSongArt != null && serviceMain != null) {
+        if (imageViewSongArt != null) {
             imageViewSongArt.post(runnableSongArtUpdater);
         }
         Log.v(TAG, "updateSongArt end");
@@ -628,15 +657,15 @@ public class ActivityMain extends AppCompatActivity {
     private void updateSongName() {
         Log.v(TAG, "updateSongName start");
         TextView textViewSongName = findViewById(R.id.text_view_song_name);
-        if (textViewSongName != null && serviceMain != null) {
-            textViewSongName.setText(serviceMain.getCurrentSong().title);
+        if (textViewSongName != null) {
+            textViewSongName.setText(mediaController.getCurrentSong().title);
         }
         Log.v(TAG, "updateSongName end");
     }
 
     private void updateTextViewTimes() {
         Log.v(TAG, "updateTextViewTimes start");
-        final int maxMillis = serviceMain.getCurrentSong().getDuration(getApplicationContext());
+        final int maxMillis = mediaController.getCurrentSong().getDuration(getApplicationContext());
         final String stringEndTime = formatMillis(maxMillis);
         String stringCurrentTime = formatMillis(getCurrentTime());
         TextView textViewCurrent = findViewById(R.id.editTextCurrentTime);
@@ -666,9 +695,8 @@ public class ActivityMain extends AppCompatActivity {
 
     private void updateSongPaneUI() {
         Log.v(TAG, "updateSongPaneUI start");
-        if (serviceMain != null
-                && !serviceMain.fragmentSongVisible() && serviceMain.getCurrentSong() != null
-                && serviceMain.songInProgress()) {
+        if (!fragmentSongVisible() && mediaController.getCurrentSong() != null
+                && mediaController.songInProgress()) {
             Log.v(TAG, "updating the song pane UI");
             updateSongPaneName();
             updateSongPaneArt();
@@ -681,8 +709,8 @@ public class ActivityMain extends AppCompatActivity {
     private void updateSongPaneName() {
         Log.v(TAG, "updateSongPaneName start");
         TextView textViewSongPaneSongName = findViewById(R.id.textViewSongPaneSongName);
-        if (textViewSongPaneSongName != null && serviceMain != null) {
-            textViewSongPaneSongName.setText(serviceMain.getCurrentSong().title);
+        if (textViewSongPaneSongName != null) {
+            textViewSongPaneSongName.setText(mediaController.getCurrentSong().title);
         }
         Log.v(TAG, "updateSongPaneName end");
     }
@@ -708,9 +736,9 @@ public class ActivityMain extends AppCompatActivity {
     private void updateSongPlayButton() {
         Log.v(TAG, "updateSongPlayButton start");
         ImageButton imageButtonPlayPause = findViewById(R.id.imageButtonPlayPause);
-        if (serviceMain != null && fragmentSongVisible() && imageButtonPlayPause != null) {
+        if (fragmentSongVisible() && imageButtonPlayPause != null) {
             Log.v(TAG, "updating SongPlayButton");
-            if (serviceMain.isPlaying()) {
+            if (mediaController.isPlaying()) {
                 imageButtonPlayPause.setImageDrawable(ResourcesCompat.getDrawable(
                         getResources(), R.drawable.pause_black_24dp, null));
             } else {
@@ -727,11 +755,11 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "updateSongPanePlayButton start");
         ImageButton imageButtonSongPanePlayPause = findViewById(R.id.imageButtonSongPanePlayPause);
         View fragmentPaneSong = findViewById(R.id.fragmentSongPane);
-        if (serviceMain != null && !fragmentSongVisible() &&
+        if (!fragmentSongVisible() &&
                 fragmentPaneSong.getVisibility() == View.VISIBLE &&
                 imageButtonSongPanePlayPause != null) {
             Log.v(TAG, "updating SongPanePlayButton");
-            if (serviceMain.isPlaying()) {
+            if (mediaController.isPlaying()) {
                 imageButtonSongPanePlayPause.setImageDrawable(ResourcesCompat.getDrawable(
                         getResources(), R.drawable.pause_black_24dp, null));
             } else {
@@ -767,45 +795,37 @@ public class ActivityMain extends AppCompatActivity {
 
     // region playbackControls
 
-    public void addToQueue(Uri uri) {
+    public void addToQueue(Long songID) {
         Log.v(TAG, "addToQueue start");
-        if (serviceMain != null) {
-            serviceMain.addToQueue(uri);
-        }
+            mediaController.addToQueue(songID);
         Log.v(TAG, "addToQueue end");
     }
 
-    public void addToQueueAndPlay(AudioUri audioURI) {
+    public void addToQueueAndPlay(Long songID) {
         Log.v(TAG, "addToQueueAndPlay start");
-        if (serviceMain != null) {
-            serviceMain.addToQueueAndPlay(audioURI.getUri());
-        }
+            mediaController.addToQueueAndPlay(songID);
         updateUI();
         Log.v(TAG, "addToQueueAndPlay end");
     }
 
     public void playNext() {
         Log.v(TAG, "playNext start");
-        if (serviceMain != null) {
-            serviceMain.playNext();
-        }
+            mediaController.playNext();
         updateUI();
         Log.v(TAG, "playNext end");
     }
 
     public void playPrevious() {
         Log.v(TAG, "playPrevious start");
-        if (serviceMain != null) {
-            serviceMain.playPrevious();
-        }
+            mediaController.playPrevious();
         updateUI();
         Log.v(TAG, "playPrevious end");
     }
 
     public void pauseOrPlay() {
         Log.v(TAG, "pauseOrPlay start");
-        if (serviceMain != null && serviceMain.getCurrentSong() != null) {
-            serviceMain.pauseOrPlay();
+        if (mediaController.getCurrentSong() != null) {
+            mediaController.pauseOrPlay();
         }
         updatePlayButtons();
         Log.v(TAG, "pauseOrPlay end");
@@ -813,12 +833,10 @@ public class ActivityMain extends AppCompatActivity {
 
     public void seekTo(int progress) {
         Log.v(TAG, "seekTo start");
-        if (serviceMain != null) {
-            serviceMain.seekTo(progress);
-            if (!serviceMain.isPlaying()) {
+            mediaController.seekTo(progress);
+            if (!mediaController.isPlaying()) {
                 pauseOrPlay();
             }
-        }
         Log.v(TAG, "seekTo end");
     }
 
@@ -826,323 +844,145 @@ public class ActivityMain extends AppCompatActivity {
 
     public boolean songInProgress() {
         Log.v(TAG, "songInProgress start");
-        if (serviceMain != null) {
             Log.v(TAG, "songInProgress end");
-            return serviceMain.songInProgress();
-        }
-        Log.v(TAG, "songInProgress default end");
-        return false;
+            return mediaController.songInProgress();
     }
 
     public boolean isPlaying() {
         Log.v(TAG, "isPlaying start");
-        if (serviceMain != null) {
             Log.v(TAG, "isPlaying end");
-            return serviceMain.isPlaying();
-        }
-        Log.v(TAG, "isPlaying default end");
-        return false;
+            return mediaController.isPlaying();
     }
 
     public boolean songQueueIsEmpty() {
         Log.v(TAG, "songQueueIsEmpty start");
-        if (serviceMain != null) {
             Log.v(TAG, "songQueueIsEmpty end");
-            return serviceMain.songQueueIsEmpty();
-        }
-        Log.v(TAG, "songQueueIsEmpty default end");
-        return false;
+            return mediaController.songQueueIsEmpty();
     }
 
     public ArrayList<RandomPlaylist> getPlaylists() {
         Log.v(TAG, "getPlaylists start");
-        if (serviceMain != null) {
             Log.v(TAG, "getPlaylists end");
-            return serviceMain.getPlaylists();
-        }
-        Log.v(TAG, "getPlaylists default end");
-        return null;
+            return mediaData.getPlaylists();
     }
 
     public void addPlaylist(RandomPlaylist randomPlaylist) {
         Log.v(TAG, "addPlaylist start");
-        if (serviceMain != null) {
-            serviceMain.addPlaylist(randomPlaylist);
-        }
+             mediaData.addPlaylist(randomPlaylist);
         Log.v(TAG, "addPlaylist end");
     }
 
     public void addPlaylist(int position, RandomPlaylist randomPlaylist) {
         Log.v(TAG, "addPlaylist w/ position start");
-        if (serviceMain != null) {
-            serviceMain.addPlaylist(position, randomPlaylist);
-        }
+        mediaData.addPlaylist(position, randomPlaylist);
         Log.v(TAG, "addPlaylist w/ position end");
-    }
-
-    public void addDirectoryPlaylist(long uriID, RandomPlaylist randomPlaylist) {
-        Log.v(TAG, "addDirectoryPlaylist start");
-        if (serviceMain != null) {
-            serviceMain.addDirectoryPlaylist(uriID, randomPlaylist);
-        }
-        Log.v(TAG, "addDirectoryPlaylist end");
-    }
-
-    public RandomPlaylist getDirectoryPlaylist(long mediaStoreUriID) {
-        Log.v(TAG, "getDirectoryPlaylist start");
-        if (serviceMain != null) {
-            Log.v(TAG, "getDirectoryPlaylist end");
-            return serviceMain.getDirectoryPlaylist(mediaStoreUriID);
-        }
-        Log.v(TAG, "getDirectoryPlaylist default end");
-        return null;
-    }
-
-    public boolean containsDirectoryPlaylist(long mediaStoreUriID) {
-        Log.v(TAG, "containsDirectoryPlaylist start");
-        if (serviceMain != null) {
-            Log.v(TAG, "containsDirectoryPlaylist end");
-            return serviceMain.containsDirectoryPlaylist(mediaStoreUriID);
-        }
-        Log.v(TAG, "containsDirectoryPlaylist default end");
-        return false;
     }
 
     public void removePlaylist(RandomPlaylist randomPlaylist) {
         Log.v(TAG, "removePlaylist start");
-        if (serviceMain != null) {
-            serviceMain.removePlaylist(randomPlaylist);
-        }
+        mediaData.removePlaylist(randomPlaylist);
         Log.v(TAG, "removePlaylist end");
     }
 
     public void setCurrentPlaylistToMaster() {
         Log.v(TAG, "setCurrentPlaylistToMaster start");
-        if (serviceMain != null) {
-            serviceMain.setCurrentPlaylistToMaster();
-        }
+            mediaController.setCurrentPlaylistToMaster();
         Log.v(TAG, "setCurrentPlaylistToMaster end");
     }
 
     public void setCurrentPlaylist(RandomPlaylist userPickedPlaylist) {
         Log.v(TAG, "setCurrentPlaylist start");
-        if (serviceMain != null) {
-            serviceMain.setCurrentPlaylist(userPickedPlaylist);
-        }
+            mediaController.setCurrentPlaylist(userPickedPlaylist);
         Log.v(TAG, "setCurrentPlaylist end");
     }
 
     public AudioUri getCurrentSong() {
         Log.v(TAG, "getCurrentSong start");
-        if (serviceMain != null) {
             Log.v(TAG, "getCurrentSong end");
-            return serviceMain.getCurrentSong();
-        }
-        Log.v(TAG, "getCurrentSong default end");
-        return null;
+            return mediaController.getCurrentSong();
     }
 
     public RandomPlaylist getCurrentPlaylist() {
         Log.v(TAG, "getCurrentPlaylist start");
-        if (serviceMain != null) {
             Log.v(TAG, "getCurrentPlaylist end");
-            return serviceMain.getCurrentPlaylist();
-        }
-        Log.v(TAG, "getCurrentPlaylist default end");
-        return null;
-    }
-
-    public RandomPlaylist getUserPickedPlaylist() {
-        Log.v(TAG, "getUserPickedPlaylist start");
-        if (serviceMain != null) {
-            Log.v(TAG, "getUserPickedPlaylist end");
-            return serviceMain.getUserPickedPlaylist();
-        }
-        Log.v(TAG, "getUserPickedPlaylist default end");
-        return null;
-    }
-
-    public void setUserPickedPlaylistToMasterPlaylist() {
-        Log.v(TAG, "setUserPickedPlaylistToMasterPlaylist start");
-        if (serviceMain != null) {
-            serviceMain.setUserPickedPlaylistToMasterPlaylist();
-        }
-        Log.v(TAG, "setUserPickedPlaylistToMasterPlaylist end");
-    }
-
-    public void setUserPickedPlaylist(RandomPlaylist randomPlaylist) {
-        Log.v(TAG, "setUserPickedPlaylist start");
-        if (serviceMain != null) {
-            serviceMain.setUserPickedPlaylist(randomPlaylist);
-        }
-        Log.v(TAG, "setUserPickedPlaylist end");
-    }
-
-    public List<AudioUri> getUserPickedSongs() {
-        Log.v(TAG, "getUserPickedSongs start");
-        if (serviceMain != null) {
-            Log.v(TAG, "getUserPickedSongs end");
-            return serviceMain.getUserPickedSongs();
-        }
-        Log.v(TAG, "getUserPickedSongs default end");
-        return null;
-    }
-
-    public void addUserPickedSong(AudioUri audioURI) {
-        Log.v(TAG, "addUserPickedSong start");
-        if (serviceMain != null) {
-            serviceMain.addUserPickedSong(audioURI);
-        }
-        Log.v(TAG, "addUserPickedSong end");
-    }
-
-    public void removeUserPickedSong(AudioUri audioURI) {
-        Log.v(TAG, "removeUserPickedSong start");
-        if (serviceMain != null) {
-            serviceMain.removeUserPickedSong(audioURI);
-        }
-        Log.v(TAG, "removeUserPickedSong end");
-    }
-
-    public void clearUserPickedSongs() {
-        Log.v(TAG, "clearUserPickedSongs start");
-        if (serviceMain != null) {
-            serviceMain.clearUserPickedSongs();
-        }
-        Log.v(TAG, "clearUserPickedSongs end");
-    }
-
-    public boolean fragmentSongVisible() {
-        Log.v(TAG, "fragmentSongVisible start");
-        if (serviceMain != null) {
-            Log.v(TAG, "fragmentSongVisible end");
-            return serviceMain.fragmentSongVisible();
-        }
-        Log.v(TAG, "fragmentSongVisible default end");
-        return false;
-    }
-
-    public void fragmentSongVisible(boolean fragmentSongVisible) {
-        Log.v(TAG, "set fragmentSongVisible start");
-        if (serviceMain != null) {
-            serviceMain.fragmentSongVisible(fragmentSongVisible);
-        }
-        Log.v(TAG, "set fragmentSongVisible end");
+            return mediaController.getCurrentPlaylist();
     }
 
     public void stopAndPreparePrevious() {
         Log.v(TAG, "stopAndPreparePrevious start");
-        if (serviceMain != null) {
-            serviceMain.stopAndPreparePrevious();
-        }
+            mediaController.stopAndPreparePrevious();
         Log.v(TAG, "stopAndPreparePrevious end");
     }
 
     public void setMaxPercent(double maxPercent) {
         Log.v(TAG, "setMaxPercent start");
-        if (serviceMain != null) {
-            serviceMain.setMaxPercent(maxPercent);
-        }
+            mediaData.setMaxPercent(maxPercent);
         Log.v(TAG, "setMaxPercent end");
     }
 
     public double getMaxPercent() {
         Log.v(TAG, "getMaxPercent start");
-        if (serviceMain != null) {
             Log.v(TAG, "getMaxPercent end");
-            return serviceMain.getMaxPercent();
-        }
-        Log.v(TAG, "getMaxPercent default end");
-        return -1;
+            return mediaData.getMaxPercent();
     }
 
     public void setPercentChangeUp(double percentChangeUp) {
         Log.v(TAG, "setPercentChangeUp start");
-        if (serviceMain != null) {
-            serviceMain.setPercentChangeUp(percentChangeUp);
-        }
+            mediaData.setPercentChangeUp(percentChangeUp);
         Log.v(TAG, "setPercentChangeUp end");
     }
 
     public double getPercentChangeUp() {
         Log.v(TAG, "getPercentChangeUp start");
-        if (serviceMain != null) {
             Log.v(TAG, "getPercentChangeUp end");
-            return serviceMain.getPercentChangeUp();
-        }
-        Log.v(TAG, "getPercentChangeUp default end");
-        return -1;
+            return mediaData.getPercentChangeUp();
     }
 
     public void setPercentChangeDown(double percentChangeDown) {
         Log.v(TAG, "setPercentChangeDown start");
-        if (serviceMain != null) {
-            serviceMain.setPercentChangeDown(percentChangeDown);
-        }
+            mediaData.setPercentChangeDown(percentChangeDown);
         Log.v(TAG, "setPercentChangeDown end");
     }
 
     public double getPercentChangeDown() {
         Log.v(TAG, "getPercentChangeDown start");
-        if (serviceMain != null) {
             Log.v(TAG, "getPercentChangeDown end");
-            return serviceMain.getPercentChangeDown();
-        }
-        Log.v(TAG, "getPercentChangeDown default end");
-        return -1;
+            return mediaData.getPercentChangeDown();
     }
 
     public boolean shuffling() {
         Log.v(TAG, "shuffling start");
-        if (serviceMain != null) {
             Log.v(TAG, "shuffling end");
-            return serviceMain.shuffling();
-        }
-        Log.v(TAG, "shuffling default end");
-        return true;
+            return mediaController.shuffling();
     }
 
     public void shuffling(boolean shuffling) {
         Log.v(TAG, "set shuffling start");
-        if (serviceMain != null) {
-            serviceMain.shuffling(shuffling);
-        }
+            mediaController.shuffling(shuffling);
         Log.v(TAG, "set shuffling end");
     }
 
     public boolean loopingOne() {
         Log.v(TAG, "loopingOne start");
-        if (serviceMain != null) {
             Log.v(TAG, "loopingOne end");
-            return serviceMain.loopingOne();
-        }
-        Log.v(TAG, "loopingOne default end");
-        return false;
+            return mediaController.loopingOne();
     }
 
     public void loopingOne(boolean loopingOne) {
         Log.v(TAG, "set loopingOne start");
-        if (serviceMain != null) {
-            serviceMain.loopingOne(loopingOne);
-        }
+            mediaController.loopingOne(loopingOne);
         Log.v(TAG, "set loopingOne end");
     }
 
     public boolean looping() {
         Log.v(TAG, "looping start");
-        if (serviceMain != null) {
             Log.v(TAG, "looping end");
-            return serviceMain.looping();
-        }
-        Log.v(TAG, "loopingOne default end");
-        return false;
+            return mediaController.looping();
     }
 
     public void looping(boolean looping) {
         Log.v(TAG, "set looping start");
-        if (serviceMain != null) {
-            serviceMain.looping(looping);
-        }
+            mediaController.looping(looping);
         Log.v(TAG, "set looping end");
     }
 
@@ -1183,8 +1023,8 @@ public class ActivityMain extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         Log.v(TAG, "onOptionsItemSelected start");
-        if (item.getItemId() == R.id.action_reset_probs && serviceMain != null) {
-            serviceMain.clearProbabilities();
+        if (item.getItemId() == R.id.action_reset_probs) {
+            mediaController.clearProbabilities();
             return true;
         } else if (item.getItemId() == R.id.action_add_to_playlist) {
             FragmentManager fragmentManager = getSupportFragmentManager();
@@ -1194,23 +1034,23 @@ public class ActivityMain extends AppCompatActivity {
             dialogFragmentAddToPlaylist.setArguments(loadBundleForAddToPlaylist(isSong));
             dialogFragmentAddToPlaylist.show(fragmentManager, fragment.getTag());
             return true;
-        } else if (item.getItemId() == R.id.action_add_to_queue && serviceMain != null) {
-            if (serviceMain.songInProgress() && songToAddToQueue != null) {
-                serviceMain.addToQueue(songToAddToQueue.getUri());
+        } else if (item.getItemId() == R.id.action_add_to_queue) {
+            if (mediaController.songInProgress() && songToAddToQueue != null) {
+                mediaController.addToQueue(songToAddToQueue);
 
             } else if (playlistToAddToQueue != null) {
-                for (AudioUri audioURI : playlistToAddToQueue.getSongIDs()) {
-                    serviceMain.addToQueue(audioURI.getUri());
+                for (Song songs : playlistToAddToQueue.getSongs()) {
+                    mediaController.addToQueue(songs.id);
                 }
-                if (serviceMain.songQueueIsEmpty()) {
-                    serviceMain.setCurrentPlaylist(playlistToAddToQueue);
+                if (mediaController.songQueueIsEmpty()) {
+                    mediaController.setCurrentPlaylist(playlistToAddToQueue);
                 }
-                if (!serviceMain.songInProgress()) {
+                if (!mediaController.songInProgress()) {
                     showSongPane();
                 }
             }
-            if (!serviceMain.songInProgress()) {
-                serviceMain.playNextInQueue(false);
+            if (!mediaController.songInProgress()) {
+                mediaController.playNextInQueue(false);
                 updateUI();
             }
         }
@@ -1222,19 +1062,18 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "loadBundleForAddToPlaylist start");
         Bundle bundle = new Bundle();
         bundle.putBoolean(BUNDLE_KEY_IS_SONG, isSong);
-        bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, serviceMain.getCurrentSong());
-        bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, serviceMain.getPlaylists());
+        bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, mediaController.getCurrentSong());
+        bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, mediaData.getPlaylists());
         bundle.putSerializable(
-                BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST, serviceMain.getUserPickedPlaylist());
+                BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST,
+                viewModelUserPickedPlaylist.getUserPickedPlaylist().getValue());
         Log.v(TAG, "loadBundleForAddToPlaylist end");
         return bundle;
     }
 
     public void saveFile() {
         Log.v(TAG, "saveFile start");
-        if (serviceMain != null) {
-            serviceMain.saveFile();
-        }
+            SaveFile.saveFile(this);
         Log.v(TAG, "saveFile end");
     }
 
@@ -1306,4 +1145,18 @@ public class ActivityMain extends AppCompatActivity {
         return -1;
     }
 
+    public RandomPlaylist getMasterPlaylist() {
+        return mediaData.getMasterPlaylist();
+    }
+
+    public RandomPlaylist getPlaylist(String playlistName) {
+        RandomPlaylist out = null;
+        for(RandomPlaylist randomPlaylist : mediaData.getPlaylists()){
+            if(randomPlaylist.getName().equals(playlistName)){
+                out = randomPlaylist;
+            }
+            break;
+        }
+        return out;
+    }
 }

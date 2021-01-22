@@ -7,7 +7,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -19,7 +18,7 @@ import java.util.List;
 
 public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerViewAdapterPlaylists.ViewHolder> {
 
-    private final Fragment fragment;
+    private final FragmentPlaylists fragmentPlaylists;
 
     public List<RandomPlaylist> randomPlaylists;
 
@@ -29,8 +28,8 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
 
     private View.OnClickListener onClickListenerViewHolder;
 
-    public RecyclerViewAdapterPlaylists(Fragment fragment, List<RandomPlaylist> items) {
-        this.fragment = fragment;
+    public RecyclerViewAdapterPlaylists(FragmentPlaylists fragmentPlaylists, List<RandomPlaylist> items) {
+        this.fragmentPlaylists = fragmentPlaylists;
         randomPlaylists = items;
     }
 
@@ -52,7 +51,7 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
         holder.textViewPlaylistName.setText(randomPlaylists.get(position).getName());
         holder.handle.setOnCreateContextMenuListener(null);
         onCreateContextMenuListenerPlaylists =
-                new OnCreateContextMenuListenerPlaylists(fragment, holder.randomPlaylist);
+                new OnCreateContextMenuListenerPlaylists(fragmentPlaylists, holder.randomPlaylist);
         holder.handle.setOnCreateContextMenuListener(onCreateContextMenuListenerPlaylists);
         onClickListenerHandle = new View.OnClickListener() {
             @Override
@@ -67,11 +66,11 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
             public void onClick(View v) {
                 int position = holder.getAdapterPosition();
                 if (position != RecyclerView.NO_POSITION) {
-                    ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
+                    ActivityMain activityMain = ((ActivityMain) fragmentPlaylists.getActivity());
                     if (activityMain != null) {
-                        activityMain.setUserPickedPlaylist(holder.randomPlaylist);
+                        fragmentPlaylists.setUserPickedPlaylist(holder.randomPlaylist);
                     }
-                    NavHostFragment.findNavController(fragment).navigate(
+                    NavHostFragment.findNavController(fragmentPlaylists).navigate(
                             FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentPlaylist());
                 }
             }

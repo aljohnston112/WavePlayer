@@ -17,10 +17,13 @@ import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.MenuItemCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.waveplayer.ActivityMain;
+import com.example.waveplayer.Song;
+import com.example.waveplayer.ViewModelUserPickedPlaylist;
 import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.fragments.OnQueryTextListenerSearch;
@@ -33,6 +36,8 @@ import java.util.List;
 public class FragmentSongs extends Fragment {
 
     public static final String NAME = "FragmentSongs";
+
+    private ViewModelUserPickedPlaylist viewModelUserPickedPlaylist;
 
     private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
@@ -54,11 +59,13 @@ public class FragmentSongs extends Fragment {
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        viewModelUserPickedPlaylist =
+                new ViewModelProvider(requireActivity()).get(ViewModelUserPickedPlaylist.class);
         ActivityMain activityMain = ((ActivityMain) getActivity());
         activityMain.hideKeyboard(view);
         updateMainContent();
         setUpRecyclerView();
-        activityMain.setUserPickedPlaylistToMasterPlaylist();
+        viewModelUserPickedPlaylist.setUserPickedPlaylist(activityMain.getMasterPlaylist());
         setUpBroadcastReceiverServiceConnected();
         setUpBroadcastReceiverOnOptionsMenuCreated();
     }
@@ -123,7 +130,7 @@ public class FragmentSongs extends Fragment {
             ActivityMain activityMain = ((ActivityMain) getActivity());
             View view = getView();
             RecyclerView recyclerViewSongs = view.findViewById(R.id.recycler_view_song_list);
-            List<AudioUri> songs = activityMain.getAllSongs();
+            List<Song> songs = activityMain.getAllSongs();
             if(songs != null) {
                 RecyclerViewAdapterSongs recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(
                         this, new ArrayList<>(songs));
