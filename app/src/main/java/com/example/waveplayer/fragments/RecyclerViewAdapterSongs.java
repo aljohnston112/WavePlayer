@@ -13,6 +13,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.waveplayer.ActivityMain;
+import com.example.waveplayer.MediaData;
 import com.example.waveplayer.Song;
 import com.example.waveplayer.R;
 import com.example.waveplayer.fragments.fragment_playlist.FragmentPlaylist;
@@ -79,7 +80,7 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                     ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
                     if (activityMain != null) {
                         if (activityMain.getCurrentSong() != null &&
-                        holder.song.equals(Song.getSong(activityMain.getCurrentSong()))) {
+                        holder.song.equals(MediaData.getInstance(activityMain).getSong(activityMain.getCurrentSong().id))) {
                             activityMain.seekTo(0);
                         }
                         if (fragment instanceof FragmentSongs) {
@@ -90,7 +91,7 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                                     ((FragmentPlaylist)fragment).getUserPickedPlaylist());
                             action = FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong();
                         }
-                        activityMain.setStarted(true);
+                        activityMain.clearSongQueue();
                         activityMain.addToQueueAndPlay(holder.song.id);
                     }
                     if (action != null) {

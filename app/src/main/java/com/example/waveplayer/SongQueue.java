@@ -66,7 +66,6 @@ public class SongQueue {
         songQueueIterator = null;
         songQueue.add(songID);
         songQueueIterator = songQueue.listIterator(songQueue.lastIndexOf(songID));
-        songQueueIterator.next();
     }
 
     public void addToQueueAtCurrentPosition(Long songID) {

@@ -1,9 +1,21 @@
 package com.example.waveplayer;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.provider.MediaStore;
 
+import androidx.room.Room;
+
+import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -11,7 +23,13 @@ import java.util.List;
 
 public class MediaData {
 
+    private static final String SONG_DATABASE_NAME = "SONG_DATABASE_NAME";
+
     private static final String MASTER_PLAYLIST_NAME = "MASTER_PLAYLIST_NAME";
+
+    private final SongDatabase songDatabase;
+
+    private final SongDAO songDAO;
 
     private final HashMap<Long, MediaPlayerWUri> songIDToMediaPlayerWUriHashMap = new HashMap<>();
 
@@ -60,10 +78,13 @@ public class MediaData {
     public static MediaData INSTANCE;
 
     private MediaData(Context context) {
+        songDatabase = Room.databaseBuilder(context, SongDatabase.class, SONG_DATABASE_NAME).build();
+        songDAO = songDatabase.songDAO();
         SaveFile.loadSaveFile(context, this);
+        getAudioFiles(context);
     }
 
-    public static MediaData getInstance(Context context) {
+    synchronized public static MediaData getInstance(Context context) {
         if (INSTANCE == null) {
             INSTANCE = new MediaData(context);
         }
@@ -119,36 +140,108 @@ public class MediaData {
         }
     }
 
-    private void removeMissingSongs(List<Song> newSongs) {
-        for (Song song : masterPlaylist.getSongs()) {
-            if (!newSongs.contains(song)) {
-                masterPlaylist.remove(song);
-                songIDToMediaPlayerWUriHashMap.remove(song.id);
+    private void getAudioFiles(Context context) {
+        String[] projection = new String[]{
+                MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DISPLAY_NAME, MediaStore.Audio.Media.IS_MUSIC,
+                MediaStore.Audio.Media.ARTIST_ID, MediaStore.Audio.Media.TITLE};
+        String selection = MediaStore.Audio.Media.IS_MUSIC + " != ?";
+        String[] selectionArgs = new String[]{"0"};
+        String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
+        try (Cursor cursor = context.getContentResolver().query(
+                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                projection, selection, selectionArgs, sortOrder)) {
+            if (cursor != null) {
+                getSongs(context, cursor);
             }
         }
     }
 
-    private void addNewSongs(List<Song> newSongs) {
-        for (Song newSong : newSongs) {
-            if (newSong != null) {
-                if (!masterPlaylist.contains(newSong)) {
-                    masterPlaylist.add(newSong);
+    private void getSongs(Context context, Cursor cursor) {
+        final ArrayList<Song> newSongs = new ArrayList<>();
+        final ArrayList<Long> filesThatExist = new ArrayList<>();
+        int idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
+        int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
+        int titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE);
+        int artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST_ID);
+        while (cursor.moveToNext()) {
+            long id = cursor.getLong(idCol);
+            String displayName = cursor.getString(nameCol);
+            String title = cursor.getString(titleCol);
+            String artist = cursor.getString(artistCol);
+            AudioUri audioURI = new AudioUri(displayName, artist, title, id);
+            File file = new File(context.getFilesDir(), String.valueOf(audioURI.id));
+            if (!file.exists()) {
+                try (FileOutputStream fos =
+                             context.openFileOutput(String.valueOf(id), Context.MODE_PRIVATE);
+                     ObjectOutputStream objectOutputStream = new ObjectOutputStream(fos)) {
+                    objectOutputStream.writeObject(audioURI);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
+                newSongs.add(new Song(id, title));
+            }
+            filesThatExist.add(id);
+        }
+        if (masterPlaylist != null) {
+            // TODO race condition!
+            ServiceMain.executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    addNewSongs(filesThatExist);
+                    removeMissingSongs(filesThatExist);
+                }
+            });
+        } else {
+            masterPlaylist = new RandomPlaylist(
+                    MediaData.MASTER_PLAYLIST_NAME, new ArrayList<>(newSongs),
+                    settings.maxPercent, true, -1);
+            ServiceMain.executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    songDAO.insertAll(newSongs.toArray(new Song[0]));
+                }
+            });
+        }
+    }
+
+    private void removeMissingSongs(List<Long> filesThatExist) {
+        for (Long songID : masterPlaylist.getSongIDs()) {
+            if (!filesThatExist.contains(songID)) {
+                masterPlaylist.remove(songDAO.getSong(songID));
+                songIDToMediaPlayerWUriHashMap.remove(songID);
             }
         }
     }
 
-    void loadMediaFiles(List<Song> newUris) {
-        if (newUris != null) {
-            if (masterPlaylist != null) {
-                addNewSongs(newUris);
-                removeMissingSongs(newUris);
-            } else {
-                masterPlaylist = new RandomPlaylist(
-                        MASTER_PLAYLIST_NAME, new ArrayList<>(newUris),
-                        settings.maxPercent, true, -1);
+    private void addNewSongs(List<Long> filesThatExist) {
+        for (Long songID : filesThatExist) {
+            if (!masterPlaylist.contains(songID)) {
+                masterPlaylist.add(songDAO.getSong(songID));
             }
         }
+    }
+
+    public Song getSong(Long songID) {
+        return songDAO.getSong(songID);
+    }
+
+    public static AudioUri getAudioUri(Context context, Long songID) {
+        File file = new File(context.getFilesDir(), String.valueOf(songID));
+        if (file.exists()) {
+            try (FileInputStream fileInputStream = context.openFileInput(String.valueOf(songID));
+                 ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
+                return (AudioUri) objectInputStream.readObject();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
     }
 
 }

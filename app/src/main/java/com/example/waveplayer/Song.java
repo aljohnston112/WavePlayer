@@ -1,17 +1,26 @@
 package com.example.waveplayer;
 
 import androidx.annotation.Nullable;
+import androidx.room.ColumnInfo;
+import androidx.room.Entity;
+import androidx.room.Fts4;
+import androidx.room.Ignore;
+import androidx.room.PrimaryKey;
 
 import com.example.waveplayer.random_playlist.AudioUri;
 
 import java.io.Serializable;
 
+@Entity(tableName = "songs")
 public class Song implements Comparable<Song>, Serializable {
 
+    @PrimaryKey
     public final Long id;
 
+    @ColumnInfo(name = "title")
     public final String title;
 
+    @Ignore
     private boolean selected;
 
     public boolean isSelected() {
@@ -40,10 +49,6 @@ public class Song implements Comparable<Song>, Serializable {
     @Override
     public int hashCode() {
         return System.identityHashCode(this);
-    }
-
-    public static Song getSong(AudioUri audioUri){
-        return new Song(audioUri.id, audioUri.title);
     }
 
 }

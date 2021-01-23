@@ -69,6 +69,8 @@ public class ServiceMain extends Service {
 
     private MediaController mediaController;
 
+    public static final ExecutorService executorService = Executors.newSingleThreadExecutor();
+
     // For updating the SeekBar
     private ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
@@ -156,7 +158,6 @@ public class ServiceMain extends Service {
         Log.v(TAG, "onCreate started");
         super.onCreate();
         Log.v(TAG, "onCreate is loading");
-        mediaController = MediaController.getInstance(this);
         setUpBroadCastReceivers();
         // setUpExceptionSaver();
         // logLastThrownException();
@@ -247,6 +248,10 @@ public class ServiceMain extends Service {
         return START_STICKY;
     }
 
+    public void permissionGranted(){
+        mediaController = MediaController.getInstance(this);
+    }
+
     private void setUpNotificationBuilder() {
         Log.v(TAG, "Setting up notification builder");
         notificationCompatBuilder = new NotificationCompat.Builder(
@@ -309,7 +314,7 @@ public class ServiceMain extends Service {
     private void updateSongArt() {
         Log.v(TAG, "updateSongArt for notification start");
         // TODO update song art background
-        if (mediaController.getCurrentSong() != null) {
+        if (mediaController != null && mediaController.getCurrentSong() != null) {
             Bitmap bitmap = ActivityMain.getThumbnail(
                     mediaController.getCurrentSong(), 92, 92, getApplicationContext());
             if (bitmap != null) {
@@ -332,7 +337,7 @@ public class ServiceMain extends Service {
 
     private void updateNotificationSongName() {
         Log.v(TAG, "updateNotificationSongName start");
-        if (mediaController.getCurrentSong() != null) {
+        if (mediaController != null && mediaController.getCurrentSong() != null) {
             remoteViewsNotificationLayoutWithoutArt.setTextViewText(
                     R.id.textViewNotificationSongPaneSongName, mediaController.getCurrentSong().title);
             remoteViewsNotificationLayoutWithArt.setTextViewText(
@@ -348,7 +353,7 @@ public class ServiceMain extends Service {
 
     void updateNotificationPlayButton() {
         Log.v(TAG, "updateNotificationPlayButton start");
-        if (mediaController.isPlaying()) {
+        if (mediaController != null && mediaController.isPlaying()) {
             remoteViewsNotificationLayoutWithoutArt.setImageViewResource(
                     R.id.imageButtonNotificationSongPanePlayPause, R.drawable.pause_black_24dp);
             remoteViewsNotificationLayoutWithArt.setImageViewResource(
@@ -425,6 +430,7 @@ public class ServiceMain extends Service {
     public void onDestroy() {
         Log.v(TAG, "onDestroy started");
         // TODO remove on release?
+        mediaController.releaseMediaPlayers();
         Toast.makeText(this, "PinkyPlayer done", Toast.LENGTH_SHORT).show();
         Log.v(TAG, "onDestroy ended");
     }

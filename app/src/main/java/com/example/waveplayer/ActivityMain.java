@@ -102,8 +102,6 @@ public class ActivityMain extends AppCompatActivity {
 
     private void setUpAfterServiceConnection() {
         Log.v(TAG, "setUpAfterServiceConnection started");
-        mediaController = MediaController.getInstance(serviceMain);
-        mediaData = MediaData.getInstance(this);
         askForReadExternalAndFillMediaController();
         askForWriteExternal();
         setUpBroadcastReceivers();
@@ -254,16 +252,15 @@ public class ActivityMain extends AppCompatActivity {
                         new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                         REQUEST_CODE_PERMISSION_READ);
             } else {
-                getAudioFiles();
+                permissionGranted();
             }
-        } else {
-            getAudioFiles();
         }
     }
 
-    private void getAudioFiles() {
-        List<Song> newSongs = AudioFileLoader.getAudioFiles(this);
-        mediaController.loadMediaFiles(newSongs);
+    private void permissionGranted() {
+        serviceMain.permissionGranted();
+        mediaController = MediaController.getInstance(serviceMain);
+        mediaData = MediaData.getInstance(this);
     }
 
     @Override
@@ -274,7 +271,7 @@ public class ActivityMain extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (requestCode == REQUEST_CODE_PERMISSION_READ && grantResults.length > 0 &&
                     grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                getAudioFiles();
+                permissionGranted();
             } else if (requestCode == REQUEST_CODE_PERMISSION_READ) {
                 Toast toast = Toast.makeText(getApplicationContext(),
                         R.string.permission_read_needed, Toast.LENGTH_LONG);
@@ -296,7 +293,7 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     public List<Song> getAllSongs() {
-            return mediaController.getAllSongs();
+            return mediaData.getAllSongs();
     }
 
     void setUpBroadcastReceivers() {
@@ -699,8 +696,8 @@ public class ActivityMain extends AppCompatActivity {
 
     private void updateSongPaneUI() {
         Log.v(TAG, "updateSongPaneUI start");
-        if (mediaController.isStarted() && !fragmentSongVisible() && mediaController.getCurrentSong() != null
-                && mediaController.songInProgress()) {
+        if ((mediaController != null) && mediaController.songInProgress() && !fragmentSongVisible()
+                && mediaController.getCurrentSong() != null && mediaController.songInProgress()) {
             Log.v(TAG, "updating the song pane UI");
             updateSongPaneName();
             updateSongPaneArt();
@@ -759,7 +756,7 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "updateSongPanePlayButton start");
         ImageButton imageButtonSongPanePlayPause = findViewById(R.id.imageButtonSongPanePlayPause);
         View fragmentPaneSong = findViewById(R.id.fragmentSongPane);
-        if (mediaController.isStarted() && !fragmentSongVisible() &&
+        if ((mediaController != null) && mediaController.songInProgress() && !fragmentSongVisible() &&
                 fragmentPaneSong.getVisibility() == View.VISIBLE &&
                 imageButtonSongPanePlayPause != null) {
             Log.v(TAG, "updating SongPanePlayButton");
@@ -849,7 +846,7 @@ public class ActivityMain extends AppCompatActivity {
     public boolean songInProgress() {
         Log.v(TAG, "songInProgress start");
             Log.v(TAG, "songInProgress end");
-            return mediaController.songInProgress();
+            return (mediaController != null) && mediaController.songInProgress();
     }
 
     public boolean isPlaying() {
@@ -910,12 +907,6 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "getCurrentPlaylist start");
             Log.v(TAG, "getCurrentPlaylist end");
             return mediaController.getCurrentPlaylist();
-    }
-
-    public void stopAndPreparePrevious() {
-        Log.v(TAG, "stopAndPreparePrevious start");
-            mediaController.stopAndPreparePrevious();
-        Log.v(TAG, "stopAndPreparePrevious end");
     }
 
     public void setMaxPercent(double maxPercent) {
@@ -1054,7 +1045,7 @@ public class ActivityMain extends AppCompatActivity {
                 }
             }
             if (!mediaController.songInProgress()) {
-                mediaController.playNextInQueue(this, false);
+                mediaController.playNext(this);
                 updateUI();
             }
         }
@@ -1180,11 +1171,11 @@ public class ActivityMain extends AppCompatActivity {
         return viewModelUserPickedPlaylist.getUserPickedPlaylist();
     }
 
-    public void setStarted(boolean isStarted) {
-        mediaController.isStarted(isStarted);
-    }
-
     public boolean serviceConnected() {
         return (serviceMain != null);
+    }
+
+    public void clearSongQueue() {
+        mediaController.clearSongQueue();
     }
 }

@@ -9,28 +9,26 @@ import android.media.MediaPlayer;
 import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 
-import java.util.List;
 import java.util.Random;
 
 public class MediaController {
 
-    private static final Random random = new Random();
+    public static MediaController INSTANCE;
 
-    public final MediaPlayer.OnCompletionListener onCompletionListener;
+    synchronized public static MediaController getInstance(ServiceMain serviceMain){
+        if(INSTANCE == null){
+            INSTANCE = new MediaController(serviceMain);
+        }
+        return INSTANCE;
+    }
+
+    private static final Random random = new Random();
 
     private final ServiceMain serviceMain;
 
     private final MediaData mediaData;
 
-    private boolean isStarted;
-
-    public boolean isStarted() {
-        return isStarted;
-    }
-
-    public void isStarted(boolean isStarted){
-        this.isStarted = isStarted;
-    }
+    public final MediaPlayer.OnCompletionListener onCompletionListener;
 
     private AudioUri currentSong;
 
@@ -44,22 +42,45 @@ public class MediaController {
         setCurrentPlaylist(mediaData.getMasterPlaylist());
     }
 
+    public RandomPlaylist getCurrentPlaylist() {
+        return currentPlaylist;
+    }
+
+    public void setCurrentPlaylist(RandomPlaylist currentPlaylist) {
+        this.currentPlaylist = currentPlaylist;
+        songQueue.clearSongQueue();
+    }
+
     public void clearProbabilities(Context context) {
         currentPlaylist.clearProbabilities(context);
     }
-    
+
     private final SongQueue songQueue = new SongQueue();
 
-    private boolean isPlaying = false;
+    public void addToQueue(Long songID) {
+        songQueue.addToQueue(songID);
+    }
 
-    public boolean isPlaying() {
-        return isPlaying;
+    public boolean songQueueIsEmpty() {
+        return songQueue.isEmpty();
+    }
+
+    public void clearSongQueue(){
+        songQueue.clearSongQueue();
     }
 
     private boolean songInProgress = false;
 
     public boolean songInProgress() {
         return songInProgress;
+    }
+
+    private boolean haveAudioFocus = false;
+
+    private boolean isPlaying = false;
+
+    public boolean isPlaying() {
+        return isPlaying;
     }
 
     private boolean shuffling = true;
@@ -92,23 +113,59 @@ public class MediaController {
         this.loopingOne = loopingOne;
     }
 
-    private boolean haveAudioFocus = false;
-
-    public static MediaController INSTANCE;
-
     private MediaController(ServiceMain serviceMain){
         this.serviceMain = serviceMain;
+        mediaData = MediaData.getInstance(serviceMain.getApplicationContext());
         onCompletionListener = new MediaPlayerOnCompletionListener(
                 serviceMain.getApplicationContext(), this);
-        mediaData = MediaData.getInstance(serviceMain.getApplicationContext());
         currentPlaylist = mediaData.getMasterPlaylist();
     }
 
-    public static MediaController getInstance(ServiceMain serviceMain){
-        if(INSTANCE == null){
-            INSTANCE = new MediaController(serviceMain);
+    private MediaPlayerWUri getCurrentMediaPlayerWUri() {
+        if (currentSong != null) {
+            return mediaData.getMediaPlayerWUri(currentSong.id);
         }
-        return INSTANCE;
+        return null;
+    }
+
+    public int getCurrentTime() {
+        MediaPlayerWUri mediaPlayerWURI = getCurrentMediaPlayerWUri();
+        if (mediaPlayerWURI != null) {
+            return mediaPlayerWURI.getCurrentPosition();
+        } else {
+            return -1;
+        }
+    }
+
+    public void releaseMediaPlayers() {
+        mediaData.releaseMediaPlayers();
+    }
+
+    public void addToQueueAndPlay(Context context, Long songID) {
+        songQueue.addToQueue(songID);
+        playNext(context);
+    }
+
+    private void makeIfNeededAndPlay(Context context, Long songID) {
+        MediaPlayerWUri mediaPlayerWUri = mediaData.getMediaPlayerWUri(songID);
+        if (mediaPlayerWUri == null) {
+            mediaPlayerWUri =
+                    new CallableCreateMediaPlayerWUri(context, this, songID).call();
+            mediaData.addMediaPlayerWUri(mediaPlayerWUri.id, mediaPlayerWUri);
+        }
+        stopCurrentSongAndPlay(context, mediaPlayerWUri);
+    }
+
+    private void stopCurrentSongAndPlay(Context context, MediaPlayerWUri mediaPlayerWURI) {
+        stopCurrentSong();
+        if (requestAudioFocus(context)) {
+            mediaPlayerWURI.shouldPlay(true);
+            isPlaying = true;
+            songInProgress = true;
+        }
+        currentSong = MediaData.getAudioUri(serviceMain.getApplicationContext(), mediaPlayerWURI.id);
+        serviceMain.updateNotification();
+        currentPlaylist.setIndexTo(mediaPlayerWURI.id);
     }
 
     public void pauseOrPlay(Context context) {
@@ -132,131 +189,6 @@ public class MediaController {
         serviceMain.updateNotification();
     }
 
-    public boolean playNextInQueue(Context context, boolean addNew) {
-        if (songQueue.hasNext()) {
-            playAndMakeIfNeeded(context, songQueue.next());
-        } else if (looping) {
-            if (shuffling) {
-                songQueue.goToFront();
-                if (songQueue.hasNext()) {
-                    playAndMakeIfNeeded(context, songQueue.next());
-                }
-            } else {
-                return false;
-            }
-        } else if (addNew) {
-            if (shuffling) {
-                currentSong = currentPlaylist.next(context, random);
-                addToQueueAndPlay(context, currentSong.id);
-            } else {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public boolean playPreviousInQueue(Context context) {
-        if (songQueue.hasPrevious()) {
-            songQueue.previous();
-            if (songQueue.hasPrevious()) {
-                playAndMakeIfNeeded(context, songQueue.previous());
-                songQueue.next();
-            } else if (looping) {
-                if (shuffling) {
-                    songQueue.goToBack();
-                    if (songQueue.hasPrevious()) {
-                        playAndMakeIfNeeded(context, songQueue.previous());
-                        songQueue.next();
-                    } else {
-                        return false;
-                    }
-                }
-            } else {
-                seekTo(0);
-            }
-            return true;
-        }
-        return false;
-    }
-
-    public void playNextInPlaylist(Context context) {
-        if (currentPlaylist.hasNext()) {
-            playAndMakeIfNeeded(context, currentPlaylist.next());
-        } else if (looping) {
-            currentPlaylist.goToFront();
-            if (currentPlaylist.hasNext()) {
-                playAndMakeIfNeeded(context, currentPlaylist.next());
-            }
-        }
-    }
-
-    public void playPreviousInPlaylist(Context context) {
-        if (currentPlaylist.hasPrevious()) {
-            playAndMakeIfNeeded(context, currentPlaylist.previous());
-        } else if (looping) {
-            currentPlaylist.goToBack();
-            if (currentPlaylist.hasPrevious()) {
-                playAndMakeIfNeeded(context, currentPlaylist.previous());
-            }
-        }
-    }
-
-    public void playNext(Context context) {
-        stopAndPreparePrevious();
-        if (loopingOne) {
-            playLoopingOne(context);
-        } else if (!playNextInQueue(context, true)) {
-            playNextInPlaylist(context);
-        }
-    }
-
-    public void playPrevious(Context context) {
-        if (loopingOne) {
-            playLoopingOne(context);
-        } else if (!playPreviousInQueue(context)) {
-            playPreviousInPlaylist(context);
-        }
-    }
-
-    void playLoopingOne(Context context) {
-        MediaPlayerWUri mediaPlayerWURI = getCurrentMediaPlayerWUri();
-        if (mediaPlayerWURI != null) {
-            mediaPlayerWURI.seekTo(serviceMain.getApplicationContext(), currentSong, 0);
-            mediaPlayerWURI.shouldPlay(true);
-            // TODO make a setting?
-            //addToQueueAtCurrentIndex(currentSong.getUri());
-        } else {
-            // TODO what if current song is in playlist?
-            playAndMakeIfNeeded(context, currentSong.id);
-        }
-    }
-
-    public void addToQueueAndPlay(Context context, Long songID) {
-        playAndMakeIfNeeded(context, songID);
-        songQueue.addToQueue(songID);
-    }
-
-    void playAndMakeIfNeeded(Context context, Long songID) {
-        MediaPlayerWUri mediaPlayerWURI = mediaData.getMediaPlayerWUri(songID);
-        if (mediaPlayerWURI != null) {
-            playAndMakeIfNeeded(context, mediaPlayerWURI);
-        } else {
-                makeMediaPlayerWURIAndPlay(serviceMain.getApplicationContext(), songID);
-        }
-    }
-
-    private void playAndMakeIfNeeded(Context context, MediaPlayerWUri mediaPlayerWURI) {
-        stopCurrentSong();
-        if (requestAudioFocus(context)) {
-            mediaPlayerWURI.shouldPlay(true);
-            isPlaying = true;
-            songInProgress = true;
-        }
-        currentSong = AudioFileLoader.getAudioUri(serviceMain.getApplicationContext(), mediaPlayerWURI.id);
-        serviceMain.updateNotification();
-        currentPlaylist.setIndexTo(mediaPlayerWURI.id);
-    }
-
     private void stopCurrentSong() {
         if (currentSong != null) {
             MediaPlayerWUri mediaPlayerWURI = mediaData.getMediaPlayerWUri(currentSong.id);
@@ -273,21 +205,7 @@ public class MediaController {
         }
     }
 
-    public void seekTo(int progress) {
-        MediaPlayerWUri mediaPlayerWUri = getCurrentMediaPlayerWUri();
-        if (mediaPlayerWUri != null) {
-            mediaPlayerWUri.seekTo(serviceMain.getApplicationContext(), currentSong, progress);
-        }
-    }
-
-    private void makeMediaPlayerWURIAndPlay(Context context, Long songID) {
-        MediaPlayerWUri mediaPlayerWURI =
-                new CallableCreateMediaPlayerWURI(context, this, songID).call();
-        mediaData.addMediaPlayerWUri(mediaPlayerWURI.id, mediaPlayerWURI);
-        playAndMakeIfNeeded(context, mediaPlayerWURI);
-    }
-
-    void stopAndPreparePrevious() {
+    private void stopPrevious() {
         if (songQueue.hasPrevious()) {
             final MediaPlayerWUri mediaPlayerWURI =
                     mediaData.getMediaPlayerWUri(songQueue.previous());
@@ -305,37 +223,94 @@ public class MediaController {
         }
     }
 
-    public RandomPlaylist getMasterPlaylist(){
-        return mediaData.getMasterPlaylist();
-    }
-
-    public RandomPlaylist getCurrentPlaylist() {
-        return currentPlaylist;
-    }
-
-    public void setCurrentPlaylist(RandomPlaylist currentPlaylist) {
-        this.currentPlaylist = currentPlaylist;
-        songQueue.clearSongQueue();
-    }
-
-    public int getCurrentTime() {
+    private void playLoopingOne(Context context) {
         MediaPlayerWUri mediaPlayerWURI = getCurrentMediaPlayerWUri();
         if (mediaPlayerWURI != null) {
-            return mediaPlayerWURI.getCurrentPosition();
+            mediaPlayerWURI.seekTo(serviceMain.getApplicationContext(), currentSong, 0);
+            mediaPlayerWURI.shouldPlay(true);
+            // TODO make a setting?
+            //addToQueueAtCurrentIndex(currentSong.getUri());
         } else {
-            return -1;
+            makeIfNeededAndPlay(context, currentSong.id);
         }
     }
 
-    private MediaPlayerWUri getCurrentMediaPlayerWUri() {
-        if (currentSong != null) {
-            return mediaData.getMediaPlayerWUri(currentSong.id);
+    public void playNext(Context context) {
+        stopPrevious();
+        if (loopingOne) {
+            playLoopingOne(context);
+        } else if (!playNextInQueue(context)) {
+            playNextInPlaylist(context);
         }
-        return null;
     }
 
-    public void releaseMediaPlayers() {
-        mediaData.releaseMediaPlayers();
+    private boolean playNextInQueue(Context context) {
+        if (songQueue.hasNext()) {
+            makeIfNeededAndPlay(context, songQueue.next());
+        } else if (looping) {
+            if (shuffling) {
+                songQueue.goToFront();
+                if (songQueue.hasNext()) {
+                    makeIfNeededAndPlay(context, songQueue.next());
+                }
+            } else {
+                return false;
+            }
+        } else if (shuffling) {
+                currentSong = currentPlaylist.next(context, random);
+                addToQueueAndPlay(context, currentSong.id);
+            }
+        return true;
+    }
+
+    private void playNextInPlaylist(Context context) {
+        currentSong = currentPlaylist.next(context, random, looping, shuffling);
+        addToQueueAndPlay(context, currentSong.id);
+    }
+
+    public void playPrevious(Context context) {
+        if (loopingOne) {
+            playLoopingOne(context);
+        } else if (!playPreviousInQueue(context)) {
+            playPreviousInPlaylist(context);
+        }
+    }
+
+    private boolean playPreviousInQueue(Context context) {
+        if (songQueue.hasPrevious()) {
+            songQueue.previous();
+            if (songQueue.hasPrevious()) {
+                makeIfNeededAndPlay(context, songQueue.previous());
+                songQueue.next();
+            } else if (looping) {
+                if (shuffling) {
+                    songQueue.goToBack();
+                    if (songQueue.hasPrevious()) {
+                        makeIfNeededAndPlay(context, songQueue.previous());
+                        songQueue.next();
+                    } else {
+                        return false;
+                    }
+                }
+            } else {
+                return false;
+            }
+            return true;
+        }
+        return looping;
+    }
+
+    private void playPreviousInPlaylist(Context context) {
+        currentSong = currentPlaylist.previous(context, random, looping, shuffling);
+        addToQueueAndPlay(context, currentSong.id);
+
+    }
+
+    public void seekTo(int progress) {
+        MediaPlayerWUri mediaPlayerWUri = getCurrentMediaPlayerWUri();
+        if (mediaPlayerWUri != null) {
+            mediaPlayerWUri.seekTo(serviceMain.getApplicationContext(), currentSong, progress);
+        }
     }
 
     private boolean requestAudioFocus(final Context context) {
@@ -395,24 +370,8 @@ public class MediaController {
         return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
     }
 
-    public void loadMediaFiles(List<Song> newSongs) {
-        mediaData.loadMediaFiles(newSongs);
-    }
-
-    public List<Song> getAllSongs() {
-        return mediaData.getAllSongs();
-    }
-
     MediaPlayerWUri getMediaPlayerWUri(Long songID) {
         return mediaData.getMediaPlayerWUri(songID);
-    }
-
-    public void addToQueue(Long songID) {
-        songQueue.addToQueue(songID);
-    }
-
-    public boolean songQueueIsEmpty() {
-        return songQueue.isEmpty();
     }
 
 }

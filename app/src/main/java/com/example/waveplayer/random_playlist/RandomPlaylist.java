@@ -2,7 +2,7 @@ package com.example.waveplayer.random_playlist;
 
 import android.content.Context;
 
-import com.example.waveplayer.AudioFileLoader;
+import com.example.waveplayer.MediaData;
 import com.example.waveplayer.Song;
 
 import java.io.Serializable;
@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.Set;
 
@@ -65,7 +64,7 @@ public class RandomPlaylist implements Serializable {
         }
         this.name = name;
         this.mediaStoreUriID = mediaStoreUriID;
-        for(Song song : music){
+        for (Song song : music) {
             playlistArray.add(song.id);
         }
         playlistIterator = playlistArray.listIterator();
@@ -75,20 +74,31 @@ public class RandomPlaylist implements Serializable {
         return probabilityFunction.getKeys();
     }
 
+    public List<Long> getSongIDs(){
+        return playlistArray;
+    }
+
     public void add(Song song) {
         probabilityFunction.add(song);
+        playlistArray.add(song.id);
     }
 
     public void add(Song song, double probability) {
         probabilityFunction.add(song, probability);
+        playlistArray.add(song.id);
     }
 
     public void remove(Song song) {
         probabilityFunction.remove(song);
+        playlistArray.remove(song.id);
     }
 
     public boolean contains(Song song) {
         return probabilityFunction.contains(song);
+    }
+
+    public boolean contains(Long songID) {
+        return playlistArray.contains(songID);
     }
 
     public void setMaxPercent(double maxPercent) {
@@ -96,13 +106,13 @@ public class RandomPlaylist implements Serializable {
     }
 
     public void good(Context context, Song song, double percent, boolean scale) {
-        if(AudioFileLoader.getAudioUri(context, song.id).good(percent, scale)) {
+        if (MediaData.getAudioUri(context, song.id).good(percent, scale)) {
             probabilityFunction.good(song, percent, scale);
         }
     }
 
     public void bad(Context context, Song song, double percent) {
-        if(AudioFileLoader.getAudioUri(context, song.id).bad(percent)) {
+        if (MediaData.getAudioUri(context, song.id).bad(percent)) {
             probabilityFunction.bad(song, percent);
         }
 
@@ -113,8 +123,8 @@ public class RandomPlaylist implements Serializable {
     }
 
     public void clearProbabilities(Context context) {
-        for(Song song : probabilityFunction.getKeys()){
-            AudioFileLoader.getAudioUri(context, song.id).clearProbabilities();
+        for (Song song : probabilityFunction.getKeys()) {
+            MediaData.getAudioUri(context, song.id).clearProbabilities();
         }
         probabilityFunction.clearProbabilities();
     }
@@ -123,9 +133,9 @@ public class RandomPlaylist implements Serializable {
         Song song;
         AudioUri audioUri = null;
         boolean next = false;
-        while(!next) {
+        while (!next) {
             song = probabilityFunction.fun(random);
-            audioUri = AudioFileLoader.getAudioUri(context, song.id);
+            audioUri = MediaData.getAudioUri(context, song.id);
             next = audioUri.shouldPlay(random);
         }
         return audioUri;
@@ -143,40 +153,36 @@ public class RandomPlaylist implements Serializable {
         probabilityFunction.switchPositions(oldPosition, newPosition);
     }
 
-    public boolean hasNext() {
-        if(playlistIterator == null){
+    public AudioUri next(Context context, Random random, boolean looping, boolean shuffling) {
+        if (playlistIterator == null) {
             playlistIterator = playlistArray.listIterator();
         }
-        return playlistIterator.hasNext();
+        if (shuffling) {
+            return next(context, random);
+        } else {
+            if (looping && !playlistIterator.hasNext()) {
+                playlistIterator = playlistArray.listIterator();
+            }
+            return MediaData.getAudioUri(context, playlistIterator.next());
+        }
     }
 
-    public Long next() {
-        if(playlistIterator == null){
+    public AudioUri previous(Context context, Random random, boolean looping, boolean shuffling) {
+        if (playlistIterator == null) {
             playlistIterator = playlistArray.listIterator();
         }
-        if (!hasNext()) {
-            throw new NoSuchElementException();
+        if (shuffling) {
+            return next(context, random);
+        } else {
+            if (looping && !playlistIterator.hasPrevious()) {
+                playlistIterator = playlistArray.listIterator(playlistArray.size()-1);
+            }
+            return MediaData.getAudioUri(context, playlistIterator.previous());
         }
-        return playlistIterator.next();
+
     }
 
-    public boolean hasPrevious() {
-        if(playlistIterator == null){
-            playlistIterator = playlistArray.listIterator();
-        }
-        return playlistIterator.hasPrevious();
-    }
-
-    public Long previous() {
-        if(playlistIterator == null){
-            playlistIterator = playlistArray.listIterator();
-        }
-        if (!hasPrevious()) {
-            throw new NoSuchElementException();
-        }
-        return playlistIterator.previous();
-    }
-
+    /*
     public void goToFront() {
         playlistIterator = null;
         playlistIterator = playlistArray.listIterator();
@@ -187,12 +193,13 @@ public class RandomPlaylist implements Serializable {
         playlistIterator = playlistArray.listIterator(playlistArray.size());
     }
 
+     */
+
     public void setIndexTo(Long songID) {
         if (playlistArray != null) {
             int i = playlistArray.indexOf(songID);
             playlistIterator = playlistArray.listIterator(i + 1);
         }
     }
-
 
 }

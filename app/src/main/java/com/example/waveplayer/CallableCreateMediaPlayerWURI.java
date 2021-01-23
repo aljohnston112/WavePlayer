@@ -7,7 +7,7 @@ import com.example.waveplayer.random_playlist.AudioUri;
 
 import java.util.concurrent.Callable;
 
-public class CallableCreateMediaPlayerWURI implements Callable<MediaPlayerWUri> {
+public class CallableCreateMediaPlayerWUri implements Callable<MediaPlayerWUri> {
 
 
     final Context context;
@@ -16,7 +16,7 @@ public class CallableCreateMediaPlayerWURI implements Callable<MediaPlayerWUri> 
 
     final Long id;
 
-    CallableCreateMediaPlayerWURI(Context context, MediaController mediaController, Long songID) {
+    CallableCreateMediaPlayerWUri(Context context, MediaController mediaController, Long songID) {
         this.context = context;
         this.id = songID;
         this.mediaController = mediaController;

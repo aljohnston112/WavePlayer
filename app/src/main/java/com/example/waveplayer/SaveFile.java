@@ -11,17 +11,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class SaveFile {
 
     private static final String FILE_SAVE = "playlists";
 
-    private static final ExecutorService executorService = Executors.newSingleThreadExecutor();
-
     public static void saveFile(final Context context) {
-        executorService.submit(new Runnable() {
+        ServiceMain.executorService.submit(new Runnable() {
             @Override
             public void run() {
                 MediaData mediaData = MediaData.getInstance(context);
