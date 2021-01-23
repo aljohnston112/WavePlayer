@@ -8,10 +8,9 @@ import android.widget.ImageView;
 
 import androidx.core.content.res.ResourcesCompat;
 
-import com.example.waveplayer.ActivityMain;
+import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.R;
-
-import static com.example.waveplayer.fragments.fragment_pane_song.FragmentPaneSong.getResizedBitmap;
+import com.example.waveplayer.media_controller.MediaData;
 
 public class OnLayoutChangeListenerSongPane implements View.OnLayoutChangeListener {
 
@@ -45,7 +44,7 @@ public class OnLayoutChangeListenerSongPane implements View.OnLayoutChangeListen
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
             drawable.draw(canvas);
-            Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
+            Bitmap bitmapResized = MediaData.getResizedBitmap(bitmap, width, height);
             bitmap.recycle();
             imageView.setImageBitmap(bitmapResized);
         }
@@ -70,7 +69,7 @@ public class OnLayoutChangeListenerSongPane implements View.OnLayoutChangeListen
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
             drawable.draw(canvas);
-            Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
+            Bitmap bitmapResized = MediaData.getResizedBitmap(bitmap, width, height);
             bitmap.recycle();
             imageView.setImageBitmap(bitmapResized);
         }
@@ -88,7 +87,7 @@ public class OnLayoutChangeListenerSongPane implements View.OnLayoutChangeListen
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
             drawable.draw(canvas);
-            Bitmap bitmapResized = getResizedBitmap(bitmap, width, height);
+            Bitmap bitmapResized = MediaData.getResizedBitmap(bitmap, width, height);
             bitmap.recycle();
             imageView.setImageBitmap(bitmapResized);
         }

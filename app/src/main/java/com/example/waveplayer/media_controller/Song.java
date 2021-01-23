@@ -1,13 +1,10 @@
-package com.example.waveplayer;
+package com.example.waveplayer.media_controller;
 
 import androidx.annotation.Nullable;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
-import androidx.room.Fts4;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
-
-import com.example.waveplayer.random_playlist.AudioUri;
 
 import java.io.Serializable;
 

@@ -3,9 +3,9 @@ package com.example.waveplayer.fragments.fragment_edit_playlist;
 import android.view.View;
 import android.widget.EditText;
 
-import com.example.waveplayer.ActivityMain;
-import com.example.waveplayer.Song;
-import com.example.waveplayer.random_playlist.AudioUri;
+import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.media_controller.MediaData;
+import com.example.waveplayer.media_controller.Song;
 import com.example.waveplayer.R;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 
@@ -43,8 +43,8 @@ public class OnClickListenerFABFragmentEditPlaylist implements View.OnClickListe
         } else if (playlistIndex != -1 && userPickedPlaylist == null) {
             activityMain.showToast(R.string.duplicate_name_playlist);
         } else if (userPickedPlaylist == null) {
-            activityMain.addPlaylist(new RandomPlaylist(editTextPlaylistName.getText().toString(),
-                    userPickedSongs, activityMain.getMaxPercent(), false, -1));
+            MediaData.getInstance(activityMain).addPlaylist(new RandomPlaylist(editTextPlaylistName.getText().toString(),
+                    userPickedSongs, MediaData.getInstance(activityMain).getMaxPercent(), false, -1));
             for (Song song : userPickedSongs) {
                 song.setSelected(false);
             }
@@ -54,7 +54,7 @@ public class OnClickListenerFABFragmentEditPlaylist implements View.OnClickListe
             activityMain.hideKeyboard(view);
         } else {
             ArrayList<String> names = new ArrayList<>();
-            for (RandomPlaylist randomPlaylist : activityMain.getPlaylists()) {
+            for (RandomPlaylist randomPlaylist : MediaData.getInstance(activityMain).getPlaylists()) {
                 names.add(randomPlaylist.getName());
             }
             if (userPickedPlaylist.getName().equals(
@@ -82,7 +82,7 @@ public class OnClickListenerFABFragmentEditPlaylist implements View.OnClickListe
         ActivityMain activityMain = (ActivityMain) fragmentEditPlaylist.getActivity();
         int playlistIndex = -1;
         int i = 0;
-        for (RandomPlaylist randomPlaylist : activityMain.getPlaylists()) {
+        for (RandomPlaylist randomPlaylist : MediaData.getInstance(activityMain).getPlaylists()) {
             if (randomPlaylist.getName().equals(playlistName)) {
                 playlistIndex = i;
             }

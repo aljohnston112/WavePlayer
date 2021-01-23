@@ -1,9 +1,11 @@
-package com.example.waveplayer;
+package com.example.waveplayer.media_controller;
 
 import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
-import android.util.Log;
+
+import com.example.waveplayer.R;
+import com.example.waveplayer.media_controller.MediaController;
 
 public class MediaPlayerOnCompletionListener implements MediaPlayer.OnCompletionListener {
 

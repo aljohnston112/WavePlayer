@@ -6,8 +6,9 @@ import android.widget.EditText;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
-import com.example.waveplayer.ActivityMain;
+import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.R;
+import com.example.waveplayer.media_controller.MediaData;
 
 public class OnClickListenerFABFragmentSettings implements View.OnClickListener {
 
@@ -92,9 +93,9 @@ public class OnClickListenerFABFragmentSettings implements View.OnClickListener 
     private void updateSettings(int nSongs, int percentChangeUp, int percentChangeDown) {
         double maxPercent = (1.0 / (double) nSongs);
         ActivityMain activityMain = (ActivityMain) fragmentSettings.getActivity();
-        activityMain.setMaxPercent(maxPercent);
-        activityMain.setPercentChangeUp(((double) percentChangeUp) / 100.0);
-        activityMain.setPercentChangeDown(((double) percentChangeDown) / 100.0);
+        MediaData.getInstance(activityMain).setMaxPercent(maxPercent);
+        MediaData.getInstance(activityMain).setPercentChangeUp(((double) percentChangeUp) / 100.0);
+        MediaData.getInstance(activityMain).setPercentChangeDown(((double) percentChangeDown) / 100.0);
     }
 
 }

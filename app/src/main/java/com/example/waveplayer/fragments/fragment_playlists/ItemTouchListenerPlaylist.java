@@ -4,8 +4,9 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.waveplayer.ActivityMain;
+import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.R;
+import com.example.waveplayer.media_controller.MediaData;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
@@ -37,7 +38,7 @@ public class ItemTouchListenerPlaylist extends ItemTouchHelper.Callback {
         if (recyclerViewAdapter != null) {
             Collections.swap(recyclerViewAdapter.randomPlaylists,
                     viewHolder.getAdapterPosition(), target.getAdapterPosition());
-            Collections.swap(activityMain.getPlaylists(),
+            Collections.swap(MediaData.getInstance(activityMain).getPlaylists(),
                     viewHolder.getAdapterPosition(), target.getAdapterPosition());
             recyclerViewAdapter.notifyItemMoved(
                     viewHolder.getAdapterPosition(), target.getAdapterPosition());
@@ -53,9 +54,9 @@ public class ItemTouchListenerPlaylist extends ItemTouchHelper.Callback {
                 (RecyclerViewAdapterPlaylists) recyclerView.getAdapter();
         if (recyclerViewAdapter != null) {
             int position = viewHolder.getAdapterPosition();
-            List<RandomPlaylist> randomPlaylists = activityMain.getPlaylists();
+            List<RandomPlaylist> randomPlaylists = MediaData.getInstance(activityMain).getPlaylists();
             RandomPlaylist randomPlaylist = randomPlaylists.get(position);
-            activityMain.removePlaylist(randomPlaylist);
+            MediaData.getInstance(activityMain).removePlaylist(randomPlaylist);
             recyclerViewAdapter.notifyItemRemoved(position);
             activityMain.saveFile();
             Snackbar snackbar = Snackbar.make(

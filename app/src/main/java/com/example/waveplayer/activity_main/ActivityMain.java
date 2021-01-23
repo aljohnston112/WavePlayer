@@ -1,4 +1,4 @@
-package com.example.waveplayer;
+package com.example.waveplayer.activity_main;
 
 import android.Manifest;
 import android.content.Context;
@@ -40,6 +40,14 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.example.waveplayer.media_controller.MediaController;
+import com.example.waveplayer.media_controller.MediaData;
+import com.example.waveplayer.R;
+import com.example.waveplayer.media_controller.SaveFile;
+import com.example.waveplayer.service_main.ServiceMain;
+import com.example.waveplayer.media_controller.Song;
+import com.example.waveplayer.ViewModelUserPickedPlaylist;
+import com.example.waveplayer.ViewModelUserPickedSongs;
 import com.example.waveplayer.fragments.fragment_pane_song.OnClickListenerSongPane;
 import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
@@ -53,11 +61,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST;
-import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG;
-import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_IS_SONG;
-import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_PLAYLISTS;
-import static com.example.waveplayer.fragments.fragment_pane_song.FragmentPaneSong.getResizedBitmap;
+import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST;
+import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG;
+import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_IS_SONG;
+import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_PLAYLISTS;
 
 public class ActivityMain extends AppCompatActivity {
 
@@ -293,7 +300,7 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     public List<Song> getAllSongs() {
-            return mediaData.getAllSongs();
+        return mediaData.getAllSongs();
     }
 
     void setUpBroadcastReceivers() {
@@ -469,6 +476,7 @@ public class ActivityMain extends AppCompatActivity {
     protected void onStop() {
         Log.v(TAG, "onStop started");
         super.onStop();
+        saveFile();
         getApplicationContext().unbindService(connectionServiceMain);
         connectionServiceMain = null;
         FragmentManager fragmentManager = getSupportFragmentManager();
@@ -529,11 +537,11 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "onPause started");
         super.onPause();
         if (serviceMain != null) {
-            SaveFile.saveFile(this);
             serviceMain.shutDownSeekBarUpdater();
         }
         Log.v(TAG, "onPause ended");
     }
+
 
     // endregion lifecycle
 
@@ -631,7 +639,7 @@ public class ActivityMain extends AppCompatActivity {
     private int getCurrentTime() {
         Log.v(TAG, "getCurrentTime start");
         Log.v(TAG, "getCurrentTime end");
-            return mediaController.getCurrentTime();
+        return mediaController.getCurrentTime();
     }
 
     private void setUpSeekBarUpdater() {
@@ -798,27 +806,28 @@ public class ActivityMain extends AppCompatActivity {
 
     public void addToQueue(Long songID) {
         Log.v(TAG, "addToQueue start");
-            mediaController.addToQueue(songID);
+        mediaController.addToQueue(songID);
+        updateUI();
         Log.v(TAG, "addToQueue end");
     }
 
     public void addToQueueAndPlay(Long songID) {
         Log.v(TAG, "addToQueueAndPlay start");
-            mediaController.addToQueueAndPlay(this, songID);
+        mediaController.addToQueueAndPlay(this, songID);
         updateUI();
         Log.v(TAG, "addToQueueAndPlay end");
     }
 
     public void playNext() {
         Log.v(TAG, "playNext start");
-            mediaController.playNext(this);
+        mediaController.playNext(this);
         updateUI();
         Log.v(TAG, "playNext end");
     }
 
     public void playPrevious() {
         Log.v(TAG, "playPrevious start");
-            mediaController.playPrevious(this);
+        mediaController.playPrevious(this);
         updateUI();
         Log.v(TAG, "playPrevious end");
     }
@@ -834,152 +843,11 @@ public class ActivityMain extends AppCompatActivity {
 
     public void seekTo(int progress) {
         Log.v(TAG, "seekTo start");
-            mediaController.seekTo(progress);
-            if (!mediaController.isPlaying()) {
-                pauseOrPlay();
-            }
+        mediaController.seekTo(this, progress);
         Log.v(TAG, "seekTo end");
     }
 
     // endregion playbackControls
-
-    public boolean songInProgress() {
-        Log.v(TAG, "songInProgress start");
-            Log.v(TAG, "songInProgress end");
-            return (mediaController != null) && mediaController.songInProgress();
-    }
-
-    public boolean isPlaying() {
-        Log.v(TAG, "isPlaying start");
-            Log.v(TAG, "isPlaying end");
-            return mediaController.isPlaying();
-    }
-
-    public boolean songQueueIsEmpty() {
-        Log.v(TAG, "songQueueIsEmpty start");
-            Log.v(TAG, "songQueueIsEmpty end");
-            return mediaController.songQueueIsEmpty();
-    }
-
-    public ArrayList<RandomPlaylist> getPlaylists() {
-        Log.v(TAG, "getPlaylists start");
-            Log.v(TAG, "getPlaylists end");
-            return mediaData.getPlaylists();
-    }
-
-    public void addPlaylist(RandomPlaylist randomPlaylist) {
-        Log.v(TAG, "addPlaylist start");
-             mediaData.addPlaylist(randomPlaylist);
-        Log.v(TAG, "addPlaylist end");
-    }
-
-    public void addPlaylist(int position, RandomPlaylist randomPlaylist) {
-        Log.v(TAG, "addPlaylist w/ position start");
-        mediaData.addPlaylist(position, randomPlaylist);
-        Log.v(TAG, "addPlaylist w/ position end");
-    }
-
-    public void removePlaylist(RandomPlaylist randomPlaylist) {
-        Log.v(TAG, "removePlaylist start");
-        mediaData.removePlaylist(randomPlaylist);
-        Log.v(TAG, "removePlaylist end");
-    }
-
-    public void setCurrentPlaylistToMaster() {
-        Log.v(TAG, "setCurrentPlaylistToMaster start");
-            mediaController.setCurrentPlaylistToMaster();
-        Log.v(TAG, "setCurrentPlaylistToMaster end");
-    }
-
-    public void setCurrentPlaylist(RandomPlaylist userPickedPlaylist) {
-        Log.v(TAG, "setCurrentPlaylist start");
-            mediaController.setCurrentPlaylist(userPickedPlaylist);
-        Log.v(TAG, "setCurrentPlaylist end");
-    }
-
-    public AudioUri getCurrentSong() {
-        Log.v(TAG, "getCurrentSong start");
-            Log.v(TAG, "getCurrentSong end");
-            return mediaController.getCurrentSong();
-    }
-
-    public RandomPlaylist getCurrentPlaylist() {
-        Log.v(TAG, "getCurrentPlaylist start");
-            Log.v(TAG, "getCurrentPlaylist end");
-            return mediaController.getCurrentPlaylist();
-    }
-
-    public void setMaxPercent(double maxPercent) {
-        Log.v(TAG, "setMaxPercent start");
-            mediaData.setMaxPercent(maxPercent);
-        Log.v(TAG, "setMaxPercent end");
-    }
-
-    public double getMaxPercent() {
-        Log.v(TAG, "getMaxPercent start");
-            Log.v(TAG, "getMaxPercent end");
-            return mediaData.getMaxPercent();
-    }
-
-    public void setPercentChangeUp(double percentChangeUp) {
-        Log.v(TAG, "setPercentChangeUp start");
-            mediaData.setPercentChangeUp(percentChangeUp);
-        Log.v(TAG, "setPercentChangeUp end");
-    }
-
-    public double getPercentChangeUp() {
-        Log.v(TAG, "getPercentChangeUp start");
-            Log.v(TAG, "getPercentChangeUp end");
-            return mediaData.getPercentChangeUp();
-    }
-
-    public void setPercentChangeDown(double percentChangeDown) {
-        Log.v(TAG, "setPercentChangeDown start");
-            mediaData.setPercentChangeDown(percentChangeDown);
-        Log.v(TAG, "setPercentChangeDown end");
-    }
-
-    public double getPercentChangeDown() {
-        Log.v(TAG, "getPercentChangeDown start");
-            Log.v(TAG, "getPercentChangeDown end");
-            return mediaData.getPercentChangeDown();
-    }
-
-    public boolean shuffling() {
-        Log.v(TAG, "shuffling start");
-            Log.v(TAG, "shuffling end");
-            return mediaController.shuffling();
-    }
-
-    public void shuffling(boolean shuffling) {
-        Log.v(TAG, "set shuffling start");
-            mediaController.shuffling(shuffling);
-        Log.v(TAG, "set shuffling end");
-    }
-
-    public boolean loopingOne() {
-        Log.v(TAG, "loopingOne start");
-            Log.v(TAG, "loopingOne end");
-            return mediaController.loopingOne();
-    }
-
-    public void loopingOne(boolean loopingOne) {
-        Log.v(TAG, "set loopingOne start");
-            mediaController.loopingOne(loopingOne);
-        Log.v(TAG, "set loopingOne end");
-    }
-
-    public boolean looping() {
-        Log.v(TAG, "looping start");
-            Log.v(TAG, "looping end");
-            return mediaController.looping();
-    }
-
-    public void looping(boolean looping) {
-        Log.v(TAG, "set looping start");
-            mediaController.looping(looping);
-        Log.v(TAG, "set looping end");
-    }
 
     public void navigateTo(int id) {
         Log.v(TAG, "navigateTo start");
@@ -1068,40 +936,8 @@ public class ActivityMain extends AppCompatActivity {
 
     public void saveFile() {
         Log.v(TAG, "saveFile start");
-            SaveFile.saveFile(this);
+        SaveFile.saveFile(this);
         Log.v(TAG, "saveFile end");
-    }
-
-    public static Bitmap getThumbnail(AudioUri audioURI, int width, int height, Context context) {
-        Log.v(TAG, "getThumbnail start");
-        Bitmap bitmap = null;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            try {
-                bitmap = context.getContentResolver().loadThumbnail(
-                        audioURI.getUri(), new Size(width, height), null);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else {
-            MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-            try {
-                mmr.setDataSource(context.getContentResolver().openFileDescriptor(
-                        audioURI.getUri(), "r").getFileDescriptor());
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-            InputStream inputStream = null;
-            if (mmr.getEmbeddedPicture() != null) {
-                inputStream = new ByteArrayInputStream(mmr.getEmbeddedPicture());
-            }
-            mmr.release();
-            bitmap = BitmapFactory.decodeStream(inputStream);
-            if (bitmap != null) {
-                return getResizedBitmap(bitmap, width, height);
-            }
-        }
-        Log.v(TAG, "getThumbnail end");
-        return bitmap;
     }
 
     public void setSongPaneArtHeight(int songArtHeight) {
@@ -1140,21 +976,6 @@ public class ActivityMain extends AppCompatActivity {
         return -1;
     }
 
-    public RandomPlaylist getMasterPlaylist() {
-        return mediaData.getMasterPlaylist();
-    }
-
-    public RandomPlaylist getPlaylist(String playlistName) {
-        RandomPlaylist out = null;
-        for(RandomPlaylist randomPlaylist : mediaData.getPlaylists()){
-            if(randomPlaylist.getName().equals(playlistName)){
-                out = randomPlaylist;
-            }
-            break;
-        }
-        return out;
-    }
-
     public void setUserPickedPlaylist(RandomPlaylist randomPlaylist) {
         viewModelUserPickedPlaylist.setUserPickedPlaylist(randomPlaylist);
     }
@@ -1175,7 +996,88 @@ public class ActivityMain extends AppCompatActivity {
         return (serviceMain != null);
     }
 
+    public boolean songInProgress() {
+        Log.v(TAG, "songInProgress start");
+        Log.v(TAG, "songInProgress end");
+        return (mediaController != null) && mediaController.songInProgress();
+    }
+
+    public boolean isPlaying() {
+        Log.v(TAG, "isPlaying start");
+        Log.v(TAG, "isPlaying end");
+        return mediaController.isPlaying();
+    }
+
+    public boolean songQueueIsEmpty() {
+        Log.v(TAG, "songQueueIsEmpty start");
+        Log.v(TAG, "songQueueIsEmpty end");
+        return mediaController.songQueueIsEmpty();
+    }
+
+    public void setCurrentPlaylistToMaster() {
+        Log.v(TAG, "setCurrentPlaylistToMaster start");
+        mediaController.setCurrentPlaylistToMaster();
+        Log.v(TAG, "setCurrentPlaylistToMaster end");
+    }
+
+    public void setCurrentPlaylist(RandomPlaylist userPickedPlaylist) {
+        Log.v(TAG, "setCurrentPlaylist start");
+        mediaController.setCurrentPlaylist(userPickedPlaylist);
+        Log.v(TAG, "setCurrentPlaylist end");
+    }
+
+    public AudioUri getCurrentSong() {
+        Log.v(TAG, "getCurrentSong start");
+        Log.v(TAG, "getCurrentSong end");
+        return mediaController.getCurrentSong();
+    }
+
+    public RandomPlaylist getCurrentPlaylist() {
+        Log.v(TAG, "getCurrentPlaylist start");
+        Log.v(TAG, "getCurrentPlaylist end");
+        return mediaController.getCurrentPlaylist();
+    }
+
+    public boolean shuffling() {
+        Log.v(TAG, "shuffling start");
+        Log.v(TAG, "shuffling end");
+        return mediaController.shuffling();
+    }
+
+    public void shuffling(boolean shuffling) {
+        Log.v(TAG, "set shuffling start");
+        mediaController.shuffling(shuffling);
+        Log.v(TAG, "set shuffling end");
+    }
+
+    public boolean loopingOne() {
+        Log.v(TAG, "loopingOne start");
+        Log.v(TAG, "loopingOne end");
+        return mediaController.loopingOne();
+    }
+
+    public void loopingOne(boolean loopingOne) {
+        Log.v(TAG, "set loopingOne start");
+        mediaController.loopingOne(loopingOne);
+        Log.v(TAG, "set loopingOne end");
+    }
+
+    public boolean looping() {
+        Log.v(TAG, "looping start");
+        Log.v(TAG, "looping end");
+        return mediaController.looping();
+    }
+
+    public void looping(boolean looping) {
+        Log.v(TAG, "set looping start");
+        mediaController.looping(looping);
+        Log.v(TAG, "set looping end");
+    }
+
     public void clearSongQueue() {
         mediaController.clearSongQueue();
     }
+
+
+
 }

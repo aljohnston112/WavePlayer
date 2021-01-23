@@ -1,4 +1,4 @@
-package com.example.waveplayer;
+package com.example.waveplayer.media_controller;
 
 import androidx.room.Dao;
 import androidx.room.Delete;

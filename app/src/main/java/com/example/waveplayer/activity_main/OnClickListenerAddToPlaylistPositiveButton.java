@@ -1,8 +1,8 @@
-package com.example.waveplayer;
+package com.example.waveplayer.activity_main;
 
 import android.content.DialogInterface;
 
-import com.example.waveplayer.random_playlist.AudioUri;
+import com.example.waveplayer.media_controller.Song;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 
 import java.util.List;

@@ -3,9 +3,9 @@ package com.example.waveplayer.fragments;
 import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.waveplayer.ActivityMain;
-import com.example.waveplayer.Song;
-import com.example.waveplayer.random_playlist.AudioUri;
+import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.media_controller.MediaData;
+import com.example.waveplayer.media_controller.Song;
 import com.example.waveplayer.R;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 import com.example.waveplayer.fragments.fragment_playlists.RecyclerViewAdapterPlaylists;
@@ -81,7 +81,7 @@ public class OnQueryTextListenerSearch implements SearchView.OnQueryTextListener
                 if (recyclerViewPlaylists != null) {
                     RecyclerViewAdapterPlaylists recyclerViewAdapterPlaylists =
                             (RecyclerViewAdapterPlaylists) recyclerViewPlaylists.getAdapter();
-                    List<RandomPlaylist> playlists = activityMain.getPlaylists();
+                    List<RandomPlaylist> playlists = MediaData.getInstance(activityMain).getPlaylists();
                     List<RandomPlaylist> sifted = new ArrayList<>();
                     if (!newText.equals("")) {
                         for (RandomPlaylist randomPlaylist : playlists) {

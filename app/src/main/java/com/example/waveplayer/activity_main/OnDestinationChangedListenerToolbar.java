@@ -1,4 +1,4 @@
-package com.example.waveplayer;
+package com.example.waveplayer.activity_main;
 
 import android.os.Bundle;
 import android.view.Menu;
@@ -8,6 +8,9 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.navigation.NavController;
 import androidx.navigation.NavDestination;
+
+import com.example.waveplayer.R;
+import com.example.waveplayer.activity_main.ActivityMain;
 
 public class OnDestinationChangedListenerToolbar implements NavController.OnDestinationChangedListener {
 

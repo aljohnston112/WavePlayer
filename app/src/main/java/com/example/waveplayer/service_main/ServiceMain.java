@@ -1,4 +1,4 @@
-package com.example.waveplayer;
+package com.example.waveplayer.service_main;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -8,17 +8,10 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.media.AudioAttributes;
-import android.media.AudioFocusRequest;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.RemoteViews;
 import android.widget.SeekBar;
@@ -29,31 +22,19 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
+import com.example.waveplayer.media_controller.MediaController;
+import com.example.waveplayer.media_controller.MediaData;
+import com.example.waveplayer.media_controller.MediaPlayerWUri;
+import com.example.waveplayer.R;
+import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.fragments.fragment_pane_song.FragmentPaneSong;
-import com.example.waveplayer.random_playlist.AudioUri;
-import com.example.waveplayer.random_playlist.RandomPlaylist;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Random;
-import java.util.TreeMap;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -315,10 +296,10 @@ public class ServiceMain extends Service {
         Log.v(TAG, "updateSongArt for notification start");
         // TODO update song art background
         if (mediaController != null && mediaController.getCurrentSong() != null) {
-            Bitmap bitmap = ActivityMain.getThumbnail(
+            Bitmap bitmap = MediaData.getThumbnail(
                     mediaController.getCurrentSong(), 92, 92, getApplicationContext());
             if (bitmap != null) {
-                FragmentPaneSong.getResizedBitmap(bitmap, songPaneArtWidth, songPaneArtHeight);
+                MediaData.getResizedBitmap(bitmap, songPaneArtWidth, songPaneArtHeight);
                 remoteViewsNotificationLayoutWithArt.setImageViewBitmap(
                         R.id.imageViewNotificationSongPaneSongArtWArt, bitmap);
                 hasArt = true;
@@ -419,7 +400,7 @@ public class ServiceMain extends Service {
     }
 
     public class ServiceMainBinder extends Binder {
-        ServiceMain getService() {
+        public ServiceMain getService() {
             return ServiceMain.this;
         }
     }

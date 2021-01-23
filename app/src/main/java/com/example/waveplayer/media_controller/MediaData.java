@@ -1,19 +1,28 @@
-package com.example.waveplayer;
+package com.example.waveplayer.media_controller;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.MediaMetadataRetriever;
+import android.os.Build;
 import android.provider.MediaStore;
+import android.util.Size;
 
 import androidx.room.Room;
 
 import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
+import com.example.waveplayer.service_main.ServiceMain;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
@@ -26,8 +35,6 @@ public class MediaData {
     private static final String SONG_DATABASE_NAME = "SONG_DATABASE_NAME";
 
     private static final String MASTER_PLAYLIST_NAME = "MASTER_PLAYLIST_NAME";
-
-    private final SongDatabase songDatabase;
 
     private final SongDAO songDAO;
 
@@ -75,10 +82,21 @@ public class MediaData {
         playlists.remove(randomPlaylist);
     }
 
+    public RandomPlaylist getPlaylist(String playlistName) {
+        RandomPlaylist out = null;
+        for(RandomPlaylist randomPlaylist : playlists){
+            if(randomPlaylist.getName().equals(playlistName)){
+                out = randomPlaylist;
+            }
+            break;
+        }
+        return out;
+    }
+
     public static MediaData INSTANCE;
 
     private MediaData(Context context) {
-        songDatabase = Room.databaseBuilder(context, SongDatabase.class, SONG_DATABASE_NAME).build();
+        SongDatabase songDatabase = Room.databaseBuilder(context, SongDatabase.class, SONG_DATABASE_NAME).build();
         songDAO = songDatabase.songDAO();
         SaveFile.loadSaveFile(context, this);
         getAudioFiles(context);
@@ -242,6 +260,46 @@ public class MediaData {
             }
         }
         return null;
+    }
+
+    public static Bitmap getThumbnail(AudioUri audioURI, int width, int height, Context context) {
+        Bitmap bitmap = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            try {
+                bitmap = context.getContentResolver().loadThumbnail(
+                        audioURI.getUri(), new Size(width, height), null);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+            try {
+                mmr.setDataSource(context.getContentResolver().openFileDescriptor(
+                        audioURI.getUri(), "r").getFileDescriptor());
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            InputStream inputStream = null;
+            if (mmr.getEmbeddedPicture() != null) {
+                inputStream = new ByteArrayInputStream(mmr.getEmbeddedPicture());
+            }
+            mmr.release();
+            bitmap = BitmapFactory.decodeStream(inputStream);
+            if (bitmap != null) {
+                return getResizedBitmap(bitmap, width, height);
+            }
+        }
+        return bitmap;
+    }
+
+    public static Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+        float scaleWidth = ((float) newWidth) / width;
+        float scaleHeight = ((float) newHeight) / height;
+        Matrix matrix = new Matrix();
+        matrix.postScale(scaleWidth, scaleHeight);
+        return Bitmap.createScaledBitmap(bm, newWidth, newHeight, true);
     }
 
 }

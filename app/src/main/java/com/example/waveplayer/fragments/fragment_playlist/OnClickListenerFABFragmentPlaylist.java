@@ -4,8 +4,6 @@ import android.view.View;
 
 import androidx.navigation.fragment.NavHostFragment;
 
-import com.example.waveplayer.ActivityMain;
-
 public class OnClickListenerFABFragmentPlaylist implements View.OnClickListener {
 
     private final FragmentPlaylist fragmentPlaylist;

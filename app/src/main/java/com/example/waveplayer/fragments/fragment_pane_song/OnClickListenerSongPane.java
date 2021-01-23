@@ -6,7 +6,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.navigation.fragment.NavHostFragment;
 
-import com.example.waveplayer.ActivityMain;
+import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.R;
 
 public class OnClickListenerSongPane implements View.OnClickListener {

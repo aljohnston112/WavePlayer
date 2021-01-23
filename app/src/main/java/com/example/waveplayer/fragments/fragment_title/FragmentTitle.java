@@ -20,10 +20,10 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
 
-import com.example.waveplayer.ActivityMain;
-import com.example.waveplayer.Song;
+import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.media_controller.MediaData;
+import com.example.waveplayer.media_controller.Song;
 import com.example.waveplayer.ViewModelUserPickedPlaylist;
-import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.R;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
@@ -82,12 +82,12 @@ public class FragmentTitle extends Fragment {
                 if (uriUserPickedFolder != null) {
                     if (!songs.isEmpty()) {
                         RandomPlaylist randomPlaylist =
-                                activityMain.getPlaylist(uriUserPickedFolder.getPath());
+                                MediaData.getInstance(activityMain).getPlaylist(uriUserPickedFolder.getPath());
                         if (randomPlaylist == null) {
                             randomPlaylist = new RandomPlaylist(
-                                    uriUserPickedFolder.getPath(), songs, activityMain.getMaxPercent(),
+                                    uriUserPickedFolder.getPath(), songs, MediaData.getInstance(activityMain).getMaxPercent(),
                                     false, mediaStoreUriID);
-                            activityMain.addPlaylist(randomPlaylist);
+                            MediaData.getInstance(activityMain).addPlaylist(randomPlaylist);
                         } else {
                             addNewSongs(randomPlaylist);
                             removeMissingSongs(randomPlaylist);

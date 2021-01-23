@@ -1,10 +1,13 @@
-package com.example.waveplayer;
+package com.example.waveplayer.activity_main;
 
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.util.Log;
+
+import com.example.waveplayer.R;
+import com.example.waveplayer.service_main.ServiceMain;
 
 public class ConnectionServiceMain implements ServiceConnection {
 

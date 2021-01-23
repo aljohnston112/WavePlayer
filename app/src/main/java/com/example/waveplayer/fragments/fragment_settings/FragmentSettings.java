@@ -10,8 +10,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import com.example.waveplayer.ActivityMain;
+import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.R;
+import com.example.waveplayer.media_controller.MediaData;
 
 public class FragmentSettings extends Fragment {
 
@@ -65,11 +66,11 @@ public class FragmentSettings extends Fragment {
         EditText editTextPercentChangeUp = activityMain.findViewById(R.id.editTextPercentChangeUp);
         EditText editTextPercentChangeDown = activityMain.findViewById(R.id.editTextPercentChangeDown);
         editTextNSongs.setText(
-                String.valueOf((int) Math.round(1.0 / activityMain.getMaxPercent())));
+                String.valueOf((int) Math.round(1.0 / MediaData.getInstance(activityMain).getMaxPercent())));
         editTextPercentChangeUp.setText(
-                String.valueOf((int) Math.round(activityMain.getPercentChangeUp() * 100.0)));
+                String.valueOf((int) Math.round(MediaData.getInstance(activityMain).getPercentChangeUp() * 100.0)));
         editTextPercentChangeDown.setText(
-                String.valueOf((int) Math.round(activityMain.getPercentChangeDown() * 100.0)));
+                String.valueOf((int) Math.round(MediaData.getInstance(activityMain).getPercentChangeDown() * 100.0)));
     }
 
     @Override

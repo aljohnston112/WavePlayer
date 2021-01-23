@@ -4,8 +4,9 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.waveplayer.ActivityMain;
-import com.example.waveplayer.Song;
+import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.media_controller.MediaData;
+import com.example.waveplayer.media_controller.Song;
 import com.example.waveplayer.R;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 import com.example.waveplayer.fragments.RecyclerViewAdapterSongs;
@@ -59,7 +60,7 @@ class ItemTouchListenerSong extends ItemTouchHelper.Callback {
         Song song = recyclerViewAdapterSongs.getSongs().get(position);
         double probability = userPickedPlaylist.getProbability(song);
         if (userPickedPlaylist.size() == 1) {
-            activityMain.removePlaylist(userPickedPlaylist);
+            MediaData.getInstance(activityMain).removePlaylist(userPickedPlaylist);
             fragmentPlaylist.setUserPickedPlaylist(null);
         } else {
             userPickedPlaylist.remove(song);

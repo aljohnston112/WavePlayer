@@ -1,8 +1,9 @@
-package com.example.waveplayer;
+package com.example.waveplayer.media_controller;
 
 import android.content.Context;
 
 import com.example.waveplayer.random_playlist.RandomPlaylist;
+import com.example.waveplayer.service_main.ServiceMain;
 
 import java.io.File;
 import java.io.FileInputStream;

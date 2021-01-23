@@ -7,14 +7,15 @@ import android.view.View;
 
 import androidx.fragment.app.Fragment;
 
-import com.example.waveplayer.ActivityMain;
-import com.example.waveplayer.DialogFragmentAddToPlaylist;
+import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist;
 import com.example.waveplayer.R;
-import com.example.waveplayer.Song;
+import com.example.waveplayer.media_controller.MediaData;
+import com.example.waveplayer.media_controller.Song;
 
-import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG;
-import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_IS_SONG;
-import static com.example.waveplayer.DialogFragmentAddToPlaylist.BUNDLE_KEY_PLAYLISTS;
+import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG;
+import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_IS_SONG;
+import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_PLAYLISTS;
 
 public class OnCreateContextMenuListenerSongs implements View.OnCreateContextMenuListener {
 
@@ -51,7 +52,7 @@ public class OnCreateContextMenuListenerSongs implements View.OnCreateContextMen
         if (activityMain != null) {
             Bundle bundle = new Bundle();
             bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, song);
-            bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, activityMain.getPlaylists());
+            bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, MediaData.getInstance(activityMain).getPlaylists());
             bundle.putBoolean(BUNDLE_KEY_IS_SONG, true);
             DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist =
                     new DialogFragmentAddToPlaylist();

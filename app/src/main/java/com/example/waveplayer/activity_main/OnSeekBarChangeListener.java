@@ -1,6 +1,8 @@
-package com.example.waveplayer;
+package com.example.waveplayer.activity_main;
 
 import android.widget.SeekBar;
+
+import com.example.waveplayer.activity_main.ActivityMain;
 
 public class OnSeekBarChangeListener implements SeekBar.OnSeekBarChangeListener {
 

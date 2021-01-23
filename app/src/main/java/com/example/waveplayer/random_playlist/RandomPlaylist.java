@@ -2,8 +2,8 @@ package com.example.waveplayer.random_playlist;
 
 import android.content.Context;
 
-import com.example.waveplayer.MediaData;
-import com.example.waveplayer.Song;
+import com.example.waveplayer.media_controller.MediaData;
+import com.example.waveplayer.media_controller.Song;
 
 import java.io.Serializable;
 import java.util.ArrayList;

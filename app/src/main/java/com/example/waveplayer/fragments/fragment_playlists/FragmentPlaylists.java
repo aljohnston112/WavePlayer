@@ -21,12 +21,13 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.waveplayer.ActivityMain;
+import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.ViewModelUserPickedPlaylist;
 import com.example.waveplayer.ViewModelUserPickedSongs;
 import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.fragments.OnQueryTextListenerSearch;
 import com.example.waveplayer.R;
+import com.example.waveplayer.media_controller.MediaData;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 
 public class FragmentPlaylists extends Fragment {
@@ -114,7 +115,7 @@ public class FragmentPlaylists extends Fragment {
         RecyclerView recyclerView = view.findViewById(R.id.recycler_view_playlist_list);
         recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
         RecyclerViewAdapterPlaylists recyclerViewAdapter =
-                new RecyclerViewAdapterPlaylists(this, activityMain.getPlaylists());
+                new RecyclerViewAdapterPlaylists(this, MediaData.getInstance(activityMain).getPlaylists());
         recyclerView.setAdapter(recyclerViewAdapter);
         itemTouchListenerPlaylist = new ItemTouchListenerPlaylist(activityMain);
         itemTouchHelper = new ItemTouchHelper(itemTouchListenerPlaylist);

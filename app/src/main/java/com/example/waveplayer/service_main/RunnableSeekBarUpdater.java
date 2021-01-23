@@ -1,7 +1,9 @@
-package com.example.waveplayer;
+package com.example.waveplayer.service_main;
 
 import android.widget.SeekBar;
 import android.widget.TextView;
+
+import com.example.waveplayer.media_controller.MediaPlayerWUri;
 
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;

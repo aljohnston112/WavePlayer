@@ -12,9 +12,10 @@ import androidx.navigation.NavDirections;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.waveplayer.ActivityMain;
-import com.example.waveplayer.MediaData;
-import com.example.waveplayer.Song;
+import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.media_controller.MediaData;
+import com.example.waveplayer.service_main.ServiceMain;
+import com.example.waveplayer.media_controller.Song;
 import com.example.waveplayer.R;
 import com.example.waveplayer.fragments.fragment_playlist.FragmentPlaylist;
 import com.example.waveplayer.fragments.fragment_playlist.FragmentPlaylistDirections;
@@ -28,7 +29,8 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
     private final Fragment fragment;
 
     private List<Song> songs;
-    public List<Song> getSongs(){
+
+    public List<Song> getSongs() {
         return songs;
     }
 
@@ -74,30 +76,35 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
         onClickListenerViewHolder = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int position = holder.getAdapterPosition();
-                NavDirections action = null;
-                if (position != RecyclerView.NO_POSITION) {
-                    ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
-                    if (activityMain != null) {
-                        if (activityMain.getCurrentSong() != null &&
-                        holder.song.equals(MediaData.getInstance(activityMain).getSong(activityMain.getCurrentSong().id))) {
-                            activityMain.seekTo(0);
+                ServiceMain.executorService.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        int position = holder.getAdapterPosition();
+                        NavDirections action = null;
+                        if (position != RecyclerView.NO_POSITION) {
+                            ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
+                            if (activityMain != null) {
+                                if (activityMain.getCurrentSong() != null &&
+                                        holder.song.equals(MediaData.getInstance(activityMain).getSong(activityMain.getCurrentSong().id))) {
+                                    activityMain.seekTo(0);
+                                }
+                                if (fragment instanceof FragmentSongs) {
+                                    activityMain.setCurrentPlaylistToMaster();
+                                    action = FragmentSongsDirections.actionFragmentSongsToFragmentSong();
+                                } else if (fragment instanceof FragmentPlaylist) {
+                                    activityMain.setCurrentPlaylist(
+                                            ((FragmentPlaylist) fragment).getUserPickedPlaylist());
+                                    action = FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong();
+                                }
+                                activityMain.clearSongQueue();
+                                activityMain.addToQueueAndPlay(holder.song.id);
+                            }
+                            if (action != null) {
+                                NavHostFragment.findNavController(fragment).navigate(action);
+                            }
                         }
-                        if (fragment instanceof FragmentSongs) {
-                            activityMain.setCurrentPlaylistToMaster();
-                            action = FragmentSongsDirections.actionFragmentSongsToFragmentSong();
-                        } else if (fragment instanceof FragmentPlaylist) {
-                            activityMain.setCurrentPlaylist(
-                                    ((FragmentPlaylist)fragment).getUserPickedPlaylist());
-                            action = FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong();
-                        }
-                        activityMain.clearSongQueue();
-                        activityMain.addToQueueAndPlay(holder.song.id);
                     }
-                    if (action != null) {
-                        NavHostFragment.findNavController(fragment).navigate(action);
-                    }
-                }
+                });
             }
         };
         holder.songView.setOnClickListener(null);

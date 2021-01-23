@@ -12,8 +12,8 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.waveplayer.ActivityMain;
-import com.example.waveplayer.Song;
+import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.media_controller.Song;
 import com.example.waveplayer.R;
 
 import java.util.List;

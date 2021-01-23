@@ -1,4 +1,4 @@
-package com.example.waveplayer;
+package com.example.waveplayer.activity_main;
 
 import android.content.DialogInterface;
 

@@ -15,16 +15,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.view.MenuItemCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.waveplayer.ActivityMain;
-import com.example.waveplayer.Song;
+import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.media_controller.MediaData;
+import com.example.waveplayer.media_controller.Song;
 import com.example.waveplayer.ViewModelUserPickedPlaylist;
-import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.fragments.OnQueryTextListenerSearch;
 import com.example.waveplayer.R;
@@ -65,7 +64,7 @@ public class FragmentSongs extends Fragment {
         activityMain.hideKeyboard(view);
         updateMainContent();
         setUpRecyclerView();
-        viewModelUserPickedPlaylist.setUserPickedPlaylist(activityMain.getMasterPlaylist());
+        viewModelUserPickedPlaylist.setUserPickedPlaylist(MediaData.getInstance(activityMain).getMasterPlaylist());
         setUpBroadcastReceiverServiceConnected();
         setUpBroadcastReceiverOnOptionsMenuCreated();
     }

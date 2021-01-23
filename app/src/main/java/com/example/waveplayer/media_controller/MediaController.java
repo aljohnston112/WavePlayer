@@ -1,4 +1,4 @@
-package com.example.waveplayer;
+package com.example.waveplayer.media_controller;
 
 import android.content.Context;
 import android.media.AudioAttributes;
@@ -8,6 +8,7 @@ import android.media.MediaPlayer;
 
 import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
+import com.example.waveplayer.service_main.ServiceMain;
 
 import java.util.Random;
 
@@ -306,10 +307,13 @@ public class MediaController {
 
     }
 
-    public void seekTo(int progress) {
+    public void seekTo(Context context, int progress) {
         MediaPlayerWUri mediaPlayerWUri = getCurrentMediaPlayerWUri();
         if (mediaPlayerWUri != null) {
             mediaPlayerWUri.seekTo(serviceMain.getApplicationContext(), currentSong, progress);
+        }
+        if (!isPlaying()) {
+            pauseOrPlay(context);
         }
     }
 
@@ -370,7 +374,7 @@ public class MediaController {
         return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
     }
 
-    MediaPlayerWUri getMediaPlayerWUri(Long songID) {
+    public MediaPlayerWUri getMediaPlayerWUri(Long songID) {
         return mediaData.getMediaPlayerWUri(songID);
     }
 

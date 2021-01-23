@@ -1,9 +1,12 @@
-package com.example.waveplayer;
+package com.example.waveplayer.service_main;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
+
+import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.service_main.ServiceMain;
 
 public class BroadcastReceiverNotificationButtonsForServiceMain extends BroadcastReceiver {
 
@@ -14,7 +17,7 @@ public class BroadcastReceiverNotificationButtonsForServiceMain extends Broadcas
     }
 
     public void onReceive(Context context, Intent intent) {
-        Log.v(ActivityMain.TAG, "BroadcastReceiverNotificationForServiceMainMediaControls start");
+        Log.v(ServiceMain.TAG, "BroadcastReceiverNotificationForServiceMainMediaControls start");
         synchronized (ServiceMain.lock) {
             String action = intent.getAction();
             if (action != null) {
@@ -30,7 +33,7 @@ public class BroadcastReceiverNotificationButtonsForServiceMain extends Broadcas
                 }
             }
         }
-        Log.v(ActivityMain.TAG, "BroadcastReceiverNotificationForServiceMainMediaControls end");
+        Log.v(ServiceMain.TAG, "BroadcastReceiverNotificationForServiceMainMediaControls end");
     }
 
 }

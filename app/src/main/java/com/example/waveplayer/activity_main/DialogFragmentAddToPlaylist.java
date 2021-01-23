@@ -1,4 +1,4 @@
-package com.example.waveplayer;
+package com.example.waveplayer.activity_main;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -9,7 +9,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 
-import com.example.waveplayer.random_playlist.AudioUri;
+import com.example.waveplayer.R;
+import com.example.waveplayer.media_controller.Song;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.List;
 
 public class DialogFragmentAddToPlaylist extends DialogFragment {
 
+    // TODO get rid of bundles
     public static final String BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST = "ADD_TO_PLAYLIST_PLAYLIST";
     public static final String BUNDLE_KEY_ADD_TO_PLAYLIST_SONG = "ADD_TO_PLAYLIST_SONG";
     public static final String BUNDLE_KEY_PLAYLISTS = "PLAYLISTS";
