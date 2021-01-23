@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -30,7 +31,7 @@ class ProbFun<T extends Comparable<T>> implements Serializable {
     // The set of elements to be picked from, mapped to the probabilities of getting picked
     protected Map<T, Double> probabilityMap;
 
-    public ArrayList<T> getKeys() {
+    public List<T> getKeys() {
         return new ArrayList<>(this.probabilityMap.keySet());
     }
 

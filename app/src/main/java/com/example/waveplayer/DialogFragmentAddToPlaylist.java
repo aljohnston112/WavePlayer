@@ -31,6 +31,7 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+        ActivityMain activityMain = (ActivityMain)getActivity();
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         Bundle bundle = getArguments();
         if (builder != null && bundle != null) {
@@ -72,14 +73,14 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
                               List<RandomPlaylist> randomPlaylists,
                               List<Integer> selectedPlaylistIndices) {
         boolean isSong = bundle.getBoolean(BUNDLE_KEY_IS_SONG);
-        AudioUri audioURI = (AudioUri) bundle.getSerializable(
+        Song song = (Song) bundle.getSerializable(
                 BUNDLE_KEY_ADD_TO_PLAYLIST_SONG);
         RandomPlaylist randomPlaylist = (RandomPlaylist) bundle.getSerializable(
                 BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST);
         onClickListenerPositiveButton = new OnClickListenerAddToPlaylistPositiveButton(
-                randomPlaylists, selectedPlaylistIndices, isSong, audioURI, randomPlaylist);
+                randomPlaylists, selectedPlaylistIndices, isSong, song, randomPlaylist);
         onClickListenerNeutralButton = new OnClickListenerAddToPlaylistNeutralButton(
-                (ActivityMain) getActivity(), isSong, audioURI, randomPlaylist);
+                (ActivityMain) getActivity(), isSong, song, randomPlaylist);
         builder.setPositiveButton(R.string.add, onClickListenerPositiveButton)
                 .setNeutralButton(R.string.new_playlist, onClickListenerNeutralButton);
     }

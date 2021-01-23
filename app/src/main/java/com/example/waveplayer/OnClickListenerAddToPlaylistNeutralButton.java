@@ -9,7 +9,7 @@ public class OnClickListenerAddToPlaylistNeutralButton implements DialogInterfac
 
     private final ActivityMain activityMain;
     private final boolean isSong;
-    private final AudioUri audioURI;
+    private final Song song;
     private final RandomPlaylist randomPlaylist;
 
     private OnClickListenerAddToPlaylistNeutralButton() {
@@ -18,10 +18,10 @@ public class OnClickListenerAddToPlaylistNeutralButton implements DialogInterfac
 
     public OnClickListenerAddToPlaylistNeutralButton(
             ActivityMain activityMain,
-            boolean isSong, AudioUri audioURI, RandomPlaylist randomPlaylist) {
+            boolean isSong, Song song, RandomPlaylist randomPlaylist) {
         this.activityMain = activityMain;
         this.isSong = isSong;
-        this.audioURI = audioURI;
+        this.song = song;
         this.randomPlaylist = randomPlaylist;
     }
 
@@ -30,12 +30,12 @@ public class OnClickListenerAddToPlaylistNeutralButton implements DialogInterfac
             // Needed for FragmentEditPlaylist to make a new playlist
             activityMain.setUserPickedPlaylist(null);
             activityMain.clearUserPickedSongs();
-            if (isSong && audioURI != null) {
-                activityMain.addUserPickedSong(audioURI);
+            if (isSong && song != null) {
+                activityMain.addUserPickedSong(song);
             }
             if (!isSong && randomPlaylist != null) {
-                for (AudioUri audioUriInPlaylist : randomPlaylist.getSongs()) {
-                    activityMain.addUserPickedSong(audioUriInPlaylist);
+                for (Song songInPlaylist : randomPlaylist.getSongs()) {
+                    activityMain.addUserPickedSong(songInPlaylist);
                 }
             }
             activityMain.navigateTo(R.id.fragmentEditPlaylist);

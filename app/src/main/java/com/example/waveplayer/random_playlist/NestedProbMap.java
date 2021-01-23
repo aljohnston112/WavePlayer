@@ -2,10 +2,11 @@ package com.example.waveplayer.random_playlist;
 
 import com.example.waveplayer.random_playlist.ProbMap;
 
+import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Random;
 
-public class NestedProbMap {
+public class NestedProbMap implements Serializable {
 
     // The ProbFun used to determine if a song should play during a specific hour
     private final ProbMap<Integer> probabilityFunctionHours = new ProbMap<>();

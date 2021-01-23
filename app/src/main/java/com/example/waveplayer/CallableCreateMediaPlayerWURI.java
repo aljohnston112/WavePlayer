@@ -24,7 +24,7 @@ public class CallableCreateMediaPlayerWURI implements Callable<MediaPlayerWUri> 
 
     @Override
     public MediaPlayerWUri call() {
-        MediaPlayerWUri mediaPlayerWURI = new MediaPlayerWUri(
+        MediaPlayerWUri mediaPlayerWURI = new MediaPlayerWUri(context,
                 mediaController, MediaPlayer.create(
                 context, AudioUri.getUri(id)), id);
         mediaPlayerWURI.setOnCompletionListener(mediaController.onCompletionListener);

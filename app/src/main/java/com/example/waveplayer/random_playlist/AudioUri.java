@@ -120,8 +120,4 @@ public final class AudioUri implements Comparable<AudioUri>, Serializable {
         //Log.v(TAG, "hashCode end");
         return uri.toString().hashCode();
     }
-
-    public Long getID() {
-        return id;
-    }
 }

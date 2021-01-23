@@ -119,26 +119,26 @@ public class MediaData {
         }
     }
 
-    private void removeMissingSongs(List<Long> newSongIDs) {
-        for (Long songID : masterPlaylist.getSongs()) {
-            if (!newSongIDs.contains(songID)) {
-                masterPlaylist.remove(songID);
-                songIDToMediaPlayerWUriHashMap.remove(songID);
+    private void removeMissingSongs(List<Song> newSongs) {
+        for (Song song : masterPlaylist.getSongs()) {
+            if (!newSongs.contains(song)) {
+                masterPlaylist.remove(song);
+                songIDToMediaPlayerWUriHashMap.remove(song.id);
             }
         }
     }
 
-    private void addNewSongs(List<Long> newSongIDs) {
-        for (Long newSongID : newSongIDs) {
-            if (newSongID != null) {
-                if (!masterPlaylist.contains(newSongID)) {
-                    masterPlaylist.add(newSongID);
+    private void addNewSongs(List<Song> newSongs) {
+        for (Song newSong : newSongs) {
+            if (newSong != null) {
+                if (!masterPlaylist.contains(newSong)) {
+                    masterPlaylist.add(newSong);
                 }
             }
         }
     }
 
-    void loadMediaFiles(List<Long> newUris) {
+    void loadMediaFiles(List<Song> newUris) {
         if (newUris != null) {
             if (masterPlaylist != null) {
                 addNewSongs(newUris);

@@ -69,7 +69,7 @@ public class FragmentPlaylist extends Fragment {
         activityMain.hideKeyboard(view);
         setUpToolbar();
         updateFAB();
-        RandomPlaylist randomPlaylist = viewModelUserPickedPlaylist.getUserPickedPlaylist().getValue();
+        RandomPlaylist randomPlaylist = viewModelUserPickedPlaylist.getUserPickedPlaylist();
         setUpRecyclerView(randomPlaylist);
         activityMain.isSong(false);
         activityMain.setPlaylistToAddToQueue(randomPlaylist);
@@ -190,7 +190,7 @@ public class FragmentPlaylist extends Fragment {
     }
 
     public RandomPlaylist getUserPickedPlaylist() {
-        return viewModelUserPickedPlaylist.getUserPickedPlaylist().getValue();
+        return viewModelUserPickedPlaylist.getUserPickedPlaylist();
     }
 
     public void setUserPickedPlaylist(RandomPlaylist randomPlaylist) {

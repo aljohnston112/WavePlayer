@@ -1,6 +1,7 @@
 package com.example.waveplayer;
 
 
+import androidx.annotation.GuardedBy;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
@@ -10,27 +11,23 @@ import java.util.List;
 
 public class ViewModelUserPickedSongs extends ViewModel {
 
+    @GuardedBy("this")
     private final List<Song> userPickedSongs = new ArrayList<>();
 
-    private final MutableLiveData<List<Song>> userPickedSongsMLD = new MutableLiveData<List<Song>>();
-
-    public LiveData<List<Song>> getUserPickedSongs() {
-        return userPickedSongsMLD;
+    synchronized public List<Song> getUserPickedSongs() {
+        return userPickedSongs;
     }
 
-    public void addUserPickedSong(Song songs) {
+    synchronized public void addUserPickedSong(Song songs) {
         userPickedSongs.add(songs);
-        userPickedSongsMLD.setValue(userPickedSongs);
     }
 
-    public void removeUserPickedSong(Song song) {
+    synchronized public void removeUserPickedSong(Song song) {
         userPickedSongs.remove(song);
-        userPickedSongsMLD.setValue(userPickedSongs);
     }
 
-    public void clearUserPickedSongs() {
+    synchronized public void clearUserPickedSongs() {
         userPickedSongs.clear();
-        userPickedSongsMLD.setValue(userPickedSongs);
     }
 
 }

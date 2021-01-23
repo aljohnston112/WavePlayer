@@ -79,7 +79,7 @@ public class ServiceMain extends Service {
         shutDownSeekBarUpdater();
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
         MediaPlayerWUri mediaPlayerWUri =
-                mediaController.getMediaPlayerWUri(mediaController.getCurrentSong().getID());
+                mediaController.getMediaPlayerWUri(mediaController.getCurrentSong().id);
         if (mediaPlayerWUri != null) {
             runnableSeekBarUpdater = new RunnableSeekBarUpdater(
                     mediaPlayerWUri,
@@ -440,7 +440,7 @@ public class ServiceMain extends Service {
     public void taskRemoved() {
         Log.v(TAG, "destroy started");
         if (mediaController.isPlaying()) {
-            mediaController.pauseOrPlay();
+            mediaController.pauseOrPlay(getApplicationContext());
         }
         mediaController.releaseMediaPlayers();
         shutDownSeekBarUpdater();
@@ -450,5 +450,19 @@ public class ServiceMain extends Service {
     }
 
     // region mediaControls
+
+    public void playNext() {
+        mediaController.playNext(getApplicationContext());
+    }
+
+    public void pauseOrPlay() {
+        mediaController.pauseOrPlay(getApplicationContext());
+    }
+
+    public void playPrevious() {
+        mediaController.playPrevious(getApplicationContext());
+    }
+
+    // endregion mediaControls
 
 }

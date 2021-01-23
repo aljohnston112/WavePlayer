@@ -13,7 +13,7 @@ public class OnClickListenerAddToPlaylistPositiveButton implements DialogInterfa
     private final List<Integer> selectedPlaylistIndices;
 
     private final boolean isSong;
-    private final AudioUri audioURI;
+    private final Song song;
     private final RandomPlaylist randomPlaylist;
 
     private OnClickListenerAddToPlaylistPositiveButton() {
@@ -22,25 +22,25 @@ public class OnClickListenerAddToPlaylistPositiveButton implements DialogInterfa
 
     public OnClickListenerAddToPlaylistPositiveButton(
             List<RandomPlaylist> randomPlaylists, List<Integer> selectedPlaylistIndices,
-            boolean isSong, AudioUri audioURI, RandomPlaylist randomPlaylist) {
+            boolean isSong, Song song, RandomPlaylist randomPlaylist) {
         this.randomPlaylists = randomPlaylists;
         this.selectedPlaylistIndices = selectedPlaylistIndices;
         this.isSong = isSong;
-        this.audioURI = audioURI;
+        this.song = song;
         this.randomPlaylist = randomPlaylist;
     }
 
 
     public void onClick(DialogInterface dialog, int id) {
-        if (isSong && audioURI != null) {
+        if (isSong && song != null) {
             for (int index : selectedPlaylistIndices) {
-                randomPlaylists.get(index).add(audioURI);
+                randomPlaylists.get(index).add(song);
             }
         }
         if (!isSong && randomPlaylist != null) {
-            for (AudioUri randomPlaylistAudioUri : randomPlaylist.getSongs()) {
+            for (Song randomPlaylistSong : randomPlaylist.getSongs()) {
                 for (int index : selectedPlaylistIndices) {
-                    randomPlaylists.get(index).add(randomPlaylistAudioUri);
+                    randomPlaylists.get(index).add(randomPlaylistSong);
                 }
             }
         }

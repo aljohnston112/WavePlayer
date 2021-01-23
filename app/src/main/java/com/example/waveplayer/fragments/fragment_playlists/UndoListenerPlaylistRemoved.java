@@ -11,17 +11,15 @@ public class UndoListenerPlaylistRemoved implements View.OnClickListener {
     private final RecyclerViewAdapterPlaylists recyclerViewAdapter;
     private final RandomPlaylist randomPlaylist;
     private final int position;
-    private final long uriID;
 
     UndoListenerPlaylistRemoved(ActivityMain activityMain,
                                 RecyclerViewAdapterPlaylists recyclerViewAdapter,
                                 RandomPlaylist randomPlaylist,
-                                int position, long uriId) {
+                                int position) {
         this.activityMain = activityMain;
         this.recyclerViewAdapter = recyclerViewAdapter;
         this.randomPlaylist = randomPlaylist;
         this.position = position;
-        this.uriID = uriId;
     }
 
     @Override

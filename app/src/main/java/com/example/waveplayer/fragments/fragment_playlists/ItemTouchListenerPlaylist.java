@@ -62,7 +62,7 @@ public class ItemTouchListenerPlaylist extends ItemTouchHelper.Callback {
                     activityMain.findViewById(R.id.coordinatorLayoutActivityMain),
                     R.string.playlist_deleted, BaseTransientBottomBar.LENGTH_LONG);
             UndoListenerPlaylistRemoved undoListenerPlaylistRemoved = new UndoListenerPlaylistRemoved(
-                    activityMain, recyclerViewAdapter, randomPlaylist, position, randomPlaylist.mediaStoreUriID);
+                    activityMain, recyclerViewAdapter, randomPlaylist, position);
             snackbar.setAction(R.string.undo, undoListenerPlaylistRemoved);
             snackbar.show();
         }

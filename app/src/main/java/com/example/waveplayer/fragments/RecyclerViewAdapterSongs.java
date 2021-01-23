@@ -78,7 +78,8 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                 if (position != RecyclerView.NO_POSITION) {
                     ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
                     if (activityMain != null) {
-                        if (holder.song.equals(activityMain.getCurrentSong())) {
+                        if (activityMain.getCurrentSong() != null &&
+                        holder.song.equals(Song.getSong(activityMain.getCurrentSong()))) {
                             activityMain.seekTo(0);
                         }
                         if (fragment instanceof FragmentSongs) {
@@ -89,6 +90,7 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                                     ((FragmentPlaylist)fragment).getUserPickedPlaylist());
                             action = FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong();
                         }
+                        activityMain.setStarted(true);
                         activityMain.addToQueueAndPlay(holder.song.id);
                     }
                     if (action != null) {

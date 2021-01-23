@@ -31,7 +31,7 @@ public class MediaPlayerWUri {
 
     private volatile boolean shouldPlay = false;
 
-    MediaPlayerWUri(final MediaController mediaController, MediaPlayer mediaPlayer, final Long id){
+    MediaPlayerWUri(final Context context, final MediaController mediaController, MediaPlayer mediaPlayer, final Long id){
         this.mediaController = mediaController;
         this.mediaPlayer = mediaPlayer;
         this.id = id;
@@ -44,7 +44,7 @@ public class MediaPlayerWUri {
             public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
                 synchronized (lock) {
                     mediaController.releaseMediaPlayers();
-                    mediaController.addToQueueAndPlay(mediaController.getCurrentSong().getID());
+                    mediaController.addToQueueAndPlay(context, mediaController.getCurrentSong().id);
                     return false;
                 }
             }
@@ -117,7 +117,7 @@ public class MediaPlayerWUri {
         }
     }
 
-    public void seekTo(Context context, AudioUri audioUri, int millis){
+    public void seekTo(final Context context, AudioUri audioUri, int millis){
         synchronized (lock) {
             if (isPrepared) {
                 String[] s = audioUri.displayName.split("\\.");
@@ -136,7 +136,7 @@ public class MediaPlayerWUri {
                             public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
                                 synchronized (lock) {
                                     mediaController.releaseMediaPlayers();
-                                    mediaController.addToQueueAndPlay(mediaController.getCurrentSong().getID());
+                                    mediaController.addToQueueAndPlay(context, mediaController.getCurrentSong().id);
                                     return false;
                                 }
                             }

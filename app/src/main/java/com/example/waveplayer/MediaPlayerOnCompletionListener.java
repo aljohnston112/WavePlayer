@@ -18,7 +18,7 @@ public class MediaPlayerOnCompletionListener implements MediaPlayer.OnCompletion
 
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
-        mediaController.playNext();
+        mediaController.playNext(context);
         sendBroadcastOnCompletion();
     }
 

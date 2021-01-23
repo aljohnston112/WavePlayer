@@ -2,6 +2,7 @@ package com.example.waveplayer;
 
 import android.util.Log;
 
+import androidx.annotation.GuardedBy;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
@@ -10,14 +11,15 @@ import com.example.waveplayer.random_playlist.RandomPlaylist;
 
 public class ViewModelUserPickedPlaylist extends ViewModel {
 
-    private final MutableLiveData<RandomPlaylist> userPickedPlaylist = new MutableLiveData<RandomPlaylist>();;
+    @GuardedBy("this")
+    volatile private RandomPlaylist userPickedPlaylist;
 
-    public LiveData<RandomPlaylist> getUserPickedPlaylist(){
+    synchronized public RandomPlaylist getUserPickedPlaylist(){
         return userPickedPlaylist;
     }
 
-    public void setUserPickedPlaylist(RandomPlaylist userPickedPlaylist) {
-        this.userPickedPlaylist.setValue(userPickedPlaylist);
+    synchronized public void setUserPickedPlaylist(RandomPlaylist userPickedPlaylist) {
+        this.userPickedPlaylist = userPickedPlaylist;
     }
 
 }

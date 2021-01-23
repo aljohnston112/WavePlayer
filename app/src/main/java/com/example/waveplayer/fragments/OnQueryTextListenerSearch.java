@@ -4,6 +4,7 @@ import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.waveplayer.ActivityMain;
+import com.example.waveplayer.Song;
 import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.R;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
@@ -39,17 +40,17 @@ public class OnQueryTextListenerSearch implements SearchView.OnQueryTextListener
                 if (recyclerViewSongs != null) {
                     RecyclerViewAdapterSongs recyclerViewAdapterSongs =
                             (RecyclerViewAdapterSongs) recyclerViewSongs.getAdapter();
-                    List<AudioUri> audioUris = activityMain.getAllSongs();
-                    List<AudioUri> sifted = new ArrayList<>();
+                    List<Song> songs = activityMain.getAllSongs();
+                    List<Song> sifted = new ArrayList<>();
                     if (!newText.equals("")) {
-                        for (AudioUri audioURI : audioUris) {
-                            if (audioURI.title.toLowerCase().contains(newText.toLowerCase())) {
-                                sifted.add(audioURI);
+                        for (Song song : songs) {
+                            if (song.title.toLowerCase().contains(newText.toLowerCase())) {
+                                sifted.add(song);
                             }
                         }
                         recyclerViewAdapterSongs.updateList(sifted);
                     } else {
-                        recyclerViewAdapterSongs.updateList(audioUris);
+                        recyclerViewAdapterSongs.updateList(songs);
                     }
                 }
                 return true;
@@ -60,17 +61,17 @@ public class OnQueryTextListenerSearch implements SearchView.OnQueryTextListener
                 if (recyclerViewSongs != null) {
                     RecyclerViewAdapterSongs recyclerViewAdapterSongs =
                             (RecyclerViewAdapterSongs) recyclerViewSongs.getAdapter();
-                    List<AudioUri> audioUris = activityMain.getUserPickedPlaylist().getSongIDs();
-                    List<AudioUri> sifted = new ArrayList<>();
+                    List<Song> songs = activityMain.getUserPickedPlaylist().getSongs();
+                    List<Song> sifted = new ArrayList<>();
                     if (!newText.equals("")) {
-                        for (AudioUri audioURI : audioUris) {
-                            if (audioURI.title.toLowerCase().contains(newText.toLowerCase())) {
-                                sifted.add(audioURI);
+                        for (Song song : songs) {
+                            if (song.title.toLowerCase().contains(newText.toLowerCase())) {
+                                sifted.add(song);
                             }
                         }
                         recyclerViewAdapterSongs.updateList(sifted);
                     } else {
-                        recyclerViewAdapterSongs.updateList(audioUris);
+                        recyclerViewAdapterSongs.updateList(songs);
                     }
                 }
                 return true;

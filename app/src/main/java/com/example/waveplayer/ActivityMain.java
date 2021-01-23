@@ -91,6 +91,8 @@ public class ActivityMain extends AppCompatActivity {
 
     private ViewModelUserPickedPlaylist viewModelUserPickedPlaylist;
 
+    private ViewModelUserPickedSongs viewModelUserPickedSongs;
+
     public void setServiceMain(ServiceMain serviceMain) {
         Log.v(TAG, "setServiceMain started");
         this.serviceMain = serviceMain;
@@ -106,6 +108,8 @@ public class ActivityMain extends AppCompatActivity {
         askForWriteExternal();
         setUpBroadcastReceivers();
         setUpSongPane();
+        updateSongPaneUI();
+        updatePlayButtons();
         runnableSongArtUpdater = new RunnableSongArtUpdater(this);
         runnableSongPaneArtUpdater = new RunnableSongPaneArtUpdater(this);
         Log.v(TAG, "setUpAfterServiceConnection ended");
@@ -190,6 +194,8 @@ public class ActivityMain extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         viewModelUserPickedPlaylist =
                 new ViewModelProvider(this).get(ViewModelUserPickedPlaylist.class);
+        viewModelUserPickedSongs =
+                new ViewModelProvider(this).get(ViewModelUserPickedSongs.class);
         Log.v(TAG, "onCreate ended");
     }
 
@@ -208,8 +214,6 @@ public class ActivityMain extends AppCompatActivity {
             public void run() {
                 Log.v(TAG, "updating UI");
                 updateSongUI();
-                updateSongPaneUI();
-                updatePlayButtons();
                 Log.v(TAG, "done updating UI");
             }
         };
@@ -258,8 +262,8 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     private void getAudioFiles() {
-        List<Long> newURIs = AudioFileLoader.getAudioFiles(this);
-        mediaController.loadMediaFiles(newURIs);
+        List<Song> newSongs = AudioFileLoader.getAudioFiles(this);
+        mediaController.loadMediaFiles(newSongs);
     }
 
     @Override
@@ -695,7 +699,7 @@ public class ActivityMain extends AppCompatActivity {
 
     private void updateSongPaneUI() {
         Log.v(TAG, "updateSongPaneUI start");
-        if (!fragmentSongVisible() && mediaController.getCurrentSong() != null
+        if (mediaController.isStarted() && !fragmentSongVisible() && mediaController.getCurrentSong() != null
                 && mediaController.songInProgress()) {
             Log.v(TAG, "updating the song pane UI");
             updateSongPaneName();
@@ -755,7 +759,7 @@ public class ActivityMain extends AppCompatActivity {
         Log.v(TAG, "updateSongPanePlayButton start");
         ImageButton imageButtonSongPanePlayPause = findViewById(R.id.imageButtonSongPanePlayPause);
         View fragmentPaneSong = findViewById(R.id.fragmentSongPane);
-        if (!fragmentSongVisible() &&
+        if (mediaController.isStarted() && !fragmentSongVisible() &&
                 fragmentPaneSong.getVisibility() == View.VISIBLE &&
                 imageButtonSongPanePlayPause != null) {
             Log.v(TAG, "updating SongPanePlayButton");
@@ -803,21 +807,21 @@ public class ActivityMain extends AppCompatActivity {
 
     public void addToQueueAndPlay(Long songID) {
         Log.v(TAG, "addToQueueAndPlay start");
-            mediaController.addToQueueAndPlay(songID);
+            mediaController.addToQueueAndPlay(this, songID);
         updateUI();
         Log.v(TAG, "addToQueueAndPlay end");
     }
 
     public void playNext() {
         Log.v(TAG, "playNext start");
-            mediaController.playNext();
+            mediaController.playNext(this);
         updateUI();
         Log.v(TAG, "playNext end");
     }
 
     public void playPrevious() {
         Log.v(TAG, "playPrevious start");
-            mediaController.playPrevious();
+            mediaController.playPrevious(this);
         updateUI();
         Log.v(TAG, "playPrevious end");
     }
@@ -825,7 +829,7 @@ public class ActivityMain extends AppCompatActivity {
     public void pauseOrPlay() {
         Log.v(TAG, "pauseOrPlay start");
         if (mediaController.getCurrentSong() != null) {
-            mediaController.pauseOrPlay();
+            mediaController.pauseOrPlay(this);
         }
         updatePlayButtons();
         Log.v(TAG, "pauseOrPlay end");
@@ -1024,7 +1028,7 @@ public class ActivityMain extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         Log.v(TAG, "onOptionsItemSelected start");
         if (item.getItemId() == R.id.action_reset_probs) {
-            mediaController.clearProbabilities();
+            mediaController.clearProbabilities(this);
             return true;
         } else if (item.getItemId() == R.id.action_add_to_playlist) {
             FragmentManager fragmentManager = getSupportFragmentManager();
@@ -1050,7 +1054,7 @@ public class ActivityMain extends AppCompatActivity {
                 }
             }
             if (!mediaController.songInProgress()) {
-                mediaController.playNextInQueue(false);
+                mediaController.playNextInQueue(this, false);
                 updateUI();
             }
         }
@@ -1066,7 +1070,7 @@ public class ActivityMain extends AppCompatActivity {
         bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, mediaData.getPlaylists());
         bundle.putSerializable(
                 BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST,
-                viewModelUserPickedPlaylist.getUserPickedPlaylist().getValue());
+                viewModelUserPickedPlaylist.getUserPickedPlaylist());
         Log.v(TAG, "loadBundleForAddToPlaylist end");
         return bundle;
     }
@@ -1158,5 +1162,29 @@ public class ActivityMain extends AppCompatActivity {
             break;
         }
         return out;
+    }
+
+    public void setUserPickedPlaylist(RandomPlaylist randomPlaylist) {
+        viewModelUserPickedPlaylist.setUserPickedPlaylist(randomPlaylist);
+    }
+
+    public void clearUserPickedSongs() {
+        viewModelUserPickedSongs.clearUserPickedSongs();
+    }
+
+    public void addUserPickedSong(Song song) {
+        viewModelUserPickedSongs.addUserPickedSong(song);
+    }
+
+    public RandomPlaylist getUserPickedPlaylist() {
+        return viewModelUserPickedPlaylist.getUserPickedPlaylist();
+    }
+
+    public void setStarted(boolean isStarted) {
+        mediaController.isStarted(isStarted);
+    }
+
+    public boolean serviceConnected() {
+        return (serviceMain != null);
     }
 }

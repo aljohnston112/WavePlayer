@@ -1,5 +1,8 @@
 package com.example.waveplayer.random_playlist;
 
+import android.content.Context;
+
+import com.example.waveplayer.AudioFileLoader;
 import com.example.waveplayer.Song;
 
 import java.io.Serializable;
@@ -20,8 +23,9 @@ public class RandomPlaylist implements Serializable {
 
     private static final long serialVersionUID = 2323326608918863420L;
 
-    private ArrayList<Long> playlistArray;
-    private ListIterator<Long> playlistIterator;
+    private final List<Long> playlistArray = new ArrayList<>();
+
+    transient private ListIterator<Long> playlistIterator;
 
     private String name;
 
@@ -61,10 +65,13 @@ public class RandomPlaylist implements Serializable {
         }
         this.name = name;
         this.mediaStoreUriID = mediaStoreUriID;
+        for(Song song : music){
+            playlistArray.add(song.id);
+        }
         playlistIterator = playlistArray.listIterator();
     }
 
-    public ArrayList<Song> getSongs() {
+    public List<Song> getSongs() {
         return probabilityFunction.getKeys();
     }
 
@@ -88,50 +95,40 @@ public class RandomPlaylist implements Serializable {
         probabilityFunction.setMaxPercent(maxPercent);
     }
 
-    public void good(Long songID, double percent, boolean scale) {
-        /*
-        if(songID.good(percent, scale)) {
-            probabilityFunction.good(songID, percent, scale);
+    public void good(Context context, Song song, double percent, boolean scale) {
+        if(AudioFileLoader.getAudioUri(context, song.id).good(percent, scale)) {
+            probabilityFunction.good(song, percent, scale);
         }
-                // TODO when AudioUris are in files
-         */
     }
 
-    public void bad(Long songID, double percent) {
-        /*
-        if(songID.bad(percent)) {
-            probabilityFunction.bad(songID, percent);
+    public void bad(Context context, Song song, double percent) {
+        if(AudioFileLoader.getAudioUri(context, song.id).bad(percent)) {
+            probabilityFunction.bad(song, percent);
         }
-        // TODO when AudioUris are in files
-         */
+
     }
 
     public double getProbability(Song song) {
         return probabilityFunction.getProbability(song);
     }
 
-    public void clearProbabilities() {
-        /*
-        for(Long songID : probabilityFunction.getKeys()){
-            songID.clearProbabilities();
+    public void clearProbabilities(Context context) {
+        for(Song song : probabilityFunction.getKeys()){
+            AudioFileLoader.getAudioUri(context, song.id).clearProbabilities();
         }
         probabilityFunction.clearProbabilities();
-        // TODO when AudioUris are in files
-         */
     }
 
-    public AudioUri next(Random random) {
-        /*
+    public AudioUri next(Context context, Random random) {
+        Song song;
         AudioUri audioUri = null;
         boolean next = false;
         while(!next) {
-            audioUri = probabilityFunction.fun(random);
+            song = probabilityFunction.fun(random);
+            audioUri = AudioFileLoader.getAudioUri(context, song.id);
             next = audioUri.shouldPlay(random);
         }
         return audioUri;
-                // TODO when AudioUris are in files
-         */
-        return null;
     }
 
     public int size() {
@@ -147,10 +144,16 @@ public class RandomPlaylist implements Serializable {
     }
 
     public boolean hasNext() {
+        if(playlistIterator == null){
+            playlistIterator = playlistArray.listIterator();
+        }
         return playlistIterator.hasNext();
     }
 
     public Long next() {
+        if(playlistIterator == null){
+            playlistIterator = playlistArray.listIterator();
+        }
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
@@ -158,10 +161,16 @@ public class RandomPlaylist implements Serializable {
     }
 
     public boolean hasPrevious() {
+        if(playlistIterator == null){
+            playlistIterator = playlistArray.listIterator();
+        }
         return playlistIterator.hasPrevious();
     }
 
     public Long previous() {
+        if(playlistIterator == null){
+            playlistIterator = playlistArray.listIterator();
+        }
         if (!hasPrevious()) {
             throw new NoSuchElementException();
         }

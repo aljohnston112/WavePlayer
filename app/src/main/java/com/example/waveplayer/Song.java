@@ -29,12 +29,12 @@ public class Song implements Comparable<Song>, Serializable {
 
     @Override
     public int compareTo(Song o) {
-        return id.compareTo(o.id);
+        return title.compareTo(o.title);
     }
 
     @Override
     public boolean equals(@Nullable Object obj) {
-        return obj instanceof AudioUri && id.equals(((AudioUri) obj).id);
+        return obj instanceof Song && id.equals(((Song) obj).id);
     }
 
     @Override
@@ -42,5 +42,8 @@ public class Song implements Comparable<Song>, Serializable {
         return System.identityHashCode(this);
     }
 
+    public static Song getSong(AudioUri audioUri){
+        return new Song(audioUri.id, audioUri.title);
+    }
 
 }

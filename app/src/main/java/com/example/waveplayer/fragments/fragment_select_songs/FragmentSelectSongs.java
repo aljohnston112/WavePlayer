@@ -81,7 +81,7 @@ public class FragmentSelectSongs extends Fragment {
         recyclerViewSongList = view.findViewById(R.id.recycler_view_song_list);
         recyclerViewSongList.setLayoutManager(
                 new LinearLayoutManager(recyclerViewSongList.getContext()));
-        for (Song song : viewModelUserPickedSongs.getUserPickedSongs().getValue()) {
+        for (Song song : viewModelUserPickedSongs.getUserPickedSongs()) {
             song.setSelected(true);
         }
         RecyclerViewAdapterSelectSongs recyclerViewAdapterSelectSongs =
@@ -115,7 +115,7 @@ public class FragmentSelectSongs extends Fragment {
     }
 
     public List<Song> getUserPickedSongs() {
-        return viewModelUserPickedSongs.getUserPickedSongs().getValue();
+        return viewModelUserPickedSongs.getUserPickedSongs();
     }
 
     public void removeUserPickedSong(Song song) {

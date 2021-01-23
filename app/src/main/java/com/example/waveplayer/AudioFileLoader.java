@@ -18,7 +18,7 @@ import java.util.List;
 
 public class AudioFileLoader {
 
-    public static List<Long> getAudioFiles(Context context) {
+    public static List<Song> getAudioFiles(Context context) {
         String[] projection = new String[]{
                 MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DISPLAY_NAME, MediaStore.Audio.Media.IS_MUSIC,
                 MediaStore.Audio.Media.ARTIST_ID, MediaStore.Audio.Media.TITLE};
@@ -29,15 +29,15 @@ public class AudioFileLoader {
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 projection, selection, selectionArgs, sortOrder)) {
             if (cursor != null) {
-                return getSongIDs(context, cursor);
+                return getSongs(context, cursor);
 
             }
         }
         return null;
     }
 
-    private static List<Long> getSongIDs(Context context, Cursor cursor) {
-        ArrayList<Long> newSongIds = new ArrayList<>();
+    private static List<Song> getSongs(Context context, Cursor cursor) {
+        ArrayList<Song> newSongIds = new ArrayList<>();
         int idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
         int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
         int titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE);
@@ -48,19 +48,18 @@ public class AudioFileLoader {
             String title = cursor.getString(titleCol);
             String artist = cursor.getString(artistCol);
             AudioUri audioURI = new AudioUri(displayName, artist, title, id);
-            File file = new File(context.getFilesDir(), String.valueOf(audioURI.getID()));
-            file.delete();
-            try (FileOutputStream fos =
-                         context.openFileOutput(String.valueOf(id), Context.MODE_PRIVATE);
-                 ObjectOutputStream objectOutputStream = new ObjectOutputStream(fos)) {
-                objectOutputStream.writeObject(audioURI);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
+            File file = new File(context.getFilesDir(), String.valueOf(audioURI.id));
+                try (FileOutputStream fos =
+                             context.openFileOutput(String.valueOf(id), Context.MODE_PRIVATE);
+                     ObjectOutputStream objectOutputStream = new ObjectOutputStream(fos)) {
+                    objectOutputStream.writeObject(audioURI);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                newSongIds.add(new Song(id, title));
             }
-            newSongIds.add(id);
-        }
         return newSongIds;
     }
 
