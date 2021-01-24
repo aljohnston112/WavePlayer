@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.media_controller.SaveFile;
 import com.example.waveplayer.service_main.ServiceMain;
 
 public class BroadcastReceiverNotificationButtonsForServiceMain extends BroadcastReceiver {
@@ -24,6 +24,12 @@ public class BroadcastReceiverNotificationButtonsForServiceMain extends Broadcas
                 switch (action) {
                     case "Next":
                         serviceMain.playNext();
+                        ServiceMain.executorService.submit(new Runnable() {
+                            @Override
+                            public void run() {
+                                SaveFile.saveFile(serviceMain.getApplicationContext());
+                            }
+                        });
                         break;
                     case "PlayPause":
                         serviceMain.pauseOrPlay();

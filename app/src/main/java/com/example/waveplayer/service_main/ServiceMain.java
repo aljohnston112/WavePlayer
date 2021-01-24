@@ -27,7 +27,6 @@ import com.example.waveplayer.media_controller.MediaData;
 import com.example.waveplayer.media_controller.MediaPlayerWUri;
 import com.example.waveplayer.R;
 import com.example.waveplayer.activity_main.ActivityMain;
-import com.example.waveplayer.fragments.fragment_pane_song.FragmentPaneSong;
 
 import java.io.BufferedReader;
 import java.io.File;

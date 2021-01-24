@@ -9,7 +9,6 @@ import androidx.core.content.res.ResourcesCompat;
 
 import com.example.waveplayer.R;
 import com.example.waveplayer.activity_main.ActivityMain;
-import com.example.waveplayer.fragments.fragment_pane_song.FragmentPaneSong;
 import com.example.waveplayer.media_controller.MediaData;
 
 public class RunnableSongPaneArtUpdater implements Runnable {

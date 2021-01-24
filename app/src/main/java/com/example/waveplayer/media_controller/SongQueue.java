@@ -1,9 +1,5 @@
 package com.example.waveplayer.media_controller;
 
-import android.util.Log;
-
-import com.example.waveplayer.random_playlist.AudioUri;
-
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
@@ -66,13 +62,6 @@ public class SongQueue {
         songQueueIterator = null;
         songQueue.add(songID);
         songQueueIterator = songQueue.listIterator(songQueue.lastIndexOf(songID));
-    }
-
-    public void addToQueueAtCurrentPosition(Long songID) {
-        int pos = songQueueIterator.nextIndex();
-        songQueueIterator = null;
-        songQueue.add(songID);
-        songQueueIterator = songQueue.listIterator(pos);
     }
 
 }

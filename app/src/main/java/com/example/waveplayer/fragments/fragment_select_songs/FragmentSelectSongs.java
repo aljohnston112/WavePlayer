@@ -75,7 +75,6 @@ public class FragmentSelectSongs extends Fragment {
     }
 
     private void setUpRecyclerView() {
-        ActivityMain activityMain = ((ActivityMain) getActivity());
         View view = getView();
         recyclerViewSongList = view.findViewById(R.id.recycler_view_song_list);
         recyclerViewSongList.setLayoutManager(

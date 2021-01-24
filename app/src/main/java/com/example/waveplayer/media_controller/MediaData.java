@@ -29,10 +29,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class MediaData {
 
-    private static final String SONG_DATABASE_NAME = "SONG_DATABASE_NAME";
+    public static final String SONG_DATABASE_NAME = "SONG_DATABASE_NAME";
 
     private static final String MASTER_PLAYLIST_NAME = "MASTER_PLAYLIST_NAME";
 
@@ -174,7 +177,7 @@ public class MediaData {
         }
     }
 
-    private void getSongs(Context context, Cursor cursor) {
+    private void getSongs(final Context context, Cursor cursor) {
         final ArrayList<Song> newSongs = new ArrayList<>();
         final ArrayList<Long> filesThatExist = new ArrayList<>();
         int idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
@@ -222,6 +225,12 @@ public class MediaData {
                 }
             });
         }
+        ServiceMain.executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                SaveFile.saveFile(context);
+            }
+        });
     }
 
     private void removeMissingSongs(List<Long> filesThatExist) {
@@ -229,6 +238,7 @@ public class MediaData {
             if (!filesThatExist.contains(songID)) {
                 masterPlaylist.remove(songDAO.getSong(songID));
                 songIDToMediaPlayerWUriHashMap.remove(songID);
+                songDAO.delete(songDAO.getSong(songID));
             }
         }
     }
@@ -241,8 +251,22 @@ public class MediaData {
         }
     }
 
-    public Song getSong(Long songID) {
-        return songDAO.getSong(songID);
+    public Song getSong(final Long songID) {
+        Future<Song> songFuture = ServiceMain.executorService.submit(new Callable<Song>() {
+            @Override
+            public Song call() throws Exception {
+                return songDAO.getSong(songID);
+            }
+        });
+        Song out = null;
+        try {
+            out = songFuture.get();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return out;
     }
 
     public static AudioUri getAudioUri(Context context, Long songID) {

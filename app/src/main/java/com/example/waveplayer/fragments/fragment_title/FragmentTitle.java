@@ -199,18 +199,15 @@ public class FragmentTitle extends Fragment {
                 new String[]{
                         MediaStore.Audio.Media._ID,
                         MediaStore.Audio.Media.TITLE,
-                        MediaStore.Audio.Media.ARTIST_ID
                 },
                 selection, selectionArgs, null)) {
             if (cursor != null) {
                 if (cursor.moveToNext()) {
                     int idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
                     int titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE);
-                    int artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST_ID);
                     long id = cursor.getLong(idCol);
                     this.mediaStoreUriID = id;
                     String title = cursor.getString(titleCol);
-                    String artist = cursor.getString(artistCol);
                     return new Song(id, title);
                 }
             }

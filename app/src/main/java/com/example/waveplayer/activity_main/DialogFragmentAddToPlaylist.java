@@ -33,7 +33,6 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
-        ActivityMain activityMain = (ActivityMain)getActivity();
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         Bundle bundle = getArguments();
         if (builder != null && bundle != null) {

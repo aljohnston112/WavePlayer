@@ -36,8 +36,6 @@ public class FragmentSongs extends Fragment {
 
     public static final String NAME = "FragmentSongs";
 
-    private ViewModelUserPickedPlaylist viewModelUserPickedPlaylist;
-
     private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
     private BroadcastReceiver broadcastReceiverOptionsMenuCreated;
@@ -58,7 +56,7 @@ public class FragmentSongs extends Fragment {
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        viewModelUserPickedPlaylist =
+        ViewModelUserPickedPlaylist viewModelUserPickedPlaylist =
                 new ViewModelProvider(requireActivity()).get(ViewModelUserPickedPlaylist.class);
         ActivityMain activityMain = ((ActivityMain) getActivity());
         activityMain.hideKeyboard(view);

@@ -1,9 +1,5 @@
 package com.example.waveplayer.media_controller;
 
-import android.util.Log;
-
-import com.example.waveplayer.random_playlist.RandomPlaylist;
-
 import java.io.Serializable;
 
 public class Settings implements Serializable {

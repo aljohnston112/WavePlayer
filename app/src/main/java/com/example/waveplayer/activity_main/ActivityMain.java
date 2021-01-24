@@ -1,20 +1,15 @@
 package com.example.waveplayer.activity_main;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
-import android.media.MediaMetadataRetriever;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.Size;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -53,10 +48,6 @@ import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
-import java.io.ByteArrayInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -110,7 +101,6 @@ public class ActivityMain extends AppCompatActivity {
     private void setUpAfterServiceConnection() {
         Log.v(TAG, "setUpAfterServiceConnection started");
         askForReadExternalAndFillMediaController();
-        askForWriteExternal();
         setUpBroadcastReceivers();
         setUpSongPane();
         updateSongPaneUI();
@@ -247,6 +237,8 @@ public class ActivityMain extends AppCompatActivity {
                 requestPermissions(
                         new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                         REQUEST_CODE_PERMISSION_WRITE);
+            } else {
+                permissionGranted();
             }
         }
     }
@@ -256,10 +248,11 @@ public class ActivityMain extends AppCompatActivity {
             if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
                     != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(
-                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,
+                                Manifest.permission.WRITE_EXTERNAL_STORAGE},
                         REQUEST_CODE_PERMISSION_READ);
             } else {
-                permissionGranted();
+                askForWriteExternal();
             }
         }
     }
@@ -278,7 +271,12 @@ public class ActivityMain extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (requestCode == REQUEST_CODE_PERMISSION_READ && grantResults.length > 0 &&
                     grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                permissionGranted();
+                ServiceMain.executorService.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        askForWriteExternal();
+                    }
+                });
             } else if (requestCode == REQUEST_CODE_PERMISSION_READ) {
                 Toast toast = Toast.makeText(getApplicationContext(),
                         R.string.permission_read_needed, Toast.LENGTH_LONG);
@@ -295,6 +293,8 @@ public class ActivityMain extends AppCompatActivity {
                 requestPermissions(
                         new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                         REQUEST_CODE_PERMISSION_READ);
+            } else {
+                permissionGranted();
             }
         }
     }
@@ -476,7 +476,6 @@ public class ActivityMain extends AppCompatActivity {
     protected void onStop() {
         Log.v(TAG, "onStop started");
         super.onStop();
-        saveFile();
         getApplicationContext().unbindService(connectionServiceMain);
         connectionServiceMain = null;
         FragmentManager fragmentManager = getSupportFragmentManager();

@@ -39,8 +39,6 @@ public class RandomPlaylist implements Serializable {
     // The ProbFun that randomly picks the media to play
     private final ProbFun<Song> probabilityFunction;
 
-    public final long mediaStoreUriID;
-
     /**
      * Creates a random playlist.
      *
@@ -63,7 +61,6 @@ public class RandomPlaylist implements Serializable {
             probabilityFunction = new ProbFunLinkedMap<>(files, maxPercent);
         }
         this.name = name;
-        this.mediaStoreUriID = mediaStoreUriID;
         for (Song song : music) {
             playlistArray.add(song.id);
         }
@@ -106,7 +103,7 @@ public class RandomPlaylist implements Serializable {
     }
 
     public void good(Context context, Song song, double percent, boolean scale) {
-        if (MediaData.getAudioUri(context, song.id).good(percent, scale)) {
+        if (MediaData.getAudioUri(context, song.id).good(percent)) {
             probabilityFunction.good(song, percent, scale);
         }
     }

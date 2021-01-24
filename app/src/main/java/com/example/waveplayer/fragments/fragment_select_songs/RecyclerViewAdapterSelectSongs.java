@@ -46,7 +46,6 @@ public class RecyclerViewAdapterSelectSongs extends RecyclerView.Adapter<Recycle
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         final ConstraintLayout linearLayout =
                 holder.songView.findViewById(R.id.linear_layout_song_name);
-        ActivityMain activityMain = ((ActivityMain) fragmentSelectSongs.getActivity());
             List<Song> userPickedSongs = fragmentSelectSongs.getUserPickedSongs();
             if (userPickedSongs.contains(allSongs.get(position))) {
                 allSongs.get(position).setSelected(true);

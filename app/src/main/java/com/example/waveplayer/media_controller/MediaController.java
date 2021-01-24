@@ -237,6 +237,7 @@ public class MediaController {
     }
 
     public void playNext(Context context) {
+
         stopPrevious();
         if (loopingOne) {
             playLoopingOne(context);

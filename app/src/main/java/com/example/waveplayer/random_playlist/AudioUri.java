@@ -59,17 +59,6 @@ public final class AudioUri implements Comparable<AudioUri>, Serializable {
         return duration;
     }
 
-    // Used for determining if the user picked a song when making a playlist.
-    private boolean isSelected = false;
-
-    public boolean isSelected() {
-        return isSelected;
-    }
-
-    public void setSelected(boolean selected) {
-        isSelected = selected;
-    }
-
     public AudioUri(String displayName, String artist, String title, long id) {
         //Log.v(TAG, "AudioURI constructing");
         this.displayName = displayName;
@@ -88,7 +77,7 @@ public final class AudioUri implements Comparable<AudioUri>, Serializable {
         return nestProbMap.bad(percent);
     }
 
-    public boolean good(double percent, boolean scale) {
+    public boolean good(double percent) {
         return nestProbMap.good(percent);
     }
 
