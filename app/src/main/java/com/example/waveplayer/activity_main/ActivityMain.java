@@ -5,11 +5,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
+import android.os.PersistableBundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -91,6 +93,10 @@ public class ActivityMain extends AppCompatActivity {
     private ViewModelUserPickedPlaylist viewModelUserPickedPlaylist;
 
     private ViewModelUserPickedSongs viewModelUserPickedSongs;
+
+    private static final String KEY_BOOLEAN_LOADED = "KEY_BOOLEAN_LOADED";
+
+    private boolean loaded = false;
 
     public void setServiceMain(ServiceMain serviceMain) {
         // Log.v(TAG, "setServiceMain started");
@@ -191,6 +197,9 @@ public class ActivityMain extends AppCompatActivity {
         // Log.v(TAG, "onCreate started");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        if(savedInstanceState != null) {
+            loaded = savedInstanceState.getBoolean(KEY_BOOLEAN_LOADED, false);
+        }
         viewModelUserPickedPlaylist =
                 new ViewModelProvider(this).get(ViewModelUserPickedPlaylist.class);
         viewModelUserPickedSongs =
@@ -474,6 +483,12 @@ public class ActivityMain extends AppCompatActivity {
     // endregion onStart
 
     @Override
+    public void onSaveInstanceState(@NonNull Bundle outState, @NonNull PersistableBundle outPersistentState) {
+        super.onSaveInstanceState(outState, outPersistentState);
+        outState.putBoolean(KEY_BOOLEAN_LOADED, loaded);
+    }
+
+    @Override
     protected void onStop() {
         // Log.v(TAG, "onStop started");
         super.onStop();
@@ -528,11 +543,16 @@ public class ActivityMain extends AppCompatActivity {
     protected void onResume() {
         // Log.v(TAG, "onResume started");
         super.onResume();
+        if(loaded){
+            startAndBindServiceMain();
+            updateUI();
+        }
         // Log.v(TAG, "onResume ended");
     }
 
     public void fragmentLoadingStarted(){
         askForReadExternalAndFillMediaController();
+        loaded = true;
         startAndBindServiceMain();
         updateUI();
     }
@@ -1086,6 +1106,16 @@ public class ActivityMain extends AppCompatActivity {
 
 
     public void initializeLoading() {
+        final ProgressBar progressBar = findViewById(R.id.progressBar);
+        progressBar.setProgressTintList(ColorStateList.valueOf(
+                ResourcesCompat.getColor(getResources(), R.color.colorPrimary, null)));
+        /*
+        Drawable progressDrawable = progressBar.getProgressDrawable().mutate();
+        progressDrawable.setColorFilter(, android.graphics.PorterDuff.Mode.SRC_IN);
+                progressBar.setProgressDrawable(progressDrawable);
+        */
+
+
         setLoadingProgress(0);
         setLoadingText(R.string.loading1);
     }

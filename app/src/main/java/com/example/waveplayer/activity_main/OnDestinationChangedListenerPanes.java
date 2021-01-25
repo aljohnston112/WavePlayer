@@ -27,9 +27,8 @@ public class OnDestinationChangedListenerPanes
             if (activityMain.songInProgress()) {
                 activityMain.fragmentSongVisible(false);
                 activityMain.showSongPane();
-            } else {
-                activityMain.updateUI();
             }
+            activityMain.updateUI();
         } else {
             activityMain.fragmentSongVisible(true);
             activityMain.hideSongPane();

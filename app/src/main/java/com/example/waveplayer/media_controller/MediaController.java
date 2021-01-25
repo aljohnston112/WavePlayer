@@ -235,6 +235,8 @@ public class MediaController {
             mediaPlayerWURI.seekTo(serviceMain.getApplicationContext(), currentSong, 0);
             mediaPlayerWURI.shouldPlay(true);
             // TODO make a setting?
+            isPlaying = true;
+            songInProgress = true;
             //addToQueueAtCurrentIndex(currentSong.getUri());
         } else {
             makeIfNeededAndPlay(context, currentSong.id);
@@ -255,11 +257,13 @@ public class MediaController {
     private boolean playNextInQueue(Context context) {
         if (songQueue.hasNext()) {
             makeIfNeededAndPlay(context, songQueue.next());
+            return true;
         } else if (looping) {
             if (shuffling) {
                 songQueue.goToFront();
                 if (songQueue.hasNext()) {
                     makeIfNeededAndPlay(context, songQueue.next());
+                    return true;
                 }
             } else {
                 return false;
@@ -268,7 +272,7 @@ public class MediaController {
                 currentSong = currentPlaylist.next(context, random);
                 addToQueueAndPlay(context, currentSong.id);
             }
-        return true;
+        return false;
     }
 
     private void playNextInPlaylist(Context context) {
