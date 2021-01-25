@@ -5,6 +5,7 @@ import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.util.Log;
 
 import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
@@ -13,6 +14,8 @@ import com.example.waveplayer.service_main.ServiceMain;
 import java.util.Random;
 
 public class MediaController {
+
+    static final String TAG = "MediaController";
 
     public static MediaController INSTANCE;
 
@@ -111,12 +114,14 @@ public class MediaController {
     }
 
     public void loopingOne(boolean loopingOne) {
+        Log.v(TAG, "loopingOne start");
         this.loopingOne = loopingOne;
+        Log.v(TAG, "loopingOne end");
     }
 
     private MediaController(ServiceMain serviceMain){
         this.serviceMain = serviceMain;
-        mediaData = MediaData.getInstance(serviceMain.getApplicationContext());
+        mediaData = MediaData.getInstance();
         onCompletionListener = new MediaPlayerOnCompletionListener(
                 serviceMain.getApplicationContext(), this);
         currentPlaylist = mediaData.getMasterPlaylist();
@@ -237,13 +242,14 @@ public class MediaController {
     }
 
     public void playNext(Context context) {
-
+        Log.v(TAG, "playNext started");
         stopPrevious();
         if (loopingOne) {
             playLoopingOne(context);
         } else if (!playNextInQueue(context)) {
             playNextInPlaylist(context);
         }
+        Log.v(TAG, "playNext ended");
     }
 
     private boolean playNextInQueue(Context context) {

@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/FragmentTitle">
+    app:startDestination="@id/fragmentLoading">
 
     <fragment
         android:id="@+id/FragmentTitle"
@@ -79,5 +79,14 @@
         <action
             android:id="@+id/action_fragmentEditPlaylist_to_FragmentSelectSongs"
             app:destination="@id/FragmentSelectSongs" />
+    </fragment>
+    <fragment
+        android:id="@+id/fragmentLoading"
+        android:name="com.example.waveplayer.fragments.FragmentLoading"
+        android:label="fragment_loading"
+        tools:layout="@layout/fragment_loading" >
+        <action
+            android:id="@+id/action_fragmentLoading_to_FragmentTitle"
+            app:destination="@id/FragmentTitle" />
     </fragment>
 </navigation>

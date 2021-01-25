@@ -6,6 +6,7 @@ import android.view.View;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.waveplayer.R;
+import com.example.waveplayer.media_controller.MediaData;
 
 import static com.example.waveplayer.fragments.fragment_title.FragmentTitleDirections.actionFragmentTitleToFragmentPlaylists;
 import static com.example.waveplayer.fragments.fragment_title.FragmentTitleDirections.actionFragmentTitleToFragmentSettings;
@@ -37,7 +38,6 @@ public class OnClickListenerFragmentTitleButtons implements View.OnClickListener
             Intent chooser = Intent.createChooser(intent, title);
             fragmentTitle.startActivityForResult(chooser, FragmentTitle.REQUEST_CODE_OPEN_FOLDER);
         }
-
     }
 
 }

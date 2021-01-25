@@ -29,7 +29,7 @@ public class SaveFile {
         ServiceMain.executorService.submit(new Runnable() {
             @Override
             public void run() {
-                MediaData mediaData = MediaData.getInstance(context);
+                MediaData mediaData = MediaData.getInstance();
                 File file = new File(context.getFilesDir(), FILE_SAVE);
                 File file2 = new File(context.getFilesDir(), FILE_SAVE2);
                 File file3 = new File(context.getFilesDir(), FILE_SAVE3);

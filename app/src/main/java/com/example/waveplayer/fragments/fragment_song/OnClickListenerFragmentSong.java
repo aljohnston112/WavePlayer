@@ -17,24 +17,24 @@ public class OnClickListenerFragmentSong implements View.OnClickListener {
     }
 
     @Override
-    public void onClick(View v) {
+    public void onClick(View view) {
         synchronized (activityMain.lock) {
-            if (v.getId() == R.id.button_thumb_down) {
+            if (view.getId() == R.id.button_thumb_down) {
                 Song song = MediaData.getInstance(activityMain).getSong(activityMain.getCurrentSong().id);
                 if(song != null) {
                     activityMain.getCurrentPlaylist().bad(activityMain,
                             song, MediaData.getInstance(activityMain).getPercentChangeDown());
                     activityMain.saveFile();
                 }
-            } else if (v.getId() == R.id.button_thumb_up) {
+            } else if (view.getId() == R.id.button_thumb_up) {
                 Song song = MediaData.getInstance(activityMain).getSong(activityMain.getCurrentSong().id);
                 if(song != null) {
                     activityMain.getCurrentPlaylist().good(activityMain,
                             song, MediaData.getInstance(activityMain).getPercentChangeUp(), true);
                     activityMain.saveFile();
                 }
-            } else if (v.getId() == R.id.imageButtonShuffle) {
-                ImageButton imageButton = (ImageButton)v;
+            } else if (view.getId() == R.id.imageButtonShuffle) {
+                ImageButton imageButton = (ImageButton)view;
                 if(activityMain.shuffling()){
                     activityMain.shuffling(false);
                     imageButton.setImageResource(R.drawable.ic_shuffle_white_24dp);
@@ -42,14 +42,14 @@ public class OnClickListenerFragmentSong implements View.OnClickListener {
                     activityMain.shuffling(true);
                     imageButton.setImageResource(R.drawable.ic_shuffle_black_24dp);
                 }
-            } else if (v.getId() == R.id.imageButtonPrev) {
+            } else if (view.getId() == R.id.imageButtonPrev) {
                 activityMain.playPrevious();
-            } else if (v.getId() == R.id.imageButtonPlayPause) {
+            } else if (view.getId() == R.id.imageButtonPlayPause) {
                 activityMain.pauseOrPlay();
-            } else if (v.getId() == R.id.imageButtonNext) {
+            } else if (view.getId() == R.id.imageButtonNext) {
                 activityMain.playNext();
-            } else if (v.getId() == R.id.imageButtonRepeat) {
-                ImageButton imageButton = (ImageButton)v;
+            } else if (view.getId() == R.id.imageButtonRepeat) {
+                ImageButton imageButton = (ImageButton)view;
                 if(activityMain.loopingOne()){
                     activityMain.loopingOne(false);
                     imageButton.setImageResource(R.drawable.repeat_white_24dp);

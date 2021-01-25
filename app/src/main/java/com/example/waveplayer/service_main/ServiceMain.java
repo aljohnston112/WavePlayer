@@ -57,7 +57,7 @@ public class ServiceMain extends Service {
     private RunnableSeekBarUpdater runnableSeekBarUpdater;
 
     public void updateSeekBarUpdater(SeekBar seekBar, TextView textViewCurrent) {
-        Log.v(TAG, "updateSeekBarUpdater start");
+        // Log.v(TAG, "updateSeekBarUpdater start");
         shutDownSeekBarUpdater();
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
         MediaPlayerWUri mediaPlayerWUri =
@@ -70,11 +70,11 @@ public class ServiceMain extends Service {
             scheduledExecutorService.scheduleAtFixedRate(
                     runnableSeekBarUpdater, 0L, 1L, TimeUnit.SECONDS);
         }
-        Log.v(TAG, "updateSeekBarUpdater end");
+        // Log.v(TAG, "updateSeekBarUpdater end");
     }
 
     public void shutDownSeekBarUpdater() {
-        Log.v(TAG, "shutDownSeekBarUpdater start");
+        // Log.v(TAG, "shutDownSeekBarUpdater start");
         if (runnableSeekBarUpdater != null) {
             runnableSeekBarUpdater.shutDown();
             runnableSeekBarUpdater = null;
@@ -83,7 +83,7 @@ public class ServiceMain extends Service {
             scheduledExecutorService.shutdown();
             scheduledExecutorService = null;
         }
-        Log.v(TAG, "shutDownSeekBarUpdater end");
+        // Log.v(TAG, "shutDownSeekBarUpdater end");
     }
 
     private final BroadcastReceiverNotificationButtonsForServiceMain
@@ -102,27 +102,27 @@ public class ServiceMain extends Service {
     private int songPaneArtHeight = 1;
 
     public int getSongPaneArtHeight() {
-        Log.v(TAG, "getSongPaneArtHeight start and end");
+        // Log.v(TAG, "getSongPaneArtHeight start and end");
         return songPaneArtHeight;
     }
 
     public void setSongPaneArtHeight(int songArtHeight) {
-        Log.v(TAG, "setSongPaneArtHeight start");
+        // Log.v(TAG, "setSongPaneArtHeight start");
         this.songPaneArtHeight = songArtHeight;
-        Log.v(TAG, "setSongPaneArtHeight end");
+        // Log.v(TAG, "setSongPaneArtHeight end");
     }
 
     private int songPaneArtWidth = 1;
 
     public int getSongPaneArtWidth() {
-        Log.v(TAG, "getSongPaneArtWidth start and end");
+        // Log.v(TAG, "getSongPaneArtWidth start and end");
         return songPaneArtWidth;
     }
 
     public void setSongPaneArtWidth(int songArtWidth) {
-        Log.v(TAG, "setSongPaneArtWidth start");
+        // Log.v(TAG, "setSongPaneArtWidth start");
         this.songPaneArtWidth = songArtWidth;
-        Log.v(TAG, "setSongPaneArtWidth end");
+        // Log.v(TAG, "setSongPaneArtWidth end");
     }
 
     // endregion ActivityMainUI
@@ -135,21 +135,21 @@ public class ServiceMain extends Service {
 
     @Override
     public void onCreate() {
-        Log.v(TAG, "onCreate started");
+        // Log.v(TAG, "onCreate started");
         super.onCreate();
-        Log.v(TAG, "onCreate is loading");
+        // Log.v(TAG, "onCreate is loading");
         setUpBroadCastReceivers();
         // setUpExceptionSaver();
         // logLastThrownException();
-        Log.v(TAG, "onCreate done loading");
+        // Log.v(TAG, "onCreate done loading");
     }
 
     private void setUpBroadCastReceivers() {
-        Log.v(TAG, "Setting up Broadcast receivers for notification buttons");
+        // Log.v(TAG, "Setting up Broadcast receivers for notification buttons");
         setUpBroadcastReceiverNext();
         setUpBroadcastReceiverPrevious();
         setUpBroadcastReceiverPlayPause();
-        Log.v(TAG, "Done setting up Broadcast receivers for notification buttons");
+        // Log.v(TAG, "Done setting up Broadcast receivers for notification buttons");
     }
 
     private void setUpBroadcastReceiverNext() {
@@ -211,20 +211,20 @@ public class ServiceMain extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.v(TAG, "onStartCommand started");
+        // Log.v(TAG, "onStartCommand started");
         if (!serviceStarted) {
-            Log.v(TAG, "onStartCommand setting up service");
+            // Log.v(TAG, "onStartCommand setting up service");
             // TODO remove before release?
             Toast.makeText(getApplicationContext(), "PinkyPlayer starting", Toast.LENGTH_SHORT).show();
             updateNotification();
             notification = notificationCompatBuilder.build();
             startForeground(NOTIFICATION_CHANNEL_ID.hashCode(), notification);
-            Log.v(TAG, "onStartCommand done setting up service");
+            // Log.v(TAG, "onStartCommand done setting up service");
         } else {
-            Log.v(TAG, "onStartCommand already set up service");
+            // Log.v(TAG, "onStartCommand already set up service");
         }
         serviceStarted = true;
-        Log.v(TAG, "onStartCommand ended");
+        // Log.v(TAG, "onStartCommand ended");
         return START_STICKY;
     }
 
@@ -233,7 +233,7 @@ public class ServiceMain extends Service {
     }
 
     private void setUpNotificationBuilder() {
-        Log.v(TAG, "Setting up notification builder");
+        // Log.v(TAG, "Setting up notification builder");
         notificationCompatBuilder = new NotificationCompat.Builder(
                 getApplicationContext(), NOTIFICATION_CHANNEL_ID)
                 .setOngoing(true)
@@ -264,12 +264,12 @@ public class ServiceMain extends Service {
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
-        Log.v(TAG, "Done setting up notification builder");
+        // Log.v(TAG, "Done setting up notification builder");
     }
 
     public void updateNotification() {
         String string = "Updating the notification";
-        Log.v(TAG, string);
+        // Log.v(TAG, string);
         setUpNotificationBuilder();
         setUpBroadCastsForNotificationButtons();
         notification = notificationCompatBuilder.build();
@@ -288,11 +288,11 @@ public class ServiceMain extends Service {
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(NOTIFICATION_CHANNEL_ID.hashCode(), notification);
-        Log.v(TAG, "Done updating the notification");
+        // Log.v(TAG, "Done updating the notification");
     }
 
     private void updateSongArt() {
-        Log.v(TAG, "updateSongArt for notification start");
+        // Log.v(TAG, "updateSongArt for notification start");
         // TODO update song art background
         if (mediaController != null && mediaController.getCurrentSong() != null) {
             Bitmap bitmap = MediaData.getThumbnail(
@@ -312,11 +312,11 @@ public class ServiceMain extends Service {
                     R.id.imageViewNotificationSongPaneSongArt, R.drawable.music_note_black_48dp);
             hasArt = false;
         }
-        Log.v(TAG, "updateSongArt for notification end");
+        // Log.v(TAG, "updateSongArt for notification end");
     }
 
     private void updateNotificationSongName() {
-        Log.v(TAG, "updateNotificationSongName start");
+        // Log.v(TAG, "updateNotificationSongName start");
         if (mediaController != null && mediaController.getCurrentSong() != null) {
             remoteViewsNotificationLayoutWithoutArt.setTextViewText(
                     R.id.textViewNotificationSongPaneSongName, mediaController.getCurrentSong().title);
@@ -328,11 +328,11 @@ public class ServiceMain extends Service {
             remoteViewsNotificationLayoutWithArt.setTextViewText(
                     R.id.textViewNotificationSongPaneSongNameWArt, NOTIFICATION_CHANNEL_ID);
         }
-        Log.v(TAG, "updateNotificationSongName end");
+        // Log.v(TAG, "updateNotificationSongName end");
     }
 
     void updateNotificationPlayButton() {
-        Log.v(TAG, "updateNotificationPlayButton start");
+        // Log.v(TAG, "updateNotificationPlayButton start");
         if (mediaController != null && mediaController.isPlaying()) {
             remoteViewsNotificationLayoutWithoutArt.setImageViewResource(
                     R.id.imageButtonNotificationSongPanePlayPause, R.drawable.pause_black_24dp);
@@ -344,15 +344,15 @@ public class ServiceMain extends Service {
             remoteViewsNotificationLayoutWithArt.setImageViewResource(
                     R.id.imageButtonNotificationSongPanePlayPauseWArt, R.drawable.play_arrow_black_24dp);
         }
-        Log.v(TAG, "updateNotificationPlayButton end");
+        // Log.v(TAG, "updateNotificationPlayButton end");
     }
 
     private void setUpBroadCastsForNotificationButtons() {
-        Log.v(TAG, "Setting up broadcasts");
+        // Log.v(TAG, "Setting up broadcasts");
         setUpBroadcastNext();
         setUpBroadcastPlayPause();
         setUpBroadcastPrevious();
-        Log.v(TAG, "Done setting up broadcasts");
+        // Log.v(TAG, "Done setting up broadcasts");
     }
 
     private void setUpBroadcastNext() {
@@ -408,23 +408,23 @@ public class ServiceMain extends Service {
 
     @Override
     public void onDestroy() {
-        Log.v(TAG, "onDestroy started");
+        // Log.v(TAG, "onDestroy started");
         // TODO remove on release?
         mediaController.releaseMediaPlayers();
         Toast.makeText(this, "PinkyPlayer done", Toast.LENGTH_SHORT).show();
-        Log.v(TAG, "onDestroy ended");
+        // Log.v(TAG, "onDestroy ended");
     }
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
-        Log.v(TAG, "onTaskRemoved started");
+        // Log.v(TAG, "onTaskRemoved started");
         super.onTaskRemoved(rootIntent);
         taskRemoved();
-        Log.v(TAG, "onTaskRemoved ended");
+        // Log.v(TAG, "onTaskRemoved ended");
     }
 
     public void taskRemoved() {
-        Log.v(TAG, "destroy started");
+        // Log.v(TAG, "destroy started");
         if (mediaController.isPlaying()) {
             mediaController.pauseOrPlay(getApplicationContext());
         }
@@ -432,7 +432,7 @@ public class ServiceMain extends Service {
         shutDownSeekBarUpdater();
         unregisterReceiver(broadcastReceiverNotificationButtonsForServiceMainButtons);
         stopSelf();
-        Log.v(TAG, "destroy ended");
+        // Log.v(TAG, "destroy ended");
     }
 
     // region mediaControls
