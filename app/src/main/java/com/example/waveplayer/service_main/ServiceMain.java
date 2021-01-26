@@ -49,7 +49,9 @@ public class ServiceMain extends Service {
 
     private MediaController mediaController;
 
-    public static final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    public static final ExecutorService executorServiceFIFO = Executors.newSingleThreadExecutor();
+
+    public static final ExecutorService executorServicePool = Executors.newCachedThreadPool();
 
     // For updating the SeekBar
     private ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();

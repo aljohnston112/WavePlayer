@@ -271,6 +271,7 @@ public class MediaController {
         } else if (shuffling) {
                 currentSong = currentPlaylist.next(context, random);
                 addToQueueAndPlay(context, currentSong.id);
+                return true;
             }
         return false;
     }
@@ -294,12 +295,14 @@ public class MediaController {
             if (songQueue.hasPrevious()) {
                 makeIfNeededAndPlay(context, songQueue.previous());
                 songQueue.next();
+                return true;
             } else if (looping) {
                 if (shuffling) {
                     songQueue.goToBack();
                     if (songQueue.hasPrevious()) {
                         makeIfNeededAndPlay(context, songQueue.previous());
                         songQueue.next();
+                        return true;
                     } else {
                         return false;
                     }
@@ -307,9 +310,8 @@ public class MediaController {
             } else {
                 return false;
             }
-            return true;
         }
-        return looping;
+        return !looping;
     }
 
     private void playPreviousInPlaylist(Context context) {

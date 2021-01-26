@@ -9,7 +9,6 @@ import android.media.MediaMetadataRetriever;
 import android.os.Build;
 import android.provider.MediaStore;
 import android.util.Size;
-import android.widget.ProgressBar;
 
 import androidx.room.Room;
 
@@ -34,7 +33,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 public class MediaData {
 
@@ -43,6 +41,8 @@ public class MediaData {
     public static final String SONG_DATABASE_NAME = "SONG_DATABASE_NAME";
 
     private static final String MASTER_PLAYLIST_NAME = "MASTER_PLAYLIST_NAME";
+
+    private final SongDatabase songDatabase;
 
     private final SongDAO songDAO;
 
@@ -104,7 +104,7 @@ public class MediaData {
     public static MediaData INSTANCE;
 
     private MediaData(ActivityMain activityMain) {
-        SongDatabase songDatabase =
+        songDatabase =
                 Room.databaseBuilder(activityMain, SongDatabase.class, SONG_DATABASE_NAME).build();
         songDAO = songDatabase.songDAO();
         SaveFile.loadSaveFile(activityMain, this);
@@ -182,7 +182,7 @@ public class MediaData {
     private void getSongs(final ActivityMain activityMain) {
         final ArrayList<Song> newSongs = new ArrayList<>();
         final ArrayList<Long> filesThatExist = new ArrayList<>();
-        ServiceMain.executorService.submit(new Runnable() {
+        ServiceMain.executorServiceFIFO.submit(new Runnable() {
             @Override
             public void run() {
                 String[] projection = new String[]{
@@ -230,7 +230,7 @@ public class MediaData {
                 }
             }
         });
-        ServiceMain.executorService.submit(new Runnable() {
+        ServiceMain.executorServiceFIFO.submit(new Runnable() {
             @Override
             public void run() {
                 int i = newSongs.size();
@@ -242,7 +242,7 @@ public class MediaData {
                 }
             }
         });
-        ServiceMain.executorService.submit(new Runnable() {
+        ServiceMain.executorServiceFIFO.submit(new Runnable() {
             @Override
             public void run() {
                 if (masterPlaylist != null) {
@@ -259,7 +259,7 @@ public class MediaData {
                 }
             }
         });
-        ServiceMain.executorService.submit(new Runnable() {
+        ServiceMain.executorServiceFIFO.submit(new Runnable() {
             @Override
             public void run() {
                 SaveFile.saveFile(activityMain);
@@ -295,21 +295,20 @@ public class MediaData {
     }
 
     public Song getSong(final Long songID) {
-        Future<Song> songFuture = ServiceMain.executorService.submit(new Callable<Song>() {
-            @Override
-            public Song call() throws Exception {
-                return songDAO.getSong(songID);
-            }
-        });
-        Song out = null;
+        Song song = null;
         try {
-            out = songFuture.get();
+            song = ServiceMain.executorServicePool.submit(new Callable<Song>() {
+                @Override
+                public Song call() {
+                    return songDAO.getSong(songID);
+                }
+            }).get();
         } catch (ExecutionException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        return out;
+        return song;
     }
 
     public static AudioUri getAudioUri(Context context, Long songID) {

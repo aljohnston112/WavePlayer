@@ -76,7 +76,7 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
         onClickListenerViewHolder = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ServiceMain.executorService.submit(new Runnable() {
+                ServiceMain.executorServiceFIFO.submit(new Runnable() {
                     @Override
                     public void run() {
                         int position = holder.getAdapterPosition();
@@ -84,8 +84,10 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                         if (position != RecyclerView.NO_POSITION) {
                             ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
                             if (activityMain != null) {
-                                if (activityMain.getCurrentSong() != null &&
-                                        holder.song.equals(MediaData.getInstance(activityMain).getSong(activityMain.getCurrentSong().id))) {
+                                if (activityMain.getCurrentAudioUri() != null &&
+                                        holder.song.equals(
+                                                MediaData.getInstance(activityMain).getSong(
+                                                        activityMain.getCurrentAudioUri().id))) {
                                     activityMain.seekTo(0);
                                 }
                                 if (fragment instanceof FragmentSongs) {

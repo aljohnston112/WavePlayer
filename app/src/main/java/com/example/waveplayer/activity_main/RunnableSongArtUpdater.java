@@ -9,7 +9,6 @@ import android.widget.ImageView;
 import androidx.core.content.res.ResourcesCompat;
 
 import com.example.waveplayer.R;
-import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.media_controller.MediaData;
 
 public class RunnableSongArtUpdater implements Runnable {
@@ -30,7 +29,7 @@ public class RunnableSongArtUpdater implements Runnable {
             } else {
                 songArtHeight = songArtWidth;
             }
-            Bitmap bitmap = MediaData.getThumbnail(activityMain.getCurrentSong(),
+            Bitmap bitmap = MediaData.getThumbnail(activityMain.getCurrentAudioUri(),
                     songArtWidth, songArtHeight, activityMain.getApplicationContext());
             if (bitmap == null) {
                 Drawable drawable = ResourcesCompat.getDrawable(imageViewSongArt.getResources(),

@@ -6,7 +6,6 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -76,8 +75,7 @@ public class ActivityMain extends AppCompatActivity {
 
     static final String TAG = "ActivityMain";
 
-    private static final int REQUEST_CODE_PERMISSION_READ = 245083964;
-    private static final int REQUEST_CODE_PERMISSION_WRITE = 245083965;
+    private static final int REQUEST_CODE_PERMISSION = 245083964;
 
     public static final int MENU_ACTION_RESET_PROBS_INDEX = 0;
     public static final int MENU_ACTION_ADD_TO_PLAYLIST_INDEX = 1;
@@ -107,14 +105,16 @@ public class ActivityMain extends AppCompatActivity {
 
     private void setUpAfterServiceConnection() {
         // Log.v(TAG, "setUpAfterServiceConnection started");
-        if(mediaData != null){
+        if (mediaData != null) {
             mediaController = MediaController.getInstance(serviceMain);
             serviceMain.permissionGranted();
         }
         setUpBroadcastReceivers();
         setUpSongPane();
+        /*
         updateSongPaneUI();
         updatePlayButtons();
+         */
         runnableSongArtUpdater = new RunnableSongArtUpdater(this);
         runnableSongPaneArtUpdater = new RunnableSongPaneArtUpdater(this);
         // Log.v(TAG, "setUpAfterServiceConnection ended");
@@ -197,7 +197,7 @@ public class ActivityMain extends AppCompatActivity {
         // Log.v(TAG, "onCreate started");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        if(savedInstanceState != null) {
+        if (savedInstanceState != null) {
             loaded = savedInstanceState.getBoolean(KEY_BOOLEAN_LOADED, false);
         }
         viewModelUserPickedPlaylist =
@@ -221,6 +221,7 @@ public class ActivityMain extends AppCompatActivity {
             public void run() {
                 // Log.v(TAG, "updating UI");
                 updateSongUI();
+                updateSongPaneUI();
                 // Log.v(TAG, "done updating UI");
             }
         };
@@ -242,30 +243,21 @@ public class ActivityMain extends AppCompatActivity {
         // Log.v(TAG, "started and bound ServiceMain");
     }
 
-    void askForWriteExternal() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(
-                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        REQUEST_CODE_PERMISSION_WRITE);
-            } else {
-                permissionGranted();
-            }
-        }
-    }
-
-    void askForReadExternalAndFillMediaController() {
+    void askForPermissionAndFillMediaController() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
+                    != PackageManager.PERMISSION_GRANTED &&
+                    checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(
                         new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,
                                 Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        REQUEST_CODE_PERMISSION_READ);
+                        REQUEST_CODE_PERMISSION);
             } else {
-                askForWriteExternal();
+                permissionGranted();
             }
+        } else {
+            permissionGranted();
         }
     }
 
@@ -279,32 +271,26 @@ public class ActivityMain extends AppCompatActivity {
         // Log.v(TAG, "onRequestPermissionsResult start");
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (requestCode == REQUEST_CODE_PERMISSION_READ && grantResults.length > 0 &&
-                    grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                ServiceMain.executorService.submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        askForWriteExternal();
-                    }
-                });
-            } else if (requestCode == REQUEST_CODE_PERMISSION_READ) {
-                Toast toast = Toast.makeText(getApplicationContext(),
-                        R.string.permission_read_needed, Toast.LENGTH_LONG);
+            if (requestCode == REQUEST_CODE_PERMISSION && grantResults.length > 1 &&
+                    grantResults[0] != PackageManager.PERMISSION_GRANTED ||
+                    grantResults[1] != PackageManager.PERMISSION_GRANTED) {
+                Toast toast;
+                if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                    toast = Toast.makeText(getApplicationContext(),
+                            R.string.permission_read_needed, Toast.LENGTH_LONG);
+                } else {
+                    toast = Toast.makeText(getApplicationContext(),
+                            R.string.permission_write_needed, Toast.LENGTH_LONG);
+                }
                 toast.show();
-                requestPermissions(
-                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                        REQUEST_CODE_PERMISSION_READ);
-            }
-            if (requestCode == REQUEST_CODE_PERMISSION_WRITE && grantResults.length > 0 &&
-                    grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                Toast toast = Toast.makeText(getApplicationContext(),
-                        R.string.permission_write_needed, Toast.LENGTH_LONG);
-                toast.show();
-                requestPermissions(
-                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                        REQUEST_CODE_PERMISSION_READ);
+                askForPermissionAndFillMediaController();
             } else {
                 permissionGranted();
+                /*
+                requestPermissions(
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        REQUEST_CODE_PERMISSION_READ);
+                 */
             }
         }
     }
@@ -543,15 +529,15 @@ public class ActivityMain extends AppCompatActivity {
     protected void onResume() {
         // Log.v(TAG, "onResume started");
         super.onResume();
-        if(loaded){
+        if (loaded) {
             startAndBindServiceMain();
             updateUI();
         }
         // Log.v(TAG, "onResume ended");
     }
 
-    public void fragmentLoadingStarted(){
-        askForReadExternalAndFillMediaController();
+    public void fragmentLoadingStarted() {
+        askForPermissionAndFillMediaController();
         loaded = true;
         startAndBindServiceMain();
         updateUI();
@@ -630,7 +616,7 @@ public class ActivityMain extends AppCompatActivity {
 
     private void updateSongUI() {
         // Log.v(TAG, "updateSongUI start");
-        if (fragmentSongVisible() && mediaController.getCurrentSong() != null) {
+        if (fragmentSongVisible() && mediaController!= null && mediaController.getCurrentSong() != null) {
             // Log.v(TAG, "updating SongUI");
             updateSongArt();
             updateSongName();
@@ -729,9 +715,10 @@ public class ActivityMain extends AppCompatActivity {
 
     private void updateSongPaneUI() {
         // Log.v(TAG, "updateSongPaneUI start");
-        if ((mediaController != null) && mediaController.songInProgress() && !fragmentSongVisible()
+        if (!fragmentSongVisible() && (mediaController != null) && mediaController.songInProgress()
                 && mediaController.getCurrentSong() != null && mediaController.songInProgress()) {
             // Log.v(TAG, "updating the song pane UI");
+            updateSongPanePlayButton();
             updateSongPaneName();
             updateSongPaneArt();
         } else {
@@ -1052,7 +1039,7 @@ public class ActivityMain extends AppCompatActivity {
         // Log.v(TAG, "setCurrentPlaylist end");
     }
 
-    public AudioUri getCurrentSong() {
+    public AudioUri getCurrentAudioUri() {
         // Log.v(TAG, "getCurrentSong start");
         // Log.v(TAG, "getCurrentSong end");
         return mediaController.getCurrentSong();

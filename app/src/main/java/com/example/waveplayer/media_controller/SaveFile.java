@@ -1,11 +1,9 @@
 package com.example.waveplayer.media_controller;
 
 import android.content.Context;
-import android.widget.Toast;
 
 import androidx.room.Room;
 
-import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 import com.example.waveplayer.service_main.ServiceMain;
 
@@ -26,7 +24,7 @@ public class SaveFile {
     private static final Long SAVE_FILE_VERIFICATION_NUMBER = 8479145830949658990L;
 
     public static void saveFile(final Context context) {
-        ServiceMain.executorService.submit(new Runnable() {
+        ServiceMain.executorServicePool.submit(new Runnable() {
             @Override
             public void run() {
                 MediaData mediaData = MediaData.getInstance();
@@ -63,7 +61,7 @@ public class SaveFile {
             if(!attemptLoadFile(context, mediaData, FILE_SAVE2).equals(SAVE_FILE_VERIFICATION_NUMBER)){
                 if(!attemptLoadFile(context, mediaData, FILE_SAVE3).equals(SAVE_FILE_VERIFICATION_NUMBER)){
                     // TODO
-                    ServiceMain.executorService.submit(new Runnable() {
+                    ServiceMain.executorServiceFIFO.submit(new Runnable() {
                         @Override
                         public void run() {
                             SongDatabase songDatabase = Room.databaseBuilder(context, SongDatabase.class, MediaData.SONG_DATABASE_NAME).build();

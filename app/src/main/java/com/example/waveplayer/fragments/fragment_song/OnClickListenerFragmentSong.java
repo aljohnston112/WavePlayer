@@ -20,14 +20,14 @@ public class OnClickListenerFragmentSong implements View.OnClickListener {
     public void onClick(View view) {
         synchronized (activityMain.lock) {
             if (view.getId() == R.id.button_thumb_down) {
-                Song song = MediaData.getInstance(activityMain).getSong(activityMain.getCurrentSong().id);
+                Song song = MediaData.getInstance(activityMain).getSong(activityMain.getCurrentAudioUri().id);
                 if(song != null) {
                     activityMain.getCurrentPlaylist().bad(activityMain,
                             song, MediaData.getInstance(activityMain).getPercentChangeDown());
                     activityMain.saveFile();
                 }
             } else if (view.getId() == R.id.button_thumb_up) {
-                Song song = MediaData.getInstance(activityMain).getSong(activityMain.getCurrentSong().id);
+                Song song = MediaData.getInstance(activityMain).getSong(activityMain.getCurrentAudioUri().id);
                 if(song != null) {
                     activityMain.getCurrentPlaylist().good(activityMain,
                             song, MediaData.getInstance(activityMain).getPercentChangeUp(), true);
