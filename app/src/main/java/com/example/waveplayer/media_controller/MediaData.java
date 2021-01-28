@@ -1,15 +1,19 @@
 package com.example.waveplayer.media_controller;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.media.MediaMetadataRetriever;
 import android.os.Build;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.util.Size;
 
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.room.Room;
 
 import com.example.waveplayer.R;
@@ -42,9 +46,21 @@ public class MediaData {
 
     private static final String MASTER_PLAYLIST_NAME = "MASTER_PLAYLIST_NAME";
 
-    private final SongDatabase songDatabase;
+    private final MutableLiveData<Double> loadingProgress = new MutableLiveData<>(0.0);
 
-    private final SongDAO songDAO;
+    public LiveData<Double> getLoadingProgress() {
+        return loadingProgress;
+    }
+
+    private final MutableLiveData<String> loadingText = new MutableLiveData<>();
+
+    public LiveData<String> getLoadingText() {
+        return loadingText;
+    }
+
+    private SongDatabase songDatabase;
+
+    private SongDAO songDAO;
 
     private final HashMap<Long, MediaPlayerWUri> songIDToMediaPlayerWUriHashMap = new HashMap<>();
 
@@ -103,25 +119,19 @@ public class MediaData {
 
     public static MediaData INSTANCE;
 
-    private MediaData(ActivityMain activityMain) {
-        songDatabase =
-                Room.databaseBuilder(activityMain, SongDatabase.class, SONG_DATABASE_NAME).build();
+    public void loadData(ActivityMain activityMain, Handler handler){
+        Context context = activityMain.getApplicationContext();
+        songDatabase = Room.databaseBuilder(context, SongDatabase.class, SONG_DATABASE_NAME).build();
         songDAO = songDatabase.songDAO();
-        SaveFile.loadSaveFile(activityMain, this);
-        getAudioFiles(activityMain);
-    }
-
-    public static MediaData getInstance(ActivityMain activityMain) {
-        synchronized(lock) {
-            if (INSTANCE == null) {
-                INSTANCE = new MediaData(activityMain);
-            }
-            return INSTANCE;
-        }
+        SaveFile.loadSaveFile(context, this);
+        getSongs(activityMain, handler);
     }
 
     public static MediaData getInstance() {
         synchronized(lock) {
+            if(INSTANCE == null){
+                INSTANCE = new MediaData();
+            }
             return INSTANCE;
         }
     }
@@ -175,14 +185,12 @@ public class MediaData {
         }
     }
 
-    private void getAudioFiles(ActivityMain activityMain) {
-                getSongs(activityMain);
-    }
-
-    private void getSongs(final ActivityMain activityMain) {
+    private void getSongs(final ActivityMain activityMain, Handler handler) {
+        final Context context = activityMain.getApplicationContext();
+        final Resources resources = activityMain.getResources();
         final ArrayList<Song> newSongs = new ArrayList<>();
         final ArrayList<Long> filesThatExist = new ArrayList<>();
-        ServiceMain.executorServiceFIFO.submit(new Runnable() {
+        ServiceMain.executorServiceFIFO.execute(new Runnable() {
             @Override
             public void run() {
                 String[] projection = new String[]{
@@ -191,27 +199,26 @@ public class MediaData {
                 String selection = MediaStore.Audio.Media.IS_MUSIC + " != ?";
                 String[] selectionArgs = new String[]{"0"};
                 String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
-                try (Cursor cursor = activityMain.getContentResolver().query(
+                try (Cursor cursor = context.getContentResolver().query(
                         MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                         projection, selection, selectionArgs, sortOrder)) {
                     if (cursor != null) {
-                        activityMain.initializeLoading();
                         int idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
                         int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
                         int titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE);
                         int artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST_ID);
                         final int i = cursor.getCount();
                         int j = 0;
+                        loadingText.postValue(resources.getString(R.string.loading1));
                         while (cursor.moveToNext()) {
                             long id = cursor.getLong(idCol);
                             String displayName = cursor.getString(nameCol);
                             String title = cursor.getString(titleCol);
                             String artist = cursor.getString(artistCol);
                             AudioUri audioURI = new AudioUri(displayName, artist, title, id);
-                            File file = new File(activityMain.getFilesDir(), String.valueOf(audioURI.id));
+                            File file = new File(context.getFilesDir(), String.valueOf(audioURI.id));
                             if (!file.exists()) {
-                                try (FileOutputStream fos =
-                                             activityMain.openFileOutput(String.valueOf(id), Context.MODE_PRIVATE);
+                                try (FileOutputStream fos = context.openFileOutput(String.valueOf(id), Context.MODE_PRIVATE);
                                      ObjectOutputStream objectOutputStream = new ObjectOutputStream(fos)) {
                                     objectOutputStream.writeObject(audioURI);
                                 } catch (FileNotFoundException e) {
@@ -222,53 +229,52 @@ public class MediaData {
                                 newSongs.add(new Song(id, title));
                             }
                             filesThatExist.add(id);
-                            activityMain.setLoadingProgress((double) ((double) j) / ((double) i));
+                            loadingProgress.postValue((double) ((double) j) / ((double) i));
                             j++;
                         }
-                        activityMain.setLoadingText(R.string.loading2);
+                        loadingText.postValue(resources.getString(R.string.loading2));
                     }
                 }
             }
         });
-        ServiceMain.executorServiceFIFO.submit(new Runnable() {
+        ServiceMain.executorServiceFIFO.execute(new Runnable() {
             @Override
             public void run() {
                 int i = newSongs.size();
                 int k = 0;
                 for(Song song : newSongs) {
                     songDAO.insertAll(song);
-                    activityMain.setLoadingProgress((double)((double)k)/((double)i));
+                    loadingProgress.postValue((double)((double)k)/((double)i));
                     k++;
                 }
             }
         });
-        ServiceMain.executorServiceFIFO.submit(new Runnable() {
+        ServiceMain.executorServiceFIFO.execute(new Runnable() {
             @Override
             public void run() {
                 if (masterPlaylist != null) {
-                    activityMain.setLoadingText(R.string.loading3);
-                    addNewSongs(activityMain, filesThatExist);
-                    activityMain.setLoadingText(R.string.loading4);
-                    removeMissingSongs(activityMain, filesThatExist);
-                    activityMain.navigateTo(R.id.FragmentTitle);
+                    loadingText.postValue(resources.getString(R.string.loading3));
+                    addNewSongs(filesThatExist);
+                    loadingText.postValue(resources.getString(R.string.loading4));
+                    removeMissingSongs(filesThatExist);
                 } else {
                     masterPlaylist = new RandomPlaylist(
                             MediaData.MASTER_PLAYLIST_NAME, new ArrayList<>(newSongs),
                             settings.maxPercent, true, -1);
-                    activityMain.navigateTo(R.id.FragmentTitle);
                 }
             }
         });
-        ServiceMain.executorServiceFIFO.submit(new Runnable() {
+        ServiceMain.executorServiceFIFO.execute(new Runnable() {
             @Override
             public void run() {
-                SaveFile.saveFile(activityMain);
+                SaveFile.saveFile(context);
+                activityMain.loaded(true);
                 activityMain.navigateTo(R.id.FragmentTitle);
             }
         });
     }
 
-    private void removeMissingSongs(ActivityMain activityMain, List<Long> filesThatExist) {
+    private void removeMissingSongs(List<Long> filesThatExist) {
         int i = filesThatExist.size();
         int j = 0;
         for (Long songID : masterPlaylist.getSongIDs()) {
@@ -277,19 +283,19 @@ public class MediaData {
                 songIDToMediaPlayerWUriHashMap.remove(songID);
                 songDAO.delete(songDAO.getSong(songID));
             }
-            activityMain.setLoadingProgress((double)((double)j)/((double)i));
+            loadingProgress.postValue((double)((double)j)/((double)i));
             j++;
         }
     }
 
-    private void addNewSongs(ActivityMain activityMain, List<Long> filesThatExist) {
+    private void addNewSongs(List<Long> filesThatExist) {
         int i = filesThatExist.size();
         int j = 0;
         for (Long songID : filesThatExist) {
             if (!masterPlaylist.contains(songID)) {
                 masterPlaylist.add(songDAO.getSong(songID));
             }
-            activityMain.setLoadingProgress((double)((double)j)/((double)i));
+            loadingProgress.postValue((double)((double)j)/((double)i));
             j++;
         }
     }

@@ -38,7 +38,7 @@ public class ItemTouchListenerPlaylist extends ItemTouchHelper.Callback {
         if (recyclerViewAdapter != null) {
             Collections.swap(recyclerViewAdapter.randomPlaylists,
                     viewHolder.getAdapterPosition(), target.getAdapterPosition());
-            Collections.swap(MediaData.getInstance(activityMain).getPlaylists(),
+            Collections.swap(MediaData.getInstance().getPlaylists(),
                     viewHolder.getAdapterPosition(), target.getAdapterPosition());
             recyclerViewAdapter.notifyItemMoved(
                     viewHolder.getAdapterPosition(), target.getAdapterPosition());
@@ -54,9 +54,9 @@ public class ItemTouchListenerPlaylist extends ItemTouchHelper.Callback {
                 (RecyclerViewAdapterPlaylists) recyclerView.getAdapter();
         if (recyclerViewAdapter != null) {
             int position = viewHolder.getAdapterPosition();
-            List<RandomPlaylist> randomPlaylists = MediaData.getInstance(activityMain).getPlaylists();
+            List<RandomPlaylist> randomPlaylists = MediaData.getInstance().getPlaylists();
             RandomPlaylist randomPlaylist = randomPlaylists.get(position);
-            MediaData.getInstance(activityMain).removePlaylist(randomPlaylist);
+            MediaData.getInstance().removePlaylist(randomPlaylist);
             recyclerViewAdapter.notifyItemRemoved(position);
             activityMain.saveFile();
             Snackbar snackbar = Snackbar.make(

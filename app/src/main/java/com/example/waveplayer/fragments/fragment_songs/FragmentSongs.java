@@ -62,7 +62,7 @@ public class FragmentSongs extends Fragment {
         activityMain.hideKeyboard(view);
         updateMainContent();
         setUpRecyclerView();
-        viewModelUserPickedPlaylist.setUserPickedPlaylist(MediaData.getInstance(activityMain).getMasterPlaylist());
+        viewModelUserPickedPlaylist.setUserPickedPlaylist(MediaData.getInstance().getMasterPlaylist());
         setUpBroadcastReceiverServiceConnected();
         setUpBroadcastReceiverOnOptionsMenuCreated();
     }
@@ -101,7 +101,6 @@ public class FragmentSongs extends Fragment {
                     @Override
                     public void onReceive(Context context, Intent intent) {
                         setUpRecyclerView();
-                        activityMain.updateUI();
                     }
                 };
         activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);

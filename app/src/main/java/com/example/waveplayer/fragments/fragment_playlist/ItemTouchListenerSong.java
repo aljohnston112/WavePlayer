@@ -60,7 +60,7 @@ class ItemTouchListenerSong extends ItemTouchHelper.Callback {
         Song song = recyclerViewAdapterSongs.getSongs().get(position);
         double probability = userPickedPlaylist.getProbability(song);
         if (userPickedPlaylist.size() == 1) {
-            MediaData.getInstance(activityMain).removePlaylist(userPickedPlaylist);
+            MediaData.getInstance().removePlaylist(userPickedPlaylist);
             fragmentPlaylist.setUserPickedPlaylist(null);
         } else {
             userPickedPlaylist.remove(song);

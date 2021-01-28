@@ -86,7 +86,7 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
                             if (activityMain != null) {
                                 if (activityMain.getCurrentAudioUri() != null &&
                                         holder.song.equals(
-                                                MediaData.getInstance(activityMain).getSong(
+                                                MediaData.getInstance().getSong(
                                                         activityMain.getCurrentAudioUri().id))) {
                                     activityMain.seekTo(0);
                                 }

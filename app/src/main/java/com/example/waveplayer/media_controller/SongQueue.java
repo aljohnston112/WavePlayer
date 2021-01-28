@@ -6,8 +6,7 @@ import java.util.NoSuchElementException;
 
 public class SongQueue {
 
-    // TODO Add methods to add and delete songs from the queue, and a next song variable
-    //  to allow for preloading of next song
+    // TODO Add methods to add and delete songs from the queue
 
     private final LinkedList<Long> songQueue = new LinkedList<>();
     private ListIterator<Long> songQueueIterator;

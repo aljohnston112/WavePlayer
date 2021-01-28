@@ -44,7 +44,7 @@ public class MediaPlayerWUri {
             public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
                 synchronized (lock) {
                     mediaController.releaseMediaPlayers();
-                    mediaController.addToQueueAndPlay(context, mediaController.getCurrentSong().id);
+                    mediaController.addToQueueAndPlay(context, mediaController.getCurrentAudioUri().id);
                     return false;
                 }
             }
@@ -136,7 +136,7 @@ public class MediaPlayerWUri {
                             public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
                                 synchronized (lock) {
                                     mediaController.releaseMediaPlayers();
-                                    mediaController.addToQueueAndPlay(context, mediaController.getCurrentSong().id);
+                                    mediaController.addToQueueAndPlay(context, mediaController.getCurrentAudioUri().id);
                                     return false;
                                 }
                             }

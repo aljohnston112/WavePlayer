@@ -110,6 +110,7 @@ public class FragmentSelectSongs extends Fragment {
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
         broadcastReceiverOnServiceConnected = null;
         onClickListenerFABFragmentSelectSongs = null;
+        viewModelUserPickedSongs = null;
     }
 
     public List<Song> getUserPickedSongs() {

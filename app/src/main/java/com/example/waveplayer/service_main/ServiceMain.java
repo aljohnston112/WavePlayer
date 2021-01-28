@@ -27,6 +27,8 @@ import com.example.waveplayer.media_controller.MediaData;
 import com.example.waveplayer.media_controller.MediaPlayerWUri;
 import com.example.waveplayer.R;
 import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.media_controller.Song;
+import com.example.waveplayer.random_playlist.AudioUri;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -49,6 +51,8 @@ public class ServiceMain extends Service {
 
     private MediaController mediaController;
 
+    private MediaData mediaData;
+
     public static final ExecutorService executorServiceFIFO = Executors.newSingleThreadExecutor();
 
     public static final ExecutorService executorServicePool = Executors.newCachedThreadPool();
@@ -63,7 +67,7 @@ public class ServiceMain extends Service {
         shutDownSeekBarUpdater();
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
         MediaPlayerWUri mediaPlayerWUri =
-                mediaController.getMediaPlayerWUri(mediaController.getCurrentSong().id);
+                mediaController.getMediaPlayerWUri(mediaController.getCurrentAudioUri().id);
         if (mediaPlayerWUri != null) {
             runnableSeekBarUpdater = new RunnableSeekBarUpdater(
                     mediaPlayerWUri,
@@ -232,6 +236,7 @@ public class ServiceMain extends Service {
 
     public void permissionGranted(){
         mediaController = MediaController.getInstance(this);
+        mediaData = MediaData.getInstance();
     }
 
     private void setUpNotificationBuilder() {
@@ -296,9 +301,9 @@ public class ServiceMain extends Service {
     private void updateSongArt() {
         // Log.v(TAG, "updateSongArt for notification start");
         // TODO update song art background
-        if (mediaController != null && mediaController.getCurrentSong() != null) {
+        if (mediaController != null && mediaController.getCurrentAudioUri() != null) {
             Bitmap bitmap = MediaData.getThumbnail(
-                    mediaController.getCurrentSong(), 92, 92, getApplicationContext());
+                    mediaController.getCurrentAudioUri(), 92, 92, getApplicationContext());
             if (bitmap != null) {
                 MediaData.getResizedBitmap(bitmap, songPaneArtWidth, songPaneArtHeight);
                 remoteViewsNotificationLayoutWithArt.setImageViewBitmap(
@@ -319,11 +324,11 @@ public class ServiceMain extends Service {
 
     private void updateNotificationSongName() {
         // Log.v(TAG, "updateNotificationSongName start");
-        if (mediaController != null && mediaController.getCurrentSong() != null) {
+        if (mediaController != null && mediaController.getCurrentAudioUri() != null) {
             remoteViewsNotificationLayoutWithoutArt.setTextViewText(
-                    R.id.textViewNotificationSongPaneSongName, mediaController.getCurrentSong().title);
+                    R.id.textViewNotificationSongPaneSongName, mediaController.getCurrentAudioUri().title);
             remoteViewsNotificationLayoutWithArt.setTextViewText(
-                    R.id.textViewNotificationSongPaneSongNameWArt, mediaController.getCurrentSong().title);
+                    R.id.textViewNotificationSongPaneSongNameWArt, mediaController.getCurrentAudioUri().title);
         } else {
             remoteViewsNotificationLayoutWithoutArt.setTextViewText(
                     R.id.textViewNotificationSongPaneSongName, NOTIFICATION_CHANNEL_ID);
@@ -440,6 +445,13 @@ public class ServiceMain extends Service {
     // region mediaControls
 
     public void playNext() {
+        AudioUri song = mediaController.getCurrentAudioUri();
+        if(song != null) {
+            mediaController.getCurrentPlaylist().bad(
+                    getApplicationContext(),
+                    MediaData.getInstance().getSong(song.id),
+                    mediaData.getPercentChangeDown());
+        }
         mediaController.playNext(getApplicationContext());
     }
 

@@ -82,12 +82,12 @@ public class FragmentTitle extends Fragment {
                 if (uriUserPickedFolder != null) {
                     if (!songs.isEmpty()) {
                         RandomPlaylist randomPlaylist =
-                                MediaData.getInstance(activityMain).getPlaylist(uriUserPickedFolder.getPath());
+                                MediaData.getInstance().getPlaylist(uriUserPickedFolder.getPath());
                         if (randomPlaylist == null) {
                             randomPlaylist = new RandomPlaylist(
-                                    uriUserPickedFolder.getPath(), songs, MediaData.getInstance(activityMain).getMaxPercent(),
+                                    uriUserPickedFolder.getPath(), songs, MediaData.getInstance().getMaxPercent(),
                                     false, mediaStoreUriID);
-                            MediaData.getInstance(activityMain).addPlaylist(randomPlaylist);
+                            MediaData.getInstance().addPlaylist(randomPlaylist);
                         } else {
                             addNewSongs(randomPlaylist);
                             removeMissingSongs(randomPlaylist);
@@ -233,6 +233,7 @@ public class FragmentTitle extends Fragment {
         view.findViewById(R.id.button_settings).setOnClickListener(null);
         view.findViewById(R.id.button_folder_search).setOnClickListener(null);
         onClickListenerFragmentTitleButtons = null;
+        viewModelUserPickedPlaylist = null;
     }
 
 }

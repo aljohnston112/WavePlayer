@@ -66,11 +66,11 @@ public class FragmentSettings extends Fragment {
         EditText editTextPercentChangeUp = activityMain.findViewById(R.id.editTextPercentChangeUp);
         EditText editTextPercentChangeDown = activityMain.findViewById(R.id.editTextPercentChangeDown);
         editTextNSongs.setText(
-                String.valueOf((int) Math.round(1.0 / MediaData.getInstance(activityMain).getMaxPercent())));
+                String.valueOf((int) Math.round(1.0 / MediaData.getInstance().getMaxPercent())));
         editTextPercentChangeUp.setText(
-                String.valueOf((int) Math.round(MediaData.getInstance(activityMain).getPercentChangeUp() * 100.0)));
+                String.valueOf((int) Math.round(MediaData.getInstance().getPercentChangeUp() * 100.0)));
         editTextPercentChangeDown.setText(
-                String.valueOf((int) Math.round(MediaData.getInstance(activityMain).getPercentChangeDown() * 100.0)));
+                String.valueOf((int) Math.round(MediaData.getInstance().getPercentChangeDown() * 100.0)));
     }
 
     @Override

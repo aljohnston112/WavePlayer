@@ -29,25 +29,27 @@ public class RunnableSongArtUpdater implements Runnable {
             } else {
                 songArtHeight = songArtWidth;
             }
-            Bitmap bitmap = MediaData.getThumbnail(activityMain.getCurrentAudioUri(),
-                    songArtWidth, songArtHeight, activityMain.getApplicationContext());
-            if (bitmap == null) {
-                Drawable drawable = ResourcesCompat.getDrawable(imageViewSongArt.getResources(),
-                        R.drawable.music_note_black_48dp, null);
-                if (drawable != null) {
-                    drawable.setBounds(0, 0, songArtWidth, songArtHeight);
-                    Bitmap bitmapDrawable = Bitmap.createBitmap(songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888);
-                    Canvas canvas = new Canvas(bitmapDrawable);
-                    Paint paint = new Paint();
-                    paint.setColor(imageViewSongArt.getResources().getColor(R.color.colorPrimary));
-                    canvas.drawRect(0, 0, songArtWidth, songArtHeight, paint);
-                    drawable.draw(canvas);
-                    Bitmap bitmapResized = MediaData.getResizedBitmap(bitmapDrawable, songArtWidth, songArtHeight);
-                    bitmapDrawable.recycle();
-                    imageViewSongArt.setImageBitmap(bitmapResized);
+            if(songArtHeight > 0 && songArtWidth > 0) {
+                Bitmap bitmap = MediaData.getThumbnail(activityMain.getCurrentAudioUri(),
+                        songArtWidth, songArtHeight, activityMain.getApplicationContext());
+                if (bitmap == null) {
+                    Drawable drawable = ResourcesCompat.getDrawable(imageViewSongArt.getResources(),
+                            R.drawable.music_note_black_48dp, null);
+                    if (drawable != null) {
+                        drawable.setBounds(0, 0, songArtWidth, songArtHeight);
+                        Bitmap bitmapDrawable = Bitmap.createBitmap(songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888);
+                        Canvas canvas = new Canvas(bitmapDrawable);
+                        Paint paint = new Paint();
+                        paint.setColor(imageViewSongArt.getResources().getColor(R.color.colorPrimary));
+                        canvas.drawRect(0, 0, songArtWidth, songArtHeight, paint);
+                        drawable.draw(canvas);
+                        Bitmap bitmapResized = MediaData.getResizedBitmap(bitmapDrawable, songArtWidth, songArtHeight);
+                        bitmapDrawable.recycle();
+                        imageViewSongArt.setImageBitmap(bitmapResized);
+                    }
+                } else {
+                    imageViewSongArt.setImageBitmap(bitmap);
                 }
-            } else {
-                imageViewSongArt.setImageBitmap(bitmap);
             }
         }
     }

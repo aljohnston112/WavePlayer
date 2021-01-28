@@ -115,7 +115,7 @@ public class FragmentPlaylists extends Fragment {
         RecyclerView recyclerView = view.findViewById(R.id.recycler_view_playlist_list);
         recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
         RecyclerViewAdapterPlaylists recyclerViewAdapter =
-                new RecyclerViewAdapterPlaylists(this, MediaData.getInstance(activityMain).getPlaylists());
+                new RecyclerViewAdapterPlaylists(this, MediaData.getInstance().getPlaylists());
         recyclerView.setAdapter(recyclerViewAdapter);
         itemTouchListenerPlaylist = new ItemTouchListenerPlaylist(activityMain);
         itemTouchHelper = new ItemTouchHelper(itemTouchListenerPlaylist);
@@ -174,6 +174,8 @@ public class FragmentPlaylists extends Fragment {
         itemTouchHelper.attachToRecyclerView(null);
         itemTouchListenerPlaylist = null;
         itemTouchHelper = null;
+        viewModelUserPickedPlaylist = null;
+        viewModelUserPickedSongs = null;
     }
 
     public void setUserPickedPlaylist(RandomPlaylist randomPlaylist) {

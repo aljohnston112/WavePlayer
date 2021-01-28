@@ -186,6 +186,8 @@ public class FragmentPlaylist extends Fragment {
         itemTouchHelper = null;
         onClickListenerFABFragmentPlaylist = null;
         activityMain.setPlaylistToAddToQueue(null);
+        viewModelUserPickedPlaylist = null;
+        viewModelUserPickedSongs = null;
     }
 
     public RandomPlaylist getUserPickedPlaylist() {

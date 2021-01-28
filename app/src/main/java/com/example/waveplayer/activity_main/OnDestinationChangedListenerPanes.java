@@ -28,13 +28,11 @@ public class OnDestinationChangedListenerPanes
                 activityMain.fragmentSongVisible(false);
                 activityMain.showSongPane();
             }
-            activityMain.updateUI();
         } else {
             activityMain.fragmentSongVisible(true);
             activityMain.hideSongPane();
-            activityMain.updateUI();
         }
-
+        activityMain.updateUI();
     }
 
 }

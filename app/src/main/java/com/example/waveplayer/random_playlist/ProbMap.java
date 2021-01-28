@@ -30,7 +30,7 @@ public class ProbMap<T> implements Serializable {
         double prob = dub;
         boolean globalBad = true;
         for (Double d : probHashMap.values()) {
-            if (prob < d) {
+            if (prob <= d) {
                 globalBad = false;
                 break;
             }
@@ -52,7 +52,7 @@ public class ProbMap<T> implements Serializable {
         double prob = dub;
         boolean globalGood = true;
         for (Double d : probHashMap.values()) {
-            if (prob > d) {
+            if (prob >= d) {
                 globalGood = false;
                 break;
             }

@@ -82,7 +82,7 @@
     </fragment>
     <fragment
         android:id="@+id/fragmentLoading"
-        android:name="com.example.waveplayer.fragments.FragmentLoading"
+        android:name="com.example.waveplayer.fragments.fragment_loading.FragmentLoading"
         android:label="fragment_loading"
         tools:layout="@layout/fragment_loading" >
         <action

@@ -34,10 +34,10 @@ public class MediaController {
 
     public final MediaPlayer.OnCompletionListener onCompletionListener;
 
-    private AudioUri currentSong;
+    private AudioUri currentAudioUri;
 
-    public AudioUri getCurrentSong() {
-        return currentSong;
+    public AudioUri getCurrentAudioUri() {
+        return currentAudioUri;
     }
 
     private RandomPlaylist currentPlaylist;
@@ -128,8 +128,8 @@ public class MediaController {
     }
 
     private MediaPlayerWUri getCurrentMediaPlayerWUri() {
-        if (currentSong != null) {
-            return mediaData.getMediaPlayerWUri(currentSong.id);
+        if (currentAudioUri != null) {
+            return mediaData.getMediaPlayerWUri(currentAudioUri.id);
         }
         return null;
     }
@@ -169,13 +169,13 @@ public class MediaController {
             isPlaying = true;
             songInProgress = true;
         }
-        currentSong = MediaData.getAudioUri(serviceMain.getApplicationContext(), mediaPlayerWURI.id);
+        currentAudioUri = MediaData.getAudioUri(serviceMain.getApplicationContext(), mediaPlayerWURI.id);
         serviceMain.updateNotification();
         currentPlaylist.setIndexTo(mediaPlayerWURI.id);
     }
 
     public void pauseOrPlay(Context context) {
-        if (currentSong != null) {
+        if (currentAudioUri != null) {
             MediaPlayerWUri mediaPlayerWURI = getCurrentMediaPlayerWUri();
             if (mediaPlayerWURI != null) {
                 if (mediaPlayerWURI.isPrepared() && mediaPlayerWURI.isPlaying()) {
@@ -196,8 +196,8 @@ public class MediaController {
     }
 
     private void stopCurrentSong() {
-        if (currentSong != null) {
-            MediaPlayerWUri mediaPlayerWURI = mediaData.getMediaPlayerWUri(currentSong.id);
+        if (currentAudioUri != null) {
+            MediaPlayerWUri mediaPlayerWURI = mediaData.getMediaPlayerWUri(currentAudioUri.id);
             if (mediaPlayerWURI != null) {
                 if (mediaPlayerWURI.isPrepared() && mediaPlayerWURI.isPlaying()) {
                     mediaPlayerWURI.stop();
@@ -232,14 +232,14 @@ public class MediaController {
     private void playLoopingOne(Context context) {
         MediaPlayerWUri mediaPlayerWURI = getCurrentMediaPlayerWUri();
         if (mediaPlayerWURI != null) {
-            mediaPlayerWURI.seekTo(serviceMain.getApplicationContext(), currentSong, 0);
+            mediaPlayerWURI.seekTo(serviceMain.getApplicationContext(), currentAudioUri, 0);
             mediaPlayerWURI.shouldPlay(true);
             // TODO make a setting?
             isPlaying = true;
             songInProgress = true;
             //addToQueueAtCurrentIndex(currentSong.getUri());
         } else {
-            makeIfNeededAndPlay(context, currentSong.id);
+            makeIfNeededAndPlay(context, currentAudioUri.id);
         }
     }
 
@@ -269,16 +269,16 @@ public class MediaController {
                 return false;
             }
         } else if (shuffling) {
-                currentSong = currentPlaylist.next(context, random);
-                addToQueueAndPlay(context, currentSong.id);
+                currentAudioUri = currentPlaylist.next(context, random);
+                addToQueueAndPlay(context, currentAudioUri.id);
                 return true;
             }
         return false;
     }
 
     private void playNextInPlaylist(Context context) {
-        currentSong = currentPlaylist.next(context, random, looping, shuffling);
-        addToQueueAndPlay(context, currentSong.id);
+        currentAudioUri = currentPlaylist.next(context, random, looping, shuffling);
+        addToQueueAndPlay(context, currentAudioUri.id);
     }
 
     public void playPrevious(Context context) {
@@ -315,15 +315,15 @@ public class MediaController {
     }
 
     private void playPreviousInPlaylist(Context context) {
-        currentSong = currentPlaylist.previous(context, random, looping, shuffling);
-        addToQueueAndPlay(context, currentSong.id);
+        currentAudioUri = currentPlaylist.previous(context, random, looping, shuffling);
+        addToQueueAndPlay(context, currentAudioUri.id);
 
     }
 
     public void seekTo(Context context, int progress) {
         MediaPlayerWUri mediaPlayerWUri = getCurrentMediaPlayerWUri();
         if (mediaPlayerWUri != null) {
-            mediaPlayerWUri.seekTo(serviceMain.getApplicationContext(), currentSong, progress);
+            mediaPlayerWUri.seekTo(serviceMain.getApplicationContext(), currentAudioUri, progress);
         }
         if (!isPlaying()) {
             pauseOrPlay(context);

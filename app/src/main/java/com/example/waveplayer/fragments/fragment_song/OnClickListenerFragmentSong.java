@@ -20,17 +20,17 @@ public class OnClickListenerFragmentSong implements View.OnClickListener {
     public void onClick(View view) {
         synchronized (activityMain.lock) {
             if (view.getId() == R.id.button_thumb_down) {
-                Song song = MediaData.getInstance(activityMain).getSong(activityMain.getCurrentAudioUri().id);
+                Song song = MediaData.getInstance().getSong(activityMain.getCurrentAudioUri().id);
                 if(song != null) {
-                    activityMain.getCurrentPlaylist().bad(activityMain,
-                            song, MediaData.getInstance(activityMain).getPercentChangeDown());
+                    activityMain.getCurrentPlaylist().bad(activityMain.getApplicationContext(),
+                            song, MediaData.getInstance().getPercentChangeDown());
                     activityMain.saveFile();
                 }
             } else if (view.getId() == R.id.button_thumb_up) {
-                Song song = MediaData.getInstance(activityMain).getSong(activityMain.getCurrentAudioUri().id);
+                Song song = MediaData.getInstance().getSong(activityMain.getCurrentAudioUri().id);
                 if(song != null) {
-                    activityMain.getCurrentPlaylist().good(activityMain,
-                            song, MediaData.getInstance(activityMain).getPercentChangeUp(), true);
+                    activityMain.getCurrentPlaylist().good(activityMain.getApplicationContext(),
+                            song, MediaData.getInstance().getPercentChangeUp(), true);
                     activityMain.saveFile();
                 }
             } else if (view.getId() == R.id.imageButtonShuffle) {

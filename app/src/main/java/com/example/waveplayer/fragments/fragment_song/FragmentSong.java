@@ -93,7 +93,6 @@ public class FragmentSong extends Fragment {
         broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                activityMain.updateUI();
                 setUpButtons();
             }
         };

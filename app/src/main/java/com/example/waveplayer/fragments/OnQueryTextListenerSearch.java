@@ -81,7 +81,7 @@ public class OnQueryTextListenerSearch implements SearchView.OnQueryTextListener
                 if (recyclerViewPlaylists != null) {
                     RecyclerViewAdapterPlaylists recyclerViewAdapterPlaylists =
                             (RecyclerViewAdapterPlaylists) recyclerViewPlaylists.getAdapter();
-                    List<RandomPlaylist> playlists = MediaData.getInstance(activityMain).getPlaylists();
+                    List<RandomPlaylist> playlists = MediaData.getInstance().getPlaylists();
                     List<RandomPlaylist> sifted = new ArrayList<>();
                     if (!newText.equals("")) {
                         for (RandomPlaylist randomPlaylist : playlists) {

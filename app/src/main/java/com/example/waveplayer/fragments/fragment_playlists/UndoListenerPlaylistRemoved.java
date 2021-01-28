@@ -25,7 +25,7 @@ public class UndoListenerPlaylistRemoved implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        MediaData.getInstance(activityMain).addPlaylist(position, randomPlaylist);
+        MediaData.getInstance().addPlaylist(position, randomPlaylist);
         recyclerViewAdapter.notifyItemInserted(position);
         activityMain.saveFile();
     }

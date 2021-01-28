@@ -123,6 +123,8 @@ public class FragmentEditPlaylist extends Fragment {
         view.findViewById(R.id.buttonEditSongs).setOnClickListener(null);
         onClickListenerFragmentEditPlaylistButtonSelectSongs = null;
         onClickListenerFABFragmentEditPlaylist = null;
+        viewModelUserPickedPlaylist = null;
+        viewModelUserPickedSongs = null;
     }
 
     // TODO move?
