@@ -21,7 +21,7 @@ public class SaveFile {
     private static final String FILE_SAVE2 = "playlists2";
     private static final String FILE_SAVE3 = "playlists3";
 
-    private static final Long SAVE_FILE_VERIFICATION_NUMBER = 8479145830949658990L;
+    private static final long SAVE_FILE_VERIFICATION_NUMBER = 8479145830949658990L;
 
     public static void saveFile(final Context context) {
         ServiceMain.executorServicePool.submit(new Runnable() {
@@ -31,7 +31,7 @@ public class SaveFile {
                 File file = new File(context.getFilesDir(), FILE_SAVE);
                 File file2 = new File(context.getFilesDir(), FILE_SAVE2);
                 File file3 = new File(context.getFilesDir(), FILE_SAVE3);
-                if(file3.exists()){
+                if (file3.exists()) {
                     file3.delete();
                 }
                 file2.renameTo(file3);
@@ -56,25 +56,24 @@ public class SaveFile {
     }
 
 
-    public static void loadSaveFile(final Context context, MediaData mediaData) {
-        if(!attemptLoadFile(context, mediaData, FILE_SAVE).equals(SAVE_FILE_VERIFICATION_NUMBER)){
-            if(!attemptLoadFile(context, mediaData, FILE_SAVE2).equals(SAVE_FILE_VERIFICATION_NUMBER)){
-                if(!attemptLoadFile(context, mediaData, FILE_SAVE3).equals(SAVE_FILE_VERIFICATION_NUMBER)){
-                    // TODO
-                    ServiceMain.executorServiceFIFO.submit(new Runnable() {
-                        @Override
-                        public void run() {
+    public static void loadSaveFile(final Context context, final MediaData mediaData) {
+        ServiceMain.executorServiceFIFO.submit(new Runnable() {
+            @Override
+            public void run() {
+                if (attemptLoadFile(context, mediaData, FILE_SAVE)!=(SAVE_FILE_VERIFICATION_NUMBER)) {
+                    if (attemptLoadFile(context, mediaData, FILE_SAVE2)!=(SAVE_FILE_VERIFICATION_NUMBER)) {
+                        if (attemptLoadFile(context, mediaData, FILE_SAVE3)!=(SAVE_FILE_VERIFICATION_NUMBER)) {
                             SongDatabase songDatabase = Room.databaseBuilder(context, SongDatabase.class, MediaData.SONG_DATABASE_NAME).build();
                             songDatabase.songDAO().deleteAll();
                         }
-                    });
+                    }
                 }
             }
-        }
+        });
     }
 
-    private static Long attemptLoadFile(Context context, MediaData mediaData, String fileSave) {
-        Long longEOF = 0L;
+    private static long attemptLoadFile(Context context, MediaData mediaData, String fileSave) {
+        long longEOF = 0L;
         File file = new File(context.getFilesDir(), fileSave);
         if (file.exists()) {
             try (FileInputStream fileInputStream = context.openFileInput(fileSave);
@@ -86,7 +85,7 @@ public class SaveFile {
                     mediaData.addPlaylist((RandomPlaylist) objectInputStream.readObject());
                 }
                 longEOF = objectInputStream.readLong();
-            }  catch (FileNotFoundException e) {
+            } catch (FileNotFoundException e) {
                 e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();

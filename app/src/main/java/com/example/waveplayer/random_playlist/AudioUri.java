@@ -47,7 +47,7 @@ public final class AudioUri implements Comparable<AudioUri>, Serializable {
         Log.v(TAG, "getDuration started");
         if (duration == -1) {
             MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-            mediaMetadataRetriever.setDataSource(context, uri);
+            mediaMetadataRetriever.setDataSource(context, getUri());
             String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
             if (time == null) {
                 time = "00:00:00";

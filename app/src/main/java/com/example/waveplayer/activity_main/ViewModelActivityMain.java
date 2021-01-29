@@ -1,5 +1,7 @@
 package com.example.waveplayer.activity_main;
 
+import android.view.View;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
@@ -24,6 +26,12 @@ public class ViewModelActivityMain extends ViewModel {
 
     public void setActionBarTitle(String actionBarTitle){
         this.actionBarTitle.setValue(actionBarTitle);
+    }
+
+    private MutableLiveData<View.OnClickListener> onClickListener;
+
+    public LiveData<View.OnClickListener> getOnClickListener() {
+        return onClickListener;
     }
 
 }

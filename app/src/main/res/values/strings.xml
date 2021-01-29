@@ -24,7 +24,7 @@
     <string name="playlist_deleted">Playlist deleted</string>
     <string name="song_removed">Song removed from playlist</string>
     <string name="undo">Undo</string>
-    <string name="pick_folder">Pick a folder with</string>
+    <string name="pick_folder">Pick a folder with: </string>
     <string name="add_to_playlist">Add to playlist</string>
     <string name="rename_playlist">Rename playlist</string>
     <string name="add">Add</string>
@@ -56,20 +56,20 @@
     <string name="duplicate_name_playlist">There is already a playlist with that name</string>
 
     <!--For FragmentSettings-->
-    <string name="max_percent"><b>Min Grain Number:</b></string>
-    <string name="max_percent_desc">The min grain number determines how many songs play when you hit thumbs up on a lot of songs.
-    When set to 1, 1 song may repeat after hitting thumbs up a lot.</string>
-    <string name="max_percent_error">Enter a positive number for Max Grain Number</string>
-    <string name="percent_change_up"><b>Mod Magnitude Up:</b></string>
-    <string name="percent_change_down"><b>Mod Magnitude Down:</b></string>
-    <string name="percent_change_desc">The mod magnitude (1-100) determines how much a grain size changes
-        when the thumb up, thumb down, or skip button is tapped. 1 makes the smallest change and 100 makes the largest change.
-    When min grain size is 1 and mod magnitude is 100, a song will take the least number of taps to repeat often.
-     When min grain size is 1 and mod magnitude is 1, a song will take the most number of taps to repeat often.</string>
-    <string name="percent_change_error">Mod Magnitude must be between 1 and 100</string>
+    <string name="max_percent"><b>Min Number of Songs:</b></string>
+    <string name="max_percent_desc">The min number of songs determines the amount of songs you will hear
+        when the algorithm finds the songs you like. The lower this number, the less songs you will hear
+        when the algorithm finds the songs you like. At one, your favorite song will play a lot after a while until
+        you use the menu in the app bar to reset the probabilities.
+    </string>
+    <string name="max_percent_error">Enter a positive number for Min Number of Songs</string>
+    <string name="percent_change_up"><b>Mod Up:</b></string>
+    <string name="percent_change_down"><b>Mod Down:</b></string>
+    <string name="percent_change_desc">The mods (1-100) determine how much weight the algorithm uses
+        when the thumb up, thumb down, or skip button are tapped. 1 makes the smallest change and 100 makes the largest change.
+        When min grain size is 1 and mod up is 100, a song will take the least number of taps to play more often.
+        When mod down is 1, songs will take a lot of taps until you do not hear them as often.</string>
+    <string name="percent_change_error">Mod must be between 1 and 100</string>
     <string name="action_settings">Settings</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-
 
 </resources>

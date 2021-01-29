@@ -12,11 +12,14 @@ import androidx.fragment.app.Fragment;
 
 import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.R;
+import com.example.waveplayer.databinding.FragmentSettingsBinding;
 import com.example.waveplayer.media_controller.MediaData;
 
 public class FragmentSettings extends Fragment {
 
-    private OnClickListenerFABFragmentSettings onClickListenerFABFragmentSettings;
+    private FragmentSettingsBinding mBinding;
+
+    private OnClickListenerFABFragmentSettings mOnClickListenerFABFragmentSettings;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -24,9 +27,10 @@ public class FragmentSettings extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_settings, container, false);
+        mBinding = FragmentSettingsBinding.inflate(inflater, container, false);
+        return mBinding.getRoot();
     }
 
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
@@ -42,29 +46,28 @@ public class FragmentSettings extends Fragment {
     }
 
     private void updateMainContent() {
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         activityMain.setActionBarTitle(getResources().getString(R.string.settings));
         updateFAB();
     }
 
     private void updateFAB() {
         ActivityMain activityMain = ((ActivityMain) getActivity());
-        final EditText editTextNSongs = activityMain.findViewById(R.id.editTextNSongs);
-        final EditText editTextPercentChangeUp = activityMain.findViewById(R.id.editTextPercentChangeUp);
-        final EditText editTextPercentChangeDown = activityMain.findViewById(R.id.editTextPercentChangeDown);
+        final EditText editTextNSongs = activityMain.findViewById(R.id.edit_text_n_songs);
+        final EditText editTextPercentChangeUp = activityMain.findViewById(R.id.edit_text_percent_change_up);
+        final EditText editTextPercentChangeDown = activityMain.findViewById(R.id.edit_text_percent_change_down);
         activityMain.setFabImage(R.drawable.ic_check_black_24dp);
         activityMain.setFABText(R.string.fab_save);
-        onClickListenerFABFragmentSettings = new OnClickListenerFABFragmentSettings(
+        mOnClickListenerFABFragmentSettings = new OnClickListenerFABFragmentSettings(
                 this, editTextNSongs, editTextPercentChangeDown, editTextPercentChangeUp);
-        activityMain.setFabOnClickListener(onClickListenerFABFragmentSettings);
+        activityMain.setFabOnClickListener(mOnClickListenerFABFragmentSettings);
         activityMain.showFab(true);
     }
 
     private void loadSettings() {
-        ActivityMain activityMain = ((ActivityMain) getActivity());
-        EditText editTextNSongs = activityMain.findViewById(R.id.editTextNSongs);
-        EditText editTextPercentChangeUp = activityMain.findViewById(R.id.editTextPercentChangeUp);
-        EditText editTextPercentChangeDown = activityMain.findViewById(R.id.editTextPercentChangeDown);
+        EditText editTextNSongs = mBinding.editTextNSongs;
+        EditText editTextPercentChangeUp = mBinding.editTextPercentChangeUp;
+        EditText editTextPercentChangeDown = mBinding.editTextPercentChangeDown;
         editTextNSongs.setText(
                 String.valueOf((int) Math.round(1.0 / MediaData.getInstance().getMaxPercent())));
         editTextPercentChangeUp.setText(
@@ -78,7 +81,8 @@ public class FragmentSettings extends Fragment {
         super.onDestroyView();
         ActivityMain activityMain = ((ActivityMain) getActivity());
         activityMain.setFabOnClickListener(null);
-        onClickListenerFABFragmentSettings = null;
+        mOnClickListenerFABFragmentSettings = null;
+        mBinding = null;
     }
 
 }

@@ -44,7 +44,7 @@ public class OnClickListenerFABFragmentEditPlaylist implements View.OnClickListe
             activityMain.showToast(R.string.duplicate_name_playlist);
         } else if (userPickedPlaylist == null) {
             MediaData.getInstance().addPlaylist(new RandomPlaylist(editTextPlaylistName.getText().toString(),
-                    userPickedSongs, MediaData.getInstance().getMaxPercent(), false, -1));
+                    userPickedSongs, MediaData.getInstance().getMaxPercent(), false));
             for (Song song : userPickedSongs) {
                 song.setSelected(false);
             }

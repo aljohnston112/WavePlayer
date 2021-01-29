@@ -64,6 +64,7 @@ public class MediaPlayerWUri {
 
     public void release(){
         synchronized (lock) {
+            setOnCompletionListener(null);
             isPrepared = false;
             shouldPlay = false;
             mediaPlayer.reset();
@@ -142,7 +143,7 @@ public class MediaPlayerWUri {
                             }
                         };
                         mediaPlayer.setOnErrorListener(onErrorListener);
-                        setOnCompletionListener(mediaController.onCompletionListener);
+                        setOnCompletionListener(new MediaPlayerOnCompletionListener(context, mediaController));
                         this.shouldPlay = true;
                         return;
                     }

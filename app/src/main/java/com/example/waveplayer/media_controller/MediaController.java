@@ -4,13 +4,13 @@ import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
-import android.media.MediaPlayer;
 import android.util.Log;
 
 import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
-import com.example.waveplayer.service_main.ServiceMain;
 
+import java.io.Serializable;
+import java.util.List;
 import java.util.Random;
 
 public class MediaController {
@@ -19,20 +19,18 @@ public class MediaController {
 
     public static MediaController INSTANCE;
 
-    synchronized public static MediaController getInstance(ServiceMain serviceMain){
+    synchronized public static MediaController getInstance(Context context){
         if(INSTANCE == null){
-            INSTANCE = new MediaController(serviceMain);
+            INSTANCE = new MediaController(context);
         }
         return INSTANCE;
     }
 
     private static final Random random = new Random();
 
-    private final ServiceMain serviceMain;
+    private final MediaData mediaData = MediaData.getInstance();
 
-    private final MediaData mediaData;
-
-    public final MediaPlayer.OnCompletionListener onCompletionListener;
+    public final MediaPlayerOnCompletionListener onCompletionListener;
 
     private AudioUri currentAudioUri;
 
@@ -119,11 +117,9 @@ public class MediaController {
         Log.v(TAG, "loopingOne end");
     }
 
-    private MediaController(ServiceMain serviceMain){
-        this.serviceMain = serviceMain;
-        mediaData = MediaData.getInstance();
+    private MediaController(Context context){
         onCompletionListener = new MediaPlayerOnCompletionListener(
-                serviceMain.getApplicationContext(), this);
+                context, this);
         currentPlaylist = mediaData.getMasterPlaylist();
     }
 
@@ -156,7 +152,8 @@ public class MediaController {
         MediaPlayerWUri mediaPlayerWUri = mediaData.getMediaPlayerWUri(songID);
         if (mediaPlayerWUri == null) {
             mediaPlayerWUri =
-                    new CallableCreateMediaPlayerWUri(context, this, songID).call();
+                    new CallableCreateMediaPlayerWUri(
+                            context, this, onCompletionListener, songID).call();
             mediaData.addMediaPlayerWUri(mediaPlayerWUri.id, mediaPlayerWUri);
         }
         stopCurrentSongAndPlay(context, mediaPlayerWUri);
@@ -169,8 +166,7 @@ public class MediaController {
             isPlaying = true;
             songInProgress = true;
         }
-        currentAudioUri = MediaData.getAudioUri(serviceMain.getApplicationContext(), mediaPlayerWURI.id);
-        serviceMain.updateNotification();
+        currentAudioUri = MediaData.getAudioUri(context, mediaPlayerWURI.id);
         currentPlaylist.setIndexTo(mediaPlayerWURI.id);
     }
 
@@ -192,7 +188,6 @@ public class MediaController {
         } else if (!isPlaying) {
             playNext(context);
         }
-        serviceMain.updateNotification();
     }
 
     private void stopCurrentSong() {
@@ -232,7 +227,7 @@ public class MediaController {
     private void playLoopingOne(Context context) {
         MediaPlayerWUri mediaPlayerWURI = getCurrentMediaPlayerWUri();
         if (mediaPlayerWURI != null) {
-            mediaPlayerWURI.seekTo(serviceMain.getApplicationContext(), currentAudioUri, 0);
+            mediaPlayerWURI.seekTo(context, currentAudioUri, 0);
             mediaPlayerWURI.shouldPlay(true);
             // TODO make a setting?
             isPlaying = true;
@@ -323,7 +318,7 @@ public class MediaController {
     public void seekTo(Context context, int progress) {
         MediaPlayerWUri mediaPlayerWUri = getCurrentMediaPlayerWUri();
         if (mediaPlayerWUri != null) {
-            mediaPlayerWUri.seekTo(serviceMain.getApplicationContext(), currentAudioUri, progress);
+            mediaPlayerWUri.seekTo(context, currentAudioUri, progress);
         }
         if (!isPlaying()) {
             pauseOrPlay(context);
@@ -334,7 +329,7 @@ public class MediaController {
         if (haveAudioFocus) {
             return true;
         }
-        AudioManager audioManager = (AudioManager) serviceMain.getSystemService(Context.AUDIO_SERVICE);
+        AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         AudioManager.OnAudioFocusChangeListener onAudioFocusChangeListener =
                 new AudioManager.OnAudioFocusChangeListener() {
                     final Object lock = new Object();
@@ -389,6 +384,18 @@ public class MediaController {
 
     public MediaPlayerWUri getMediaPlayerWUri(Long songID) {
         return mediaData.getMediaPlayerWUri(songID);
+    }
+
+    public List<Song> getAllSongs() {
+        return mediaData.getAllSongs();
+    }
+
+    public double getPercentChangeDown() {
+        return mediaData.getPercentChangeDown();
+    }
+
+    public Serializable getPlaylists() {
+        return mediaData.getPlaylists();
     }
 
 }

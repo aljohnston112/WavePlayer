@@ -27,7 +27,6 @@ import com.example.waveplayer.media_controller.MediaData;
 import com.example.waveplayer.media_controller.MediaPlayerWUri;
 import com.example.waveplayer.R;
 import com.example.waveplayer.activity_main.ActivityMain;
-import com.example.waveplayer.media_controller.Song;
 import com.example.waveplayer.random_playlist.AudioUri;
 
 import java.io.BufferedReader;
@@ -235,7 +234,7 @@ public class ServiceMain extends Service {
     }
 
     public void permissionGranted(){
-        mediaController = MediaController.getInstance(this);
+        mediaController = MediaController.getInstance(getApplicationContext());
         mediaData = MediaData.getInstance();
     }
 
@@ -457,6 +456,7 @@ public class ServiceMain extends Service {
 
     public void pauseOrPlay() {
         mediaController.pauseOrPlay(getApplicationContext());
+        updateNotification();
     }
 
     public void playPrevious() {

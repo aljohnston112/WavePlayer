@@ -38,8 +38,8 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.waveplayer.media_controller.MediaController;
-import com.example.waveplayer.media_controller.MediaData;
 import com.example.waveplayer.R;
+import com.example.waveplayer.media_controller.MediaData;
 import com.example.waveplayer.media_controller.SaveFile;
 import com.example.waveplayer.service_main.ServiceMain;
 import com.example.waveplayer.media_controller.Song;
@@ -84,8 +84,6 @@ public class ActivityMain extends AppCompatActivity {
 
     private MediaController mediaController;
 
-    private MediaData mediaData;
-
     private ViewModelUserPickedPlaylist viewModelUserPickedPlaylist;
 
     private ViewModelUserPickedSongs viewModelUserPickedSongs;
@@ -108,14 +106,13 @@ public class ActivityMain extends AppCompatActivity {
     private void setUpAfterServiceConnection() {
         // Log.v(TAG, "setUpAfterServiceConnection started");
         if (loaded) {
-            if (MediaController.getInstance(serviceMain).isPlaying()) {
+            if (MediaController.getInstance(getApplicationContext()).isPlaying()) {
                 navigateTo(R.id.fragmentSong);
             } else {
                 navigateTo(R.id.FragmentTitle);
             }
         }
-        mediaController = MediaController.getInstance(serviceMain);
-        mediaData = MediaData.getInstance();
+        mediaController = MediaController.getInstance(getApplicationContext());
         serviceMain.permissionGranted();
         setUpBroadcastReceivers();
         runnableSongArtUpdater = new RunnableSongArtUpdater(this);
@@ -131,7 +128,6 @@ public class ActivityMain extends AppCompatActivity {
         runnableSongArtUpdater = null;
         runnableSongPaneArtUpdater = null;
         mediaController = null;
-        mediaData = null;
         // Log.v(TAG, "serviceDisconnected end");
     }
 
@@ -250,7 +246,7 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     public List<Song> getAllSongs() {
-        return mediaData.getAllSongs();
+        return mediaController.getAllSongs();
     }
 
     void setUpBroadcastReceivers() {
@@ -785,7 +781,7 @@ public class ActivityMain extends AppCompatActivity {
         getCurrentPlaylist().bad(
                 serviceMain.getApplicationContext(),
                 MediaData.getInstance().getSong(mediaController.getCurrentAudioUri().id),
-                mediaData.getPercentChangeDown());
+                mediaController.getPercentChangeDown());
         mediaController.playNext(serviceMain.getApplicationContext());
         updateUI();
         // Log.v(TAG, "playNext end");
@@ -893,7 +889,7 @@ public class ActivityMain extends AppCompatActivity {
         Bundle bundle = new Bundle();
         bundle.putBoolean(BUNDLE_KEY_IS_SONG, isSong);
         bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, mediaController.getCurrentAudioUri());
-        bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, mediaData.getPlaylists());
+        bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, mediaController.getPlaylists());
         bundle.putSerializable(
                 BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST,
                 viewModelUserPickedPlaylist.getUserPickedPlaylist());

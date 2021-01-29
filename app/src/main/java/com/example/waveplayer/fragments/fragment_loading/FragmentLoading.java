@@ -104,7 +104,6 @@ public class FragmentLoading extends Fragment {
         ViewModelFragmentLoading model = new ViewModelProvider(this).get(ViewModelFragmentLoading.class);
         model.getLoadingProgress().observe(getViewLifecycleOwner(), mObserverLoadingProgress);
         model.getLoadingText().observe(getViewLifecycleOwner(), mObserverLoadingText);
-        model.observe(getViewLifecycleOwner(), MediaData.getInstance());
     }
 
     private void updateMainContent() {
@@ -182,7 +181,7 @@ public class FragmentLoading extends Fragment {
         ServiceMain.executorServicePool.execute(new Runnable() {
             @Override
             public void run() {
-                MediaData.getInstance().loadData((ActivityMain) requireActivity(), mHandler);
+                MediaData.getInstance().loadData((ActivityMain) requireActivity());
             }
         });
     }

@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 
 public class MediaData {
 
@@ -46,69 +47,67 @@ public class MediaData {
 
     private static final String MASTER_PLAYLIST_NAME = "MASTER_PLAYLIST_NAME";
 
-    private final MutableLiveData<Double> loadingProgress = new MutableLiveData<>(0.0);
+    private final MutableLiveData<Double> mLoadingProgress = new MutableLiveData<>(0.0);
 
     public LiveData<Double> getLoadingProgress() {
-        return loadingProgress;
+        return mLoadingProgress;
     }
 
-    private final MutableLiveData<String> loadingText = new MutableLiveData<>();
+    private final MutableLiveData<String> mLoadingText = new MutableLiveData<>();
 
     public LiveData<String> getLoadingText() {
-        return loadingText;
+        return mLoadingText;
     }
-
-    private SongDatabase songDatabase;
 
     private SongDAO songDAO;
 
-    private final HashMap<Long, MediaPlayerWUri> songIDToMediaPlayerWUriHashMap = new HashMap<>();
+    private final HashMap<Long, MediaPlayerWUri> mSongIDToMediaPlayerWUriHashMap = new HashMap<>();
 
-    private Settings settings = new Settings(0.1, 0.1, 0.5);
+    private Settings mSettings = new Settings(0.1, 0.1, 0.5);
 
     public void setSettings(Settings settings) {
-        this.settings = settings;
+        this.mSettings = settings;
     }
 
     public Settings getSettings() {
-        return settings;
+        return mSettings;
     }
 
-    private RandomPlaylist masterPlaylist;
+    private RandomPlaylist mMasterPlaylist;
 
     public void setMasterPlaylist(RandomPlaylist masterPlaylist) {
-        this.masterPlaylist = masterPlaylist;
+        this.mMasterPlaylist = masterPlaylist;
     }
 
     public RandomPlaylist getMasterPlaylist() {
-        return masterPlaylist;
+        return mMasterPlaylist;
     }
 
     public List<Song> getAllSongs() {
-        return masterPlaylist.getSongs();
+        return mMasterPlaylist.getSongs();
     }
 
-    private final ArrayList<RandomPlaylist> playlists = new ArrayList<>();
+    private final ArrayList<RandomPlaylist> mPlaylists = new ArrayList<>();
 
     public ArrayList<RandomPlaylist> getPlaylists() {
-        return playlists;
+        return mPlaylists;
     }
 
     public void addPlaylist(RandomPlaylist randomPlaylist) {
-        playlists.add(randomPlaylist);
+        mPlaylists.add(randomPlaylist);
     }
 
     public void addPlaylist(int position, RandomPlaylist randomPlaylist) {
-        playlists.add(position, randomPlaylist);
+        mPlaylists.add(position, randomPlaylist);
     }
 
     public void removePlaylist(RandomPlaylist randomPlaylist) {
-        playlists.remove(randomPlaylist);
+        mPlaylists.remove(randomPlaylist);
     }
 
     public RandomPlaylist getPlaylist(String playlistName) {
         RandomPlaylist out = null;
-        for(RandomPlaylist randomPlaylist : playlists){
+        for(RandomPlaylist randomPlaylist : mPlaylists){
             if(randomPlaylist.getName().equals(playlistName)){
                 out = randomPlaylist;
             }
@@ -117,65 +116,65 @@ public class MediaData {
         return out;
     }
 
-    public static MediaData INSTANCE;
+    public static MediaData M_INSTANCE;
 
-    public void loadData(ActivityMain activityMain, Handler handler){
+    public void loadData(ActivityMain activityMain){
         Context context = activityMain.getApplicationContext();
-        songDatabase = Room.databaseBuilder(context, SongDatabase.class, SONG_DATABASE_NAME).build();
+        SongDatabase songDatabase = Room.databaseBuilder(context, SongDatabase.class, SONG_DATABASE_NAME).build();
         songDAO = songDatabase.songDAO();
         SaveFile.loadSaveFile(context, this);
-        getSongs(activityMain, handler);
+        getSongs(activityMain);
     }
 
     public static MediaData getInstance() {
         synchronized(lock) {
-            if(INSTANCE == null){
-                INSTANCE = new MediaData();
+            if(M_INSTANCE == null){
+                M_INSTANCE = new MediaData();
             }
-            return INSTANCE;
+            return M_INSTANCE;
         }
     }
 
     public double getMaxPercent() {
-        return settings.maxPercent;
+        return mSettings.maxPercent;
     }
 
     public void setMaxPercent(double maxPercent) {
-        masterPlaylist.setMaxPercent(maxPercent);
-        for (RandomPlaylist randomPlaylist : playlists) {
+        mMasterPlaylist.setMaxPercent(maxPercent);
+        for (RandomPlaylist randomPlaylist : mPlaylists) {
             randomPlaylist.setMaxPercent(maxPercent);
         }
-        settings = new Settings(maxPercent, settings.percentChangeUp, settings.percentChangeDown);
+        mSettings = new Settings(maxPercent, mSettings.percentChangeUp, mSettings.percentChangeDown);
     }
 
     public void setPercentChangeUp(double percentChangeUp) {
-        settings = new Settings(settings.maxPercent, percentChangeUp, settings.percentChangeDown);
+        mSettings = new Settings(mSettings.maxPercent, percentChangeUp, mSettings.percentChangeDown);
 
     }
 
     public double getPercentChangeUp() {
-        return settings.percentChangeUp;
+        return mSettings.percentChangeUp;
     }
 
     public void setPercentChangeDown(double percentChangeDown) {
-        settings = new Settings(settings.maxPercent, settings.percentChangeUp, percentChangeDown);
+        mSettings = new Settings(mSettings.maxPercent, mSettings.percentChangeUp, percentChangeDown);
     }
 
     public double getPercentChangeDown() {
-        return settings.percentChangeDown;
+        return mSettings.percentChangeDown;
     }
 
     MediaPlayerWUri getMediaPlayerWUri(Long songID) {
-        return songIDToMediaPlayerWUriHashMap.get(songID);
+        return mSongIDToMediaPlayerWUriHashMap.get(songID);
     }
 
     public void addMediaPlayerWUri(Long id, MediaPlayerWUri mediaPlayerWURI) {
-        songIDToMediaPlayerWUriHashMap.put(id, mediaPlayerWURI);
+        mSongIDToMediaPlayerWUriHashMap.put(id, mediaPlayerWURI);
     }
 
     public void releaseMediaPlayers() {
         synchronized (this) {
-            Iterator<MediaPlayerWUri> iterator = songIDToMediaPlayerWUriHashMap.values().iterator();
+            Iterator<MediaPlayerWUri> iterator = mSongIDToMediaPlayerWUriHashMap.values().iterator();
             MediaPlayerWUri mediaPlayerWURI;
             while (iterator.hasNext()) {
                 mediaPlayerWURI = iterator.next();
@@ -185,12 +184,13 @@ public class MediaData {
         }
     }
 
-    private void getSongs(final ActivityMain activityMain, Handler handler) {
+    private void getSongs(final ActivityMain activityMain) {
         final Context context = activityMain.getApplicationContext();
         final Resources resources = activityMain.getResources();
         final ArrayList<Song> newSongs = new ArrayList<>();
         final ArrayList<Long> filesThatExist = new ArrayList<>();
-        ServiceMain.executorServiceFIFO.execute(new Runnable() {
+        final ExecutorService executorService = ServiceMain.executorServiceFIFO;
+        executorService.execute(new Runnable() {
             @Override
             public void run() {
                 String[] projection = new String[]{
@@ -209,7 +209,7 @@ public class MediaData {
                         int artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST_ID);
                         final int i = cursor.getCount();
                         int j = 0;
-                        loadingText.postValue(resources.getString(R.string.loading1));
+                        mLoadingText.postValue(resources.getString(R.string.loading1));
                         while (cursor.moveToNext()) {
                             long id = cursor.getLong(idCol);
                             String displayName = cursor.getString(nameCol);
@@ -229,42 +229,42 @@ public class MediaData {
                                 newSongs.add(new Song(id, title));
                             }
                             filesThatExist.add(id);
-                            loadingProgress.postValue((double) ((double) j) / ((double) i));
+                            mLoadingProgress.postValue((double) ((double) j) / ((double) i));
                             j++;
                         }
-                        loadingText.postValue(resources.getString(R.string.loading2));
+                        mLoadingText.postValue(resources.getString(R.string.loading2));
                     }
                 }
             }
         });
-        ServiceMain.executorServiceFIFO.execute(new Runnable() {
+        executorService.execute(new Runnable() {
             @Override
             public void run() {
                 int i = newSongs.size();
                 int k = 0;
                 for(Song song : newSongs) {
                     songDAO.insertAll(song);
-                    loadingProgress.postValue((double)((double)k)/((double)i));
+                    mLoadingProgress.postValue((double)((double)k)/((double)i));
                     k++;
                 }
             }
         });
-        ServiceMain.executorServiceFIFO.execute(new Runnable() {
+        executorService.execute(new Runnable() {
             @Override
             public void run() {
-                if (masterPlaylist != null) {
-                    loadingText.postValue(resources.getString(R.string.loading3));
+                if (mMasterPlaylist != null) {
+                    mLoadingText.postValue(resources.getString(R.string.loading3));
                     addNewSongs(filesThatExist);
-                    loadingText.postValue(resources.getString(R.string.loading4));
+                    mLoadingText.postValue(resources.getString(R.string.loading4));
                     removeMissingSongs(filesThatExist);
                 } else {
-                    masterPlaylist = new RandomPlaylist(
+                    mMasterPlaylist = new RandomPlaylist(
                             MediaData.MASTER_PLAYLIST_NAME, new ArrayList<>(newSongs),
-                            settings.maxPercent, true, -1);
+                            mSettings.maxPercent, true);
                 }
             }
         });
-        ServiceMain.executorServiceFIFO.execute(new Runnable() {
+        executorService.execute(new Runnable() {
             @Override
             public void run() {
                 SaveFile.saveFile(context);
@@ -277,13 +277,13 @@ public class MediaData {
     private void removeMissingSongs(List<Long> filesThatExist) {
         int i = filesThatExist.size();
         int j = 0;
-        for (Long songID : masterPlaylist.getSongIDs()) {
+        for (Long songID : mMasterPlaylist.getSongIDs()) {
             if (!filesThatExist.contains(songID)) {
-                masterPlaylist.remove(songDAO.getSong(songID));
-                songIDToMediaPlayerWUriHashMap.remove(songID);
+                mMasterPlaylist.remove(songDAO.getSong(songID));
+                mSongIDToMediaPlayerWUriHashMap.remove(songID);
                 songDAO.delete(songDAO.getSong(songID));
             }
-            loadingProgress.postValue((double)((double)j)/((double)i));
+            mLoadingProgress.postValue((double)((double)j)/((double)i));
             j++;
         }
     }
@@ -292,10 +292,10 @@ public class MediaData {
         int i = filesThatExist.size();
         int j = 0;
         for (Long songID : filesThatExist) {
-            if (!masterPlaylist.contains(songID)) {
-                masterPlaylist.add(songDAO.getSong(songID));
+            if (!mMasterPlaylist.contains(songID)) {
+                mMasterPlaylist.add(songDAO.getSong(songID));
             }
-            loadingProgress.postValue((double)((double)j)/((double)i));
+            mLoadingProgress.postValue((double)((double)j)/((double)i));
             j++;
         }
     }

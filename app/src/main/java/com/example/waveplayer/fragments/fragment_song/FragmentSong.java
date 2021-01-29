@@ -117,6 +117,13 @@ public class FragmentSong extends Fragment {
         buttonPrev.setOnClickListener(onClickListenerFragmentSong);
         buttonPause.setOnClickListener(onClickListenerFragmentSong);
         buttonNext.setOnClickListener(onClickListenerFragmentSong);
+        buttonNext.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                // TODO
+                return false;
+            }
+        });
         buttonLoop.setOnClickListener(onClickListenerFragmentSong);
         onTouchListenerFragmentSongButtons = new OnTouchListenerFragmentSongButtons();
         buttonBad.setOnTouchListener(onTouchListenerFragmentSongButtons);

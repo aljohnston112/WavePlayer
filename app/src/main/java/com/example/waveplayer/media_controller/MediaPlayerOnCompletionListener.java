@@ -13,7 +13,7 @@ public class MediaPlayerOnCompletionListener implements MediaPlayer.OnCompletion
 
     private final MediaController mediaController;
 
-    MediaPlayerOnCompletionListener(Context context, MediaController mediaController) {
+    public MediaPlayerOnCompletionListener(Context context, MediaController mediaController) {
         this.mediaController = mediaController;
         this.context = context;
     }

@@ -46,12 +46,11 @@ public class RandomPlaylist implements Serializable {
      * @param music           The List of AudioURIs to add to this playlist.
      * @param maxPercent      The max percentage that any AudioUri can have
      *                        of being returned when fun() is called.
-     * @param mediaStoreUriID The UriID used by the MediaStore.
      * @throws IllegalArgumentException if there is not at least one AudioURI in music.
      * @throws IllegalArgumentException if folder is not a directory.
      */
     public RandomPlaylist(String name, List<Song> music, double maxPercent,
-                          boolean comparable, long mediaStoreUriID) {
+                          boolean comparable) {
         if (music.isEmpty())
             throw new IllegalArgumentException("List music must contain at least one AudioURI");
         Set<Song> files = new LinkedHashSet<>(music);
