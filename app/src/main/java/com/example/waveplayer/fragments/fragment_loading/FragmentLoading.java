@@ -28,36 +28,25 @@ import com.example.waveplayer.databinding.FragmentLoadingBinding;
 import com.example.waveplayer.media_controller.MediaData;
 import com.example.waveplayer.service_main.ServiceMain;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 public class FragmentLoading extends Fragment {
 
-    private static final int REQUEST_CODE_PERMISSION = 245083964;
+    private static final short REQUEST_CODE_PERMISSION = 245;
 
     private FragmentLoadingBinding mBinding;
 
     private Handler mHandler = HandlerCompat.createAsync(Looper.myLooper());
 
-    private Runnable mRunnableAskForPermission = new Runnable() {
-        @Override
-        public void run() {
-            askForPermissionAndFillMediaController();
-        }
-    };
+    private Runnable mRunnableAskForPermission = this::askForPermissionAndFillMediaController;
 
     private Observer<Double> mObserverLoadingProgress = new Observer<Double>() {
         @Override
         public void onChanged(final Double loadingProgress) {
             final ProgressBar progressBar = mBinding.progressBarLoading;
-            progressBar.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        progressBar.setProgress((int) Math.round(loadingProgress * 100), true);
-                    } else {
-                        progressBar.setProgress((int) Math.round(loadingProgress * 100));
-                    }
+            progressBar.post(() -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    progressBar.setProgress((int) Math.round(loadingProgress * 100), true);
+                } else {
+                    progressBar.setProgress((int) Math.round(loadingProgress * 100));
                 }
             });
         }
@@ -67,17 +56,7 @@ public class FragmentLoading extends Fragment {
         @Override
         public void onChanged(final String loadingText) {
             final TextView textView = mBinding.textViewLoading;
-            textView.post(new Runnable() {
-                @Override
-                public void run() {
-                    textView.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            textView.setText(loadingText);
-                        }
-                    });
-                }
-            });
+            textView.post(() -> textView.setText(loadingText));
         }
     };
 
@@ -178,12 +157,8 @@ public class FragmentLoading extends Fragment {
     }
 
     private void permissionGranted() {
-        ServiceMain.executorServicePool.execute(new Runnable() {
-            @Override
-            public void run() {
-                MediaData.getInstance().loadData((ActivityMain) requireActivity());
-            }
-        });
+        ServiceMain.executorServicePool.execute(
+                () -> MediaData.getInstance().loadData((ActivityMain) requireActivity()));
     }
 
 }

@@ -1,21 +1,27 @@
 package com.example.waveplayer.fragments.fragment_select_songs;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SearchView;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.fragments.OnQueryTextListenerSearch;
 import com.example.waveplayer.media_controller.Song;
 import com.example.waveplayer.ViewModelUserPickedSongs;
 import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
@@ -25,6 +31,8 @@ import java.util.List;
 
 public class FragmentSelectSongs extends Fragment {
 
+    public static final String NAME = "FragmentSelectSongs";
+
     private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
     private OnClickListenerFABFragmentSelectSongs onClickListenerFABFragmentSelectSongs;
@@ -32,6 +40,10 @@ public class FragmentSelectSongs extends Fragment {
     private RecyclerView recyclerViewSongList;
 
     private ViewModelUserPickedSongs viewModelUserPickedSongs;
+
+    private OnQueryTextListenerSearch onQueryTextListenerSearch;
+
+    private BroadcastReceiver broadcastReceiverOptionsMenuCreated;
 
     // TODO search functionality
 
@@ -56,13 +68,45 @@ public class FragmentSelectSongs extends Fragment {
         activityMain.setActionBarTitle(getResources().getString(R.string.select_songs));
         updateFAB();
         setUpRecyclerView();
+        setUpToolbar();
         setUpBroadcastReceiverServiceConnected();
+        setUpBroadcastReceiverOnOptionsMenuCreated();
     }
 
     @Override
     public void onResume() {
         super.onResume();
         updateFAB();
+    }
+
+    private void setUpToolbar() {
+        ActivityMain activityMain = (ActivityMain) requireActivity();
+        Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
+        Menu menu = toolbar.getMenu();
+        if (menu != null) {
+            menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(true);
+            MenuItem itemSearch = menu.findItem(R.id.action_search);
+            if (itemSearch != null) {
+                onQueryTextListenerSearch = new OnQueryTextListenerSearch(activityMain, NAME);
+                SearchView searchView = (SearchView) itemSearch.getActionView();
+                searchView.setOnQueryTextListener(onQueryTextListenerSearch);
+            }
+        }
+    }
+
+    private void setUpBroadcastReceiverOnOptionsMenuCreated() {
+        ActivityMain activityMain = ((ActivityMain) getActivity());
+        IntentFilter filterComplete = new IntentFilter();
+        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
+        filterComplete.addAction(activityMain.getResources().getString(
+                R.string.broadcast_receiver_on_create_options_menu));
+        broadcastReceiverOptionsMenuCreated = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                setUpToolbar();
+            }
+        };
+        activityMain.registerReceiver(broadcastReceiverOptionsMenuCreated, filterComplete);
     }
 
     private void updateFAB() {
@@ -111,6 +155,17 @@ public class FragmentSelectSongs extends Fragment {
         broadcastReceiverOnServiceConnected = null;
         onClickListenerFABFragmentSelectSongs = null;
         viewModelUserPickedSongs = null;
+        activityMain.unregisterReceiver(broadcastReceiverOptionsMenuCreated);
+        broadcastReceiverOptionsMenuCreated = null;
+        Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
+        Menu menu = toolbar.getMenu();
+        if (menu != null) {
+            MenuItem itemSearch = menu.findItem(R.id.action_search);
+            SearchView searchView = (SearchView) itemSearch.getActionView();
+            searchView.setOnQueryTextListener(null);
+            searchView.onActionViewCollapsed();
+        }
+        onQueryTextListenerSearch = null;
     }
 
     public List<Song> getUserPickedSongs() {

@@ -53,26 +53,18 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
         onCreateContextMenuListenerPlaylists =
                 new OnCreateContextMenuListenerPlaylists(fragmentPlaylists, holder.randomPlaylist);
         holder.handle.setOnCreateContextMenuListener(onCreateContextMenuListenerPlaylists);
-        onClickListenerHandle = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                holder.handle.performLongClick();
-            }
-        };
+        onClickListenerHandle = v -> holder.handle.performLongClick();
         holder.handle.setOnClickListener(null);
         holder.handle.setOnClickListener(onClickListenerHandle);
-        onClickListenerViewHolder = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int position = holder.getAdapterPosition();
-                if (position != RecyclerView.NO_POSITION) {
-                    ActivityMain activityMain = ((ActivityMain) fragmentPlaylists.getActivity());
-                    if (activityMain != null) {
-                        fragmentPlaylists.setUserPickedPlaylist(holder.randomPlaylist);
-                    }
-                    NavHostFragment.findNavController(fragmentPlaylists).navigate(
-                            FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentPlaylist());
+        onClickListenerViewHolder = v -> {
+            int position1 = holder.getAdapterPosition();
+            if (position1 != RecyclerView.NO_POSITION) {
+                ActivityMain activityMain = ((ActivityMain) fragmentPlaylists.getActivity());
+                if (activityMain != null) {
+                    fragmentPlaylists.setUserPickedPlaylist(holder.randomPlaylist);
                 }
+                NavHostFragment.findNavController(fragmentPlaylists).navigate(
+                        FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentPlaylist());
             }
         };
         holder.playlistView.setOnClickListener(null);

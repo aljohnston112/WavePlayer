@@ -17,24 +17,35 @@ import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavDirections;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.waveplayer.activity_main.ActivityMain;
-import com.example.waveplayer.media_controller.MediaData;
-import com.example.waveplayer.media_controller.Song;
+import com.example.waveplayer.R;
 import com.example.waveplayer.ViewModelUserPickedPlaylist;
+import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist;
+import com.example.waveplayer.databinding.RecyclerViewSongListBinding;
 import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.fragments.OnQueryTextListenerSearch;
-import com.example.waveplayer.R;
 import com.example.waveplayer.fragments.RecyclerViewAdapterSongs;
+import com.example.waveplayer.media_controller.MediaData;
+import com.example.waveplayer.media_controller.Song;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class FragmentSongs extends Fragment {
+import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG;
+import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_IS_SONG;
+
+public class FragmentSongs extends Fragment implements
+        RecyclerViewAdapterSongs.OnCreateContextMenuListenerSongsCallback,
+        RecyclerViewAdapterSongs.OnClickListenerViewHolderCallback {
 
     public static final String NAME = "FragmentSongs";
+
+    private RecyclerViewSongListBinding mBinding;
 
     private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
@@ -50,7 +61,8 @@ public class FragmentSongs extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.recycler_view_song_list, container, false);
+        mBinding = RecyclerViewSongListBinding.inflate(inflater, container, false);
+        return mBinding.getRoot();
     }
 
     @Override
@@ -58,7 +70,7 @@ public class FragmentSongs extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         ViewModelUserPickedPlaylist viewModelUserPickedPlaylist =
                 new ViewModelProvider(requireActivity()).get(ViewModelUserPickedPlaylist.class);
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         activityMain.hideKeyboard(view);
         updateMainContent();
         setUpRecyclerView();
@@ -68,14 +80,14 @@ public class FragmentSongs extends Fragment {
     }
 
     private void updateMainContent() {
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        ActivityMain activityMain = ((ActivityMain) requireActivity());
         activityMain.setActionBarTitle(getResources().getString(R.string.songs));
         activityMain.showFab(false);
         setUpToolbar();
     }
 
     private void setUpToolbar() {
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
         Menu menu = toolbar.getMenu();
         if (menu != null) {
@@ -87,6 +99,19 @@ public class FragmentSongs extends Fragment {
                 SearchView searchView = (SearchView) itemSearch.getActionView();
                 searchView.setOnQueryTextListener(onQueryTextListenerSearch);
             }
+        }
+    }
+
+    private void setUpRecyclerView() {
+        RecyclerView recyclerViewSongs = mBinding.recyclerViewSongList;
+        List<Song> songs = MediaData.getInstance().getAllSongs();
+        if (songs != null) {
+            RecyclerViewAdapterSongs recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(
+                    this, this,
+                    new ArrayList<>(songs));
+            recyclerViewSongs.setLayoutManager(
+                    new LinearLayoutManager(recyclerViewSongs.getContext()));
+            recyclerViewSongs.setAdapter(recyclerViewAdapterSongs);
         }
     }
 
@@ -121,25 +146,11 @@ public class FragmentSongs extends Fragment {
         activityMain.registerReceiver(broadcastReceiverOptionsMenuCreated, filterComplete);
     }
 
-
-    private void setUpRecyclerView() {
-            ActivityMain activityMain = ((ActivityMain) getActivity());
-            View view = getView();
-            RecyclerView recyclerViewSongs = view.findViewById(R.id.recycler_view_song_list);
-            List<Song> songs = activityMain.getAllSongs();
-            if(songs != null) {
-                RecyclerViewAdapterSongs recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(
-                        this, new ArrayList<>(songs));
-                recyclerViewSongs.setLayoutManager(
-                        new LinearLayoutManager(recyclerViewSongs.getContext()));
-                recyclerViewSongs.setAdapter(recyclerViewAdapterSongs);
-            }
-        }
-
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        final ActivityMain activityMain = ((ActivityMain) requireActivity());
+        mBinding = null;
         View view = getView();
         activityMain.hideKeyboard(view);
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
@@ -155,6 +166,55 @@ public class FragmentSongs extends Fragment {
             searchView.onActionViewCollapsed();
         }
         onQueryTextListenerSearch = null;
+    }
+
+    @Override
+    public boolean onMenuItemClickAddToPlaylist(Song song) {
+        contextMenuAddToPlaylist(song);
+        return true;
+    }
+
+    private void contextMenuAddToPlaylist(Song song) {
+        Bundle bundle = new Bundle();
+        bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, song);
+        bundle.putBoolean(BUNDLE_KEY_IS_SONG, true);
+        DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist =
+                new DialogFragmentAddToPlaylist();
+        dialogFragmentAddToPlaylist.setArguments(bundle);
+        dialogFragmentAddToPlaylist.show(getParentFragmentManager(), getTag());
+    }
+
+    @Override
+    public boolean onMenuItemClickAddToQueue(Song song) {
+        contextMenuAddToQueue(song);
+        return true;
+    }
+
+    private void contextMenuAddToQueue(Song song) {
+        ActivityMain activityMain = (ActivityMain) requireActivity();
+        if (activityMain.songInProgress()) {
+            activityMain.addToQueue(song.id);
+        } else {
+            activityMain.showSongPane();
+            activityMain.addToQueueAndPlay(song.id);
+        }
+    }
+
+    @Override
+    public void onClick(Song song) {
+        ActivityMain activityMain = ((ActivityMain) requireActivity());
+        if (activityMain.getCurrentAudioUri() != null &&
+                song.equals(MediaData.getInstance().getSong(
+                        activityMain.getCurrentAudioUri().id))) {
+            activityMain.seekTo(0);
+        }
+        activityMain.setCurrentPlaylistToMaster();
+        activityMain.clearSongQueue();
+        activityMain.addToQueueAndPlay(song.id);
+        NavDirections action = FragmentSongsDirections.actionFragmentSongsToFragmentSong();
+        if (action != null) {
+            NavHostFragment.findNavController(this).navigate(action);
+        }
     }
 
 }

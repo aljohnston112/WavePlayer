@@ -4,6 +4,8 @@ import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.fragments.fragment_select_songs.FragmentSelectSongs;
+import com.example.waveplayer.fragments.fragment_select_songs.RecyclerViewAdapterSelectSongs;
 import com.example.waveplayer.media_controller.MediaData;
 import com.example.waveplayer.media_controller.Song;
 import com.example.waveplayer.R;
@@ -95,6 +97,25 @@ public class OnQueryTextListenerSearch implements SearchView.OnQueryTextListener
                     }
                 }
                 return true;
+            }
+            case FragmentSelectSongs.NAME: {
+                RecyclerView recyclerViewSelectSongs = activityMain.findViewById(R.id.recycler_view_song_list);
+                if (recyclerViewSelectSongs != null) {
+                    RecyclerViewAdapterSelectSongs recyclerViewAdapterSelectSongs =
+                            (RecyclerViewAdapterSelectSongs) recyclerViewSelectSongs.getAdapter();
+                    List<Song> songs = activityMain.getAllSongs();
+                    List<Song> sifted = new ArrayList<>();
+                    if (!newText.equals("")) {
+                        for (Song song : songs) {
+                            if (song.title.toLowerCase().contains(newText.toLowerCase())) {
+                                sifted.add(song);
+                            }
+                        }
+                        recyclerViewAdapterSelectSongs.updateList(sifted);
+                    } else {
+                        recyclerViewAdapterSelectSongs.updateList(songs);
+                    }
+                }
             }
         }
         return false;

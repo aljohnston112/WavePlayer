@@ -2,6 +2,7 @@ package com.example.waveplayer.activity_main;
 
 import android.content.DialogInterface;
 
+import com.example.waveplayer.media_controller.MediaData;
 import com.example.waveplayer.media_controller.Song;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 
@@ -9,7 +10,6 @@ import java.util.List;
 
 public class OnClickListenerAddToPlaylistPositiveButton implements DialogInterface.OnClickListener {
 
-    private final List<RandomPlaylist> randomPlaylists;
     private final List<Integer> selectedPlaylistIndices;
 
     private final boolean isSong;
@@ -21,9 +21,8 @@ public class OnClickListenerAddToPlaylistPositiveButton implements DialogInterfa
     }
 
     public OnClickListenerAddToPlaylistPositiveButton(
-            List<RandomPlaylist> randomPlaylists, List<Integer> selectedPlaylistIndices,
+            List<Integer> selectedPlaylistIndices,
             boolean isSong, Song song, RandomPlaylist randomPlaylist) {
-        this.randomPlaylists = randomPlaylists;
         this.selectedPlaylistIndices = selectedPlaylistIndices;
         this.isSong = isSong;
         this.song = song;
@@ -34,13 +33,13 @@ public class OnClickListenerAddToPlaylistPositiveButton implements DialogInterfa
     public void onClick(DialogInterface dialog, int id) {
         if (isSong && song != null) {
             for (int index : selectedPlaylistIndices) {
-                randomPlaylists.get(index).add(song);
+                MediaData.getInstance().getPlaylists().get(index).add(song);
             }
         }
         if (!isSong && randomPlaylist != null) {
             for (Song randomPlaylistSong : randomPlaylist.getSongs()) {
                 for (int index : selectedPlaylistIndices) {
-                    randomPlaylists.get(index).add(randomPlaylistSong);
+                    MediaData.getInstance().getPlaylists().get(index).add(randomPlaylistSong);
                 }
             }
         }

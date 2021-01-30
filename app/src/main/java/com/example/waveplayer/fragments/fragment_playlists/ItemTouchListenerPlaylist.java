@@ -36,8 +36,6 @@ public class ItemTouchListenerPlaylist extends ItemTouchHelper.Callback {
         RecyclerViewAdapterPlaylists recyclerViewAdapter =
                 (RecyclerViewAdapterPlaylists) recyclerView.getAdapter();
         if (recyclerViewAdapter != null) {
-            Collections.swap(recyclerViewAdapter.randomPlaylists,
-                    viewHolder.getAdapterPosition(), target.getAdapterPosition());
             Collections.swap(MediaData.getInstance().getPlaylists(),
                     viewHolder.getAdapterPosition(), target.getAdapterPosition());
             recyclerViewAdapter.notifyItemMoved(

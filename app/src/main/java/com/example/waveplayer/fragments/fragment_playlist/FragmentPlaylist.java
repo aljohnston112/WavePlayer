@@ -17,22 +17,32 @@ import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavDirections;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.R;
 import com.example.waveplayer.ViewModelUserPickedPlaylist;
 import com.example.waveplayer.ViewModelUserPickedSongs;
+import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist;
 import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.fragments.OnQueryTextListenerSearch;
-import com.example.waveplayer.R;
-import com.example.waveplayer.random_playlist.RandomPlaylist;
 import com.example.waveplayer.fragments.RecyclerViewAdapterSongs;
+import com.example.waveplayer.media_controller.MediaData;
+import com.example.waveplayer.media_controller.Song;
+import com.example.waveplayer.random_playlist.RandomPlaylist;
 
 import java.util.ArrayList;
 
-public class FragmentPlaylist extends Fragment {
+import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG;
+import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_IS_SONG;
+
+public class FragmentPlaylist extends Fragment implements
+        RecyclerViewAdapterSongs.OnCreateContextMenuListenerSongsCallback,
+        RecyclerViewAdapterSongs.OnClickListenerViewHolderCallback {
 
     public static final String NAME = "FragmentPlaylist";
 
@@ -120,7 +130,8 @@ public class FragmentPlaylist extends Fragment {
         recyclerViewSongList.setLayoutManager(
                 new LinearLayoutManager(recyclerViewSongList.getContext()));
         RecyclerViewAdapterSongs recyclerViewAdapterSongsList = new RecyclerViewAdapterSongs(
-                this, new ArrayList<>(userPickedPlaylist.getSongs()));
+                this, this,
+                new ArrayList<>(userPickedPlaylist.getSongs()));
         recyclerViewSongList.setAdapter(recyclerViewAdapterSongsList);
         itemTouchListenerSong = new ItemTouchListenerSong(this, userPickedPlaylist);
         itemTouchHelper = new ItemTouchHelper(itemTouchListenerSong);
@@ -201,4 +212,54 @@ public class FragmentPlaylist extends Fragment {
     public void clearUserPickedSongs() {
         viewModelUserPickedSongs.clearUserPickedSongs();
     }
+
+    @Override
+    public boolean onMenuItemClickAddToPlaylist(Song song) {
+        contextMenuAddToPlaylist(song);
+        return true;
+    }
+
+    private void contextMenuAddToPlaylist(Song song) {
+        Bundle bundle = new Bundle();
+        bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, song);
+        bundle.putBoolean(BUNDLE_KEY_IS_SONG, true);
+        DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist =
+                new DialogFragmentAddToPlaylist();
+        dialogFragmentAddToPlaylist.setArguments(bundle);
+        dialogFragmentAddToPlaylist.show(getParentFragmentManager(), getTag());
+    }
+
+    @Override
+    public boolean onMenuItemClickAddToQueue(Song song) {
+        contextMenuAddToQueue(song);
+        return true;
+    }
+
+    private void contextMenuAddToQueue(Song song) {
+        ActivityMain activityMain = (ActivityMain) requireActivity();
+        if (activityMain.songInProgress()) {
+            activityMain.addToQueue(song.id);
+        } else {
+            activityMain.showSongPane();
+            activityMain.addToQueueAndPlay(song.id);
+        }
+    }
+
+    @Override
+    public void onClick(Song song) {
+        ActivityMain activityMain = ((ActivityMain) requireActivity());
+        if (activityMain.getCurrentAudioUri() != null &&
+                song.equals(MediaData.getInstance().getSong(
+                        activityMain.getCurrentAudioUri().id))) {
+            activityMain.seekTo(0);
+        }
+        activityMain.setCurrentPlaylist(getUserPickedPlaylist());
+        activityMain.clearSongQueue();
+        activityMain.addToQueueAndPlay(song.id);
+        NavDirections action = FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong();
+        if (action != null) {
+            NavHostFragment.findNavController(this).navigate(action);
+        }
+    }
+
 }

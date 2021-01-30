@@ -1,11 +1,8 @@
 package com.example.waveplayer.activity_main;
 
-import android.Manifest;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.pm.PackageManager;
-import android.content.res.ColorStateList;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -18,7 +15,6 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,17 +33,17 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
-import com.example.waveplayer.media_controller.MediaController;
 import com.example.waveplayer.R;
-import com.example.waveplayer.media_controller.MediaData;
-import com.example.waveplayer.media_controller.SaveFile;
-import com.example.waveplayer.service_main.ServiceMain;
-import com.example.waveplayer.media_controller.Song;
 import com.example.waveplayer.ViewModelUserPickedPlaylist;
 import com.example.waveplayer.ViewModelUserPickedSongs;
 import com.example.waveplayer.fragments.fragment_pane_song.OnClickListenerSongPane;
+import com.example.waveplayer.media_controller.MediaController;
+import com.example.waveplayer.media_controller.MediaData;
+import com.example.waveplayer.media_controller.SaveFile;
+import com.example.waveplayer.media_controller.Song;
 import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
+import com.example.waveplayer.service_main.ServiceMain;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import java.util.ArrayList;
@@ -57,7 +53,6 @@ import java.util.concurrent.TimeUnit;
 import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST;
 import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG;
 import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_IS_SONG;
-import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_PLAYLISTS;
 
 public class ActivityMain extends AppCompatActivity {
 
@@ -75,10 +70,14 @@ public class ActivityMain extends AppCompatActivity {
 
     static final String TAG = "ActivityMain";
 
+    public final static Object lock = new Object();
+
     public static final int MENU_ACTION_RESET_PROBS_INDEX = 0;
     public static final int MENU_ACTION_ADD_TO_PLAYLIST_INDEX = 1;
     public static final int MENU_ACTION_SEARCH_INDEX = 2;
     public static final int MENU_ACTION_ADD_TO_QUEUE = 3;
+
+    private static final String KEY_BOOLEAN_LOADED = "KEY_BOOLEAN_LOADED";
 
     private ServiceMain serviceMain;
 
@@ -87,8 +86,6 @@ public class ActivityMain extends AppCompatActivity {
     private ViewModelUserPickedPlaylist viewModelUserPickedPlaylist;
 
     private ViewModelUserPickedSongs viewModelUserPickedSongs;
-
-    private static final String KEY_BOOLEAN_LOADED = "KEY_BOOLEAN_LOADED";
 
     private boolean loaded = false;
 
@@ -106,13 +103,24 @@ public class ActivityMain extends AppCompatActivity {
     private void setUpAfterServiceConnection() {
         // Log.v(TAG, "setUpAfterServiceConnection started");
         if (loaded) {
-            if (MediaController.getInstance(getApplicationContext()).isPlaying()) {
-                navigateTo(R.id.fragmentSong);
-            } else {
-                navigateTo(R.id.FragmentTitle);
+            mediaController = MediaController.getInstance(getApplicationContext());
+            if (!fragmentSongVisible()) {
+                if (MediaController.getInstance(getApplicationContext()).isPlaying()) {
+                    navigateTo(R.id.fragmentSong);
+                } else {
+                    navigateTo(R.id.FragmentTitle);
+                }
+            }
+        } else {
+            mediaController = MediaController.getInstance(getApplicationContext());
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
+            if (fragment != null) {
+                NavHostFragment.findNavController(fragment).popBackStack(R.id.fragmentLoading, true);
             }
         }
-        mediaController = MediaController.getInstance(getApplicationContext());
+
+
         serviceMain.permissionGranted();
         setUpBroadcastReceivers();
         runnableSongArtUpdater = new RunnableSongArtUpdater(this);
@@ -150,8 +158,6 @@ public class ActivityMain extends AppCompatActivity {
     private RunnableSongArtUpdater runnableSongArtUpdater;
 
     private RunnableSongPaneArtUpdater runnableSongPaneArtUpdater;
-
-    public final Object lock = new Object();
 
     private boolean isSong;
 
@@ -218,14 +224,11 @@ public class ActivityMain extends AppCompatActivity {
         // Log.v(TAG, "onStart started");
         onSeekBarChangeListener = new OnSeekBarChangeListener(this);
         setUpActionBar();
-        runnableUIUpdate = new Runnable() {
-            @Override
-            public void run() {
-                // Log.v(TAG, "updating UI");
-                updateSongUI();
-                updateSongPaneUI();
-                // Log.v(TAG, "done updating UI");
-            }
+        runnableUIUpdate = () -> {
+            // Log.v(TAG, "updating UI");
+            updateSongUI();
+            updateSongPaneUI();
+            // Log.v(TAG, "done updating UI");
         };
         super.onStart();
         // Log.v(TAG, "onStart ended");
@@ -304,18 +307,15 @@ public class ActivityMain extends AppCompatActivity {
         // Log.v(TAG, "sending runnable to hide song pane");
         final View fragmentPaneSong = findViewById(R.id.fragmentSongPane);
         if (fragmentPaneSong.getVisibility() != View.INVISIBLE) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    // Log.v(TAG, "hiding song pane");
-                    fragmentPaneSong.setVisibility(View.INVISIBLE);
-                    ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
-                    ConstraintSet constraintSet = new ConstraintSet();
-                    constraintSet.clone(constraintLayout);
-                    constraintSet.connect(R.id.fab, ConstraintSet.BOTTOM, R.id.constraintMain, ConstraintSet.BOTTOM);
-                    constraintSet.applyTo(constraintLayout);
-                    // Log.v(TAG, "done hiding song pane");
-                }
+            runOnUiThread(() -> {
+                // Log.v(TAG, "hiding song pane");
+                fragmentPaneSong.setVisibility(View.INVISIBLE);
+                ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
+                ConstraintSet constraintSet = new ConstraintSet();
+                constraintSet.clone(constraintLayout);
+                constraintSet.connect(R.id.fab, ConstraintSet.BOTTOM, R.id.constraintMain, ConstraintSet.BOTTOM);
+                constraintSet.applyTo(constraintLayout);
+                // Log.v(TAG, "done hiding song pane");
             });
         }
         // Log.v(TAG, "done sending runnable to hide song pane");
@@ -325,19 +325,16 @@ public class ActivityMain extends AppCompatActivity {
         // Log.v(TAG, "sending runnable to show song pane");
         final View fragmentPaneSong = findViewById(R.id.fragmentSongPane);
         if (fragmentPaneSong.getVisibility() != View.VISIBLE) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    // Log.v(TAG, "showing song pane");
-                    findViewById(R.id.fragmentSongPane).setVisibility(View.VISIBLE);
-                    ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
-                    ConstraintSet constraintSet = new ConstraintSet();
-                    constraintSet.clone(constraintLayout);
-                    constraintSet.connect(R.id.fab, ConstraintSet.BOTTOM, R.id.fragmentSongPane, ConstraintSet.TOP);
-                    constraintSet.applyTo(constraintLayout);
-                    updateUI();
-                    // Log.v(TAG, "done showing song pane");
-                }
+            runOnUiThread(() -> {
+                // Log.v(TAG, "showing song pane");
+                findViewById(R.id.fragmentSongPane).setVisibility(View.VISIBLE);
+                ConstraintLayout constraintLayout = findViewById(R.id.constraintMain);
+                ConstraintSet constraintSet = new ConstraintSet();
+                constraintSet.clone(constraintLayout);
+                constraintSet.connect(R.id.fab, ConstraintSet.BOTTOM, R.id.fragmentSongPane, ConstraintSet.TOP);
+                constraintSet.applyTo(constraintLayout);
+                updateUI();
+                // Log.v(TAG, "done showing song pane");
             });
         }
         // Log.v(TAG, "done sending runnable to show song pane");
@@ -449,6 +446,7 @@ public class ActivityMain extends AppCompatActivity {
         viewModelUserPickedPlaylist = null;
         viewModelUserPickedSongs = null;
         serviceMain = null;
+        playlistToAddToQueue = null;
         // Log.v(TAG, "onStop ended");
     }
 
@@ -813,15 +811,12 @@ public class ActivityMain extends AppCompatActivity {
 
     public void navigateTo(final int id) {
         // Log.v(TAG, "navigateTo start");
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
-                if (fragment != null) {
-                    NavController navController = NavHostFragment.findNavController(fragment);
-                    navController.navigate(id);
-                }
+        runOnUiThread(() -> {
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
+            if (fragment != null) {
+                NavController navController = NavHostFragment.findNavController(fragment);
+                navController.navigate(id);
             }
         });
         // Log.v(TAG, "navigateTo end");
@@ -889,9 +884,7 @@ public class ActivityMain extends AppCompatActivity {
         Bundle bundle = new Bundle();
         bundle.putBoolean(BUNDLE_KEY_IS_SONG, isSong);
         bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, mediaController.getCurrentAudioUri());
-        bundle.putSerializable(BUNDLE_KEY_PLAYLISTS, mediaController.getPlaylists());
-        bundle.putSerializable(
-                BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST,
+        bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST,
                 viewModelUserPickedPlaylist.getUserPickedPlaylist());
         // Log.v(TAG, "loadBundleForAddToPlaylist end");
         return bundle;

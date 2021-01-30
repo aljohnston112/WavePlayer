@@ -145,8 +145,7 @@ public class FragmentTitle extends Fragment {
     private void getFiles(Uri childrenUri, Uri rootUri) {
         ActivityMain activityMain = (ActivityMain) requireActivity();
         ContentResolver contentResolver = activityMain.getContentResolver();
-        String selection = MediaStore.Audio.Media.IS_MUSIC + " != ? OR" +
-                DocumentsContract.Document.COLUMN_MIME_TYPE + " == ?";
+        String selection = MediaStore.Audio.Media.IS_MUSIC + " != ? OR" + DocumentsContract.Document.COLUMN_MIME_TYPE + " == ?";
         String[] selectionArgs = new String[]{"0", DocumentsContract.Document.MIME_TYPE_DIR};
         try (Cursor cursor = contentResolver.query(childrenUri, new String[]{
                         DocumentsContract.Document.COLUMN_DOCUMENT_ID,
