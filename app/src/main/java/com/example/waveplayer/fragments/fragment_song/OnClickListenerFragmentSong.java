@@ -18,11 +18,11 @@ public class OnClickListenerFragmentSong implements View.OnClickListener {
 
     @Override
     public void onClick(View view) {
-        synchronized (activityMain.lock) {
+        synchronized (ActivityMain.lock) {
             if (view.getId() == R.id.button_thumb_down) {
                 Song song = MediaData.getInstance().getSong(activityMain.getCurrentAudioUri().id);
                 if(song != null) {
-                    activityMain.getCurrentPlaylist().bad(activityMain.getApplicationContext(),
+                    activityMain.getCurrentPlaylist().globalBad(
                             song, MediaData.getInstance().getPercentChangeDown());
                     activityMain.saveFile();
                 }

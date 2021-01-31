@@ -6,6 +6,8 @@ import android.media.MediaPlayer;
 
 import com.example.waveplayer.R;
 import com.example.waveplayer.media_controller.MediaController;
+import com.example.waveplayer.media_controller.MediaPlayerWUri.MOnPreparedListener;
+import com.example.waveplayer.random_playlist.AudioUri;
 
 public class MediaPlayerOnCompletionListener implements MediaPlayer.OnCompletionListener {
 
@@ -20,6 +22,8 @@ public class MediaPlayerOnCompletionListener implements MediaPlayer.OnCompletion
 
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
+        AudioUri audioUri = mediaController.getCurrentAudioUri();
+        mediaController.getMediaPlayerWUri(audioUri.id).resetIfMKV(audioUri, context);
         mediaController.playNext(context);
         sendBroadcastOnCompletion();
     }

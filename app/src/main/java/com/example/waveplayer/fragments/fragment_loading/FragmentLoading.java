@@ -24,6 +24,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.waveplayer.R;
 import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.activity_main.ViewModelActivityMain;
 import com.example.waveplayer.databinding.FragmentLoadingBinding;
 import com.example.waveplayer.media_controller.MediaData;
 import com.example.waveplayer.service_main.ServiceMain;
@@ -32,16 +33,18 @@ public class FragmentLoading extends Fragment {
 
     private static final short REQUEST_CODE_PERMISSION = 245;
 
-    private FragmentLoadingBinding mBinding;
+    private ViewModelActivityMain viewModelActivityMain;
 
-    private Handler mHandler = HandlerCompat.createAsync(Looper.myLooper());
+    private FragmentLoadingBinding binding;
 
-    private Runnable mRunnableAskForPermission = this::askForPermissionAndFillMediaController;
+    private Handler handler = HandlerCompat.createAsync(Looper.myLooper());
 
-    private Observer<Double> mObserverLoadingProgress = new Observer<Double>() {
+    private Runnable runnableAskForPermission = this::askForPermissionAndFillMediaController;
+
+    private Observer<Double> observerLoadingProgress = new Observer<Double>() {
         @Override
         public void onChanged(final Double loadingProgress) {
-            final ProgressBar progressBar = mBinding.progressBarLoading;
+            final ProgressBar progressBar = binding.progressBarLoading;
             progressBar.post(() -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     progressBar.setProgress((int) Math.round(loadingProgress * 100), true);
@@ -52,10 +55,10 @@ public class FragmentLoading extends Fragment {
         }
     };
 
-    private Observer<String> mObserverLoadingText = new Observer<String>() {
+    private Observer<String> observerLoadingText = new Observer<String>() {
         @Override
         public void onChanged(final String loadingText) {
-            final TextView textView = mBinding.textViewLoading;
+            final TextView textView = binding.textViewLoading;
             textView.post(() -> textView.setText(loadingText));
         }
     };
@@ -68,8 +71,8 @@ public class FragmentLoading extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        mBinding = FragmentLoadingBinding.inflate(inflater, container, false);
-        return mBinding.getRoot();
+        binding = FragmentLoadingBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
@@ -80,26 +83,23 @@ public class FragmentLoading extends Fragment {
     }
 
     private void setUpViewModel() {
-        ViewModelFragmentLoading model = new ViewModelProvider(this).get(ViewModelFragmentLoading.class);
-        model.getLoadingProgress().observe(getViewLifecycleOwner(), mObserverLoadingProgress);
-        model.getLoadingText().observe(getViewLifecycleOwner(), mObserverLoadingText);
+        ViewModelFragmentLoading model =
+                new ViewModelProvider(this).get(ViewModelFragmentLoading.class);
+        viewModelActivityMain =
+                new ViewModelProvider(requireActivity()).get(ViewModelActivityMain.class);
+        model.getLoadingProgress().observe(getViewLifecycleOwner(), observerLoadingProgress);
+        model.getLoadingText().observe(getViewLifecycleOwner(), observerLoadingText);
     }
 
     private void updateMainContent() {
-        ActivityMain activityMain = ((ActivityMain) requireActivity());
-        activityMain.setActionBarTitle(getResources().getString(R.string.loading));
-        updateFAB();
-    }
-
-    private void updateFAB() {
-        ActivityMain activityMain = ((ActivityMain) requireActivity());
-        activityMain.showFab(false);
+        viewModelActivityMain.setActionBarTitle(getResources().getString(R.string.loading));
+        viewModelActivityMain.showFab(false);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        updateFAB();
+        viewModelActivityMain.showFab(false);
         ActivityMain activityMain = ((ActivityMain) requireActivity());
         activityMain.fragmentLoadingStarted();
     }
@@ -107,11 +107,12 @@ public class FragmentLoading extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        mBinding = null;
-        mRunnableAskForPermission = null;
-        mHandler = null;
-        mObserverLoadingProgress = null;
-        mObserverLoadingText = null;
+        binding = null;
+        runnableAskForPermission = null;
+        handler = null;
+        observerLoadingProgress = null;
+        observerLoadingText = null;
+        viewModelActivityMain = null;
     }
 
     void askForPermissionAndFillMediaController() {
@@ -149,7 +150,7 @@ public class FragmentLoading extends Fragment {
                     toast = Toast.makeText(context, R.string.permission_write_needed, Toast.LENGTH_LONG);
                 }
                 toast.show();
-                mHandler.postDelayed(mRunnableAskForPermission, 1000);
+                handler.postDelayed(runnableAskForPermission, 1000);
             } else {
                 permissionGranted();
             }

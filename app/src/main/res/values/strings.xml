@@ -21,6 +21,7 @@
 
     <string name="start_time">00:00:00</string>
     <string name="reset_probs">Reset Probabilities</string>
+    <string name="lower_probs">Lower Probabilities</string>
     <string name="playlist_deleted">Playlist deleted</string>
     <string name="song_removed">Song removed from playlist</string>
     <string name="undo">Undo</string>

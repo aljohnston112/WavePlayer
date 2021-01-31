@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.activity_main.ViewModelActivityMain;
 import com.example.waveplayer.fragments.OnQueryTextListenerSearch;
 import com.example.waveplayer.media_controller.Song;
 import com.example.waveplayer.ViewModelUserPickedSongs;
@@ -32,6 +33,8 @@ import java.util.List;
 public class FragmentSelectSongs extends Fragment {
 
     public static final String NAME = "FragmentSelectSongs";
+
+    private ViewModelActivityMain viewModelActivityMain;
 
     private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
@@ -63,9 +66,11 @@ public class FragmentSelectSongs extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModelUserPickedSongs =
                 new ViewModelProvider(requireActivity()).get(ViewModelUserPickedSongs.class);
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        viewModelActivityMain =
+                new ViewModelProvider(requireActivity()).get(ViewModelActivityMain.class);
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         activityMain.hideKeyboard(view);
-        activityMain.setActionBarTitle(getResources().getString(R.string.select_songs));
+        viewModelActivityMain.setActionBarTitle(getResources().getString(R.string.select_songs));
         updateFAB();
         setUpRecyclerView();
         setUpToolbar();
@@ -95,7 +100,7 @@ public class FragmentSelectSongs extends Fragment {
     }
 
     private void setUpBroadcastReceiverOnOptionsMenuCreated() {
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -110,12 +115,11 @@ public class FragmentSelectSongs extends Fragment {
     }
 
     private void updateFAB() {
-        ActivityMain activityMain = ((ActivityMain) getActivity());
-        activityMain.setFabImage(R.drawable.ic_check_white_24dp);
-        activityMain.setFABText(R.string.fab_done);
-        activityMain.showFab(true);
+        viewModelActivityMain.setFabImage(R.drawable.ic_check_white_24dp);
+        viewModelActivityMain.setFABText(R.string.fab_done);
+        viewModelActivityMain.showFab(true);
         onClickListenerFABFragmentSelectSongs = new OnClickListenerFABFragmentSelectSongs(this);
-        activityMain.setFabOnClickListener(onClickListenerFABFragmentSelectSongs);
+        viewModelActivityMain.setFabOnClickListener(onClickListenerFABFragmentSelectSongs);
     }
 
     private void setUpRecyclerView() {
@@ -132,7 +136,7 @@ public class FragmentSelectSongs extends Fragment {
     }
 
     private void setUpBroadcastReceiverServiceConnected() {
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -149,7 +153,7 @@ public class FragmentSelectSongs extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         recyclerViewSongList.setAdapter(null);
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
         broadcastReceiverOnServiceConnected = null;
@@ -166,6 +170,7 @@ public class FragmentSelectSongs extends Fragment {
             searchView.onActionViewCollapsed();
         }
         onQueryTextListenerSearch = null;
+        viewModelActivityMain = null;
     }
 
     public List<Song> getUserPickedSongs() {

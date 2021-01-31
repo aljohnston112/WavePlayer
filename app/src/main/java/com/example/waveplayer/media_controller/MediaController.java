@@ -50,11 +50,14 @@ public class MediaController {
 
     public void setCurrentPlaylist(RandomPlaylist currentPlaylist) {
         this.currentPlaylist = currentPlaylist;
-        songQueue.clearSongQueue();
     }
 
     public void clearProbabilities(Context context) {
         currentPlaylist.clearProbabilities(context);
+    }
+
+    public void lowerProbabilities(Context context) {
+        currentPlaylist.lowerProbabilities(context, mediaData.getLowerProb());
     }
 
     private final SongQueue songQueue = new SongQueue();
@@ -167,7 +170,7 @@ public class MediaController {
             songInProgress = true;
         }
         currentAudioUri = MediaData.getAudioUri(context, mediaPlayerWURI.id);
-        currentPlaylist.setIndexTo(mediaPlayerWURI.id);
+            currentPlaylist.setIndexTo(mediaPlayerWURI.id);
     }
 
     public void pauseOrPlay(Context context) {
@@ -394,8 +397,7 @@ public class MediaController {
         return mediaData.getPercentChangeDown();
     }
 
-    public Serializable getPlaylists() {
-        return mediaData.getPlaylists();
+    public void goToFront() {
+        songQueue.goToFront();
     }
-
 }

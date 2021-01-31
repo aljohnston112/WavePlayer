@@ -24,26 +24,27 @@ public class OnDestinationChangedListenerToolbar implements NavController.OnDest
     public void onDestinationChanged(@NonNull NavController controller,
                                      @NonNull final NavDestination destination,
                                      @Nullable Bundle arguments) {
-        activityMain.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
-                Menu menu = toolbar.getMenu();
-                if (menu.size() > 0) {
-                    menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(
-                            destination.getId() == R.id.fragmentPlaylist ||
-                                    destination.getId() == R.id.fragmentSongs);
-                    menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).setVisible(
-                            destination.getId() == R.id.fragmentSong ||
-                                    destination.getId() == R.id.fragmentPlaylist);
-                    menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(
-                            destination.getId() == R.id.fragmentSongs ||
-                                    destination.getId() == R.id.fragmentPlaylist ||
-                                    destination.getId() == R.id.FragmentPlaylists);
-                    menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).setVisible(
-                            destination.getId() == R.id.fragmentSong ||
-                                    destination.getId() == R.id.fragmentPlaylist);
-                }
+        activityMain.runOnUiThread(() -> {
+            Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
+            Menu menu = toolbar.getMenu();
+            if (menu.size() > 0) {
+                menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(
+                        destination.getId() == R.id.fragmentPlaylist ||
+                                destination.getId() == R.id.fragmentSongs);
+                menu.getItem(ActivityMain.MENU_ACTION_LOWER_PROBS_INDEX).setVisible(
+                        destination.getId() == R.id.fragmentPlaylist ||
+                        destination.getId() == R.id.fragmentSongs
+                );
+                menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).setVisible(
+                        destination.getId() == R.id.fragmentSong ||
+                                destination.getId() == R.id.fragmentPlaylist);
+                menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(
+                        destination.getId() == R.id.fragmentSongs ||
+                                destination.getId() == R.id.fragmentPlaylist ||
+                                destination.getId() == R.id.FragmentPlaylists);
+                menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).setVisible(
+                        destination.getId() == R.id.fragmentSong ||
+                                destination.getId() == R.id.fragmentPlaylist);
             }
         });
     }

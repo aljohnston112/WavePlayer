@@ -29,6 +29,7 @@ import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
@@ -73,9 +74,10 @@ public class ActivityMain extends AppCompatActivity {
     public final static Object lock = new Object();
 
     public static final int MENU_ACTION_RESET_PROBS_INDEX = 0;
-    public static final int MENU_ACTION_ADD_TO_PLAYLIST_INDEX = 1;
-    public static final int MENU_ACTION_SEARCH_INDEX = 2;
-    public static final int MENU_ACTION_ADD_TO_QUEUE = 3;
+    public static final int MENU_ACTION_LOWER_PROBS_INDEX = 1;
+    public static final int MENU_ACTION_ADD_TO_PLAYLIST_INDEX = 2;
+    public static final int MENU_ACTION_SEARCH_INDEX = 3;
+    public static final int MENU_ACTION_ADD_TO_QUEUE = 4;
 
     private static final String KEY_BOOLEAN_LOADED = "KEY_BOOLEAN_LOADED";
 
@@ -86,6 +88,14 @@ public class ActivityMain extends AppCompatActivity {
     private ViewModelUserPickedPlaylist viewModelUserPickedPlaylist;
 
     private ViewModelUserPickedSongs viewModelUserPickedSongs;
+
+    private ViewModelActivityMain viewModelActivityMain;
+
+    private Observer<String> observerActionBarTitle;
+    private Observer<Boolean> observerShowFAB;
+    private Observer<Integer> observerFABText;
+    private Observer<Integer> observerFABImage;
+    private Observer<View.OnClickListener> observerFABOnClickListener;
 
     private boolean loaded = false;
 
@@ -212,7 +222,59 @@ public class ActivityMain extends AppCompatActivity {
                 new ViewModelProvider(this).get(ViewModelUserPickedPlaylist.class);
         viewModelUserPickedSongs =
                 new ViewModelProvider(this).get(ViewModelUserPickedSongs.class);
+        viewModelActivityMain =
+                new ViewModelProvider(this).get(ViewModelActivityMain.class);
+        setUpViewModelActivityMain();
         // Log.v(TAG, "onCreate ended");
+    }
+
+    private void setUpViewModelActivityMain() {
+        observerActionBarTitle = s -> {
+            // Log.v(TAG, "setting ActionBar title");
+            ActionBar actionBar = getSupportActionBar();
+            if (actionBar != null) {
+                actionBar.setTitle(s);
+            }
+            // Log.v(TAG, "done setting ActionBar title");
+        };
+        viewModelActivityMain.getActionBarTitle().observe(this, observerActionBarTitle);
+        observerShowFAB = b -> {
+            // Log.v(TAG, "showing or hiding FAB");
+            ExtendedFloatingActionButton fab = findViewById(R.id.fab);
+            if (b) {
+                // Log.v(TAG, "showing FAB");
+                fab.show();
+            } else {
+                // Log.v(TAG, "hiding FAB");
+                fab.hide();
+            }
+            // Log.v(TAG, "done showing or hiding FAB");
+        };
+        viewModelActivityMain.showFab().observe(this, observerShowFAB);
+        observerFABText = s -> {
+            // Log.v(TAG, "setFABText start");
+            ExtendedFloatingActionButton fab;
+            fab = findViewById(R.id.fab);
+            fab.setText(s);
+            // Log.v(TAG, "setFABText end");
+        };
+        viewModelActivityMain.getFABText().observe(this, observerFABText);
+        observerFABImage = i -> {
+            // Log.v(TAG, "setting FAB image");
+            ExtendedFloatingActionButton fab;
+            fab = findViewById(R.id.fab);
+            fab.setIcon(ResourcesCompat.getDrawable(getResources(), i, null));
+            // Log.v(TAG, "done setting FAB image");
+        };
+        viewModelActivityMain.getFABImage().observe(this, observerFABImage);
+        observerFABOnClickListener = l -> {
+            // Log.v(TAG, "setting FAB OnClickListener");
+            ExtendedFloatingActionButton fab = findViewById(R.id.fab);
+            fab.setOnClickListener(null);
+            fab.setOnClickListener(l);
+            // Log.v(TAG, "done setting FAB OnClickListener");
+        };
+        viewModelActivityMain.getFabOnClickListener().observe(this, observerFABOnClickListener);
     }
 
     // endregion onCreate
@@ -445,6 +507,17 @@ public class ActivityMain extends AppCompatActivity {
         }
         viewModelUserPickedPlaylist = null;
         viewModelUserPickedSongs = null;
+        viewModelActivityMain.getActionBarTitle().removeObservers(this);
+        viewModelActivityMain.showFab().removeObservers(this);
+        viewModelActivityMain.getFABText().removeObservers(this);
+        viewModelActivityMain.getFABImage().removeObservers(this);
+        viewModelActivityMain.getFabOnClickListener().removeObservers(this);
+        observerActionBarTitle = null;
+        observerShowFAB = null;
+        observerFABText =  null;
+        observerFABImage = null;
+        observerFABOnClickListener = null;
+        viewModelActivityMain = null;
         serviceMain = null;
         playlistToAddToQueue = null;
         // Log.v(TAG, "onStop ended");
@@ -501,52 +574,6 @@ public class ActivityMain extends AppCompatActivity {
     // endregion lifecycle
 
     // region UI
-
-    public void setActionBarTitle(String title) {
-        // Log.v(TAG, "setting ActionBar title");
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setTitle(title);
-        }
-        // Log.v(TAG, "done setting ActionBar title");
-    }
-
-    public void showFab(boolean show) {
-        // Log.v(TAG, "showing or hiding FAB");
-        ExtendedFloatingActionButton fab = findViewById(R.id.fab);
-        if (show) {
-            // Log.v(TAG, "showing FAB");
-            fab.show();
-        } else {
-            // Log.v(TAG, "hiding FAB");
-            fab.hide();
-        }
-        // Log.v(TAG, "done showing or hiding FAB");
-    }
-
-    public void setFABText(int id) {
-        // Log.v(TAG, "setFABText start");
-        ExtendedFloatingActionButton fab;
-        fab = findViewById(R.id.fab);
-        fab.setText(id);
-        // Log.v(TAG, "setFABText end");
-    }
-
-    public void setFabImage(int id) {
-        // Log.v(TAG, "setting FAB image");
-        ExtendedFloatingActionButton fab;
-        fab = findViewById(R.id.fab);
-        fab.setIcon(ResourcesCompat.getDrawable(getResources(), id, null));
-        // Log.v(TAG, "done setting FAB image");
-    }
-
-    public void setFabOnClickListener(final View.OnClickListener onClickListener) {
-        // Log.v(TAG, "setting FAB OnClickListener");
-        ExtendedFloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(null);
-        fab.setOnClickListener(onClickListener);
-        // Log.v(TAG, "done setting FAB OnClickListener");
-    }
 
     public void updateUI() {
         // Log.v(TAG, "sending Runnable to update UI");
@@ -776,10 +803,15 @@ public class ActivityMain extends AppCompatActivity {
 
     public void playNext() {
         // Log.v(TAG, "playNext start");
-        getCurrentPlaylist().bad(
-                serviceMain.getApplicationContext(),
-                MediaData.getInstance().getSong(mediaController.getCurrentAudioUri().id),
-                mediaController.getPercentChangeDown());
+        if(mediaController.getCurrentAudioUri() != null) {
+            RandomPlaylist randomPlaylist = getCurrentPlaylist();
+            if (randomPlaylist != null) {
+                randomPlaylist.bad(
+                        serviceMain.getApplicationContext(),
+                        MediaData.getInstance().getSong(mediaController.getCurrentAudioUri().id),
+                        mediaController.getPercentChangeDown());
+            }
+        }
         mediaController.playNext(serviceMain.getApplicationContext());
         updateUI();
         // Log.v(TAG, "playNext end");
@@ -847,7 +879,9 @@ public class ActivityMain extends AppCompatActivity {
         if (item.getItemId() == R.id.action_reset_probs) {
             mediaController.clearProbabilities(serviceMain.getApplicationContext());
             return true;
-        } else if (item.getItemId() == R.id.action_add_to_playlist) {
+        } else if(item.getItemId() == R.id.action_lower_probs) {
+            mediaController.lowerProbabilities(serviceMain.getApplicationContext());
+        }else if (item.getItemId() == R.id.action_add_to_playlist) {
             FragmentManager fragmentManager = getSupportFragmentManager();
             Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
             DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist =
@@ -883,7 +917,8 @@ public class ActivityMain extends AppCompatActivity {
         // Log.v(TAG, "loadBundleForAddToPlaylist start");
         Bundle bundle = new Bundle();
         bundle.putBoolean(BUNDLE_KEY_IS_SONG, isSong);
-        bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, mediaController.getCurrentAudioUri());
+        bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG,
+                MediaData.getInstance().getSong(mediaController.getCurrentAudioUri().id));
         bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST,
                 viewModelUserPickedPlaylist.getUserPickedPlaylist());
         // Log.v(TAG, "loadBundleForAddToPlaylist end");
@@ -964,12 +999,6 @@ public class ActivityMain extends AppCompatActivity {
         return mediaController.isPlaying();
     }
 
-    public boolean songQueueIsEmpty() {
-        // Log.v(TAG, "songQueueIsEmpty start");
-        // Log.v(TAG, "songQueueIsEmpty end");
-        return mediaController.songQueueIsEmpty();
-    }
-
     public void setCurrentPlaylistToMaster() {
         // Log.v(TAG, "setCurrentPlaylistToMaster start");
         mediaController.setCurrentPlaylistToMaster();
@@ -1038,6 +1067,13 @@ public class ActivityMain extends AppCompatActivity {
 
     public void fragmentLoadingStarted() {
         startAndBindServiceMain();
+    }
+
+    public Song getCurrentSong() {
+        if(getCurrentAudioUri() != null) {
+            return MediaData.getInstance().getSong(getCurrentAudioUri().id);
+        }
+        return null;
     }
 
     // endregion fragmentLoading

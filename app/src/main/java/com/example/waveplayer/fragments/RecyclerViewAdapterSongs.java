@@ -1,6 +1,7 @@
 package com.example.waveplayer.fragments;
 
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -17,37 +18,28 @@ import java.util.List;
 
 public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewAdapterSongs.ViewHolder> {
 
-    private final OnCreateContextMenuListenerSongsCallback onCreateContextMenuListenerSongsCallback;
-
     private List<Song> songs;
 
     public List<Song> getSongs() {
         return songs;
     }
 
-    private OnCreateContextMenuListenerSongs onCreateContextMenuListenerSongs;
+    private ListenerCallbackSongs listenerCallbackSongs;
 
-    public interface OnCreateContextMenuListenerSongsCallback {
+    public interface ListenerCallbackSongs {
         boolean onMenuItemClickAddToPlaylist(Song song);
         boolean onMenuItemClickAddToQueue(Song song);
+        void onClickViewHolder(Song Song);
     }
+
+    private View.OnCreateContextMenuListener onCreateContextMenuListenerSongs;
 
     private View.OnClickListener onClickListenerViewHolder;
 
-    private final OnClickListenerViewHolderCallback onClickListenerViewHolderCallback;
-
-    public interface OnClickListenerViewHolderCallback {
-        void onClick(Song Song);
-    }
-
     private View.OnClickListener onClickListenerHandle;
 
-    public RecyclerViewAdapterSongs(
-            OnCreateContextMenuListenerSongsCallback onCreateContextMenuListenerSongsCallback,
-            OnClickListenerViewHolderCallback onClickListenerViewHolderCallback,
-            List<Song> items) {
-        this.onCreateContextMenuListenerSongsCallback = onCreateContextMenuListenerSongsCallback;
-        this.onClickListenerViewHolderCallback = onClickListenerViewHolderCallback;
+    public RecyclerViewAdapterSongs(ListenerCallbackSongs listenerCallbackSongs, List<Song> items) {
+        this.listenerCallbackSongs = listenerCallbackSongs;
         songs = items;
     }
 
@@ -67,16 +59,28 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.song = songs.get(position);
         holder.textViewSongName.setText(songs.get(position).title);
-        onCreateContextMenuListenerSongs =
-                new OnCreateContextMenuListenerSongs(onCreateContextMenuListenerSongsCallback, holder.song);
+
+        // onCreateContextMenu
+        onCreateContextMenuListenerSongs = (menu, v, menuInfo) -> {
+                    final MenuItem menuItemAddToPlaylist = menu.add(R.string.add_to_playlist);
+                    menuItemAddToPlaylist.setOnMenuItemClickListener(
+                            menuItem -> listenerCallbackSongs.onMenuItemClickAddToPlaylist(holder.song));
+                    final MenuItem menuItemAddToQueue = menu.add(R.string.add_to_queue);
+                    menuItemAddToQueue.setOnMenuItemClickListener(
+                            menuItem2 -> listenerCallbackSongs.onMenuItemClickAddToQueue(holder.song));
+                };
         holder.handle.setOnCreateContextMenuListener(null);
         holder.handle.setOnCreateContextMenuListener(onCreateContextMenuListenerSongs);
+
+        // onClickListenerHandle
         onClickListenerHandle = v -> holder.handle.performLongClick();
         holder.handle.setOnClickListener(null);
         holder.handle.setOnClickListener(onClickListenerHandle);
+
+        // onClickListenerViewHolder
         onClickListenerViewHolder = v -> ServiceMain.executorServiceFIFO.submit(() -> {
             if (position != RecyclerView.NO_POSITION) {
-                onClickListenerViewHolderCallback.onClick(holder.song);
+                listenerCallbackSongs.onClickViewHolder(holder.song);
             }
         });
         holder.songView.setOnClickListener(null);
@@ -86,13 +90,14 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
     @Override
     public void onViewRecycled(@NonNull ViewHolder holder) {
         super.onViewRecycled(holder);
-        onCreateContextMenuListenerSongs = null;
         holder.handle.setOnCreateContextMenuListener(null);
-        onClickListenerHandle = null;
+        onCreateContextMenuListenerSongs = null;
         holder.handle.setOnClickListener(null);
-        onClickListenerViewHolder = null;
+        onClickListenerHandle = null;
         holder.songView.setOnClickListener(null);
+        onClickListenerViewHolder = null;
         holder.song = null;
+        listenerCallbackSongs = null;
     }
 
     @Override

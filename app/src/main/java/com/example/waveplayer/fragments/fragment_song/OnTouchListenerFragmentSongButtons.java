@@ -12,7 +12,7 @@ public class OnTouchListenerFragmentSongButtons implements View.OnTouchListener 
         switch (motionEvent.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 view.setBackgroundColor(view.getResources().getColor(R.color.colorOnSecondary));
-                return true;
+                return false;
             case MotionEvent.ACTION_UP:
                 view.setBackgroundColor(view.getResources().getColor(R.color.colorPrimary));
                 view.performClick();

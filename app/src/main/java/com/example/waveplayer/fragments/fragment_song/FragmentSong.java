@@ -16,12 +16,17 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.activity_main.ViewModelActivityMain;
 import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.R;
+import com.example.waveplayer.media_controller.MediaData;
 
 public class FragmentSong extends Fragment {
+
+    private ViewModelActivityMain viewModelActivityMain;
 
     private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
     private BroadcastReceiver broadcastReceiverOptionsMenuCreated;
@@ -44,11 +49,13 @@ public class FragmentSong extends Fragment {
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        viewModelActivityMain =
+                new ViewModelProvider(requireActivity()).get(ViewModelActivityMain.class);
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         activityMain.hideKeyboard(view);
-        activityMain.setActionBarTitle(getResources().getString(R.string.now_playing));
+        viewModelActivityMain.setActionBarTitle(getResources().getString(R.string.now_playing));
         setUpToolbar();
-        activityMain.showFab(false);
+        viewModelActivityMain.showFab(false);
         setUpButtons();
         activityMain.updateUI();
         activityMain.isSong(true);
@@ -58,7 +65,7 @@ public class FragmentSong extends Fragment {
     }
 
     private void setUpBroadcastReceiverServiceOnOptionsMenuCreated() {
-        final ActivityMain activityMain = ((ActivityMain) getActivity());
+        final ActivityMain activityMain = (ActivityMain) requireActivity();
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -73,7 +80,7 @@ public class FragmentSong extends Fragment {
     }
 
     private void setUpToolbar() {
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
         if (toolbar != null) {
             Menu menu = toolbar.getMenu();
@@ -85,7 +92,7 @@ public class FragmentSong extends Fragment {
     }
 
     private void setUpBroadcastReceiverServiceConnected() {
-        final ActivityMain activityMain = ((ActivityMain) getActivity());
+        final ActivityMain activityMain = (ActivityMain) requireActivity();
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -101,7 +108,7 @@ public class FragmentSong extends Fragment {
 
     @SuppressLint("ClickableViewAccessibility")
     private void setUpButtons() {
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         View view = getView();
         final ImageButton buttonBad = view.findViewById(R.id.button_thumb_down);
         final ImageButton buttonGood = view.findViewById(R.id.button_thumb_up);
@@ -117,12 +124,14 @@ public class FragmentSong extends Fragment {
         buttonPrev.setOnClickListener(onClickListenerFragmentSong);
         buttonPause.setOnClickListener(onClickListenerFragmentSong);
         buttonNext.setOnClickListener(onClickListenerFragmentSong);
-        buttonNext.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                // TODO
-                return false;
-            }
+        buttonNext.setLongClickable(true);
+        buttonNext.setOnLongClickListener(v -> {
+            // TODO
+                activityMain.getCurrentPlaylist().globalBad(
+                        MediaData.getInstance().getSong(activityMain.getCurrentAudioUri().id),
+                        MediaData.getInstance().getPercentChangeDown());
+            return true;
+
         });
         buttonLoop.setOnClickListener(onClickListenerFragmentSong);
         onTouchListenerFragmentSongButtons = new OnTouchListenerFragmentSongButtons();
@@ -153,7 +162,7 @@ public class FragmentSong extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         View view = getView();
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
         broadcastReceiverOnServiceConnected = null;
@@ -185,6 +194,7 @@ public class FragmentSong extends Fragment {
         view.removeOnLayoutChangeListener(onLayoutChangeListenerFragmentSongButtons);
         onLayoutChangeListenerFragmentSongButtons = null;
         activityMain.setSongToAddToQueue(null);
+        viewModelActivityMain = null;
     }
 
 }

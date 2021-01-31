@@ -10,11 +10,11 @@ public class ViewModelActivityMain extends ViewModel {
 
     private MutableLiveData<Boolean> showFAB;
 
-    public LiveData<Boolean> showFAB() {
+    public LiveData<Boolean> showFab() {
         return showFAB;
     }
 
-    public void showFAB(boolean showFAB){
+    public void showFab(boolean showFAB){
         this.showFAB.setValue(showFAB);
     }
 
@@ -28,10 +28,33 @@ public class ViewModelActivityMain extends ViewModel {
         this.actionBarTitle.setValue(actionBarTitle);
     }
 
-    private MutableLiveData<View.OnClickListener> onClickListener;
+    private MutableLiveData<Integer> fabText;
 
-    public LiveData<View.OnClickListener> getOnClickListener() {
-        return onClickListener;
+    public LiveData<Integer> getFABText() {
+        return fabText;
     }
 
+    public void setFABText(Integer fabText){
+        this.fabText.setValue(fabText);
+    }
+
+    private MutableLiveData<Integer> fabImage;
+
+    public LiveData<Integer> getFABImage() {
+        return fabImage;
+    }
+
+    public void setFabImage(Integer fabImage){
+        this.fabImage.setValue(fabImage);
+    }
+
+    private MutableLiveData<View.OnClickListener> fabOnClickListener;
+
+    public LiveData<View.OnClickListener> getFabOnClickListener() {
+        return fabOnClickListener;
+    }
+
+    public void setFabOnClickListener(View.OnClickListener fabOnClickListener){
+        this.fabOnClickListener.setValue(fabOnClickListener);
+    }
 }

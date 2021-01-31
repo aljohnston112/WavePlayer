@@ -10,10 +10,13 @@ public class Settings implements Serializable {
 
     public final double percentChangeDown;
 
-    public Settings(double maxPercent, double percentChangeUp, double percentChangeDown){
+    public final double lowerProb;
+
+    public Settings(double maxPercent, double percentChangeUp, double percentChangeDown, double lowerProb){
         this.maxPercent = maxPercent;
         this.percentChangeUp = percentChangeUp;
         this.percentChangeDown = percentChangeDown;
+        this.lowerProb = lowerProb;
     }
 
 }

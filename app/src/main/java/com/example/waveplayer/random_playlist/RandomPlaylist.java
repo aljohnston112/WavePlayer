@@ -125,6 +125,10 @@ public class RandomPlaylist implements Serializable {
         probabilityFunction.clearProbabilities();
     }
 
+    public void lowerProbabilities(Context context, double lowerProb) {
+        probabilityFunction.lowerProbs(lowerProb);
+    }
+
     public AudioUri next(Context context, Random random) {
         Song song;
         AudioUri audioUri = null;
@@ -198,4 +202,7 @@ public class RandomPlaylist implements Serializable {
         }
     }
 
+    public void globalBad(Song song, double percentChangeDown) {
+        probabilityFunction.bad(song, percentChangeDown);
+    }
 }

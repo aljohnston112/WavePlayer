@@ -127,12 +127,13 @@ class ProbFun<T extends Comparable<T>> implements Serializable {
      *
      */
     public void lowerProbs(double low) {
+        // TODO address higher probs and if prob is unreasonably low (1.0/n).
         Collection<T> probs = this.probabilityMap.keySet();
-        double badPercent = (1.0-low);
         for (T t : probs) {
             while (probabilityMap.get(t) > low) {
-                bad(t, badPercent);
+                probabilityMap.put(t, low);
             }
+            scaleProbs();
         }
     }
 

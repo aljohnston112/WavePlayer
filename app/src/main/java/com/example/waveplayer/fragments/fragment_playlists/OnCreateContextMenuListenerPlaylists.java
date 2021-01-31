@@ -8,6 +8,7 @@ import android.view.View;
 import androidx.fragment.app.Fragment;
 
 import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.media_controller.MediaController;
 import com.example.waveplayer.media_controller.MediaData;
 import com.example.waveplayer.media_controller.Song;
 import com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist;
@@ -64,21 +65,17 @@ public class OnCreateContextMenuListenerPlaylists implements View.OnCreateContex
     private void contextMenuAddToQueue() {
         ActivityMain activityMain = ((ActivityMain) fragment.getActivity());
         if (activityMain != null) {
-            if (activityMain.songInProgress()) {
-                for (Song song : randomPlaylist.getSongs()) {
-                    activityMain.addToQueue(song.id);
-                }
-            } else {
-                if(activityMain.songQueueIsEmpty()){
-                    activityMain.setCurrentPlaylist(randomPlaylist);
-                }
-                for (Song song : randomPlaylist.getSongs()) {
-                    activityMain.addToQueue(song.id);
-                }
-                activityMain.shuffling(false);
-                activityMain.looping(false);
-                activityMain.loopingOne(false);
-                activityMain.showSongPane();
+            for (Song song : randomPlaylist.getSongs()) {
+                activityMain.addToQueue(song.id);
+            }
+            activityMain.shuffling(false);
+            activityMain.looping(false);
+            activityMain.loopingOne(false);
+            activityMain.showSongPane();
+            // TODO stop MasterPlaylist from continuing after queue is done
+            activityMain.setCurrentPlaylistToMaster();
+            if (!activityMain.isPlaying()) {
+                MediaController.getInstance(activityMain.getApplicationContext()).goToFront();
                 activityMain.playNext();
             }
         }

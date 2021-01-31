@@ -9,17 +9,21 @@ import android.widget.EditText;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.R;
+import com.example.waveplayer.activity_main.ViewModelActivityMain;
 import com.example.waveplayer.databinding.FragmentSettingsBinding;
 import com.example.waveplayer.media_controller.MediaData;
 
 public class FragmentSettings extends Fragment {
 
-    private FragmentSettingsBinding mBinding;
+    private ViewModelActivityMain viewModelActivityMain;
 
-    private OnClickListenerFABFragmentSettings mOnClickListenerFABFragmentSettings;
+    private FragmentSettingsBinding binding;
+
+    private OnClickListenerFABFragmentSettings onClickListenerFABFragmentSettings;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -29,12 +33,14 @@ public class FragmentSettings extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        mBinding = FragmentSettingsBinding.inflate(inflater, container, false);
-        return mBinding.getRoot();
+        binding = FragmentSettingsBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        viewModelActivityMain =
+                new ViewModelProvider(requireActivity()).get(ViewModelActivityMain.class);
         updateMainContent();
         loadSettings();
     }
@@ -46,28 +52,27 @@ public class FragmentSettings extends Fragment {
     }
 
     private void updateMainContent() {
-        ActivityMain activityMain = (ActivityMain) requireActivity();
-        activityMain.setActionBarTitle(getResources().getString(R.string.settings));
+        viewModelActivityMain.setActionBarTitle(getResources().getString(R.string.settings));
         updateFAB();
     }
 
     private void updateFAB() {
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         final EditText editTextNSongs = activityMain.findViewById(R.id.edit_text_n_songs);
         final EditText editTextPercentChangeUp = activityMain.findViewById(R.id.edit_text_percent_change_up);
         final EditText editTextPercentChangeDown = activityMain.findViewById(R.id.edit_text_percent_change_down);
-        activityMain.setFabImage(R.drawable.ic_check_black_24dp);
-        activityMain.setFABText(R.string.fab_save);
-        mOnClickListenerFABFragmentSettings = new OnClickListenerFABFragmentSettings(
+        viewModelActivityMain.setFabImage(R.drawable.ic_check_black_24dp);
+        viewModelActivityMain.setFABText(R.string.fab_save);
+        onClickListenerFABFragmentSettings = new OnClickListenerFABFragmentSettings(
                 this, editTextNSongs, editTextPercentChangeDown, editTextPercentChangeUp);
-        activityMain.setFabOnClickListener(mOnClickListenerFABFragmentSettings);
-        activityMain.showFab(true);
+        viewModelActivityMain.setFabOnClickListener(onClickListenerFABFragmentSettings);
+        viewModelActivityMain.showFab(true);
     }
 
     private void loadSettings() {
-        EditText editTextNSongs = mBinding.editTextNSongs;
-        EditText editTextPercentChangeUp = mBinding.editTextPercentChangeUp;
-        EditText editTextPercentChangeDown = mBinding.editTextPercentChangeDown;
+        EditText editTextNSongs = binding.editTextNSongs;
+        EditText editTextPercentChangeUp = binding.editTextPercentChangeUp;
+        EditText editTextPercentChangeDown = binding.editTextPercentChangeDown;
         editTextNSongs.setText(
                 String.valueOf((int) Math.round(1.0 / MediaData.getInstance().getMaxPercent())));
         editTextPercentChangeUp.setText(
@@ -79,10 +84,10 @@ public class FragmentSettings extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        ActivityMain activityMain = ((ActivityMain) getActivity());
-        activityMain.setFabOnClickListener(null);
-        mOnClickListenerFABFragmentSettings = null;
-        mBinding = null;
+        viewModelActivityMain.setFabOnClickListener(null);
+        onClickListenerFABFragmentSettings = null;
+        binding = null;
+        viewModelActivityMain = null;
     }
 
 }

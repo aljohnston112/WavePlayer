@@ -63,7 +63,8 @@ public class MediaData {
 
     private final HashMap<Long, MediaPlayerWUri> mSongIDToMediaPlayerWUriHashMap = new HashMap<>();
 
-    private Settings mSettings = new Settings(0.1, 0.1, 0.5);
+    private Settings mSettings = new Settings(
+            0.1, 0.1, 0.5, 0);
 
     public void setSettings(Settings settings) {
         this.mSettings = settings;
@@ -144,11 +145,13 @@ public class MediaData {
         for (RandomPlaylist randomPlaylist : mPlaylists) {
             randomPlaylist.setMaxPercent(maxPercent);
         }
-        mSettings = new Settings(maxPercent, mSettings.percentChangeUp, mSettings.percentChangeDown);
+        mSettings = new Settings(
+                maxPercent, mSettings.percentChangeUp, mSettings.percentChangeDown, mSettings.lowerProb);
     }
 
     public void setPercentChangeUp(double percentChangeUp) {
-        mSettings = new Settings(mSettings.maxPercent, percentChangeUp, mSettings.percentChangeDown);
+        mSettings = new Settings(
+                mSettings.maxPercent, percentChangeUp, mSettings.percentChangeDown, mSettings.lowerProb);
 
     }
 
@@ -157,11 +160,21 @@ public class MediaData {
     }
 
     public void setPercentChangeDown(double percentChangeDown) {
-        mSettings = new Settings(mSettings.maxPercent, mSettings.percentChangeUp, percentChangeDown);
+        mSettings = new Settings(
+                mSettings.maxPercent, mSettings.percentChangeUp, percentChangeDown, mSettings.lowerProb);
     }
 
     public double getPercentChangeDown() {
         return mSettings.percentChangeDown;
+    }
+
+    public void setLowerProb(double lowerProb) {
+        mSettings = new Settings(
+                mSettings.maxPercent, mSettings.percentChangeUp, mSettings.percentChangeDown, lowerProb);
+    }
+
+    public double getLowerProb() {
+        return mSettings.lowerProb;
     }
 
     MediaPlayerWUri getMediaPlayerWUri(Long songID) {
@@ -190,87 +203,78 @@ public class MediaData {
         final ArrayList<Song> newSongs = new ArrayList<>();
         final ArrayList<Long> filesThatExist = new ArrayList<>();
         final ExecutorService executorService = ServiceMain.executorServiceFIFO;
-        executorService.execute(new Runnable() {
-            @Override
-            public void run() {
-                String[] projection = new String[]{
-                        MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DISPLAY_NAME, MediaStore.Audio.Media.IS_MUSIC,
-                        MediaStore.Audio.Media.ARTIST_ID, MediaStore.Audio.Media.TITLE};
-                String selection = MediaStore.Audio.Media.IS_MUSIC + " != ?";
-                String[] selectionArgs = new String[]{"0"};
-                String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
-                try (Cursor cursor = context.getContentResolver().query(
-                        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                        projection, selection, selectionArgs, sortOrder)) {
-                    if (cursor != null) {
-                        int idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
-                        int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
-                        int titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE);
-                        int artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST_ID);
-                        final int i = cursor.getCount();
-                        int j = 0;
-                        mLoadingText.postValue(resources.getString(R.string.loading1));
-                        while (cursor.moveToNext()) {
-                            long id = cursor.getLong(idCol);
-                            String displayName = cursor.getString(nameCol);
-                            String title = cursor.getString(titleCol);
-                            String artist = cursor.getString(artistCol);
-                            AudioUri audioURI = new AudioUri(displayName, artist, title, id);
-                            File file = new File(context.getFilesDir(), String.valueOf(audioURI.id));
-                            if (!file.exists()) {
-                                try (FileOutputStream fos = context.openFileOutput(String.valueOf(id), Context.MODE_PRIVATE);
-                                     ObjectOutputStream objectOutputStream = new ObjectOutputStream(fos)) {
-                                    objectOutputStream.writeObject(audioURI);
-                                } catch (FileNotFoundException e) {
-                                    e.printStackTrace();
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                                newSongs.add(new Song(id, title));
+        executorService.execute((Runnable) () -> {
+            String[] projection = new String[]{
+                    MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DISPLAY_NAME, MediaStore.Audio.Media.IS_MUSIC,
+                    MediaStore.Audio.Media.ARTIST_ID, MediaStore.Audio.Media.TITLE};
+            String selection = MediaStore.Audio.Media.IS_MUSIC + " != ?";
+            String[] selectionArgs = new String[]{"0"};
+            String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
+            try (Cursor cursor = context.getContentResolver().query(
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                    projection, selection, selectionArgs, sortOrder)) {
+                if (cursor != null) {
+                    int idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID);
+                    int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME);
+                    int titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE);
+                    int artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST_ID);
+                    final int i = cursor.getCount();
+                    int j = 0;
+                    mLoadingText.postValue(resources.getString(R.string.loading1));
+                    while (cursor.moveToNext()) {
+                        long id = cursor.getLong(idCol);
+                        String displayName = cursor.getString(nameCol);
+                        String title = cursor.getString(titleCol);
+                        String artist = cursor.getString(artistCol);
+                        AudioUri audioURI = new AudioUri(displayName, artist, title, id);
+                        File file = new File(context.getFilesDir(), String.valueOf(audioURI.id));
+                        if (!file.exists()) {
+                            try (FileOutputStream fos = context.openFileOutput(String.valueOf(id), Context.MODE_PRIVATE);
+                                 ObjectOutputStream objectOutputStream = new ObjectOutputStream(fos)) {
+                                objectOutputStream.writeObject(audioURI);
+                            } catch (FileNotFoundException e) {
+                                e.printStackTrace();
+                            } catch (IOException e) {
+                                e.printStackTrace();
                             }
-                            filesThatExist.add(id);
-                            mLoadingProgress.postValue((double) ((double) j) / ((double) i));
-                            j++;
+                            newSongs.add(new Song(id, title));
                         }
-                        mLoadingText.postValue(resources.getString(R.string.loading2));
+                        filesThatExist.add(id);
+                        mLoadingProgress.postValue((double) ((double) j) / ((double) i));
+                        j++;
                     }
+                    mLoadingText.postValue(resources.getString(R.string.loading2));
                 }
             }
         });
-        executorService.execute(new Runnable() {
-            @Override
-            public void run() {
-                int i = newSongs.size();
-                int k = 0;
-                for(Song song : newSongs) {
-                    songDAO.insertAll(song);
-                    mLoadingProgress.postValue((double)((double)k)/((double)i));
-                    k++;
-                }
+        executorService.execute((Runnable) () -> {
+            int i = newSongs.size();
+            int k = 0;
+            for(Song song : newSongs) {
+                songDAO.insertAll(song);
+                mLoadingProgress.postValue((double)((double)k)/((double)i));
+                k++;
             }
         });
-        executorService.execute(new Runnable() {
-            @Override
-            public void run() {
-                if (mMasterPlaylist != null) {
-                    mLoadingText.postValue(resources.getString(R.string.loading3));
-                    addNewSongs(filesThatExist);
-                    mLoadingText.postValue(resources.getString(R.string.loading4));
-                    removeMissingSongs(filesThatExist);
-                } else {
-                    mMasterPlaylist = new RandomPlaylist(
-                            MediaData.MASTER_PLAYLIST_NAME, new ArrayList<>(newSongs),
-                            mSettings.maxPercent, true);
-                }
+        executorService.execute(() -> {
+            if (mMasterPlaylist != null) {
+                mLoadingText.postValue(resources.getString(R.string.loading3));
+                addNewSongs(filesThatExist);
+                mLoadingText.postValue(resources.getString(R.string.loading4));
+                removeMissingSongs(filesThatExist);
+            } else {
+                mMasterPlaylist = new RandomPlaylist(
+                        MediaData.MASTER_PLAYLIST_NAME, new ArrayList<>(newSongs),
+                        mSettings.maxPercent, true);
             }
         });
-        executorService.execute(new Runnable() {
-            @Override
-            public void run() {
-                SaveFile.saveFile(context);
-                activityMain.loaded(true);
-                activityMain.navigateTo(R.id.FragmentTitle);
+        executorService.execute(() -> {
+            if(mSettings.lowerProb == 0){
+                setLowerProb(2.0/mMasterPlaylist.size());
             }
+            SaveFile.saveFile(context);
+            activityMain.loaded(true);
+            activityMain.navigateTo(R.id.FragmentTitle);
         });
     }
 

@@ -17,6 +17,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.activity_main.ViewModelActivityMain;
 import com.example.waveplayer.media_controller.Song;
 import com.example.waveplayer.ViewModelUserPickedPlaylist;
 import com.example.waveplayer.ViewModelUserPickedSongs;
@@ -27,6 +28,8 @@ import com.example.waveplayer.random_playlist.RandomPlaylist;
 import java.util.List;
 
 public class FragmentEditPlaylist extends Fragment {
+
+    private ViewModelActivityMain viewModelActivityMain;
 
     private ViewModelUserPickedPlaylist viewModelUserPickedPlaylist;
 
@@ -57,8 +60,9 @@ public class FragmentEditPlaylist extends Fragment {
                 new ViewModelProvider(requireActivity()).get(ViewModelUserPickedPlaylist.class);
         viewModelUserPickedSongs =
                 new ViewModelProvider(requireActivity()).get(ViewModelUserPickedSongs.class);
-        ActivityMain activityMain = ((ActivityMain) getActivity());
-        activityMain.setActionBarTitle(getResources().getString(R.string.edit_playlist));
+        viewModelActivityMain =
+                new ViewModelProvider(requireActivity()).get(ViewModelActivityMain.class);
+        viewModelActivityMain.setActionBarTitle(getResources().getString(R.string.edit_playlist));
         updateFAB();
         onClickListenerFragmentEditPlaylistButtonSelectSongs =
                 new OnClickListenerFragmentEditPlaylistButtonSelectSongs(this);
@@ -74,11 +78,11 @@ public class FragmentEditPlaylist extends Fragment {
     }
 
     private void updateFAB() {
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         View view = getView();
-        activityMain.setFabImage(R.drawable.ic_check_black_24dp);
-        activityMain.setFABText(R.string.fab_save);
-        activityMain.showFab(true);
+        viewModelActivityMain.setFabImage(R.drawable.ic_check_black_24dp);
+        viewModelActivityMain.setFABText(R.string.fab_save);
+        viewModelActivityMain.showFab(true);
         final EditText finalEditTextPlaylistName = view.findViewById(R.id.editTextPlaylistName);
         RandomPlaylist userPickedPlaylist = viewModelUserPickedPlaylist.getUserPickedPlaylist();
         List<Song> userPickedSongs = viewModelUserPickedSongs.getUserPickedSongs();
@@ -96,11 +100,11 @@ public class FragmentEditPlaylist extends Fragment {
                 userPickedPlaylist,
                 finalEditTextPlaylistName,
                 userPickedSongs);
-        activityMain.setFabOnClickListener(onClickListenerFABFragmentEditPlaylist);
+        viewModelActivityMain.setFabOnClickListener(onClickListenerFABFragmentEditPlaylist);
     }
 
     private void setUpBroadcastReceiverServiceConnected() {
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -117,7 +121,7 @@ public class FragmentEditPlaylist extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         View view = getView();
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
         view.findViewById(R.id.buttonEditSongs).setOnClickListener(null);
@@ -125,6 +129,7 @@ public class FragmentEditPlaylist extends Fragment {
         onClickListenerFABFragmentEditPlaylist = null;
         viewModelUserPickedPlaylist = null;
         viewModelUserPickedSongs = null;
+        viewModelActivityMain = null;
     }
 
     // TODO move?

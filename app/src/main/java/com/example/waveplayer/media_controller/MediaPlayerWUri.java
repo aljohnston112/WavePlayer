@@ -13,7 +13,7 @@ public class MediaPlayerWUri {
 
     private static final String TAG = "MediaPlayerWURI";
 
-    private final Object lock = new Object();
+    public static final Object lock = new Object();
 
     private MediaPlayer mediaPlayer;
 
@@ -31,7 +31,7 @@ public class MediaPlayerWUri {
 
     private volatile boolean shouldPlay = false;
 
-    MediaPlayerWUri(final Context context, final MediaController mediaController, MediaPlayer mediaPlayer, final Long id){
+    MediaPlayerWUri(final Context context, final MediaController mediaController, MediaPlayer mediaPlayer, final Long id) {
         this.mediaController = mediaController;
         this.mediaPlayer = mediaPlayer;
         this.id = id;
@@ -52,7 +52,7 @@ public class MediaPlayerWUri {
         mediaPlayer.setOnErrorListener(onErrorListener);
     }
 
-    public void shouldPlay(boolean shouldPlay){
+    public void shouldPlay(boolean shouldPlay) {
         synchronized (lock) {
             if (shouldPlay && isPrepared) {
                 mediaPlayer.start();
@@ -62,7 +62,7 @@ public class MediaPlayerWUri {
         }
     }
 
-    public void release(){
+    public void release() {
         synchronized (lock) {
             setOnCompletionListener(null);
             isPrepared = false;
@@ -72,7 +72,7 @@ public class MediaPlayerWUri {
         }
     }
 
-    public void prepareAsync(){
+    public void prepareAsync() {
         Log.v(TAG, "Waiting for prepareAsync");
         synchronized (lock) {
             isPrepared = false;
@@ -80,7 +80,7 @@ public class MediaPlayerWUri {
         }
     }
 
-    public int getCurrentPosition(){
+    public int getCurrentPosition() {
         synchronized (lock) {
             if (isPrepared && mediaController.songInProgress()) {
                 return mediaPlayer.getCurrentPosition();
@@ -90,7 +90,7 @@ public class MediaPlayerWUri {
         }
     }
 
-    public boolean isPlaying(){
+    public boolean isPlaying() {
         synchronized (lock) {
             if (isPrepared) {
                 return mediaPlayer.isPlaying();
@@ -100,7 +100,7 @@ public class MediaPlayerWUri {
         }
     }
 
-    public void stop(){
+    public void stop() {
         Log.v(TAG, "MediaPlayer stopped");
         synchronized (lock) {
             isPrepared = false;
@@ -109,7 +109,7 @@ public class MediaPlayerWUri {
         }
     }
 
-    public void pause(){
+    public void pause() {
         synchronized (lock) {
             if (isPrepared) {
                 mediaPlayer.pause();
@@ -118,41 +118,18 @@ public class MediaPlayerWUri {
         }
     }
 
-    public void seekTo(final Context context, AudioUri audioUri, int millis){
+    public void seekTo(final Context context, AudioUri audioUri, int millis) {
         synchronized (lock) {
             if (isPrepared) {
-                String[] s = audioUri.displayName.split("\\.");
-                if(s.length > 0) {
-                    if(s[s.length - 1].toLowerCase().equals("mkv")){
-                        mediaPlayer.reset();
-                        mediaPlayer.release();
-                        mediaPlayer = null;
-                        mediaPlayer = MediaPlayer.create(context, AudioUri.getUri(id));
-                        mediaPlayer.setOnPreparedListener(null);
-                        mediaPlayer.setOnErrorListener(null);
-                        MOnPreparedListener mOnPreparedListener = new MOnPreparedListener(this);
-                        mediaPlayer.setOnPreparedListener(mOnPreparedListener);
-                        MediaPlayer.OnErrorListener onErrorListener = new MediaPlayer.OnErrorListener() {
-                            @Override
-                            public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
-                                synchronized (lock) {
-                                    mediaController.releaseMediaPlayers();
-                                    mediaController.addToQueueAndPlay(context, mediaController.getCurrentAudioUri().id);
-                                    return false;
-                                }
-                            }
-                        };
-                        mediaPlayer.setOnErrorListener(onErrorListener);
-                        setOnCompletionListener(new MediaPlayerOnCompletionListener(context, mediaController));
-                        this.shouldPlay = true;
-                        return;
-                    }
+                if (resetIfMKV(audioUri, context)) {
+                    this.shouldPlay = true;
+                    return;
                 }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    mediaPlayer.seekTo(millis, SEEK_CLOSEST);
-                } else {
-                    mediaPlayer.seekTo(millis);
-                }
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                mediaPlayer.seekTo(millis, SEEK_CLOSEST);
+            } else {
+                mediaPlayer.seekTo(millis);
             }
         }
     }
@@ -161,11 +138,40 @@ public class MediaPlayerWUri {
         mediaPlayer.setOnCompletionListener(onCompletionListener);
     }
 
-    class MOnPreparedListener implements MediaPlayer.OnPreparedListener{
+    public boolean resetIfMKV(AudioUri audioUri, Context context) {
+        String[] s = audioUri.displayName.split("\\.");
+        if (s.length > 0) {
+            if (s[s.length - 1].toLowerCase().equals("mkv")) {
+                mediaPlayer.reset();
+                mediaPlayer.release();
+                mediaPlayer = null;
+                mediaPlayer = MediaPlayer.create(context, audioUri.getUri());
+                mediaPlayer.setOnPreparedListener(null);
+                mediaPlayer.setOnErrorListener(null);
+                MOnPreparedListener mOnPreparedListener = new MOnPreparedListener(
+                        mediaController.getMediaPlayerWUri(audioUri.id)
+                );
+                mediaPlayer.setOnPreparedListener(mOnPreparedListener);
+                MediaPlayer.OnErrorListener onErrorListener = (mediaPlayer1, i, i1) -> {
+                    synchronized (MediaPlayerWUri.lock) {
+                        mediaController.releaseMediaPlayers();
+                        mediaController.addToQueueAndPlay(context, mediaController.getCurrentAudioUri().id);
+                        return false;
+                    }
+                };
+                mediaPlayer.setOnErrorListener(onErrorListener);
+                mediaPlayer.setOnCompletionListener(new MediaPlayerOnCompletionListener(context, mediaController));
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public class MOnPreparedListener implements MediaPlayer.OnPreparedListener {
 
         private final MediaPlayerWUri mediaPlayerWURI;
 
-        public MOnPreparedListener(MediaPlayerWUri mediaPlayerWURI){
+        public MOnPreparedListener(MediaPlayerWUri mediaPlayerWURI) {
             this.mediaPlayerWURI = mediaPlayerWURI;
         }
 

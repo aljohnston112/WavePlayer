@@ -44,7 +44,7 @@ public class FragmentPaneSong extends Fragment {
     }
 
     private void updateUI() {
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         View view = getView();
         if (view.getVisibility() == View.VISIBLE) {
             activityMain.updateUI();
@@ -52,7 +52,7 @@ public class FragmentPaneSong extends Fragment {
     }
 
     private void setUpBroadcastReceiver() {
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -69,7 +69,7 @@ public class FragmentPaneSong extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         View view = getView();
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
         broadcastReceiverOnServiceConnected = null;

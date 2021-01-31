@@ -26,6 +26,7 @@ import com.example.waveplayer.R;
 import com.example.waveplayer.ViewModelUserPickedPlaylist;
 import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist;
+import com.example.waveplayer.activity_main.ViewModelActivityMain;
 import com.example.waveplayer.databinding.RecyclerViewSongListBinding;
 import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.fragments.OnQueryTextListenerSearch;
@@ -40,15 +41,15 @@ import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.B
 import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_IS_SONG;
 
 public class FragmentSongs extends Fragment implements
-        RecyclerViewAdapterSongs.OnCreateContextMenuListenerSongsCallback,
-        RecyclerViewAdapterSongs.OnClickListenerViewHolderCallback {
+        RecyclerViewAdapterSongs.ListenerCallbackSongs {
 
     public static final String NAME = "FragmentSongs";
 
-    private RecyclerViewSongListBinding mBinding;
+    private ViewModelActivityMain viewModelActivityMain;
+
+    private RecyclerViewSongListBinding binding;
 
     private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
-
     private BroadcastReceiver broadcastReceiverOptionsMenuCreated;
 
     private OnQueryTextListenerSearch onQueryTextListenerSearch;
@@ -61,8 +62,8 @@ public class FragmentSongs extends Fragment implements
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        mBinding = RecyclerViewSongListBinding.inflate(inflater, container, false);
-        return mBinding.getRoot();
+        binding = RecyclerViewSongListBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
@@ -70,6 +71,8 @@ public class FragmentSongs extends Fragment implements
         super.onViewCreated(view, savedInstanceState);
         ViewModelUserPickedPlaylist viewModelUserPickedPlaylist =
                 new ViewModelProvider(requireActivity()).get(ViewModelUserPickedPlaylist.class);
+        viewModelActivityMain =
+                new ViewModelProvider(requireActivity()).get(ViewModelActivityMain.class);
         ActivityMain activityMain = (ActivityMain) requireActivity();
         activityMain.hideKeyboard(view);
         updateMainContent();
@@ -80,9 +83,8 @@ public class FragmentSongs extends Fragment implements
     }
 
     private void updateMainContent() {
-        ActivityMain activityMain = ((ActivityMain) requireActivity());
-        activityMain.setActionBarTitle(getResources().getString(R.string.songs));
-        activityMain.showFab(false);
+        viewModelActivityMain.setActionBarTitle(getResources().getString(R.string.songs));
+        viewModelActivityMain.showFab(false);
         setUpToolbar();
     }
 
@@ -103,12 +105,11 @@ public class FragmentSongs extends Fragment implements
     }
 
     private void setUpRecyclerView() {
-        RecyclerView recyclerViewSongs = mBinding.recyclerViewSongList;
+        RecyclerView recyclerViewSongs = binding.recyclerViewSongList;
         List<Song> songs = MediaData.getInstance().getAllSongs();
         if (songs != null) {
             RecyclerViewAdapterSongs recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(
-                    this, this,
-                    new ArrayList<>(songs));
+                    this, new ArrayList<>(songs));
             recyclerViewSongs.setLayoutManager(
                     new LinearLayoutManager(recyclerViewSongs.getContext()));
             recyclerViewSongs.setAdapter(recyclerViewAdapterSongs);
@@ -116,7 +117,7 @@ public class FragmentSongs extends Fragment implements
     }
 
     private void setUpBroadcastReceiverServiceConnected() {
-        final ActivityMain activityMain = ((ActivityMain) getActivity());
+        final ActivityMain activityMain = (ActivityMain) requireActivity();
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -132,7 +133,7 @@ public class FragmentSongs extends Fragment implements
     }
 
     private void setUpBroadcastReceiverOnOptionsMenuCreated() {
-        ActivityMain activityMain = ((ActivityMain) getActivity());
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
@@ -150,7 +151,7 @@ public class FragmentSongs extends Fragment implements
     public void onDestroyView() {
         super.onDestroyView();
         final ActivityMain activityMain = ((ActivityMain) requireActivity());
-        mBinding = null;
+        binding = null;
         View view = getView();
         activityMain.hideKeyboard(view);
         activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
@@ -166,15 +167,11 @@ public class FragmentSongs extends Fragment implements
             searchView.onActionViewCollapsed();
         }
         onQueryTextListenerSearch = null;
+        viewModelActivityMain = null;
     }
 
     @Override
     public boolean onMenuItemClickAddToPlaylist(Song song) {
-        contextMenuAddToPlaylist(song);
-        return true;
-    }
-
-    private void contextMenuAddToPlaylist(Song song) {
         Bundle bundle = new Bundle();
         bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, song);
         bundle.putBoolean(BUNDLE_KEY_IS_SONG, true);
@@ -182,15 +179,11 @@ public class FragmentSongs extends Fragment implements
                 new DialogFragmentAddToPlaylist();
         dialogFragmentAddToPlaylist.setArguments(bundle);
         dialogFragmentAddToPlaylist.show(getParentFragmentManager(), getTag());
+        return true;
     }
 
     @Override
     public boolean onMenuItemClickAddToQueue(Song song) {
-        contextMenuAddToQueue(song);
-        return true;
-    }
-
-    private void contextMenuAddToQueue(Song song) {
         ActivityMain activityMain = (ActivityMain) requireActivity();
         if (activityMain.songInProgress()) {
             activityMain.addToQueue(song.id);
@@ -198,14 +191,13 @@ public class FragmentSongs extends Fragment implements
             activityMain.showSongPane();
             activityMain.addToQueueAndPlay(song.id);
         }
+        return true;
     }
 
     @Override
-    public void onClick(Song song) {
+    public void onClickViewHolder(Song song) {
         ActivityMain activityMain = ((ActivityMain) requireActivity());
-        if (activityMain.getCurrentAudioUri() != null &&
-                song.equals(MediaData.getInstance().getSong(
-                        activityMain.getCurrentAudioUri().id))) {
+        if (song.equals(activityMain.getCurrentSong())) {
             activityMain.seekTo(0);
         }
         activityMain.setCurrentPlaylistToMaster();
