@@ -38,6 +38,8 @@ public class MediaController {
 
     private AudioUri currentAudioUri;
 
+    private AudioManager.OnAudioFocusChangeListener onAudioFocusChangeListener;
+
     private boolean haveAudioFocus = false;
     private boolean songInProgress = false;
     private boolean isPlaying = false;
@@ -129,6 +131,8 @@ public class MediaController {
 
     public void releaseMediaPlayers() {
         mediaData.releaseMediaPlayers();
+        songInProgress = false;
+        isPlaying = false;
     }
 
     public boolean isSongInProgress() {
@@ -163,6 +167,17 @@ public class MediaController {
         this.loopingOne = loopingOne;
     }
 
+    /** If a song is playing, it will be paused:
+     *      songInProgress will be unchanged and
+     *      isPlaying will be false
+     *      if a song if paused.
+     *  If a song is started and/or paused, but not playing, it will be played:
+     *      songInProgress will be true and
+     *      isPlaying will be true
+     *      if a song is played
+     *  If there is no song in progress, nothing will be done.
+     * @param context Context used to request audio focus if needed
+     */
     public void pauseOrPlay(Context context) {
         if (currentAudioUri != null) {
             MediaPlayerWUri mediaPlayerWURI = getCurrentMediaPlayerWUri();
@@ -178,11 +193,14 @@ public class MediaController {
                     }
                 }
             }
-        } else if (!isPlaying) {
-            playNext(context);
         }
     }
 
+    /** Stops the current song only if there is a current song:
+     *      songInProgress will be false and
+     *      isPlaying will be false
+     *      if there is a current song.
+     */
     private void stopCurrentSong() {
         if (currentAudioUri != null) {
             MediaPlayerWUri mediaPlayerWURI = mediaData.getMediaPlayerWUri(currentAudioUri.id);
@@ -199,43 +217,19 @@ public class MediaController {
         }
     }
 
-    private void stopCurrentSongAndPlay(Context context, MediaPlayerWUri mediaPlayerWURI) {
-        stopCurrentSong();
-        if (requestAudioFocus(context)) {
-            mediaPlayerWURI.shouldPlay(true);
-            isPlaying = true;
-            songInProgress = true;
-        }
-        currentAudioUri = AudioUri.getAudioUri(context, mediaPlayerWURI.id);
-        currentPlaylist.setIndexTo(mediaPlayerWURI.id);
-    }
-
-    private void stopPrevious() {
-        if (songQueue.hasPrevious()) {
-            final MediaPlayerWUri mediaPlayerWURI =
-                    mediaData.getMediaPlayerWUri(songQueue.previous());
-            songQueue.next();
-            if (mediaPlayerWURI != null) {
-                if (mediaPlayerWURI.isPrepared() && mediaPlayerWURI.isPlaying()) {
-                    mediaPlayerWURI.stop();
-                    mediaPlayerWURI.prepareAsync();
-                }
-            } else {
-                mediaData.releaseMediaPlayers();
-            }
-            songInProgress = false;
-            isPlaying = false;
-        }
-    }
-
-    public void addToQueueAndPlay(Context context, Long songID) {
-        songQueue.addToQueue(songID);
-        playNext(context);
-    }
-
+    /** Plays the next song.
+     *  First, if looping one the current song wil start over.
+     *  Second, if the queue can play a song, that will be played.
+     *  Third, if the playlist can play a song, that will be played.
+     *      songInProgress will be true and
+     *      isPlaying will be true
+     *      if a song was played
+     * @param context The context used for making a MediaPlayer if needed,
+     *                and for the broken MKV seeking.
+     */
     public void playNext(Context context) {
         Log.v(TAG, "playNext started");
-        stopPrevious();
+        stopCurrentSong();
         if (loopingOne) {
             playLoopingOne(context);
         } else if (!playNextInQueue(context)) {
@@ -244,20 +238,39 @@ public class MediaController {
         Log.v(TAG, "playNext ended");
     }
 
+    /** Plays the previous song.
+     *  First, if looping one the current song wil start over.
+     *  Second, if the queue can play a song, that will be played.
+     *  Third, if the playlist can play a song, that will be played.
+     *      songInProgress will be true and
+     *      isPlaying will be true
+     *      if a song was played
+     * @param context The context used for making a MediaPlayer if needed,
+     *                and for the broken MKV seeking.
+     */
     public void playPrevious(Context context) {
         if (loopingOne) {
             playLoopingOne(context);
         } else if (!playPreviousInQueue(context)) {
             playPreviousInPlaylist(context);
+        } else {
+            songInProgress = true;
+            isPlaying = true;
         }
     }
 
+    /** Makes a {@link MediaPlayerWUri} for the song if one doesn't exist, and then plays the song.
+     *      songInProgress will be true and
+     *      isPlaying will be true
+     *      if a {@link MediaPlayerWUri} was made, there is audio focus, and the song is playing.
+     * @param context Context used to request audio focus and make a MediaPlayer if needed.
+     * @param songID The id of the song to make and play.
+     */
     private void makeIfNeededAndPlay(Context context, Long songID) {
         MediaPlayerWUri mediaPlayerWUri = mediaData.getMediaPlayerWUri(songID);
         if (mediaPlayerWUri == null) {
             try {
-                mediaPlayerWUri =
-                        ((Callable<MediaPlayerWUri>) () -> {
+                mediaPlayerWUri = ((Callable<MediaPlayerWUri>) () -> {
                             MediaPlayerWUri mediaPlayerWURI = new MediaPlayerWUri(
                                     context,
                                     MediaPlayer.create(context, AudioUri.getUri(currentAudioUri.id)),
@@ -270,9 +283,23 @@ public class MediaController {
             }
             mediaData.addMediaPlayerWUri(mediaPlayerWUri.id, mediaPlayerWUri);
         }
-        stopCurrentSongAndPlay(context, mediaPlayerWUri);
+        stopCurrentSong();
+        if (requestAudioFocus(context)) {
+            mediaPlayerWUri.shouldPlay(true);
+            isPlaying = true;
+            songInProgress = true;
+        }
+        currentAudioUri = AudioUri.getAudioUri(context, mediaPlayerWUri.id);
+        currentPlaylist.setIndexTo(mediaPlayerWUri.id);
     }
 
+    /** Plays the next song in the queue
+     *      songInProgress will be true and
+     *      isPlaying will be true
+     *      if a song was played
+     * @param context Context used to request audio focus and make a MediaPlayer if needed.
+     * @return True if there was a song to play, else false.
+     */
     private boolean playNextInQueue(Context context) {
         if (songQueue.hasNext()) {
             makeIfNeededAndPlay(context, songQueue.next());
@@ -289,17 +316,42 @@ public class MediaController {
             }
         } else if (shuffling) {
             currentAudioUri = currentPlaylist.next(context, random);
-            addToQueueAndPlay(context, currentAudioUri.id);
+            currentPlaylist.setIndexTo(currentAudioUri.id);
+            addToQueue(currentAudioUri.id);
+            makeIfNeededAndPlay(context, songQueue.next());
             return true;
         }
         return false;
     }
 
+    /** Plays the next song in the current playlist if there is one.
+     *      songInProgress will be true and
+     *      isPlaying will be true
+     *      if a song was played.
+     *      songInProgress will be false and
+     *      isPlaying will be false
+     *      if the playlist did not have a song to play.
+     * @param context Context used to request audio focus and make a MediaPlayer if needed.
+     */
     private void playNextInPlaylist(Context context) {
         currentAudioUri = currentPlaylist.next(context, random, looping, shuffling);
-        addToQueueAndPlay(context, currentAudioUri.id);
+        if(currentAudioUri != null) {
+            currentPlaylist.setIndexTo(currentAudioUri.id);
+            addToQueue(currentAudioUri.id);
+            makeIfNeededAndPlay(context, songQueue.next());
+        } else {
+            isPlaying = false;
+            songInProgress = false;
+        }
     }
 
+    /** Plays the previous song in the queue.
+     *      songInProgress will be true and
+     *      isPlaying will be true
+     *      if a song was played
+     * @param context Context used to request audio focus and make a MediaPlayer if needed.
+     * @return True if a song was played, else false.
+     */
     private boolean playPreviousInQueue(Context context) {
         if (songQueue.hasPrevious()) {
             songQueue.previous();
@@ -325,12 +377,26 @@ public class MediaController {
         return !looping;
     }
 
+    /** Plays the previous song in the playlist.
+     *      songInProgress will be true and
+     *      isPlaying will be true
+     *      if a song was played
+     * @param context Context used to request audio focus and make a MediaPlayer if needed.
+     */
     private void playPreviousInPlaylist(Context context) {
         currentAudioUri = currentPlaylist.previous(context, random, looping, shuffling);
-        addToQueueAndPlay(context, currentAudioUri.id);
-
+        currentPlaylist.setIndexTo(currentAudioUri.id);
+        addToQueue(currentAudioUri.id);
+        makeIfNeededAndPlay(context, songQueue.next());
     }
 
+    /** Restarts the current song.
+     *      songInProgress will be true and
+     *      isPlaying will be true
+     *      if a song was successfully restarted.
+     * @param context Context used to request audio focus, make a MediaPlayer if needed,
+     *                and for the broken MKV seek functionality.
+     */
     private void playLoopingOne(Context context) {
         MediaPlayerWUri mediaPlayerWURI = getCurrentMediaPlayerWUri();
         if (mediaPlayerWURI != null) {
@@ -360,7 +426,7 @@ public class MediaController {
             return true;
         }
         AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-        AudioManager.OnAudioFocusChangeListener onAudioFocusChangeListener =
+         onAudioFocusChangeListener =
                 new AudioManager.OnAudioFocusChangeListener() {
                     final Object lock = new Object();
                     boolean wasPlaying;
@@ -370,7 +436,6 @@ public class MediaController {
                         switch (i) {
                             case AudioManager.AUDIOFOCUS_GAIN: {
                                 synchronized (lock) {
-                                    // TODO DO NOT PLAY MUSIC PAUSED BEFORE FOCUS LOSS!
                                     haveAudioFocus = true;
                                     if (!isPlaying && wasPlaying) {
                                         pauseOrPlay(context);

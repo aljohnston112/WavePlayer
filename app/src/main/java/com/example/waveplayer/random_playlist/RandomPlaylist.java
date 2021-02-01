@@ -162,6 +162,9 @@ public class RandomPlaylist implements Serializable {
             if (looping && !playlistIterator.hasNext()) {
                 playlistIterator = playlistArray.listIterator();
             }
+            if(!playlistIterator.hasNext()){
+                return null;
+            }
             return AudioUri.getAudioUri(context, playlistIterator.next());
         }
     }

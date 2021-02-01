@@ -190,7 +190,10 @@ public class FragmentSongs extends Fragment implements
             activityMain.addToQueue(song.id);
         } else {
             activityMain.showSongPane();
-            activityMain.addToQueueAndPlay(song.id);
+            activityMain.addToQueue(song.id);
+            if (!activityMain.isSongInProgress()) {
+                activityMain.playNext();
+            }
         }
         return true;
     }
@@ -203,7 +206,8 @@ public class FragmentSongs extends Fragment implements
         }
         activityMain.setCurrentPlaylistToMaster();
         activityMain.clearSongQueue();
-        activityMain.addToQueueAndPlay(song.id);
+        activityMain.addToQueue(song.id);
+        activityMain.playNext();
         NavDirections action = FragmentSongsDirections.actionFragmentSongsToFragmentSong();
         if (action != null) {
             NavHostFragment.findNavController(this).navigate(action);

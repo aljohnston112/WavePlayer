@@ -521,12 +521,6 @@ public class ActivityMain extends AppCompatActivity {
         // Log.v(TAG, "addToQueue end");
     }
 
-    public void addToQueueAndPlay(Long songID) {
-        // Log.v(TAG, "addToQueueAndPlay start");
-        mediaController.addToQueueAndPlay(serviceMain.getApplicationContext(), songID);
-        // Log.v(TAG, "addToQueueAndPlay end");
-    }
-
     public void playNext() {
         // Log.v(TAG, "playNext start");
         if (mediaController.getCurrentAudioUri() != null) {
@@ -866,6 +860,10 @@ public class ActivityMain extends AppCompatActivity {
 
     public RandomPlaylist getPlaylist(String playlistName) {
         return mediaController.getPlaylist(playlistName);
+    }
+
+    public boolean isSongInProgress() {
+        return mediaController.isSongInProgress();
     }
 
     // endregion fragmentLoading

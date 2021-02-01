@@ -29,18 +29,23 @@ public class MediaPlayerWUri {
 
     private volatile boolean shouldPlay = false;
 
-    MediaPlayerWUri(final Context context, MediaPlayer mediaPlayer, final Long id) {
+    private MediaPlayer.OnErrorListener onErrorListener;
+
+    MediaPlayerWUri(final Context context, MediaPlayer mediaPlayer, final Long songID) {
         this.mediaPlayer = mediaPlayer;
-        this.id = id;
+        this.id = songID;
         mediaPlayer.setOnPreparedListener(null);
         mediaPlayer.setOnErrorListener(null);
         MOnPreparedListener mOnPreparedListener = new MOnPreparedListener(this);
         mediaPlayer.setOnPreparedListener(mOnPreparedListener);
-        MediaPlayer.OnErrorListener onErrorListener = (mediaPlayer1, i, i1) -> {
+        onErrorListener = (mediaPlayer1, i, i1) -> {
             synchronized (lock) {
                 MediaController mediaController = MediaController.getInstance(context);
                 mediaController.releaseMediaPlayers();
-                mediaController.addToQueueAndPlay(context, mediaController.getCurrentAudioUri().id);
+                mediaController.addToQueue(songID);
+                if(!mediaController.isSongInProgress()) {
+                    mediaController.playNext(context);
+                }
                 return false;
             }
         };
@@ -148,10 +153,13 @@ public class MediaPlayerWUri {
                         mediaController.getMediaPlayerWUri(audioUri.id)
                 );
                 mediaPlayer.setOnPreparedListener(mOnPreparedListener);
-                MediaPlayer.OnErrorListener onErrorListener = (mediaPlayer1, i, i1) -> {
+                onErrorListener = (mediaPlayer1, i, i1) -> {
                     synchronized (MediaPlayerWUri.lock) {
                         mediaController.releaseMediaPlayers();
-                        mediaController.addToQueueAndPlay(context, mediaController.getCurrentAudioUri().id);
+                        mediaController.addToQueue(audioUri.id);
+                        if(!mediaController.isSongInProgress()) {
+                            mediaController.playNext(context);
+                        }
                         return false;
                     }
                 };

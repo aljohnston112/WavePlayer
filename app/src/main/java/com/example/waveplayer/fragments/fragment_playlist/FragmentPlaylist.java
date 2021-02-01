@@ -98,7 +98,7 @@ public class FragmentPlaylist extends Fragment implements
     private void setUpToolbar() {
         ActivityMain activityMain = (ActivityMain) requireActivity();
         Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
-        if(toolbar != null) {
+        if (toolbar != null) {
             Menu menu = toolbar.getMenu();
             if (menu != null) {
                 menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(true);
@@ -186,7 +186,7 @@ public class FragmentPlaylist extends Fragment implements
         broadcastReceiverOptionsMenuCreated = null;
         onQueryTextListenerSearch = null;
         Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
-        if(toolbar != null) {
+        if (toolbar != null) {
             Menu menu = toolbar.getMenu();
             if (menu != null) {
                 MenuItem itemSearch = menu.findItem(R.id.action_search);
@@ -232,11 +232,10 @@ public class FragmentPlaylist extends Fragment implements
     public boolean onMenuItemClickAddToQueue(Song song) {
         // TODO fix how MasterPlaylist continues after queue is depleted
         ActivityMain activityMain = (ActivityMain) requireActivity();
-        if (activityMain.songInProgress()) {
-            activityMain.addToQueue(song.id);
-        } else {
+        activityMain.addToQueue(song.id);
+        if (!activityMain.isSongInProgress()) {
             activityMain.showSongPane();
-            activityMain.addToQueueAndPlay(song.id);
+            activityMain.playNext();
         }
         return true;
     }
@@ -252,7 +251,8 @@ public class FragmentPlaylist extends Fragment implements
         }
         activityMain.setCurrentPlaylist(getUserPickedPlaylist());
         activityMain.clearSongQueue();
-        activityMain.addToQueueAndPlay(song.id);
+        activityMain.addToQueue(song.id);
+        activityMain.playNext();
         NavDirections action = FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong();
         if (action != null) {
             NavHostFragment.findNavController(this).navigate(action);
