@@ -1,4 +1,4 @@
-package com.example.waveplayer.media_controller;
+package com.example.waveplayer.random_playlist;
 
 import androidx.annotation.Nullable;
 import androidx.room.ColumnInfo;

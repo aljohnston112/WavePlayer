@@ -26,7 +26,8 @@ import com.example.waveplayer.R;
 import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.activity_main.ViewModelActivityMain;
 import com.example.waveplayer.databinding.FragmentLoadingBinding;
-import com.example.waveplayer.media_controller.MediaData;
+import com.example.waveplayer.media_controller.MediaController;
+import com.example.waveplayer.media_controller.ViewModelFragmentLoading;
 import com.example.waveplayer.service_main.ServiceMain;
 
 public class FragmentLoading extends Fragment {
@@ -159,7 +160,7 @@ public class FragmentLoading extends Fragment {
 
     private void permissionGranted() {
         ServiceMain.executorServicePool.execute(
-                () -> MediaData.getInstance().loadData((ActivityMain) requireActivity()));
+                () -> MediaController.getInstance(requireActivity().getApplicationContext()));
     }
 
 }

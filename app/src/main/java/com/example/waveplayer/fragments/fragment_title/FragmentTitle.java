@@ -25,7 +25,7 @@ import com.example.waveplayer.activity_main.ViewModelActivityMain;
 import com.example.waveplayer.databinding.FragmentTitleBinding;
 import com.example.waveplayer.media_controller.MediaData;
 import com.example.waveplayer.media_controller.SaveFile;
-import com.example.waveplayer.media_controller.Song;
+import com.example.waveplayer.random_playlist.Song;
 import com.example.waveplayer.ViewModelUserPickedPlaylist;
 import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.R;
@@ -112,21 +112,21 @@ public class FragmentTitle extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode,
                                  Intent resultData) {
+        final ActivityMain activityMain = (ActivityMain) requireActivity();
         if (requestCode == REQUEST_CODE_OPEN_FOLDER && resultCode == Activity.RESULT_OK) {
             if (resultData != null) {
                 Uri uri = resultData.getData();
                 this.uriUserPickedFolder = uri;
                 getFilesFromDirRecursive(uri);
-                MediaData mediaData = MediaData.getInstance();
                 if (uriUserPickedFolder != null) {
                     if (!songs.isEmpty()) {
                         RandomPlaylist randomPlaylist =
-                                MediaData.getInstance().getPlaylist(uriUserPickedFolder.getPath());
+                                activityMain.getPlaylist(uriUserPickedFolder.getPath());
                         if (randomPlaylist == null) {
                             randomPlaylist = new RandomPlaylist(
-                                    uriUserPickedFolder.getPath(), songs, mediaData.getMaxPercent(),
+                                    uriUserPickedFolder.getPath(), songs, activityMain.getMaxPercent(),
                                     false);
-                            mediaData.addPlaylist(randomPlaylist);
+                            activityMain.addPlaylist(randomPlaylist);
                         } else {
                             addNewSongs(randomPlaylist);
                             removeMissingSongs(randomPlaylist);

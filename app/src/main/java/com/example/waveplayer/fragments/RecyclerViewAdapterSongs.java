@@ -11,7 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.waveplayer.R;
-import com.example.waveplayer.media_controller.Song;
+import com.example.waveplayer.random_playlist.Song;
 import com.example.waveplayer.service_main.ServiceMain;
 
 import java.util.List;

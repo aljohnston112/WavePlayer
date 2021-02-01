@@ -6,10 +6,14 @@ import com.example.waveplayer.activity_main.ActivityMain;
 
 public class OnSeekBarChangeListener implements SeekBar.OnSeekBarChangeListener {
 
-    private final ActivityMain activityMain;
+    private final OnSeekBarChangeCallback onSeekBarChangeCallback;
 
-    public OnSeekBarChangeListener(ActivityMain activityMain) {
-        this.activityMain = activityMain;
+    public interface OnSeekBarChangeCallback{
+        void onStopTrackingTouch(SeekBar seekBar);
+    }
+
+    public OnSeekBarChangeListener(OnSeekBarChangeCallback onSeekBarChangeCallback) {
+        this.onSeekBarChangeCallback = onSeekBarChangeCallback;
     }
 
     @Override
@@ -22,7 +26,7 @@ public class OnSeekBarChangeListener implements SeekBar.OnSeekBarChangeListener 
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
-        activityMain.seekTo(seekBar.getProgress());
+        onSeekBarChangeCallback.onStopTrackingTouch(seekBar);
     }
 
 }

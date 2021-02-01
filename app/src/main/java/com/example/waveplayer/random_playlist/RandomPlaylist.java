@@ -3,7 +3,6 @@ package com.example.waveplayer.random_playlist;
 import android.content.Context;
 
 import com.example.waveplayer.media_controller.MediaData;
-import com.example.waveplayer.media_controller.Song;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -102,13 +101,13 @@ public class RandomPlaylist implements Serializable {
     }
 
     public void good(Context context, Song song, double percent, boolean scale) {
-        if (MediaData.getAudioUri(context, song.id).good(percent)) {
+        if (AudioUri.getAudioUri(context, song.id).good(percent)) {
             probabilityFunction.good(song, percent, scale);
         }
     }
 
     public void bad(Context context, Song song, double percent) {
-        if (MediaData.getAudioUri(context, song.id).bad(percent)) {
+        if (AudioUri.getAudioUri(context, song.id).bad(percent)) {
             probabilityFunction.bad(song, percent);
         }
 
@@ -120,7 +119,7 @@ public class RandomPlaylist implements Serializable {
 
     public void clearProbabilities(Context context) {
         for (Song song : probabilityFunction.getKeys()) {
-            MediaData.getAudioUri(context, song.id).clearProbabilities();
+            AudioUri.getAudioUri(context, song.id).clearProbabilities();
         }
         probabilityFunction.clearProbabilities();
     }
@@ -135,7 +134,7 @@ public class RandomPlaylist implements Serializable {
         boolean next = false;
         while (!next) {
             song = probabilityFunction.fun(random);
-            audioUri = MediaData.getAudioUri(context, song.id);
+            audioUri = AudioUri.getAudioUri(context, song.id);
             next = audioUri.shouldPlay(random);
         }
         return audioUri;
@@ -163,7 +162,7 @@ public class RandomPlaylist implements Serializable {
             if (looping && !playlistIterator.hasNext()) {
                 playlistIterator = playlistArray.listIterator();
             }
-            return MediaData.getAudioUri(context, playlistIterator.next());
+            return AudioUri.getAudioUri(context, playlistIterator.next());
         }
     }
 
@@ -177,7 +176,7 @@ public class RandomPlaylist implements Serializable {
             if (looping && !playlistIterator.hasPrevious()) {
                 playlistIterator = playlistArray.listIterator(playlistArray.size()-1);
             }
-            return MediaData.getAudioUri(context, playlistIterator.previous());
+            return AudioUri.getAudioUri(context, playlistIterator.previous());
         }
 
     }

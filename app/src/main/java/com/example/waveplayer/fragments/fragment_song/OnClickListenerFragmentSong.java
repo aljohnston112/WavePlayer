@@ -5,7 +5,7 @@ import android.widget.ImageButton;
 
 import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.media_controller.MediaData;
-import com.example.waveplayer.media_controller.Song;
+import com.example.waveplayer.random_playlist.Song;
 import com.example.waveplayer.R;
 
 public class OnClickListenerFragmentSong implements View.OnClickListener {
@@ -20,17 +20,17 @@ public class OnClickListenerFragmentSong implements View.OnClickListener {
     public void onClick(View view) {
         synchronized (ActivityMain.lock) {
             if (view.getId() == R.id.button_thumb_down) {
-                Song song = MediaData.getInstance().getSong(activityMain.getCurrentAudioUri().id);
+                Song song = activityMain.getSong(activityMain.getCurrentAudioUri().id);
                 if(song != null) {
                     activityMain.getCurrentPlaylist().globalBad(
-                            song, MediaData.getInstance().getPercentChangeDown());
+                            song, activityMain.getPercentChangeDown());
                     activityMain.saveFile();
                 }
             } else if (view.getId() == R.id.button_thumb_up) {
-                Song song = MediaData.getInstance().getSong(activityMain.getCurrentAudioUri().id);
+                Song song = activityMain.getSong(activityMain.getCurrentAudioUri().id);
                 if(song != null) {
                     activityMain.getCurrentPlaylist().good(activityMain.getApplicationContext(),
-                            song, MediaData.getInstance().getPercentChangeUp(), true);
+                            song, activityMain.getPercentChangeUp(), true);
                     activityMain.saveFile();
                 }
             } else if (view.getId() == R.id.imageButtonShuffle) {

@@ -9,6 +9,11 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Random;
 
@@ -27,6 +32,23 @@ public final class AudioUri implements Comparable<AudioUri>, Serializable {
     public final String title;
 
     public final long id;
+    
+    public static AudioUri getAudioUri(Context context, Long songID) {
+        File file = new File(context.getFilesDir(), String.valueOf(songID));
+        if (file.exists()) {
+            try (FileInputStream fileInputStream = context.openFileInput(String.valueOf(songID));
+                 ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
+                return (AudioUri) objectInputStream.readObject();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
 
     public Uri getUri() {
         Log.v(TAG, "getUri started");

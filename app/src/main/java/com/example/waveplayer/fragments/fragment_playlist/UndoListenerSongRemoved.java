@@ -3,7 +3,7 @@ package com.example.waveplayer.fragments.fragment_playlist;
 import android.view.View;
 
 import com.example.waveplayer.activity_main.ActivityMain;
-import com.example.waveplayer.media_controller.Song;
+import com.example.waveplayer.random_playlist.Song;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 import com.example.waveplayer.fragments.RecyclerViewAdapterSongs;
 

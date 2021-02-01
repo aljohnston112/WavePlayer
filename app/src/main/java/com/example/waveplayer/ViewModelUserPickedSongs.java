@@ -4,7 +4,7 @@ package com.example.waveplayer;
 import androidx.annotation.GuardedBy;
 import androidx.lifecycle.ViewModel;
 
-import com.example.waveplayer.media_controller.Song;
+import com.example.waveplayer.random_playlist.Song;
 
 import java.util.ArrayList;
 import java.util.List;

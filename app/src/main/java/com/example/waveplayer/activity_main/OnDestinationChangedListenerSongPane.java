@@ -10,29 +10,24 @@ import androidx.navigation.NavDestination;
 import com.example.waveplayer.R;
 import com.example.waveplayer.activity_main.ActivityMain;
 
-public class OnDestinationChangedListenerPanes
+public class OnDestinationChangedListenerSongPane
         implements NavController.OnDestinationChangedListener {
 
-    private final ActivityMain activityMain;
+    private final OnDestinationChangedCallback onDestinationChangedCallback;
 
-    public OnDestinationChangedListenerPanes(ActivityMain activityMain) {
-        this.activityMain = activityMain;
+    public interface OnDestinationChangedCallback {
+        void onDestinationChanged(@NonNull final NavDestination destination);
+    }
+
+    public OnDestinationChangedListenerSongPane(OnDestinationChangedCallback onDestinationChangedCallback) {
+        this.onDestinationChangedCallback = onDestinationChangedCallback;
     }
 
     @Override
     public void onDestinationChanged(@NonNull NavController controller,
                                      @NonNull final NavDestination destination,
                                      @Nullable Bundle arguments) {
-        if (destination.getId() != R.id.fragmentSong) {
-            if (activityMain.songInProgress()) {
-                activityMain.fragmentSongVisible(false);
-                activityMain.showSongPane();
-            }
-        } else {
-            activityMain.fragmentSongVisible(true);
-            activityMain.hideSongPane();
-        }
-        activityMain.updateUI();
+        onDestinationChangedCallback.onDestinationChanged(destination);
     }
 
 }

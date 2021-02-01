@@ -91,10 +91,11 @@ public class OnClickListenerFABFragmentSettings implements View.OnClickListener 
     }
 
     private void updateSettings(int nSongs, int percentChangeUp, int percentChangeDown) {
+        ActivityMain activityMain = (ActivityMain) fragmentSettings.getActivity();
         double maxPercent = (1.0 / (double) nSongs);
-        MediaData.getInstance().setMaxPercent(maxPercent);
-        MediaData.getInstance().setPercentChangeUp(((double) percentChangeUp) / 100.0);
-        MediaData.getInstance().setPercentChangeDown(((double) percentChangeDown) / 100.0);
+        activityMain.setMaxPercent(maxPercent);
+        activityMain.setPercentChangeUp(((double) percentChangeUp) / 100.0);
+        activityMain.setPercentChangeDown(((double) percentChangeDown) / 100.0);
     }
 
 }

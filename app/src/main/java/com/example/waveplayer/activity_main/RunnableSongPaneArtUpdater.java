@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import androidx.core.content.res.ResourcesCompat;
 
 import com.example.waveplayer.R;
+import com.example.waveplayer.media_controller.BitmapLoader;
 import com.example.waveplayer.media_controller.MediaData;
 
 public class RunnableSongPaneArtUpdater implements Runnable {
@@ -20,11 +21,10 @@ public class RunnableSongPaneArtUpdater implements Runnable {
 
     @Override
     public void run() {
-        int songArtHeight;
         int songArtWidth = getSongArtWidth();
-        songArtHeight = songArtWidth;
-        Bitmap bitmapSongArt = MediaData.getThumbnail(
-                activityMain.getCurrentAudioUri(), songArtWidth, songArtHeight, activityMain.getApplicationContext());
+        int songArtHeight = getSongArtHeight();
+        Bitmap bitmapSongArt = BitmapLoader.getThumbnail(
+                activityMain.getCurrentUri(), songArtWidth, songArtHeight, activityMain.getApplicationContext());
         ImageView imageViewSongPaneSongArt = activityMain.findViewById(R.id.imageViewSongPaneSongArt);
         if(imageViewSongPaneSongArt != null) {
             if (bitmapSongArt != null) {
@@ -78,7 +78,7 @@ public class RunnableSongPaneArtUpdater implements Runnable {
                         songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888);
                 Canvas canvas = new Canvas(bitmapSongArt);
                 drawableSongArt.draw(canvas);
-                Bitmap bitmapSongArtResized = MediaData.getResizedBitmap(
+                Bitmap bitmapSongArtResized = BitmapLoader.getResizedBitmap(
                         bitmapSongArt, songArtWidth, songArtHeight);
                 bitmapSongArt.recycle();
                 return bitmapSongArtResized;

@@ -10,6 +10,7 @@ import androidx.core.content.res.ResourcesCompat;
 
 import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.R;
+import com.example.waveplayer.media_controller.BitmapLoader;
 import com.example.waveplayer.media_controller.MediaData;
 
 public class OnLayoutChangeListenerSongPane implements View.OnLayoutChangeListener {
@@ -26,9 +27,11 @@ public class OnLayoutChangeListenerSongPane implements View.OnLayoutChangeListen
         ActivityMain activityMain = ((ActivityMain)fragmentPaneSong.getActivity());
         if(activityMain.findViewById(R.id.fragmentSongPane).getVisibility() == View.VISIBLE &&
                 !((ActivityMain)fragmentPaneSong.getActivity()).fragmentSongVisible()) {
+            fragmentPaneSong.updateSongPaneUI();
             setUpPrev(v);
             setUpPlay(v);
             setUpNext(v);
+
         }
     }
 
@@ -44,7 +47,7 @@ public class OnLayoutChangeListenerSongPane implements View.OnLayoutChangeListen
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
             drawable.draw(canvas);
-            Bitmap bitmapResized = MediaData.getResizedBitmap(bitmap, width, height);
+            Bitmap bitmapResized = BitmapLoader.getResizedBitmap(bitmap, width, height);
             bitmap.recycle();
             imageView.setImageBitmap(bitmapResized);
         }
@@ -69,7 +72,7 @@ public class OnLayoutChangeListenerSongPane implements View.OnLayoutChangeListen
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
             drawable.draw(canvas);
-            Bitmap bitmapResized = MediaData.getResizedBitmap(bitmap, width, height);
+            Bitmap bitmapResized = BitmapLoader.getResizedBitmap(bitmap, width, height);
             bitmap.recycle();
             imageView.setImageBitmap(bitmapResized);
         }
@@ -87,7 +90,7 @@ public class OnLayoutChangeListenerSongPane implements View.OnLayoutChangeListen
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
             drawable.draw(canvas);
-            Bitmap bitmapResized = MediaData.getResizedBitmap(bitmap, width, height);
+            Bitmap bitmapResized = BitmapLoader.getResizedBitmap(bitmap, width, height);
             bitmap.recycle();
             imageView.setImageBitmap(bitmapResized);
         }

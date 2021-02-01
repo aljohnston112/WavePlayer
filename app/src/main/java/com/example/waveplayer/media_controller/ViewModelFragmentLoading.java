@@ -1,4 +1,4 @@
-package com.example.waveplayer.fragments.fragment_loading;
+package com.example.waveplayer.media_controller;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;

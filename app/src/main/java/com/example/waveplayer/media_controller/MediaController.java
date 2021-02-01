@@ -1,47 +1,48 @@
 package com.example.waveplayer.media_controller;
 
 import android.content.Context;
+import android.content.Intent;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.util.Log;
 
+import com.example.waveplayer.R;
 import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
+import com.example.waveplayer.random_playlist.Song;
+import com.example.waveplayer.random_playlist.SongQueue;
+import com.example.waveplayer.service_main.ServiceMain;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Callable;
 
 public class MediaController {
 
-    static final String TAG = "MediaController";
+    private static final Random random = new Random();
+
+    private static final String TAG = "MediaController";
 
     public static MediaController INSTANCE;
 
-    synchronized public static MediaController getInstance(Context context){
+    protected final MediaPlayer.OnCompletionListener onCompletionListener;
+
+    private final MediaData mediaData = MediaData.getInstance();
+
+    private final SongQueue songQueue = new SongQueue();
+
+    private RandomPlaylist currentPlaylist;
+
+    private AudioUri currentAudioUri;
+    
+    public static synchronized MediaController getInstance(Context context){
         if(INSTANCE == null){
             INSTANCE = new MediaController(context);
         }
         return INSTANCE;
-    }
-
-    private static final Random random = new Random();
-
-    private final MediaData mediaData = MediaData.getInstance();
-
-    public final MediaPlayerOnCompletionListener onCompletionListener;
-
-    private AudioUri currentAudioUri;
-
-    public AudioUri getCurrentAudioUri() {
-        return currentAudioUri;
-    }
-
-    private RandomPlaylist currentPlaylist;
-
-    public void setCurrentPlaylistToMaster() {
-        setCurrentPlaylist(mediaData.getMasterPlaylist());
     }
 
     public RandomPlaylist getCurrentPlaylist() {
@@ -52,6 +53,10 @@ public class MediaController {
         this.currentPlaylist = currentPlaylist;
     }
 
+    public void setCurrentPlaylistToMaster() {
+        setCurrentPlaylist(mediaData.getMasterPlaylist());
+    }
+
     public void clearProbabilities(Context context) {
         currentPlaylist.clearProbabilities(context);
     }
@@ -60,7 +65,13 @@ public class MediaController {
         currentPlaylist.lowerProbabilities(context, mediaData.getLowerProb());
     }
 
-    private final SongQueue songQueue = new SongQueue();
+    public AudioUri getCurrentAudioUri() {
+        return currentAudioUri;
+    }
+
+    public Uri getCurrentUri() {
+        return getCurrentAudioUri().getUri();
+    }
 
     public void addToQueue(Long songID) {
         songQueue.addToQueue(songID);
@@ -121,9 +132,19 @@ public class MediaController {
     }
 
     private MediaController(Context context){
-        onCompletionListener = new MediaPlayerOnCompletionListener(
-                context, this);
-        currentPlaylist = mediaData.getMasterPlaylist();
+        onCompletionListener = mediaPlayer -> {
+            AudioUri audioUri = getCurrentAudioUri();
+            getMediaPlayerWUri(audioUri.id).resetIfMKV(audioUri, context);
+            playNext(context);
+            Intent intent = new Intent();
+            intent.addCategory(Intent.CATEGORY_DEFAULT);
+            intent.setAction(context.getResources().getString(R.string.broadcast_receiver_action_on_completion));
+            context.sendBroadcast(intent);
+        };
+        mediaData.loadData(context);
+        ServiceMain.executorServiceFIFO.execute(
+                () -> currentPlaylist = mediaData.getMasterPlaylist());
+
     }
 
     private MediaPlayerWUri getCurrentMediaPlayerWUri() {
@@ -154,9 +175,19 @@ public class MediaController {
     private void makeIfNeededAndPlay(Context context, Long songID) {
         MediaPlayerWUri mediaPlayerWUri = mediaData.getMediaPlayerWUri(songID);
         if (mediaPlayerWUri == null) {
-            mediaPlayerWUri =
-                    new CallableCreateMediaPlayerWUri(
-                            context, this, onCompletionListener, songID).call();
+            try {
+                mediaPlayerWUri =
+                        ((Callable<MediaPlayerWUri>) () -> {
+                            MediaPlayerWUri mediaPlayerWURI = new MediaPlayerWUri(
+                                    context,
+                                    MediaPlayer.create(context, AudioUri.getUri(currentAudioUri.id)),
+                                    currentAudioUri.id);
+                            mediaPlayerWURI.setOnCompletionListener(onCompletionListener);
+                            return mediaPlayerWURI;
+                        }).call();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             mediaData.addMediaPlayerWUri(mediaPlayerWUri.id, mediaPlayerWUri);
         }
         stopCurrentSongAndPlay(context, mediaPlayerWUri);
@@ -169,7 +200,7 @@ public class MediaController {
             isPlaying = true;
             songInProgress = true;
         }
-        currentAudioUri = MediaData.getAudioUri(context, mediaPlayerWURI.id);
+        currentAudioUri = AudioUri.getAudioUri(context, mediaPlayerWURI.id);
             currentPlaylist.setIndexTo(mediaPlayerWURI.id);
     }
 
@@ -399,5 +430,53 @@ public class MediaController {
 
     public void goToFront() {
         songQueue.goToFront();
+    }
+
+    public List<RandomPlaylist> getPlaylists() {
+        return mediaData.getPlaylists();
+    }
+
+    public Song getSong(long songID) {
+        return mediaData.getSong(songID);
+    }
+
+    public double getMaxPercent() {
+        return mediaData.getMaxPercent();
+    }
+
+    public void addPlaylist(RandomPlaylist randomPlaylist) {
+        mediaData.addPlaylist(randomPlaylist);
+    }
+
+    public void removePlaylist(RandomPlaylist randomPlaylist) {
+        mediaData.removePlaylist(randomPlaylist);
+    }
+
+    public void addPlaylist(int position, RandomPlaylist randomPlaylist) {
+        mediaData.addPlaylist(position, randomPlaylist);
+    }
+
+    public double getPercentChangeUp() {
+        return mediaData.getPercentChangeUp();
+    }
+
+    public void setMaxPercent(double maxPercent) {
+        mediaData.setMaxPercent(maxPercent);
+    }
+
+    public void setPercentChangeUp(double percentChangeUp) {
+        mediaData.setPercentChangeUp(percentChangeUp);
+    }
+
+    public void setPercentChangeDown(double percentChangeDown) {
+        mediaData.setPercentChangeDown(percentChangeDown);
+    }
+
+    public RandomPlaylist getMasterPlaylist() {
+        return mediaData.getMasterPlaylist();
+    }
+
+    public RandomPlaylist getPlaylist(String playlistName) {
+        return mediaData.getPlaylist(playlistName);
     }
 }

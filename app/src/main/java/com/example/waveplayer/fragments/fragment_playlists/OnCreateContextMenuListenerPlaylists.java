@@ -9,8 +9,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.media_controller.MediaController;
-import com.example.waveplayer.media_controller.MediaData;
-import com.example.waveplayer.media_controller.Song;
+import com.example.waveplayer.random_playlist.Song;
 import com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist;
 import com.example.waveplayer.R;
 import com.example.waveplayer.random_playlist.RandomPlaylist;

@@ -119,7 +119,7 @@ public class FragmentPlaylists extends Fragment {
         RecyclerView recyclerView = view.findViewById(R.id.recycler_view_playlist_list);
         recyclerView.setLayoutManager(new LinearLayoutManager(recyclerView.getContext()));
         RecyclerViewAdapterPlaylists recyclerViewAdapter =
-                new RecyclerViewAdapterPlaylists(this, MediaData.getInstance().getPlaylists());
+                new RecyclerViewAdapterPlaylists(this, activityMain.getPlaylists());
         recyclerView.setAdapter(recyclerViewAdapter);
         itemTouchListenerPlaylist = new ItemTouchListenerPlaylist(activityMain);
         itemTouchHelper = new ItemTouchHelper(itemTouchListenerPlaylist);
@@ -146,7 +146,7 @@ public class FragmentPlaylists extends Fragment {
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
-                R.string.broadcast_receiver_on_create_options_menu));
+                R.string.broadcast_receiver_action_on_create_options_menu));
         broadcastReceiverOptionsMenuCreated = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {

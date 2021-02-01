@@ -10,8 +10,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 
 import com.example.waveplayer.R;
+import com.example.waveplayer.media_controller.MediaController;
 import com.example.waveplayer.media_controller.MediaData;
-import com.example.waveplayer.media_controller.Song;
+import com.example.waveplayer.random_playlist.Song;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 
 import java.util.ArrayList;
@@ -50,7 +51,7 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
         onMultiChoiceClickListener =
                 new OnMultiChoiceClickListenerAddToPlaylist(selectedPlaylistIndices);
         builder.setMultiChoiceItems(
-                getPlaylistTitles(MediaData.getInstance().getPlaylists()),
+                getPlaylistTitles(MediaController.getInstance(getContext()).getPlaylists()),
                 null, onMultiChoiceClickListener);
     }
 
@@ -74,8 +75,22 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
                 BUNDLE_KEY_ADD_TO_PLAYLIST_SONG);
         RandomPlaylist randomPlaylist = (RandomPlaylist) bundle.getSerializable(
                 BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST);
-        onClickListenerPositiveButton = new OnClickListenerAddToPlaylistPositiveButton(
-                selectedPlaylistIndices, isSong, song, randomPlaylist);
+        onClickListenerPositiveButton = (dialog, id) -> {
+            if (isSong && song != null) {
+                for (int index : selectedPlaylistIndices) {
+                    MediaController.getInstance(requireActivity().getApplicationContext())
+                            .getPlaylists().get(index).add(song);
+                }
+            }
+            if (!isSong && randomPlaylist != null) {
+                for (Song randomPlaylistSong : randomPlaylist.getSongs()) {
+                    for (int index : selectedPlaylistIndices) {
+                        MediaController.getInstance(requireActivity().getApplicationContext())
+                                .getPlaylists().get(index).add(randomPlaylistSong);
+                    }
+                }
+            }
+        };
         onClickListenerNeutralButton = new OnClickListenerAddToPlaylistNeutralButton(
                 (ActivityMain) requireActivity(), isSong, song, randomPlaylist);
         builder.setPositiveButton(R.string.add, onClickListenerPositiveButton)

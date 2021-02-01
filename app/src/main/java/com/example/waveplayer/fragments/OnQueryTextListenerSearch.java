@@ -7,7 +7,7 @@ import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.fragments.fragment_select_songs.FragmentSelectSongs;
 import com.example.waveplayer.fragments.fragment_select_songs.RecyclerViewAdapterSelectSongs;
 import com.example.waveplayer.media_controller.MediaData;
-import com.example.waveplayer.media_controller.Song;
+import com.example.waveplayer.random_playlist.Song;
 import com.example.waveplayer.R;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 import com.example.waveplayer.fragments.fragment_playlists.RecyclerViewAdapterPlaylists;
@@ -83,7 +83,7 @@ public class OnQueryTextListenerSearch implements SearchView.OnQueryTextListener
                 if (recyclerViewPlaylists != null) {
                     RecyclerViewAdapterPlaylists recyclerViewAdapterPlaylists =
                             (RecyclerViewAdapterPlaylists) recyclerViewPlaylists.getAdapter();
-                    List<RandomPlaylist> playlists = MediaData.getInstance().getPlaylists();
+                    List<RandomPlaylist> playlists = activityMain.getPlaylists();
                     List<RandomPlaylist> sifted = new ArrayList<>();
                     if (!newText.equals("")) {
                         for (RandomPlaylist randomPlaylist : playlists) {

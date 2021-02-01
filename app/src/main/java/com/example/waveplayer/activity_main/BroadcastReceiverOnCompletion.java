@@ -21,9 +21,7 @@ public class BroadcastReceiverOnCompletion extends BroadcastReceiver {
         Log.v(ActivityMain.TAG, "BroadcastReceiverOnCompletion start");
         String action = intent.getAction();
         if (action != null) {
-            if (action.equals(activityMain.getResources().getString(R.string.broadcast_receiver_action_on_completion))) {
-                activityMain.updateUI();
-            }
+
         }
         Log.v(ActivityMain.TAG, "BroadcastReceiverOnCompletion end");
     }

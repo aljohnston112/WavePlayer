@@ -32,7 +32,7 @@ import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.fragments.OnQueryTextListenerSearch;
 import com.example.waveplayer.fragments.RecyclerViewAdapterSongs;
 import com.example.waveplayer.media_controller.MediaData;
-import com.example.waveplayer.media_controller.Song;
+import com.example.waveplayer.random_playlist.Song;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,7 +77,7 @@ public class FragmentSongs extends Fragment implements
         activityMain.hideKeyboard(view);
         updateMainContent();
         setUpRecyclerView();
-        viewModelUserPickedPlaylist.setUserPickedPlaylist(MediaData.getInstance().getMasterPlaylist());
+        viewModelUserPickedPlaylist.setUserPickedPlaylist(activityMain.getMasterPlaylist());
         setUpBroadcastReceiverServiceConnected();
         setUpBroadcastReceiverOnOptionsMenuCreated();
     }
@@ -105,8 +105,9 @@ public class FragmentSongs extends Fragment implements
     }
 
     private void setUpRecyclerView() {
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         RecyclerView recyclerViewSongs = binding.recyclerViewSongList;
-        List<Song> songs = MediaData.getInstance().getAllSongs();
+        List<Song> songs = activityMain.getAllSongs();
         if (songs != null) {
             RecyclerViewAdapterSongs recyclerViewAdapterSongs = new RecyclerViewAdapterSongs(
                     this, new ArrayList<>(songs));
@@ -137,7 +138,7 @@ public class FragmentSongs extends Fragment implements
         IntentFilter filterComplete = new IntentFilter();
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
-                R.string.broadcast_receiver_on_create_options_menu));
+                R.string.broadcast_receiver_action_on_create_options_menu));
         broadcastReceiverOptionsMenuCreated = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {

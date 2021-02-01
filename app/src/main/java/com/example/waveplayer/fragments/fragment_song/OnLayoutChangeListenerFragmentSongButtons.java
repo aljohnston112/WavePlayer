@@ -10,6 +10,7 @@ import androidx.core.content.res.ResourcesCompat;
 
 import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.R;
+import com.example.waveplayer.media_controller.BitmapLoader;
 import com.example.waveplayer.media_controller.MediaData;
 
 public class OnLayoutChangeListenerFragmentSongButtons implements View.OnLayoutChangeListener {
@@ -45,7 +46,7 @@ public class OnLayoutChangeListenerFragmentSongButtons implements View.OnLayoutC
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
             drawable.draw(canvas);
-            Bitmap bitmapResized = MediaData.getResizedBitmap(bitmap, width, height);
+            Bitmap bitmapResized = BitmapLoader.getResizedBitmap(bitmap, width, height);
             bitmap.recycle();
             imageView.setImageBitmap(bitmapResized);
         }
@@ -63,7 +64,7 @@ public class OnLayoutChangeListenerFragmentSongButtons implements View.OnLayoutC
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
             drawable.draw(canvas);
-            Bitmap bitmapResized = MediaData.getResizedBitmap(bitmap, width, height);
+            Bitmap bitmapResized = BitmapLoader.getResizedBitmap(bitmap, width, height);
             bitmap.recycle();
             imageView.setImageBitmap(bitmapResized);
         }
@@ -87,7 +88,7 @@ public class OnLayoutChangeListenerFragmentSongButtons implements View.OnLayoutC
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
             drawable.draw(canvas);
-            Bitmap bitmapResized = MediaData.getResizedBitmap(bitmap, width, height);
+            Bitmap bitmapResized = BitmapLoader.getResizedBitmap(bitmap, width, height);
             bitmap.recycle();
             imageView.setImageBitmap(bitmapResized);
         }
@@ -104,7 +105,7 @@ public class OnLayoutChangeListenerFragmentSongButtons implements View.OnLayoutC
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
             drawable.draw(canvas);
-            Bitmap bitmapResized = MediaData.getResizedBitmap(bitmap, width, height);
+            Bitmap bitmapResized = BitmapLoader.getResizedBitmap(bitmap, width, height);
             bitmap.recycle();
             imageView.setImageBitmap(bitmapResized);
         }
@@ -126,7 +127,7 @@ public class OnLayoutChangeListenerFragmentSongButtons implements View.OnLayoutC
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
             drawable.draw(canvas);
-            Bitmap bitmapResized = MediaData.getResizedBitmap(bitmap, width, height);
+            Bitmap bitmapResized = BitmapLoader.getResizedBitmap(bitmap, width, height);
             bitmap.recycle();
             imageView.setImageBitmap(bitmapResized);
         }
@@ -143,7 +144,7 @@ public class OnLayoutChangeListenerFragmentSongButtons implements View.OnLayoutC
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
             drawable.draw(canvas);
-            Bitmap bitmapResized = MediaData.getResizedBitmap(bitmap, width, height);
+            Bitmap bitmapResized = BitmapLoader.getResizedBitmap(bitmap, width, height);
             bitmap.recycle();
             imageView.setImageBitmap(bitmapResized);
         }
@@ -171,7 +172,7 @@ public class OnLayoutChangeListenerFragmentSongButtons implements View.OnLayoutC
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
             drawable.draw(canvas);
-            Bitmap bitmapResized = MediaData.getResizedBitmap(bitmap, width, height);
+            Bitmap bitmapResized = BitmapLoader.getResizedBitmap(bitmap, width, height);
             bitmap.recycle();
             imageView.setImageBitmap(bitmapResized);
         }

@@ -13,34 +13,19 @@ public class OnClickListenerSongPane implements View.OnClickListener {
 
     // TODO does not appear to work (resized to different dimensions)
 
-    private final ActivityMain activityMain;
+    private final OnClickCallback onClickCallback;
 
-    public OnClickListenerSongPane(ActivityMain activityMain) {
-        this.activityMain = activityMain;
+    public interface OnClickCallback {
+        void onClick(View v);
+    }
+
+    public OnClickListenerSongPane(OnClickCallback onClickCallback) {
+        this.onClickCallback = onClickCallback;
     }
 
     @Override
     public void onClick(View v) {
-        synchronized (activityMain.lock) {
-            if (v.getId() == R.id.imageButtonSongPaneNext) {
-                activityMain.playNext();
-            } else if (v.getId() == R.id.imageButtonSongPanePlayPause) {
-                activityMain.pauseOrPlay();
-            } else if (v.getId() == R.id.imageButtonSongPanePrev) {
-                activityMain.playPrevious();
-            } else if (v.getId() == R.id.textViewSongPaneSongName ||
-                    v.getId() == R.id.imageViewSongPaneSongArt) {
-                openFragmentSong();
-            }
-        }
-    }
-
-    private void openFragmentSong() {
-        FragmentManager fragmentManager = activityMain.getSupportFragmentManager();
-        Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
-        if (fragment != null) {
-            NavHostFragment.findNavController(fragment).navigate(R.id.fragmentSong);
-        }
+        onClickCallback.onClick(v);
     }
 
 }

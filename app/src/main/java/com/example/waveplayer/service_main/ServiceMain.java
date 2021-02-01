@@ -22,6 +22,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
+import com.example.waveplayer.media_controller.BitmapLoader;
 import com.example.waveplayer.media_controller.MediaController;
 import com.example.waveplayer.media_controller.MediaData;
 import com.example.waveplayer.media_controller.MediaPlayerWUri;
@@ -50,46 +51,9 @@ public class ServiceMain extends Service {
 
     private MediaController mediaController;
 
-    private MediaData mediaData;
-
     public static final ExecutorService executorServiceFIFO = Executors.newSingleThreadExecutor();
 
     public static final ExecutorService executorServicePool = Executors.newCachedThreadPool();
-
-    // For updating the SeekBar
-    private ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-
-    private RunnableSeekBarUpdater runnableSeekBarUpdater;
-
-    public void updateSeekBarUpdater(SeekBar seekBar, TextView textViewCurrent) {
-        // Log.v(TAG, "updateSeekBarUpdater start");
-        shutDownSeekBarUpdater();
-        scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-        MediaPlayerWUri mediaPlayerWUri =
-                mediaController.getMediaPlayerWUri(mediaController.getCurrentAudioUri().id);
-        if (mediaPlayerWUri != null) {
-            runnableSeekBarUpdater = new RunnableSeekBarUpdater(
-                    mediaPlayerWUri,
-                    seekBar, textViewCurrent,
-                    getResources().getConfiguration().locale);
-            scheduledExecutorService.scheduleAtFixedRate(
-                    runnableSeekBarUpdater, 0L, 1L, TimeUnit.SECONDS);
-        }
-        // Log.v(TAG, "updateSeekBarUpdater end");
-    }
-
-    public void shutDownSeekBarUpdater() {
-        // Log.v(TAG, "shutDownSeekBarUpdater start");
-        if (runnableSeekBarUpdater != null) {
-            runnableSeekBarUpdater.shutDown();
-            runnableSeekBarUpdater = null;
-        }
-        if (scheduledExecutorService != null) {
-            scheduledExecutorService.shutdown();
-            scheduledExecutorService = null;
-        }
-        // Log.v(TAG, "shutDownSeekBarUpdater end");
-    }
 
     private final BroadcastReceiverNotificationButtonsForServiceMain
             broadcastReceiverNotificationButtonsForServiceMainButtons =
@@ -235,7 +199,6 @@ public class ServiceMain extends Service {
 
     public void permissionGranted(){
         mediaController = MediaController.getInstance(getApplicationContext());
-        mediaData = MediaData.getInstance();
     }
 
     private void setUpNotificationBuilder() {
@@ -301,10 +264,10 @@ public class ServiceMain extends Service {
         // Log.v(TAG, "updateSongArt for notification start");
         // TODO update song art background
         if (mediaController != null && mediaController.getCurrentAudioUri() != null) {
-            Bitmap bitmap = MediaData.getThumbnail(
-                    mediaController.getCurrentAudioUri(), 92, 92, getApplicationContext());
+            Bitmap bitmap = BitmapLoader.getThumbnail(
+                    mediaController.getCurrentUri(), 92, 92, getApplicationContext());
             if (bitmap != null) {
-                MediaData.getResizedBitmap(bitmap, songPaneArtWidth, songPaneArtHeight);
+                BitmapLoader.getResizedBitmap(bitmap, songPaneArtWidth, songPaneArtHeight);
                 remoteViewsNotificationLayoutWithArt.setImageViewBitmap(
                         R.id.imageViewNotificationSongPaneSongArtWArt, bitmap);
                 hasArt = true;
@@ -435,7 +398,6 @@ public class ServiceMain extends Service {
             mediaController.pauseOrPlay(getApplicationContext());
         }
         mediaController.releaseMediaPlayers();
-        shutDownSeekBarUpdater();
         unregisterReceiver(broadcastReceiverNotificationButtonsForServiceMainButtons);
         stopSelf();
         // Log.v(TAG, "destroy ended");
@@ -448,8 +410,8 @@ public class ServiceMain extends Service {
         if(song != null) {
             mediaController.getCurrentPlaylist().bad(
                     getApplicationContext(),
-                    MediaData.getInstance().getSong(song.id),
-                    mediaData.getPercentChangeDown());
+                    mediaController.getSong(song.id),
+                    mediaController.getPercentChangeDown());
         }
         mediaController.playNext(getApplicationContext());
     }

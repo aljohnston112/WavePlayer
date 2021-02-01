@@ -6,9 +6,11 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.waveplayer.random_playlist.AudioUri;
+
 public class ViewModelActivityMain extends ViewModel {
 
-    private MutableLiveData<Boolean> showFAB;
+    private final MutableLiveData<Boolean> showFAB = new MutableLiveData<>();
 
     public LiveData<Boolean> showFab() {
         return showFAB;
@@ -18,7 +20,7 @@ public class ViewModelActivityMain extends ViewModel {
         this.showFAB.setValue(showFAB);
     }
 
-    private MutableLiveData<String> actionBarTitle;
+    private MutableLiveData<String> actionBarTitle = new MutableLiveData<>();
 
     public LiveData<String> getActionBarTitle() {
         return actionBarTitle;
@@ -28,7 +30,7 @@ public class ViewModelActivityMain extends ViewModel {
         this.actionBarTitle.setValue(actionBarTitle);
     }
 
-    private MutableLiveData<Integer> fabText;
+    private MutableLiveData<Integer> fabText = new MutableLiveData<>();
 
     public LiveData<Integer> getFABText() {
         return fabText;
@@ -38,7 +40,7 @@ public class ViewModelActivityMain extends ViewModel {
         this.fabText.setValue(fabText);
     }
 
-    private MutableLiveData<Integer> fabImage;
+    private MutableLiveData<Integer> fabImage = new MutableLiveData<>();
 
     public LiveData<Integer> getFABImage() {
         return fabImage;
@@ -48,7 +50,7 @@ public class ViewModelActivityMain extends ViewModel {
         this.fabImage.setValue(fabImage);
     }
 
-    private MutableLiveData<View.OnClickListener> fabOnClickListener;
+    private MutableLiveData<View.OnClickListener> fabOnClickListener = new MutableLiveData<>();
 
     public LiveData<View.OnClickListener> getFabOnClickListener() {
         return fabOnClickListener;
@@ -57,4 +59,25 @@ public class ViewModelActivityMain extends ViewModel {
     public void setFabOnClickListener(View.OnClickListener fabOnClickListener){
         this.fabOnClickListener.setValue(fabOnClickListener);
     }
+
+    private MutableLiveData<AudioUri> currentSong = new MutableLiveData<>();
+
+    public LiveData<AudioUri> getCurrentSong() {
+        return currentSong;
+    }
+
+    public void setCurrentSong(AudioUri audioUri){
+        this.currentSong.setValue(audioUri);
+    }
+
+    private MutableLiveData<Boolean> isPlaying = new MutableLiveData<>();
+
+    public LiveData<Boolean> isPlaying() {
+        return isPlaying;
+    }
+
+    public void setIsPlaying(boolean isPlaying){
+        this.isPlaying.setValue(isPlaying);
+    }
+
 }

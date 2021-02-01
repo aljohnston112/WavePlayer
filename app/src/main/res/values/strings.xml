@@ -7,7 +7,8 @@
     <string name="broadcast_receiver_action_next">Next</string>
     <string name="broadcast_receiver_action_previous">Previous</string>
     <string name="broadcast_receiver_action_play_pause">PlayPause</string>
-    <string name="broadcast_receiver_on_create_options_menu">OptionsMenuCreated</string>
+    <string name="broadcast_receiver_action_on_create_options_menu">OptionsMenuCreated</string>
+    <string name="broadcast_receiver_action_loaded">Loaded</string>
 
     <string name="permission_read_needed">Permission wanted to scan for media</string>
     <string name="permission_write_needed">Permission wanted to save playlists and AI data</string>
