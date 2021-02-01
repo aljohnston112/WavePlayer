@@ -39,7 +39,6 @@ import com.example.waveplayer.ViewModelUserPickedPlaylist;
 import com.example.waveplayer.ViewModelUserPickedSongs;
 import com.example.waveplayer.databinding.ActivityMainBinding;
 import com.example.waveplayer.media_controller.MediaController;
-import com.example.waveplayer.media_controller.MediaData;
 import com.example.waveplayer.media_controller.SaveFile;
 import com.example.waveplayer.random_playlist.Song;
 import com.example.waveplayer.random_playlist.AudioUri;
@@ -622,7 +621,7 @@ public class ActivityMain extends AppCompatActivity {
             dialogFragmentAddToPlaylist.show(fragmentManager, fragment.getTag());
             return true;
         } else if (item.getItemId() == R.id.action_add_to_queue) {
-            if (mediaController.songInProgress() && songToAddToQueue != null) {
+            if (mediaController.isSongInProgress() && songToAddToQueue != null) {
                 mediaController.addToQueue(songToAddToQueue);
 
             } else if (playlistToAddToQueue != null) {
@@ -632,11 +631,11 @@ public class ActivityMain extends AppCompatActivity {
                 if (mediaController.songQueueIsEmpty()) {
                     mediaController.setCurrentPlaylist(playlistToAddToQueue);
                 }
-                if (!mediaController.songInProgress()) {
+                if (!mediaController.isSongInProgress()) {
                     showSongPane();
                 }
             }
-            if (!mediaController.songInProgress()) {
+            if (!mediaController.isSongInProgress()) {
                 mediaController.playNext(serviceMain.getApplicationContext());
             }
         }
@@ -722,7 +721,7 @@ public class ActivityMain extends AppCompatActivity {
     public boolean songInProgress() {
         // Log.v(TAG, "songInProgress start");
         // Log.v(TAG, "songInProgress end");
-        return (mediaController != null) && mediaController.songInProgress();
+        return (mediaController != null) && mediaController.isSongInProgress();
     }
 
     public boolean isPlaying() {
@@ -758,36 +757,36 @@ public class ActivityMain extends AppCompatActivity {
     public boolean shuffling() {
         // Log.v(TAG, "shuffling start");
         // Log.v(TAG, "shuffling end");
-        return mediaController.shuffling();
+        return mediaController.isShuffling();
     }
 
     public void shuffling(boolean shuffling) {
         // Log.v(TAG, "set shuffling start");
-        mediaController.shuffling(shuffling);
+        mediaController.setShuffling(shuffling);
         // Log.v(TAG, "set shuffling end");
     }
 
     public boolean loopingOne() {
         // Log.v(TAG, "loopingOne start");
         // Log.v(TAG, "loopingOne end");
-        return mediaController.loopingOne();
+        return mediaController.isLoopingOne();
     }
 
     public void loopingOne(boolean loopingOne) {
         // Log.v(TAG, "set loopingOne start");
-        mediaController.loopingOne(loopingOne);
+        mediaController.setLoopingOne(loopingOne);
         // Log.v(TAG, "set loopingOne end");
     }
 
     public boolean looping() {
         // Log.v(TAG, "looping start");
         // Log.v(TAG, "looping end");
-        return mediaController.looping();
+        return mediaController.isLooping();
     }
 
     public void looping(boolean looping) {
         // Log.v(TAG, "set looping start");
-        mediaController.looping(looping);
+        mediaController.setLooping(looping);
         // Log.v(TAG, "set looping end");
     }
 

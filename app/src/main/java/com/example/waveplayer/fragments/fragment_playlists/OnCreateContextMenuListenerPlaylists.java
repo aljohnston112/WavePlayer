@@ -74,7 +74,7 @@ public class OnCreateContextMenuListenerPlaylists implements View.OnCreateContex
             // TODO stop MasterPlaylist from continuing after queue is done
             activityMain.setCurrentPlaylistToMaster();
             if (!activityMain.isPlaying()) {
-                MediaController.getInstance(activityMain.getApplicationContext()).goToFront();
+                MediaController.getInstance(activityMain.getApplicationContext()).goToFrontOfQueue();
                 activityMain.playNext();
             }
         }
