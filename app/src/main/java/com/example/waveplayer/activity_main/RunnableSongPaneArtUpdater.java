@@ -22,7 +22,7 @@ public class RunnableSongPaneArtUpdater implements Runnable {
     @Override
     public void run() {
         int songArtWidth = getSongArtWidth();
-        int songArtHeight = getSongArtHeight();
+        int songArtHeight = songArtWidth;
         Bitmap bitmapSongArt = BitmapLoader.getThumbnail(
                 activityMain.getCurrentUri(), songArtWidth, songArtHeight, activityMain.getApplicationContext());
         ImageView imageViewSongPaneSongArt = activityMain.findViewById(R.id.imageViewSongPaneSongArt);

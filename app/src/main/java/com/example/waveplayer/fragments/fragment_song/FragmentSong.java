@@ -216,9 +216,7 @@ implements OnSeekBarChangeListener.OnSeekBarChangeCallback,
         // Log.v(TAG, "updateSongName start");
         final ActivityMain activityMain = (ActivityMain) requireActivity();
         TextView textViewSongName = binding.textViewSongName;
-        if (textViewSongName != null) {
             textViewSongName.setText(activityMain.getCurrentAudioUri().title);
-        }
         // Log.v(TAG, "updateSongName end");
     }
 
@@ -290,6 +288,7 @@ implements OnSeekBarChangeListener.OnSeekBarChangeCallback,
             @Override
             public void onReceive(Context context, Intent intent) {
                 setUpButtons();
+                updateSongUI();
             }
         };
         activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);

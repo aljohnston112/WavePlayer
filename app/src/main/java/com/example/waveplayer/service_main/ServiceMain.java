@@ -5,6 +5,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -14,8 +15,6 @@ import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.RemoteViews;
-import android.widget.SeekBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -24,10 +23,9 @@ import androidx.core.app.NotificationCompat;
 
 import com.example.waveplayer.media_controller.BitmapLoader;
 import com.example.waveplayer.media_controller.MediaController;
-import com.example.waveplayer.media_controller.MediaData;
-import com.example.waveplayer.media_controller.MediaPlayerWUri;
 import com.example.waveplayer.R;
 import com.example.waveplayer.activity_main.ActivityMain;
+import com.example.waveplayer.media_controller.SaveFile;
 import com.example.waveplayer.random_playlist.AudioUri;
 
 import java.io.BufferedReader;
@@ -38,8 +36,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class ServiceMain extends Service {
 
@@ -55,9 +51,32 @@ public class ServiceMain extends Service {
 
     public static final ExecutorService executorServicePool = Executors.newCachedThreadPool();
 
-    private final BroadcastReceiverNotificationButtonsForServiceMain
-            broadcastReceiverNotificationButtonsForServiceMainButtons =
-            new BroadcastReceiverNotificationButtonsForServiceMain(this);
+    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.v(ServiceMain.TAG, "BroadcastReceiverNotificationForServiceMainMediaControls start");
+            synchronized (ServiceMain.lock) {
+                String action = intent.getAction();
+                if (action != null) {
+                    if (action.equals(getResources().getString(
+                            R.string.broadcast_receiver_action_next))) {
+                        playNext();
+                        SaveFile.saveFile(getApplicationContext());
+                    } else if (action.equals(getResources().getString(
+                            R.string.broadcast_receiver_action_play_pause))) {
+                        pauseOrPlay();
+                    } else if (action.equals(getResources().getString(
+                            R.string.broadcast_receiver_action_previous))) {
+                        playPrevious();
+                    } else if (action.equals(getResources().getString(
+                            R.string.broadcast_receiver_action_on_completion))) {
+                        updateNotification();
+                    }
+                }
+            }
+            Log.v(ServiceMain.TAG, "BroadcastReceiverNotificationForServiceMainMediaControls end");
+        }
+    };
 
     private RemoteViews remoteViewsNotificationLayout;
     private RemoteViews remoteViewsNotificationLayoutWithoutArt;
@@ -115,32 +134,16 @@ public class ServiceMain extends Service {
 
     private void setUpBroadCastReceivers() {
         // Log.v(TAG, "Setting up Broadcast receivers for notification buttons");
-        setUpBroadcastReceiverNext();
-        setUpBroadcastReceiverPrevious();
-        setUpBroadcastReceiverPlayPause();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
+        intentFilter.addAction(getResources().getString(R.string.broadcast_receiver_action_next));
+        intentFilter.addAction(getResources().getString(R.string.broadcast_receiver_action_previous));
+        intentFilter.addAction(getResources().getString(R.string.broadcast_receiver_action_play_pause));
+        intentFilter.addAction(getResources().getString(R.string.broadcast_receiver_action_on_completion));
+        registerReceiver(broadcastReceiver, intentFilter);
         // Log.v(TAG, "Done setting up Broadcast receivers for notification buttons");
     }
 
-    private void setUpBroadcastReceiverNext() {
-        IntentFilter filterNext = new IntentFilter();
-        filterNext.addAction(getResources().getString(R.string.broadcast_receiver_action_next));
-        filterNext.addCategory(Intent.CATEGORY_DEFAULT);
-        registerReceiver(broadcastReceiverNotificationButtonsForServiceMainButtons, filterNext);
-    }
-
-    private void setUpBroadcastReceiverPrevious() {
-        IntentFilter filterPrevious = new IntentFilter();
-        filterPrevious.addAction(getResources().getString(R.string.broadcast_receiver_action_previous));
-        filterPrevious.addCategory(Intent.CATEGORY_DEFAULT);
-        registerReceiver(broadcastReceiverNotificationButtonsForServiceMainButtons, filterPrevious);
-    }
-
-    private void setUpBroadcastReceiverPlayPause() {
-        IntentFilter filterPlayPause = new IntentFilter();
-        filterPlayPause.addAction(getResources().getString(R.string.broadcast_receiver_action_play_pause));
-        filterPlayPause.addCategory(Intent.CATEGORY_DEFAULT);
-        registerReceiver(broadcastReceiverNotificationButtonsForServiceMainButtons, filterPlayPause);
-    }
 
     private void setUpExceptionSaver() {
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
@@ -197,7 +200,7 @@ public class ServiceMain extends Service {
         return START_STICKY;
     }
 
-    public void permissionGranted(){
+    public void permissionGranted() {
         mediaController = MediaController.getInstance(getApplicationContext());
     }
 
@@ -398,7 +401,7 @@ public class ServiceMain extends Service {
             mediaController.pauseOrPlay(getApplicationContext());
         }
         mediaController.releaseMediaPlayers();
-        unregisterReceiver(broadcastReceiverNotificationButtonsForServiceMainButtons);
+        unregisterReceiver(broadcastReceiver);
         stopSelf();
         // Log.v(TAG, "destroy ended");
     }
@@ -407,7 +410,7 @@ public class ServiceMain extends Service {
 
     public void playNext() {
         AudioUri song = mediaController.getCurrentAudioUri();
-        if(song != null) {
+        if (song != null) {
             mediaController.getCurrentPlaylist().bad(
                     getApplicationContext(),
                     mediaController.getSong(song.id),

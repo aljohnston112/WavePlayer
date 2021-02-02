@@ -273,8 +273,8 @@ public class MediaController {
                 mediaPlayerWUri = ((Callable<MediaPlayerWUri>) () -> {
                             MediaPlayerWUri mediaPlayerWURI = new MediaPlayerWUri(
                                     context,
-                                    MediaPlayer.create(context, AudioUri.getUri(currentAudioUri.id)),
-                                    currentAudioUri.id);
+                                    MediaPlayer.create(context, AudioUri.getUri(songID)),
+                                    songID);
                             mediaPlayerWURI.setOnCompletionListener(onCompletionListener);
                             return mediaPlayerWURI;
                         }).call();

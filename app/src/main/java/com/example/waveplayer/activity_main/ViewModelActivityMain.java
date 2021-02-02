@@ -17,7 +17,7 @@ public class ViewModelActivityMain extends ViewModel {
     }
 
     public void showFab(boolean showFAB){
-        this.showFAB.setValue(showFAB);
+        this.showFAB.postValue(showFAB);
     }
 
     private MutableLiveData<String> actionBarTitle = new MutableLiveData<>();
@@ -27,7 +27,7 @@ public class ViewModelActivityMain extends ViewModel {
     }
 
     public void setActionBarTitle(String actionBarTitle){
-        this.actionBarTitle.setValue(actionBarTitle);
+        this.actionBarTitle.postValue(actionBarTitle);
     }
 
     private MutableLiveData<Integer> fabText = new MutableLiveData<>();
@@ -37,7 +37,7 @@ public class ViewModelActivityMain extends ViewModel {
     }
 
     public void setFABText(Integer fabText){
-        this.fabText.setValue(fabText);
+        this.fabText.postValue(fabText);
     }
 
     private MutableLiveData<Integer> fabImage = new MutableLiveData<>();
@@ -47,7 +47,7 @@ public class ViewModelActivityMain extends ViewModel {
     }
 
     public void setFabImage(Integer fabImage){
-        this.fabImage.setValue(fabImage);
+        this.fabImage.postValue(fabImage);
     }
 
     private MutableLiveData<View.OnClickListener> fabOnClickListener = new MutableLiveData<>();
@@ -57,7 +57,7 @@ public class ViewModelActivityMain extends ViewModel {
     }
 
     public void setFabOnClickListener(View.OnClickListener fabOnClickListener){
-        this.fabOnClickListener.setValue(fabOnClickListener);
+        this.fabOnClickListener.postValue(fabOnClickListener);
     }
 
     private MutableLiveData<AudioUri> currentSong = new MutableLiveData<>();
@@ -67,7 +67,7 @@ public class ViewModelActivityMain extends ViewModel {
     }
 
     public void setCurrentSong(AudioUri audioUri){
-        this.currentSong.setValue(audioUri);
+        this.currentSong.postValue(audioUri);
     }
 
     private MutableLiveData<Boolean> isPlaying = new MutableLiveData<>();
@@ -77,7 +77,7 @@ public class ViewModelActivityMain extends ViewModel {
     }
 
     public void setIsPlaying(boolean isPlaying){
-        this.isPlaying.setValue(isPlaying);
+        this.isPlaying.postValue(isPlaying);
     }
 
 }
