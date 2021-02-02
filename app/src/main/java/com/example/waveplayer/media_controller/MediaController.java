@@ -14,7 +14,6 @@ import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 import com.example.waveplayer.random_playlist.Song;
 import com.example.waveplayer.random_playlist.SongQueue;
-import com.example.waveplayer.service_main.ServiceMain;
 
 import java.util.List;
 import java.util.Random;
@@ -22,11 +21,11 @@ import java.util.concurrent.Callable;
 
 public class MediaController {
 
-    public static MediaController INSTANCE;
-
     private static final Random random = new Random();
 
     private static final String TAG = "MediaController";
+
+    private static MediaController INSTANCE;
 
     protected final MediaPlayer.OnCompletionListener onCompletionListener;
 
@@ -47,7 +46,7 @@ public class MediaController {
     private boolean looping = false;
     private boolean loopingOne = false;
 
-    public static synchronized MediaController getInstance(Context context) {
+    protected static synchronized MediaController getInstance(Context context) {
         if (INSTANCE == null) {
             INSTANCE = new MediaController(context);
         }
@@ -61,7 +60,7 @@ public class MediaController {
             playNext(context);
             Intent intent = new Intent();
             intent.addCategory(Intent.CATEGORY_DEFAULT);
-            intent.setAction(context.getResources().getString(R.string.broadcast_receiver_action_on_completion));
+            intent.setAction(context.getResources().getString(R.string.broadcast_receiver_action_new_song));
             context.sendBroadcast(intent);
         };
         mediaData.loadData(context);
@@ -69,51 +68,51 @@ public class MediaController {
                 () -> currentPlaylist = mediaData.getMasterPlaylist());
     }
 
-    public void addToQueue(Long songID) {
+    protected void addToQueue(Long songID) {
         songQueue.addToQueue(songID);
     }
 
-    public boolean songQueueIsEmpty() {
+    protected boolean songQueueIsEmpty() {
         return songQueue.isEmpty();
     }
 
-    public void clearSongQueue() {
+    protected void clearSongQueue() {
         songQueue.clearSongQueue();
     }
 
-    public void goToFrontOfQueue() {
+    protected void goToFrontOfQueue() {
         songQueue.goToFront();
     }
 
-    public RandomPlaylist getCurrentPlaylist() {
+    protected RandomPlaylist getCurrentPlaylist() {
         return currentPlaylist;
     }
 
-    public void setCurrentPlaylist(RandomPlaylist currentPlaylist) {
+    protected void setCurrentPlaylist(RandomPlaylist currentPlaylist) {
         this.currentPlaylist = currentPlaylist;
     }
 
-    public void setCurrentPlaylistToMaster() {
+    protected void setCurrentPlaylistToMaster() {
         setCurrentPlaylist(mediaData.getMasterPlaylist());
     }
 
-    public void clearProbabilities(Context context) {
+    protected void clearProbabilities(Context context) {
         currentPlaylist.clearProbabilities(context);
     }
 
-    public void lowerProbabilities(Context context) {
+    protected void lowerProbabilities(Context context) {
         currentPlaylist.lowerProbabilities(context, mediaData.getLowerProb());
     }
 
-    public AudioUri getCurrentAudioUri() {
+    protected AudioUri getCurrentAudioUri() {
         return currentAudioUri;
     }
 
-    public Uri getCurrentUri() {
+    protected Uri getCurrentUri() {
         return getCurrentAudioUri().getUri();
     }
 
-    public int getCurrentTime() {
+    protected int getCurrentTime() {
         MediaPlayerWUri mediaPlayerWURI = getCurrentMediaPlayerWUri();
         if (mediaPlayerWURI != null) {
             return mediaPlayerWURI.getCurrentPosition();
@@ -122,48 +121,48 @@ public class MediaController {
         }
     }
 
-    private MediaPlayerWUri getCurrentMediaPlayerWUri() {
+    protected MediaPlayerWUri getCurrentMediaPlayerWUri() {
         if (currentAudioUri != null) {
             return mediaData.getMediaPlayerWUri(currentAudioUri.id);
         }
         return null;
     }
 
-    public void releaseMediaPlayers() {
+    protected void releaseMediaPlayers() {
         mediaData.releaseMediaPlayers();
         songInProgress = false;
         isPlaying = false;
     }
 
-    public boolean isSongInProgress() {
+    protected boolean isSongInProgress() {
         return songInProgress;
     }
 
-    public boolean isPlaying() {
+    protected boolean isPlaying() {
         return isPlaying;
     }
 
-    public boolean isShuffling() {
+    protected boolean isShuffling() {
         return shuffling;
     }
 
-    public void setShuffling(boolean shuffling) {
+    protected void setShuffling(boolean shuffling) {
         this.shuffling = shuffling;
     }
 
-    public boolean isLooping() {
+    protected boolean isLooping() {
         return looping;
     }
 
-    public void setLooping(boolean looping) {
+    protected void setLooping(boolean looping) {
         this.looping = looping;
     }
 
-    public boolean isLoopingOne() {
+    protected boolean isLoopingOne() {
         return loopingOne;
     }
 
-    public void setLoopingOne(boolean loopingOne) {
+    protected void setLoopingOne(boolean loopingOne) {
         this.loopingOne = loopingOne;
     }
 
@@ -178,7 +177,7 @@ public class MediaController {
      *  If there is no song in progress, nothing will be done.
      * @param context Context used to request audio focus if needed
      */
-    public void pauseOrPlay(Context context) {
+    protected void pauseOrPlay(Context context) {
         if (currentAudioUri != null) {
             MediaPlayerWUri mediaPlayerWURI = getCurrentMediaPlayerWUri();
             if (mediaPlayerWURI != null) {
@@ -227,7 +226,7 @@ public class MediaController {
      * @param context The context used for making a MediaPlayer if needed,
      *                and for the broken MKV seeking.
      */
-    public void playNext(Context context) {
+    protected void playNext(Context context) {
         Log.v(TAG, "playNext started");
         stopCurrentSong();
         if (loopingOne) {
@@ -248,7 +247,7 @@ public class MediaController {
      * @param context The context used for making a MediaPlayer if needed,
      *                and for the broken MKV seeking.
      */
-    public void playPrevious(Context context) {
+    protected void playPrevious(Context context) {
         if (loopingOne) {
             playLoopingOne(context);
         } else if (!playPreviousInQueue(context)) {
@@ -411,7 +410,7 @@ public class MediaController {
         }
     }
 
-    public void seekTo(Context context, int progress) {
+    protected void seekTo(Context context, int progress) {
         MediaPlayerWUri mediaPlayerWUri = getCurrentMediaPlayerWUri();
         if (mediaPlayerWUri != null) {
             mediaPlayerWUri.seekTo(context, currentAudioUri, progress);
@@ -482,63 +481,63 @@ public class MediaController {
 
     // Forwarding methods
 
-    public MediaPlayerWUri getMediaPlayerWUri(Long songID) {
+    protected MediaPlayerWUri getMediaPlayerWUri(Long songID) {
         return mediaData.getMediaPlayerWUri(songID);
     }
 
-    public Song getSong(long songID) {
+    protected Song getSong(long songID) {
         return mediaData.getSong(songID);
     }
 
-    public List<Song> getAllSongs() {
+    protected List<Song> getAllSongs() {
         return mediaData.getAllSongs();
     }
 
-    public RandomPlaylist getMasterPlaylist() {
+    protected RandomPlaylist getMasterPlaylist() {
         return mediaData.getMasterPlaylist();
     }
 
-    public RandomPlaylist getPlaylist(String playlistName) {
+    protected RandomPlaylist getPlaylist(String playlistName) {
         return mediaData.getPlaylist(playlistName);
     }
 
-    public List<RandomPlaylist> getPlaylists() {
+    protected List<RandomPlaylist> getPlaylists() {
         return mediaData.getPlaylists();
     }
 
-    public void addPlaylist(RandomPlaylist randomPlaylist) {
+    protected void addPlaylist(RandomPlaylist randomPlaylist) {
         mediaData.addPlaylist(randomPlaylist);
     }
 
-    public void addPlaylist(int position, RandomPlaylist randomPlaylist) {
+    protected void addPlaylist(int position, RandomPlaylist randomPlaylist) {
         mediaData.addPlaylist(position, randomPlaylist);
     }
 
-    public void removePlaylist(RandomPlaylist randomPlaylist) {
+    protected void removePlaylist(RandomPlaylist randomPlaylist) {
         mediaData.removePlaylist(randomPlaylist);
     }
 
-    public double getMaxPercent() {
+    protected double getMaxPercent() {
         return mediaData.getMaxPercent();
     }
 
-    public void setMaxPercent(double maxPercent) {
+    protected void setMaxPercent(double maxPercent) {
         mediaData.setMaxPercent(maxPercent);
     }
 
-    public double getPercentChangeUp() {
+    protected double getPercentChangeUp() {
         return mediaData.getPercentChangeUp();
     }
 
-    public void setPercentChangeUp(double percentChangeUp) {
+    protected void setPercentChangeUp(double percentChangeUp) {
         mediaData.setPercentChangeUp(percentChangeUp);
     }
 
-    public double getPercentChangeDown() {
+    protected double getPercentChangeDown() {
         return mediaData.getPercentChangeDown();
     }
 
-    public void setPercentChangeDown(double percentChangeDown) {
+    protected void setPercentChangeDown(double percentChangeDown) {
         mediaData.setPercentChangeDown(percentChangeDown);
     }
 

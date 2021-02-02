@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
 import androidx.navigation.NavDestination;
 import androidx.navigation.fragment.NavHostFragment;
 
@@ -20,24 +21,18 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.waveplayer.activity_main.ActivityMain;
-import com.example.waveplayer.activity_main.OnDestinationChangedListenerSongPane;
-import com.example.waveplayer.activity_main.RunnableSongPaneArtUpdater;
 import com.example.waveplayer.activity_main.ViewModelActivityMain;
 import com.example.waveplayer.databinding.FragmentPaneSongBinding;
 import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.R;
 import com.example.waveplayer.media_controller.BitmapLoader;
-import com.example.waveplayer.media_controller.MediaData;
 import com.example.waveplayer.random_playlist.AudioUri;
 
-public class FragmentPaneSong extends Fragment
-        implements OnDestinationChangedListenerSongPane.OnDestinationChangedCallback,
-        OnClickListenerSongPane.OnClickCallback {
+public class FragmentPaneSong extends Fragment {
 
     private ViewModelActivityMain viewModelActivityMain;
 
@@ -45,17 +40,19 @@ public class FragmentPaneSong extends Fragment
 
     private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
 
-    private OnLayoutChangeListenerSongPane onLayoutChangeListenerSongPane;
+    private View.OnLayoutChangeListener onLayoutChangeListenerSongPane;
 
-    private OnDestinationChangedListenerSongPane onDestinationChangedListenerSongPane;
+    private NavController.OnDestinationChangedListener onDestinationChangedListenerSongPane;
 
-    private OnClickListenerSongPane onClickListenerSongPane;
+    private View.OnClickListener onClickListenerSongPane;
 
-    private RunnableSongPaneArtUpdater runnableSongPaneArtUpdater;
+    private Runnable runnableSongPaneArtUpdater;
 
     private Observer<AudioUri> observerCurrentSong;
 
     private Observer<Boolean> observerIsPlaying;
+
+    private int songArtWidth;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -73,20 +70,51 @@ public class FragmentPaneSong extends Fragment
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         viewModelActivityMain =
-                new ViewModelProvider(requireActivity()).get(ViewModelActivityMain.class);
-        onLayoutChangeListenerSongPane = new OnLayoutChangeListenerSongPane(this);
+                new ViewModelProvider(activityMain).get(ViewModelActivityMain.class);
+        onLayoutChangeListenerSongPane =
+                (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+                    ActivityMain activityMain1 = ((ActivityMain) requireActivity());
+                    if (activityMain1.findViewById(R.id.fragmentSongPane).getVisibility() == View.VISIBLE &&
+                            !activityMain1.fragmentSongVisible()) {
+                        if (songArtWidth == 0) {
+                            ImageView imageViewSongPaneSongArt =
+                                    activityMain1.findViewById(R.id.imageViewSongPaneSongArt);
+                            songArtWidth = imageViewSongPaneSongArt.getWidth();
+                        }
+                        updateSongPaneUI();
+                        setUpPrev(v);
+                        setUpPlayButton(v);
+                        setUpNext(v);
+                    }
+                };
+        ImageView imageViewSongPaneSongArt = activityMain.findViewById(R.id.imageViewSongPaneSongArt);
         view.addOnLayoutChangeListener(onLayoutChangeListenerSongPane);
         setUpBroadcastReceiver();
         setUpDestinationChangedListenerForPaneSong();
         linkSongPaneButtons();
-        runnableSongPaneArtUpdater = new RunnableSongPaneArtUpdater((ActivityMain) requireActivity());
+        runnableSongPaneArtUpdater = () -> {
+            int songArtHeight = songArtWidth;
+            Bitmap bitmapSongArt = BitmapLoader.getThumbnail(
+                    activityMain.getCurrentUri(), songArtWidth, songArtHeight, activityMain.getApplicationContext());
+            if (imageViewSongPaneSongArt != null) {
+                if (bitmapSongArt != null) {
+                    imageViewSongPaneSongArt.setImageBitmap(bitmapSongArt);
+                } else {
+                    Bitmap defaultBitmap = getDefaultBitmap(songArtWidth, songArtHeight);
+                    if (defaultBitmap != null) {
+                        imageViewSongPaneSongArt.setImageBitmap(defaultBitmap);
+                    }
+                }
+            }
+        };
         observerCurrentSong = s -> {
             updateSongPaneUI();
         };
         viewModelActivityMain.getCurrentSong().observe(getViewLifecycleOwner(), observerCurrentSong);
         observerIsPlaying = b -> {
-            updateSongPanePlayButton();
+            setUpPlayButton(getView());
         };
         viewModelActivityMain.isPlaying().observe(getViewLifecycleOwner(), observerIsPlaying);
         updateSongPaneUI();
@@ -94,8 +122,21 @@ public class FragmentPaneSong extends Fragment
 
     private void setUpDestinationChangedListenerForPaneSong() {
         // Log.v(TAG, "setUpDestinationChangedListenerForPaneSong started");
-        onDestinationChangedListenerSongPane =
-                new OnDestinationChangedListenerSongPane(this);
+        onDestinationChangedListenerSongPane = new NavController.OnDestinationChangedListener() {
+            @Override
+            public void onDestinationChanged(@NonNull NavController controller, @NonNull NavDestination destination, @Nullable Bundle arguments) {
+                ActivityMain activityMain = (ActivityMain) requireActivity();
+                if (destination.getId() != R.id.fragmentSong) {
+                    if (activityMain.songInProgress()) {
+                        activityMain.fragmentSongVisible(false);
+                        activityMain.showSongPane();
+                    }
+                } else {
+                    activityMain.fragmentSongVisible(true);
+                    activityMain.hideSongPane();
+                }
+            }
+        };
         ActivityMain activityMain = (ActivityMain) requireActivity();
         FragmentManager fragmentManager = activityMain.getSupportFragmentManager();
         Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
@@ -108,7 +149,21 @@ public class FragmentPaneSong extends Fragment
 
     private void linkSongPaneButtons() {
         // Log.v(TAG, "linking song pane buttons");
-        onClickListenerSongPane = new OnClickListenerSongPane(this);
+        onClickListenerSongPane = v -> {
+            ActivityMain activityMain = (ActivityMain) requireActivity();
+            synchronized (ActivityMain.lock) {
+                if (v.getId() == R.id.imageButtonSongPaneNext) {
+                    activityMain.playNext();
+                } else if (v.getId() == R.id.imageButtonSongPanePlayPause) {
+                    activityMain.pauseOrPlay();
+                } else if (v.getId() == R.id.imageButtonSongPanePrev) {
+                    activityMain.playPrevious();
+                } else if (v.getId() == R.id.textViewSongPaneSongName ||
+                        v.getId() == R.id.imageViewSongPaneSongArt) {
+                    openFragmentSong();
+                }
+            }
+        };
         binding.imageButtonSongPaneNext.setOnClickListener(onClickListenerSongPane);
         binding.imageButtonSongPanePlayPause.setOnClickListener(onClickListenerSongPane);
         binding.imageButtonSongPanePrev.setOnClickListener(onClickListenerSongPane);
@@ -133,16 +188,12 @@ public class FragmentPaneSong extends Fragment
         activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
     }
 
-    private void updateSongPanePlayButton() {
-        setUpPlay(getView());
-    }
-
     public void updateSongPaneUI() {
         // Log.v(TAG, "updateSongPaneUI start");
         ActivityMain activityMain = (ActivityMain) requireActivity();
         if (activityMain.songInProgress() && activityMain.getCurrentAudioUri() != null) {
             // Log.v(TAG, "updating the song pane UI");
-            updateSongPanePlayButton();
+            setUpPlayButton(getView());
             updateSongPaneName();
             updateSongPaneArt();
         } else {
@@ -156,14 +207,14 @@ public class FragmentPaneSong extends Fragment
         // Log.v(TAG, "updateSongPaneName start");
         ActivityMain activityMain = (ActivityMain) requireActivity();
         TextView textViewSongPaneSongName = binding.textViewSongPaneSongName;
-            textViewSongPaneSongName.setText(activityMain.getCurrentAudioUri().title);
+        textViewSongPaneSongName.setText(activityMain.getCurrentAudioUri().title);
         // Log.v(TAG, "updateSongPaneName end");
     }
 
     private void updateSongPaneArt() {
         // Log.v(TAG, "updateSongPaneArt start");
         final ImageView imageViewSongPaneSongArt = binding.imageViewSongPaneSongArt;
-            imageViewSongPaneSongArt.post(runnableSongPaneArtUpdater);
+        imageViewSongPaneSongArt.post(runnableSongPaneArtUpdater);
         // Log.v(TAG, "updateSongPaneArt end");
     }
 
@@ -205,37 +256,6 @@ public class FragmentPaneSong extends Fragment
         binding = null;
     }
 
-    @Override
-    public void onDestinationChanged(@NonNull NavDestination destination) {
-        ActivityMain activityMain = (ActivityMain) requireActivity();
-        if (destination.getId() != R.id.fragmentSong) {
-            if (activityMain.songInProgress()) {
-                activityMain.fragmentSongVisible(false);
-                activityMain.showSongPane();
-            }
-        } else {
-            activityMain.fragmentSongVisible(true);
-            activityMain.hideSongPane();
-        }
-    }
-
-    @Override
-    public void onClick(View v) {
-        ActivityMain activityMain = (ActivityMain) requireActivity();
-        synchronized (ActivityMain.lock) {
-            if (v.getId() == R.id.imageButtonSongPaneNext) {
-                activityMain.playNext();
-            } else if (v.getId() == R.id.imageButtonSongPanePlayPause) {
-                activityMain.pauseOrPlay();
-            } else if (v.getId() == R.id.imageButtonSongPanePrev) {
-                activityMain.playPrevious();
-            } else if (v.getId() == R.id.textViewSongPaneSongName ||
-                    v.getId() == R.id.imageViewSongPaneSongArt) {
-                openFragmentSong();
-            }
-        }
-    }
-
     private void openFragmentSong() {
         ActivityMain activityMain = (ActivityMain) requireActivity();
         FragmentManager fragmentManager = activityMain.getSupportFragmentManager();
@@ -245,7 +265,7 @@ public class FragmentPaneSong extends Fragment
         }
     }
 
-    private void setUpPlay(View view) {
+    private void setUpPlayButton(View view) {
         ImageView imageView = view.findViewById(R.id.imageButtonSongPanePlayPause);
         int height = imageView.getMeasuredHeight();
         //noinspection SuspiciousNameCombination
@@ -259,6 +279,66 @@ public class FragmentPaneSong extends Fragment
             drawable = ResourcesCompat.getDrawable(
                     getResources(), R.drawable.play_arrow_black_24dp, null);
         }
+        if (drawable != null && width > 0) {
+            drawable.setBounds(0, 0, width, height);
+            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            drawable.draw(canvas);
+            Bitmap bitmapResized = BitmapLoader.getResizedBitmap(bitmap, width, height);
+            bitmap.recycle();
+            imageView.setImageBitmap(bitmapResized);
+        }
+    }
+
+    private Bitmap getDefaultBitmap(int songArtWidth, int songArtHeight) {
+        ActivityMain activityMain = (ActivityMain) requireActivity();
+        ImageView imageViewSongPaneSongArt = activityMain.findViewById(R.id.imageViewSongPaneSongArt);
+        if (imageViewSongPaneSongArt != null) {
+            Drawable drawableSongArt = ResourcesCompat.getDrawable(
+                    imageViewSongPaneSongArt.getResources(), R.drawable.music_note_black_48dp, null);
+            if (drawableSongArt != null) {
+                Bitmap bitmapSongArt;
+                drawableSongArt.setBounds(0, 0, songArtWidth, songArtHeight);
+                bitmapSongArt = Bitmap.createBitmap(
+                        songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888);
+                Canvas canvas = new Canvas(bitmapSongArt);
+                drawableSongArt.draw(canvas);
+                Bitmap bitmapSongArtResized = BitmapLoader.getResizedBitmap(
+                        bitmapSongArt, songArtWidth, songArtHeight);
+                bitmapSongArt.recycle();
+                return bitmapSongArtResized;
+            }
+        }
+        return null;
+    }
+
+    private void setUpNext(View view) {
+        ActivityMain activityMain = (ActivityMain) requireActivity();
+        ImageView imageView = view.findViewById(R.id.imageButtonSongPaneNext);
+        int height = imageView.getMeasuredHeight();
+        //noinspection SuspiciousNameCombination
+        int width = height;
+        Drawable drawable = ResourcesCompat.getDrawable(
+                activityMain.getResources(), R.drawable.skip_next_black_24dp, null);
+        if (drawable != null && width > 0) {
+            drawable.setBounds(0, 0, width, height);
+            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            drawable.draw(canvas);
+            Bitmap bitmapResized = BitmapLoader.getResizedBitmap(bitmap, width, height);
+            bitmap.recycle();
+            imageView.setImageBitmap(bitmapResized);
+        }
+    }
+
+    private void setUpPrev(View view) {
+        ActivityMain activityMain = (ActivityMain) requireActivity();
+        ImageView imageView = view.findViewById(R.id.imageButtonSongPanePrev);
+        int height = imageView.getMeasuredHeight();
+        //noinspection SuspiciousNameCombination
+        int width = height;
+        Drawable drawable = ResourcesCompat.getDrawable(
+                activityMain.getResources(), R.drawable.skip_previous_black_24dp, null);
         if (drawable != null && width > 0) {
             drawable.setBounds(0, 0, width, height);
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);

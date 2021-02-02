@@ -7,7 +7,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 import com.example.waveplayer.R;
-import com.example.waveplayer.service_main.ServiceMain;
+import com.example.waveplayer.media_controller.ServiceMain;
 
 public class ConnectionServiceMain implements ServiceConnection {
 

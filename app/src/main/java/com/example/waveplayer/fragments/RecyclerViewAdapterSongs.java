@@ -12,7 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.waveplayer.R;
 import com.example.waveplayer.random_playlist.Song;
-import com.example.waveplayer.service_main.ServiceMain;
+import com.example.waveplayer.media_controller.ServiceMain;
 
 import java.util.List;
 

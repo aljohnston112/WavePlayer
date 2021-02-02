@@ -48,10 +48,11 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
 
     private void setUpChoices(AlertDialog.Builder builder,
                               List<Integer> selectedPlaylistIndices) {
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         onMultiChoiceClickListener =
                 new OnMultiChoiceClickListenerAddToPlaylist(selectedPlaylistIndices);
         builder.setMultiChoiceItems(
-                getPlaylistTitles(MediaController.getInstance(getContext()).getPlaylists()),
+                getPlaylistTitles(activityMain.getPlaylists()),
                 null, onMultiChoiceClickListener);
     }
 
@@ -70,6 +71,7 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
 
     private void setUpButtons(AlertDialog.Builder builder, Bundle bundle,
                               List<Integer> selectedPlaylistIndices) {
+        ActivityMain activityMain = (ActivityMain) requireActivity();
         boolean isSong = bundle.getBoolean(BUNDLE_KEY_IS_SONG);
         Song song = (Song) bundle.getSerializable(
                 BUNDLE_KEY_ADD_TO_PLAYLIST_SONG);
@@ -78,15 +80,13 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
         onClickListenerPositiveButton = (dialog, id) -> {
             if (isSong && song != null) {
                 for (int index : selectedPlaylistIndices) {
-                    MediaController.getInstance(requireActivity().getApplicationContext())
-                            .getPlaylists().get(index).add(song);
+                    activityMain.getPlaylists().get(index).add(song);
                 }
             }
             if (!isSong && randomPlaylist != null) {
                 for (Song randomPlaylistSong : randomPlaylist.getSongs()) {
                     for (int index : selectedPlaylistIndices) {
-                        MediaController.getInstance(requireActivity().getApplicationContext())
-                                .getPlaylists().get(index).add(randomPlaylistSong);
+                        activityMain.getPlaylists().get(index).add(randomPlaylistSong);
                     }
                 }
             }

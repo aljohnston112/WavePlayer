@@ -12,7 +12,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <service android:name=".service_main.ServiceMain"
+        <service android:name=".media_controller.ServiceMain"
             android:exported="false"
             android:description="@string/service_description"
            />

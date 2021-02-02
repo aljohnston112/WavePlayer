@@ -10,7 +10,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -38,12 +37,12 @@ import com.example.waveplayer.R;
 import com.example.waveplayer.ViewModelUserPickedPlaylist;
 import com.example.waveplayer.ViewModelUserPickedSongs;
 import com.example.waveplayer.databinding.ActivityMainBinding;
-import com.example.waveplayer.media_controller.MediaController;
+import com.example.waveplayer.media_controller.MediaPlayerWUri;
 import com.example.waveplayer.media_controller.SaveFile;
 import com.example.waveplayer.random_playlist.Song;
 import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
-import com.example.waveplayer.service_main.ServiceMain;
+import com.example.waveplayer.media_controller.ServiceMain;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import java.util.ArrayList;
@@ -74,13 +73,9 @@ public class ActivityMain extends AppCompatActivity {
     public static final int MENU_ACTION_SEARCH_INDEX = 3;
     public static final int MENU_ACTION_ADD_TO_QUEUE = 4;
 
-    private static final String KEY_BOOLEAN_LOADED = "KEY_BOOLEAN_LOADED";
-
     private ActivityMainBinding binding;
 
     private ServiceMain serviceMain;
-
-    private MediaController mediaController;
 
     private ViewModelUserPickedPlaylist viewModelUserPickedPlaylist;
 
@@ -94,10 +89,10 @@ public class ActivityMain extends AppCompatActivity {
     private Observer<Integer> observerFABImage;
     private Observer<View.OnClickListener> observerFABOnClickListener;
 
-    private boolean loaded = false;
+    private boolean permissionGranted = false;
 
     public void loaded(boolean loaded) {
-        this.loaded = loaded;
+        serviceMain.loaded(loaded);
     }
 
     public void setServiceMain(ServiceMain serviceMain) {
@@ -109,23 +104,25 @@ public class ActivityMain extends AppCompatActivity {
 
     private void setUpAfterServiceConnection() {
         // Log.v(TAG, "setUpAfterServiceConnection started");
-        if (loaded) {
-            mediaController = MediaController.getInstance(getApplicationContext());
+        if(permissionGranted) {
+            serviceMain.permissionGranted();
+        }
+        if (serviceMain.loaded()) {
             if (!fragmentSongVisible()) {
-                if (MediaController.getInstance(getApplicationContext()).isPlaying()) {
+                if (isPlaying()) {
                     navigateTo(R.id.fragmentSong);
                 } else {
                     navigateTo(R.id.FragmentTitle);
                 }
             }
         } else {
-            mediaController = MediaController.getInstance(getApplicationContext());
             FragmentManager fragmentManager = getSupportFragmentManager();
             Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
             if (fragment != null) {
                 NavHostFragment.findNavController(fragment).popBackStack(R.id.fragmentLoading, true);
             }
         }
+        // TODO granted?
         serviceMain.permissionGranted();
         setUpBroadcastReceiver();
         setUpSongPane();
@@ -135,7 +132,7 @@ public class ActivityMain extends AppCompatActivity {
     public void serviceDisconnected() {
         // Log.v(TAG, "serviceDisconnected started");
         unregisterReceiver(broadcastReceiver);
-        mediaController = null;
+        broadcastReceiver = null;
         // Log.v(TAG, "serviceDisconnected end");
     }
 
@@ -194,9 +191,6 @@ public class ActivityMain extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        if (savedInstanceState != null) {
-            loaded = savedInstanceState.getBoolean(KEY_BOOLEAN_LOADED, false);
-        }
         viewModelUserPickedPlaylist =
                 new ViewModelProvider(this).get(ViewModelUserPickedPlaylist.class);
         viewModelUserPickedSongs =
@@ -281,10 +275,6 @@ public class ActivityMain extends AppCompatActivity {
         // Log.v(TAG, "started and bound ServiceMain");
     }
 
-    public List<Song> getAllSongs() {
-        return mediaController.getAllSongs();
-    }
-
     void setUpBroadcastReceiver() {
         // Log.v(TAG, "setting up BroadcastReceivers");
         broadcastReceiver = new BroadcastReceiver() {
@@ -293,26 +283,22 @@ public class ActivityMain extends AppCompatActivity {
                 String action = intent.getAction();
                 if (action != null) {
                     if (action.equals(getResources().getString(
-                            R.string.broadcast_receiver_action_next)) ||
-                            action.equals(getResources().getString(
-                                    R.string.broadcast_receiver_action_play_pause)) ||
-                            action.equals(getResources().getString(
-                                    R.string.broadcast_receiver_action_previous))) {
-                        // TODO
+                            R.string.broadcast_receiver_action_play_pause))) {
+                        viewModelActivityMain.setIsPlaying(isPlaying());
                     } else if (action.equals(getResources().getString(
                             R.string.broadcast_receiver_action_loaded))) {
                         loaded(true);
                         navigateTo(R.id.FragmentTitle);
                     } else if (action.equals(getResources().getString(
-                            R.string.broadcast_receiver_action_on_completion))) {
-                        updateAudioUri();
+                            R.string.broadcast_receiver_action_new_song))) {
+                        viewModelActivityMain.setCurrentSong(serviceMain.getCurrentAudioUri());
                     }
                 }
             }
         };
         IntentFilter filter = new IntentFilter();
         filter.addCategory(Intent.CATEGORY_DEFAULT);
-        filter.addAction(getResources().getString(R.string.broadcast_receiver_action_on_completion));
+        filter.addAction(getResources().getString(R.string.broadcast_receiver_action_new_song));
         filter.addAction(getResources().getString(R.string.broadcast_receiver_action_next));
         filter.addAction(getResources().getString(R.string.broadcast_receiver_action_previous));
         filter.addAction(getResources().getString(R.string.broadcast_receiver_action_play_pause));
@@ -416,12 +402,6 @@ public class ActivityMain extends AppCompatActivity {
     // endregion onStart
 
     @Override
-    public void onSaveInstanceState(@NonNull Bundle outState, @NonNull PersistableBundle outPersistentState) {
-        super.onSaveInstanceState(outState, outPersistentState);
-        outState.putBoolean(KEY_BOOLEAN_LOADED, loaded);
-    }
-
-    @Override
     protected void onStop() {
         // Log.v(TAG, "onStop started");
         super.onStop();
@@ -465,9 +445,7 @@ public class ActivityMain extends AppCompatActivity {
     protected void onResume() {
         // Log.v(TAG, "onResume started");
         super.onResume();
-        if (loaded) {
-            startAndBindServiceMain();
-        }
+        startAndBindServiceMain();
         // Log.v(TAG, "onResume ended");
     }
 
@@ -477,94 +455,6 @@ public class ActivityMain extends AppCompatActivity {
         super.onPause();
         // Log.v(TAG, "onPause ended");
     }
-
-    // endregion lifecycle
-
-    // region UI
-
-    // region updateSongUI
-
-    public int getCurrentTime() {
-        // Log.v(TAG, "getCurrentTime start");
-        // Log.v(TAG, "getCurrentTime end");
-        return mediaController.getCurrentTime();
-    }
-
-    // endregion updateSongUI
-
-    public void hideKeyboard(View view) {
-        // Log.v(TAG, "hideKeyboard start");
-        InputMethodManager imm = (InputMethodManager)
-                getSystemService(AppCompatActivity.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-        // Log.v(TAG, "hideKeyboard end");
-    }
-
-    public void showToast(int idMessage) {
-        // Log.v(TAG, "showToast start");
-        Toast toast = Toast.makeText(getApplicationContext(), idMessage, Toast.LENGTH_LONG);
-        toast.getView().getBackground().setColorFilter(
-                getResources().getColor(R.color.colorPrimary), PorterDuff.Mode.SRC_IN);
-        TextView text = toast.getView().findViewById(android.R.id.message);
-        text.setTextSize(16);
-        toast.show();
-        // Log.v(TAG, "showToast end");
-    }
-
-    // endregion UI
-
-    // region playbackControls
-
-    public void addToQueue(Long songID) {
-        // Log.v(TAG, "addToQueue start");
-        mediaController.addToQueue(songID);
-        // Log.v(TAG, "addToQueue end");
-    }
-
-    public void playNext() {
-        // Log.v(TAG, "playNext start");
-        if (mediaController.getCurrentAudioUri() != null) {
-            RandomPlaylist randomPlaylist = getCurrentPlaylist();
-            if (randomPlaylist != null) {
-                randomPlaylist.bad(
-                        serviceMain.getApplicationContext(),
-                        MediaController.getInstance(getApplicationContext())
-                                .getSong(mediaController.getCurrentAudioUri().id),
-                        mediaController.getPercentChangeDown());
-            }
-        }
-        mediaController.playNext(serviceMain.getApplicationContext());
-        updateAudioUri();
-        // Log.v(TAG, "playNext end");
-    }
-
-    public void playPrevious() {
-        // Log.v(TAG, "playPrevious start");
-        mediaController.playPrevious(serviceMain.getApplicationContext());
-        updateAudioUri();
-        // Log.v(TAG, "playPrevious end");
-    }
-
-    public void pauseOrPlay() {
-        // Log.v(TAG, "pauseOrPlay start");
-        if (mediaController.getCurrentAudioUri() != null) {
-            mediaController.pauseOrPlay(serviceMain.getApplicationContext());
-        }
-        if (isPlaying()) {
-            viewModelActivityMain.setIsPlaying(true);
-        } else {
-            viewModelActivityMain.setIsPlaying(false);
-        }
-        // Log.v(TAG, "pauseOrPlay end");
-    }
-
-    public void seekTo(int progress) {
-        // Log.v(TAG, "seekTo start");
-        mediaController.seekTo(serviceMain.getApplicationContext(), progress);
-        // Log.v(TAG, "seekTo end");
-    }
-
-    // endregion playbackControls
 
     public void navigateTo(final int id) {
         // Log.v(TAG, "navigateTo start");
@@ -602,10 +492,10 @@ public class ActivityMain extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         // Log.v(TAG, "onOptionsItemSelected start");
         if (item.getItemId() == R.id.action_reset_probs) {
-            mediaController.clearProbabilities(serviceMain.getApplicationContext());
+            clearProbabilities();
             return true;
         } else if (item.getItemId() == R.id.action_lower_probs) {
-            mediaController.lowerProbabilities(serviceMain.getApplicationContext());
+            lowerProbabilities();
         } else if (item.getItemId() == R.id.action_add_to_playlist) {
             FragmentManager fragmentManager = getSupportFragmentManager();
             Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
@@ -615,22 +505,22 @@ public class ActivityMain extends AppCompatActivity {
             dialogFragmentAddToPlaylist.show(fragmentManager, fragment.getTag());
             return true;
         } else if (item.getItemId() == R.id.action_add_to_queue) {
-            if (mediaController.isSongInProgress() && songToAddToQueue != null) {
-                mediaController.addToQueue(songToAddToQueue);
+            if (isSongInProgress() && songToAddToQueue != null) {
+                addToQueue(songToAddToQueue);
 
             } else if (playlistToAddToQueue != null) {
                 for (Song songs : playlistToAddToQueue.getSongs()) {
-                    mediaController.addToQueue(songs.id);
+                    addToQueue(songs.id);
                 }
-                if (mediaController.songQueueIsEmpty()) {
-                    mediaController.setCurrentPlaylist(playlistToAddToQueue);
+                if (songQueueIsEmpty()) {
+                    setCurrentPlaylist(playlistToAddToQueue);
                 }
-                if (!mediaController.isSongInProgress()) {
+                if (!isSongInProgress()) {
                     showSongPane();
                 }
             }
-            if (!mediaController.isSongInProgress()) {
-                mediaController.playNext(serviceMain.getApplicationContext());
+            if (!isSongInProgress()) {
+                playNext();
             }
         }
         // Log.v(TAG, "onOptionsItemSelected action_unknown end");
@@ -641,9 +531,7 @@ public class ActivityMain extends AppCompatActivity {
         // Log.v(TAG, "loadBundleForAddToPlaylist start");
         Bundle bundle = new Bundle();
         bundle.putBoolean(BUNDLE_KEY_IS_SONG, isSong);
-        bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG,
-                MediaController.getInstance(getApplicationContext())
-                        .getSong(mediaController.getCurrentAudioUri().id));
+        bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, getSong(getCurrentAudioUri().id));
         bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST,
                 viewModelUserPickedPlaylist.getUserPickedPlaylist());
         // Log.v(TAG, "loadBundleForAddToPlaylist end");
@@ -712,80 +600,166 @@ public class ActivityMain extends AppCompatActivity {
         return (serviceMain != null);
     }
 
+    // endregion lifecycle
+
+    // region UI
+
+    // region updateSongUI
+
+    // endregion updateSongUI
+
+    public void hideKeyboard(View view) {
+        // Log.v(TAG, "hideKeyboard start");
+        InputMethodManager imm = (InputMethodManager)
+                getSystemService(AppCompatActivity.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        // Log.v(TAG, "hideKeyboard end");
+    }
+
+    public void showToast(int idMessage) {
+        // Log.v(TAG, "showToast start");
+        Toast toast = Toast.makeText(getApplicationContext(), idMessage, Toast.LENGTH_LONG);
+        toast.getView().getBackground().setColorFilter(
+                getResources().getColor(R.color.colorPrimary), PorterDuff.Mode.SRC_IN);
+        TextView text = toast.getView().findViewById(android.R.id.message);
+        text.setTextSize(16);
+        toast.show();
+        // Log.v(TAG, "showToast end");
+    }
+
+    // endregion UI
+
+    // region playbackControls
+
+    private void lowerProbabilities() {
+        serviceMain.lowerProbabilities();
+    }
+
+    private boolean songQueueIsEmpty() {
+        return serviceMain.songQueueIsEmpty();
+    }
+
+    private void clearProbabilities() {
+        serviceMain.clearProbabilities();
+    }
+
+    public List<Song> getAllSongs() {
+        return serviceMain.getAllSongs();
+    }
+
+    public int getCurrentTime() {
+        // Log.v(TAG, "getCurrentTime start");
+        // Log.v(TAG, "getCurrentTime end");
+        return serviceMain.getCurrentTime();
+    }
+
+    public void addToQueue(Long songID) {
+        // Log.v(TAG, "addToQueue start");
+        serviceMain.addToQueue(songID);
+        // Log.v(TAG, "addToQueue end");
+    }
+
+    public void playNext() {
+        // Log.v(TAG, "playNext start");
+        serviceMain.playNext();
+        // Log.v(TAG, "playNext end");
+    }
+
+    public void playPrevious() {
+        // Log.v(TAG, "playPrevious start");
+        serviceMain.playPrevious();
+        // Log.v(TAG, "playPrevious end");
+    }
+
+    public void pauseOrPlay() {
+        // Log.v(TAG, "pauseOrPlay start");
+        serviceMain.pauseOrPlay();
+        // Log.v(TAG, "pauseOrPlay end");
+    }
+
+    public void seekTo(int progress) {
+        // Log.v(TAG, "seekTo start");
+        serviceMain.seekTo(progress);
+        // Log.v(TAG, "seekTo end");
+    }
+
+    // endregion playbackControls
+
     public boolean songInProgress() {
         // Log.v(TAG, "songInProgress start");
         // Log.v(TAG, "songInProgress end");
-        return (mediaController != null) && mediaController.isSongInProgress();
+        return (serviceMain != null) && serviceMain.isSongInProgress();
     }
 
     public boolean isPlaying() {
         // Log.v(TAG, "isPlaying start");
         // Log.v(TAG, "isPlaying end");
-        return mediaController.isPlaying();
+
+        return serviceMain.isPlaying();
     }
 
     public void setCurrentPlaylistToMaster() {
         // Log.v(TAG, "setCurrentPlaylistToMaster start");
-        mediaController.setCurrentPlaylistToMaster();
+        serviceMain.setCurrentPlaylistToMaster();
         // Log.v(TAG, "setCurrentPlaylistToMaster end");
     }
 
     public void setCurrentPlaylist(RandomPlaylist userPickedPlaylist) {
         // Log.v(TAG, "setCurrentPlaylist start");
-        mediaController.setCurrentPlaylist(userPickedPlaylist);
+        serviceMain.setCurrentPlaylist(userPickedPlaylist);
         // Log.v(TAG, "setCurrentPlaylist end");
     }
 
     public AudioUri getCurrentAudioUri() {
         // Log.v(TAG, "getCurrentSong start");
         // Log.v(TAG, "getCurrentSong end");
-        return mediaController.getCurrentAudioUri();
+        return serviceMain.getCurrentAudioUri();
     }
 
     public RandomPlaylist getCurrentPlaylist() {
         // Log.v(TAG, "getCurrentPlaylist start");
         // Log.v(TAG, "getCurrentPlaylist end");
-        return mediaController.getCurrentPlaylist();
+        return serviceMain.getCurrentPlaylist();
     }
 
     public boolean shuffling() {
         // Log.v(TAG, "shuffling start");
         // Log.v(TAG, "shuffling end");
-        return mediaController.isShuffling();
+        return serviceMain.shuffling();
     }
 
     public void shuffling(boolean shuffling) {
         // Log.v(TAG, "set shuffling start");
-        mediaController.setShuffling(shuffling);
+        serviceMain.shuffling(shuffling);
         // Log.v(TAG, "set shuffling end");
     }
 
     public boolean loopingOne() {
         // Log.v(TAG, "loopingOne start");
         // Log.v(TAG, "loopingOne end");
-        return mediaController.isLoopingOne();
+        return serviceMain.loopingOne();
     }
 
     public void loopingOne(boolean loopingOne) {
         // Log.v(TAG, "set loopingOne start");
-        mediaController.setLoopingOne(loopingOne);
+        serviceMain.loopingOne(loopingOne);
         // Log.v(TAG, "set loopingOne end");
     }
 
     public boolean looping() {
         // Log.v(TAG, "looping start");
         // Log.v(TAG, "looping end");
-        return mediaController.isLooping();
+        return serviceMain.looping();
     }
 
     public void looping(boolean looping) {
         // Log.v(TAG, "set looping start");
-        mediaController.setLooping(looping);
+        serviceMain.looping(looping);
         // Log.v(TAG, "set looping end");
     }
 
     public void clearSongQueue() {
-        mediaController.clearSongQueue();
+        serviceMain.clearSongQueue();
     }
 
     // region fragmentLoading
@@ -795,75 +769,82 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     public Song getCurrentSong() {
-        if (getCurrentAudioUri() != null) {
-            return MediaController.getInstance(getApplicationContext())
-                    .getSong(getCurrentAudioUri().id);
-        }
-        return null;
-    }
-
-    public void updateAudioUri() {
-        viewModelActivityMain.setCurrentSong(mediaController.getCurrentAudioUri());
+        return serviceMain.getCurrentSong();
     }
 
     public Uri getCurrentUri() {
-        return mediaController.getCurrentUri();
+        return serviceMain.getCurrentUri();
     }
 
     public double getMaxPercent() {
-        return mediaController.getMaxPercent();
+        return serviceMain.getMaxPercent();
     }
 
     public void addPlaylist(RandomPlaylist randomPlaylist) {
-        mediaController.addPlaylist(randomPlaylist);
+        serviceMain.addPlaylist(randomPlaylist);
     }
 
     public List<RandomPlaylist> getPlaylists() {
-        return mediaController.getPlaylists();
+        return serviceMain.getPlaylists();
     }
 
     public Song getSong(long songID) {
-        return mediaController.getSong(songID);
+        return serviceMain.getSong(songID);
     }
 
     public void removePlaylist(RandomPlaylist randomPlaylist) {
-        mediaController.removePlaylist(randomPlaylist);
+        serviceMain.removePlaylist(randomPlaylist);
     }
 
     public void addPlaylist(int position, RandomPlaylist randomPlaylist) {
-        mediaController.addPlaylist(position, randomPlaylist);
+        serviceMain.addPlaylist(position, randomPlaylist);
     }
 
     public double getPercentChangeUp() {
-        return mediaController.getPercentChangeUp();
+        return serviceMain.getPercentChangeUp();
     }
 
     public double getPercentChangeDown() {
-        return mediaController.getPercentChangeDown();
+        return serviceMain.getPercentChangeDown();
     }
 
     public void setMaxPercent(double maxPercent) {
-        mediaController.setMaxPercent(maxPercent);
+        serviceMain.setMaxPercent(maxPercent);
     }
 
     public void setPercentChangeUp(double percentChangeUp) {
-        mediaController.setPercentChangeUp(percentChangeUp);
+        serviceMain.setPercentChangeUp(percentChangeUp);
     }
 
     public void setPercentChangeDown(double percentChangeDown) {
-        mediaController.setPercentChangeDown(percentChangeDown);
+        serviceMain.setPercentChangeDown(percentChangeDown);
     }
 
     public RandomPlaylist getMasterPlaylist() {
-        return mediaController.getMasterPlaylist();
+        return serviceMain.getMasterPlaylist();
     }
 
     public RandomPlaylist getPlaylist(String playlistName) {
-        return mediaController.getPlaylist(playlistName);
+        return serviceMain.getPlaylist(playlistName);
     }
 
     public boolean isSongInProgress() {
-        return mediaController.isSongInProgress();
+        return serviceMain.isSongInProgress();
+    }
+
+    public MediaPlayerWUri getCurrentMediaPlayerWUri() {
+        return serviceMain.getCurrentMediaPlayerWUri();
+
+    }
+
+    public void permissionGranted() {
+        if(serviceMain != null){
+            serviceMain.permissionGranted();
+        }
+    }
+
+    public void goToFrontOfQueue() {
+        serviceMain.goToFrontOfQueue();
     }
 
     // endregion fragmentLoading

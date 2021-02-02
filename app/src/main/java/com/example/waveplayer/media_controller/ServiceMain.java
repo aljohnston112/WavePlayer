@@ -1,4 +1,4 @@
-package com.example.waveplayer.service_main;
+package com.example.waveplayer.media_controller;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
@@ -21,12 +22,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
-import com.example.waveplayer.media_controller.BitmapLoader;
-import com.example.waveplayer.media_controller.MediaController;
 import com.example.waveplayer.R;
 import com.example.waveplayer.activity_main.ActivityMain;
-import com.example.waveplayer.media_controller.SaveFile;
 import com.example.waveplayer.random_playlist.AudioUri;
+import com.example.waveplayer.random_playlist.RandomPlaylist;
+import com.example.waveplayer.random_playlist.Song;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -34,49 +34,23 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ServiceMain extends Service {
 
-    public static final String TAG = "ServiceMain";
-    private static final String FILE_ERROR_LOG = "error";
-    private final static String NOTIFICATION_CHANNEL_ID = "PinkyPlayer";
-
-    public static final Object lock = new Object();
-
-    private MediaController mediaController;
-
     public static final ExecutorService executorServiceFIFO = Executors.newSingleThreadExecutor();
-
     public static final ExecutorService executorServicePool = Executors.newCachedThreadPool();
 
-    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.v(ServiceMain.TAG, "BroadcastReceiverNotificationForServiceMainMediaControls start");
-            synchronized (ServiceMain.lock) {
-                String action = intent.getAction();
-                if (action != null) {
-                    if (action.equals(getResources().getString(
-                            R.string.broadcast_receiver_action_next))) {
-                        playNext();
-                        SaveFile.saveFile(getApplicationContext());
-                    } else if (action.equals(getResources().getString(
-                            R.string.broadcast_receiver_action_play_pause))) {
-                        pauseOrPlay();
-                    } else if (action.equals(getResources().getString(
-                            R.string.broadcast_receiver_action_previous))) {
-                        playPrevious();
-                    } else if (action.equals(getResources().getString(
-                            R.string.broadcast_receiver_action_on_completion))) {
-                        updateNotification();
-                    }
-                }
-            }
-            Log.v(ServiceMain.TAG, "BroadcastReceiverNotificationForServiceMainMediaControls end");
-        }
-    };
+    private static final String TAG = "ServiceMain";
+    private static final String FILE_ERROR_LOG = "error";
+    private static final String NOTIFICATION_CHANNEL_ID = "PinkyPlayer";
+    private static final Object LOCK = new Object();
+
+    private boolean loaded = false;
+    private MediaController mediaController;
+    private BroadcastReceiver broadcastReceiver;
 
     private RemoteViews remoteViewsNotificationLayout;
     private RemoteViews remoteViewsNotificationLayoutWithoutArt;
@@ -85,7 +59,12 @@ public class ServiceMain extends Service {
     private Notification notification;
     private boolean hasArt = false;
 
-    // region ActivityMainUI
+    public boolean loaded(){
+        return loaded;
+    }
+    public void loaded(boolean loaded) {
+        this.loaded = loaded;
+    }
 
     private int songPaneArtHeight = 1;
 
@@ -134,12 +113,38 @@ public class ServiceMain extends Service {
 
     private void setUpBroadCastReceivers() {
         // Log.v(TAG, "Setting up Broadcast receivers for notification buttons");
+        broadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.v(ServiceMain.TAG, "BroadcastReceiverNotificationForServiceMainMediaControls start");
+                synchronized (ServiceMain.LOCK) {
+                    String action = intent.getAction();
+                    if (action != null) {
+                        if (action.equals(getResources().getString(
+                                R.string.broadcast_receiver_action_next))) {
+                            playNext();
+                            SaveFile.saveFile(getApplicationContext());
+                        } else if (action.equals(getResources().getString(
+                                R.string.broadcast_receiver_action_play_pause))) {
+                            pauseOrPlay();
+                        } else if (action.equals(getResources().getString(
+                                R.string.broadcast_receiver_action_previous))) {
+                            playPrevious();
+                        } else if (action.equals(getResources().getString(
+                                R.string.broadcast_receiver_action_new_song))) {
+                            updateNotification();
+                        }
+                    }
+                }
+                Log.v(ServiceMain.TAG, "BroadcastReceiverNotificationForServiceMainMediaControls end");
+            }
+        };
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
         intentFilter.addAction(getResources().getString(R.string.broadcast_receiver_action_next));
         intentFilter.addAction(getResources().getString(R.string.broadcast_receiver_action_previous));
         intentFilter.addAction(getResources().getString(R.string.broadcast_receiver_action_play_pause));
-        intentFilter.addAction(getResources().getString(R.string.broadcast_receiver_action_on_completion));
+        intentFilter.addAction(getResources().getString(R.string.broadcast_receiver_action_new_song));
         registerReceiver(broadcastReceiver, intentFilter);
         // Log.v(TAG, "Done setting up Broadcast receivers for notification buttons");
     }
@@ -201,7 +206,8 @@ public class ServiceMain extends Service {
     }
 
     public void permissionGranted() {
-        mediaController = MediaController.getInstance(getApplicationContext());
+        ServiceMain.executorServicePool.execute(
+                () -> mediaController = MediaController.getInstance(getApplicationContext()));
     }
 
     private void setUpNotificationBuilder() {
@@ -370,6 +376,14 @@ public class ServiceMain extends Service {
         return serviceMainBinder;
     }
 
+    public MediaPlayerWUri getCurrentMediaPlayerWUri() {
+        return mediaController.getCurrentMediaPlayerWUri();
+    }
+
+    public void goToFrontOfQueue() {
+        mediaController.goToFrontOfQueue();
+    }
+
     public class ServiceMainBinder extends Binder {
         public ServiceMain getService() {
             return ServiceMain.this;
@@ -402,6 +416,7 @@ public class ServiceMain extends Service {
         }
         mediaController.releaseMediaPlayers();
         unregisterReceiver(broadcastReceiver);
+        broadcastReceiver = null;
         stopSelf();
         // Log.v(TAG, "destroy ended");
     }
@@ -409,25 +424,233 @@ public class ServiceMain extends Service {
     // region mediaControls
 
     public void playNext() {
-        AudioUri song = mediaController.getCurrentAudioUri();
-        if (song != null) {
-            mediaController.getCurrentPlaylist().bad(
-                    getApplicationContext(),
-                    mediaController.getSong(song.id),
-                    mediaController.getPercentChangeDown());
+        // Log.v(TAG, "playNext start");
+        if (mediaController.getCurrentAudioUri() != null) {
+            RandomPlaylist randomPlaylist = getCurrentPlaylist();
+            if (randomPlaylist != null) {
+                randomPlaylist.bad(
+                        getApplicationContext(),
+                        MediaController.getInstance(getApplicationContext())
+                                .getSong(mediaController.getCurrentAudioUri().id),
+                        mediaController.getPercentChangeDown());
+            }
         }
         mediaController.playNext(getApplicationContext());
+        sendBroadcastNewSong();
+        // Log.v(TAG, "playNext end");
     }
 
     public void pauseOrPlay() {
-        mediaController.pauseOrPlay(getApplicationContext());
+        if (mediaController.getCurrentAudioUri() != null) {
+            mediaController.pauseOrPlay(getApplicationContext());
+        }
         updateNotification();
+        sendBroadcastPlayPause();
+    }
+
+    public void sendBroadcastPlayPause() {
+        Intent intent = new Intent();
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.setAction(getApplicationContext().getResources().getString(
+                R.string.broadcast_receiver_action_play_pause));
+        getApplicationContext().sendBroadcast(intent);
     }
 
     public void playPrevious() {
         mediaController.playPrevious(getApplicationContext());
+        sendBroadcastNewSong();
+    }
+
+    public void lowerProbabilities() {
+        mediaController.lowerProbabilities(getApplicationContext());
+    }
+
+    public boolean songQueueIsEmpty() {
+        return mediaController.songQueueIsEmpty();
+    }
+
+    public void clearProbabilities() {
+        mediaController.clearProbabilities(getApplicationContext());
     }
 
     // endregion mediaControls
+
+    public List<Song> getAllSongs() {
+        return mediaController.getAllSongs();
+    }
+
+    public int getCurrentTime() {
+        // Log.v(TAG, "getCurrentTime start");
+        // Log.v(TAG, "getCurrentTime end");
+        return mediaController.getCurrentTime();
+    }
+
+    public void addToQueue(Long songID) {
+        // Log.v(TAG, "addToQueue start");
+        mediaController.addToQueue(songID);
+        // Log.v(TAG, "addToQueue end");
+    }
+
+    public void seekTo(int progress) {
+        // Log.v(TAG, "seekTo start");
+        mediaController.seekTo(getApplicationContext(), progress);
+        // Log.v(TAG, "seekTo end");
+    }
+
+    // endregion playbackControls
+
+    public boolean songInProgress() {
+        // Log.v(TAG, "songInProgress start");
+        // Log.v(TAG, "songInProgress end");
+        return (mediaController != null) && mediaController.isSongInProgress();
+    }
+
+    public boolean isPlaying() {
+        // Log.v(TAG, "isPlaying start");
+        // Log.v(TAG, "isPlaying end");
+        return mediaController.isPlaying();
+    }
+
+    public void setCurrentPlaylistToMaster() {
+        // Log.v(TAG, "setCurrentPlaylistToMaster start");
+        mediaController.setCurrentPlaylistToMaster();
+        // Log.v(TAG, "setCurrentPlaylistToMaster end");
+    }
+
+    public void setCurrentPlaylist(RandomPlaylist userPickedPlaylist) {
+        // Log.v(TAG, "setCurrentPlaylist start");
+        mediaController.setCurrentPlaylist(userPickedPlaylist);
+        // Log.v(TAG, "setCurrentPlaylist end");
+    }
+
+    public AudioUri getCurrentAudioUri() {
+        // Log.v(TAG, "getCurrentSong start");
+        // Log.v(TAG, "getCurrentSong end");
+        return mediaController.getCurrentAudioUri();
+    }
+
+    public RandomPlaylist getCurrentPlaylist() {
+        // Log.v(TAG, "getCurrentPlaylist start");
+        // Log.v(TAG, "getCurrentPlaylist end");
+        return mediaController.getCurrentPlaylist();
+    }
+
+    public boolean shuffling() {
+        // Log.v(TAG, "shuffling start");
+        // Log.v(TAG, "shuffling end");
+        return mediaController.isShuffling();
+    }
+
+    public void shuffling(boolean shuffling) {
+        // Log.v(TAG, "set shuffling start");
+        mediaController.setShuffling(shuffling);
+        // Log.v(TAG, "set shuffling end");
+    }
+
+    public boolean loopingOne() {
+        // Log.v(TAG, "loopingOne start");
+        // Log.v(TAG, "loopingOne end");
+        return mediaController.isLoopingOne();
+    }
+
+    public void loopingOne(boolean loopingOne) {
+        // Log.v(TAG, "set loopingOne start");
+        mediaController.setLoopingOne(loopingOne);
+        // Log.v(TAG, "set loopingOne end");
+    }
+
+    public boolean looping() {
+        // Log.v(TAG, "looping start");
+        // Log.v(TAG, "looping end");
+        return mediaController.isLooping();
+    }
+
+    public void looping(boolean looping) {
+        // Log.v(TAG, "set looping start");
+        mediaController.setLooping(looping);
+        // Log.v(TAG, "set looping end");
+    }
+
+    public void clearSongQueue() {
+        mediaController.clearSongQueue();
+    }
+
+    // region fragmentLoading
+
+    public Song getCurrentSong() {
+        if (getCurrentAudioUri() != null) {
+            return MediaController.getInstance(getApplicationContext())
+                    .getSong(getCurrentAudioUri().id);
+        }
+        return null;
+    }
+
+    public void sendBroadcastNewSong() {
+        Intent intent = new Intent();
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.setAction(getApplicationContext().getResources().getString(
+                        R.string.broadcast_receiver_action_new_song));
+        getApplicationContext().sendBroadcast(intent);
+    }
+
+    public Uri getCurrentUri() {
+        return mediaController.getCurrentUri();
+    }
+
+    public double getMaxPercent() {
+        return mediaController.getMaxPercent();
+    }
+
+    public void addPlaylist(RandomPlaylist randomPlaylist) {
+        mediaController.addPlaylist(randomPlaylist);
+    }
+
+    public List<RandomPlaylist> getPlaylists() {
+        return mediaController.getPlaylists();
+    }
+
+    public Song getSong(long songID) {
+        return mediaController.getSong(songID);
+    }
+
+    public void removePlaylist(RandomPlaylist randomPlaylist) {
+        mediaController.removePlaylist(randomPlaylist);
+    }
+
+    public void addPlaylist(int position, RandomPlaylist randomPlaylist) {
+        mediaController.addPlaylist(position, randomPlaylist);
+    }
+
+    public double getPercentChangeUp() {
+        return mediaController.getPercentChangeUp();
+    }
+
+    public double getPercentChangeDown() {
+        return mediaController.getPercentChangeDown();
+    }
+
+    public void setMaxPercent(double maxPercent) {
+        mediaController.setMaxPercent(maxPercent);
+    }
+
+    public void setPercentChangeUp(double percentChangeUp) {
+        mediaController.setPercentChangeUp(percentChangeUp);
+    }
+
+    public void setPercentChangeDown(double percentChangeDown) {
+        mediaController.setPercentChangeDown(percentChangeDown);
+    }
+
+    public RandomPlaylist getMasterPlaylist() {
+        return mediaController.getMasterPlaylist();
+    }
+
+    public RandomPlaylist getPlaylist(String playlistName) {
+        return mediaController.getPlaylist(playlistName);
+    }
+
+    public boolean isSongInProgress() {
+        return mediaController.isSongInProgress();
+    }
 
 }

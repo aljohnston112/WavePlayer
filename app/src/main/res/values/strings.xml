@@ -3,7 +3,7 @@
     <string name="service_description">PinkyPlayer</string>
 
     <string name="broadcast_receiver_action_service_connected">ServiceConnected</string>
-    <string name="broadcast_receiver_action_on_completion">Complete</string>
+    <string name="broadcast_receiver_action_new_song">Complete</string>
     <string name="broadcast_receiver_action_next">Next</string>
     <string name="broadcast_receiver_action_previous">Previous</string>
     <string name="broadcast_receiver_action_play_pause">PlayPause</string>
