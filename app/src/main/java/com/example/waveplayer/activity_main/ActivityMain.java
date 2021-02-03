@@ -1,6 +1,7 @@
 package com.example.waveplayer.activity_main;
 
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -10,6 +11,8 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -19,6 +22,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatTextView;
@@ -31,6 +35,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
+import androidx.navigation.NavDestination;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.waveplayer.R;
@@ -104,7 +109,7 @@ public class ActivityMain extends AppCompatActivity {
 
     private void setUpAfterServiceConnection() {
         // Log.v(TAG, "setUpAfterServiceConnection started");
-        if(permissionGranted) {
+        if (permissionGranted) {
             serviceMain.permissionGranted();
         }
         if (serviceMain.loaded()) {
@@ -140,7 +145,7 @@ public class ActivityMain extends AppCompatActivity {
 
     private BroadcastReceiver broadcastReceiver;
 
-    private OnDestinationChangedListenerToolbar onDestinationChangedListenerToolbar;
+    private NavController.OnDestinationChangedListener onDestinationChangedListenerToolbar;
 
     // TODO get rid of?
 
@@ -269,10 +274,35 @@ public class ActivityMain extends AppCompatActivity {
         } else {
             startService(intentServiceMain);
         }
-        connectionServiceMain = new ConnectionServiceMain(this);
+        connectionServiceMain = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName className, IBinder service) {
+                Log.v(ActivityMain.TAG, "onServiceConnected started");
+                ServiceMain.ServiceMainBinder binder = (ServiceMain.ServiceMainBinder) service;
+                setServiceMain(binder.getService());
+                sendBroadcast();
+                Log.v(ActivityMain.TAG, "onServiceConnected ended");
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName arg0) {
+                Log.v(ActivityMain.TAG, "onServiceDisconnected start");
+                serviceDisconnected();
+            }
+        };
         getApplicationContext().bindService(
                 intentServiceMain, connectionServiceMain, BIND_AUTO_CREATE | BIND_IMPORTANT);
         // Log.v(TAG, "started and bound ServiceMain");
+    }
+
+    private void sendBroadcast() {
+        Log.v(ActivityMain.TAG, "Sending Broadcast onServiceConnected");
+        Intent intent = new Intent();
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.setAction(getResources().getString(
+                R.string.broadcast_receiver_action_service_connected));
+        sendBroadcast(intent);
+        Log.v(ActivityMain.TAG, "Done sending Broadcast onServiceConnected");
     }
 
     void setUpBroadcastReceiver() {
@@ -389,7 +419,32 @@ public class ActivityMain extends AppCompatActivity {
 
     private void setUpDestinationChangedListenerForToolbar() {
         // Log.v(TAG, "setUpDestinationChangedListenerForToolbar started");
-        onDestinationChangedListenerToolbar = new OnDestinationChangedListenerToolbar(this);
+        onDestinationChangedListenerToolbar =
+                (NavController.OnDestinationChangedListener) (controller, destination, arguments) -> {
+                    runOnUiThread(() -> {
+                        Toolbar toolbar = findViewById(R.id.toolbar);
+                        Menu menu = toolbar.getMenu();
+                        if (menu.size() > 0) {
+                            menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(
+                                    destination.getId() == R.id.fragmentPlaylist ||
+                                            destination.getId() == R.id.fragmentSongs);
+                            menu.getItem(ActivityMain.MENU_ACTION_LOWER_PROBS_INDEX).setVisible(
+                                    destination.getId() == R.id.fragmentPlaylist ||
+                                            destination.getId() == R.id.fragmentSongs
+                            );
+                            menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).setVisible(
+                                    destination.getId() == R.id.fragmentSong ||
+                                            destination.getId() == R.id.fragmentPlaylist);
+                            menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(
+                                    destination.getId() == R.id.fragmentSongs ||
+                                            destination.getId() == R.id.fragmentPlaylist ||
+                                            destination.getId() == R.id.FragmentPlaylists);
+                            menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).setVisible(
+                                    destination.getId() == R.id.fragmentSong ||
+                                            destination.getId() == R.id.fragmentPlaylist);
+                        }
+                    });
+                };
         FragmentManager fragmentManager = getSupportFragmentManager();
         Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
         if (fragment != null) {
@@ -694,7 +749,9 @@ public class ActivityMain extends AppCompatActivity {
     public boolean isPlaying() {
         // Log.v(TAG, "isPlaying start");
         // Log.v(TAG, "isPlaying end");
-
+        if (serviceMain == null) {
+            return false;
+        }
         return serviceMain.isPlaying();
     }
 
@@ -838,7 +895,7 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     public void permissionGranted() {
-        if(serviceMain != null){
+        if (serviceMain != null) {
             serviceMain.permissionGranted();
         }
     }

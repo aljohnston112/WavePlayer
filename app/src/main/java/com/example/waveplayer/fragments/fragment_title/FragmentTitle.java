@@ -1,6 +1,7 @@
 package com.example.waveplayer.fragments.fragment_title;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -23,11 +24,9 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.activity_main.ViewModelActivityMain;
 import com.example.waveplayer.databinding.FragmentTitleBinding;
-import com.example.waveplayer.media_controller.MediaData;
 import com.example.waveplayer.media_controller.SaveFile;
 import com.example.waveplayer.random_playlist.Song;
 import com.example.waveplayer.ViewModelUserPickedPlaylist;
-import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.R;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 
@@ -35,6 +34,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.example.waveplayer.fragments.fragment_title.FragmentTitleDirections.actionFragmentTitleToFragmentPlaylists;
+import static com.example.waveplayer.fragments.fragment_title.FragmentTitleDirections.actionFragmentTitleToFragmentSettings;
+import static com.example.waveplayer.fragments.fragment_title.FragmentTitleDirections.actionFragmentTitleToFragmentSongs;
 
 public class FragmentTitle extends Fragment {
 
@@ -46,9 +47,9 @@ public class FragmentTitle extends Fragment {
 
     private ViewModelUserPickedPlaylist viewModelUserPickedPlaylist;
 
-    private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
+    private BroadcastReceiver broadcastReceiverOnServiceConnected;
 
-    private OnClickListenerFragmentTitleButtons onClickListenerFragmentTitleButtons;
+    private View.OnClickListener onClickListenerFragmentTitleButtons;
 
     private Uri uriUserPickedFolder;
 
@@ -84,7 +85,24 @@ public class FragmentTitle extends Fragment {
     }
 
     private void setUpButtons() {
-        onClickListenerFragmentTitleButtons = new OnClickListenerFragmentTitleButtons(this);
+        onClickListenerFragmentTitleButtons = view -> {
+            if (view.getId() == R.id.button_playlists) {
+                NavHostFragment.findNavController(this)
+                        .navigate(actionFragmentTitleToFragmentPlaylists());
+            } else if (view.getId() == R.id.button_songs) {
+                NavHostFragment.findNavController(this)
+                        .navigate(actionFragmentTitleToFragmentSongs());
+            } else if (view.getId() == R.id.button_settings) {
+                NavHostFragment.findNavController(this)
+                        .navigate(actionFragmentTitleToFragmentSettings());
+            } else if (view.getId() == R.id.button_folder_search) {
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                String title = view.getResources().getString(R.string.pick_folder);
+                Intent chooser = Intent.createChooser(intent, title);
+                startActivityForResult(chooser, FragmentTitle.REQUEST_CODE_OPEN_FOLDER);
+            }
+        };
         binding.buttonPlaylists.setOnClickListener(onClickListenerFragmentTitleButtons);
         binding.buttonSongs.setOnClickListener(onClickListenerFragmentTitleButtons);
         binding.buttonSettings.setOnClickListener(onClickListenerFragmentTitleButtons);
@@ -99,7 +117,7 @@ public class FragmentTitle extends Fragment {
         intentFilterServiceConnected.addCategory(Intent.CATEGORY_DEFAULT);
         intentFilterServiceConnected.addAction(activityMain.getResources().getString(
                 R.string.broadcast_receiver_action_service_connected));
-        broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
+        broadcastReceiverOnServiceConnected = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
 

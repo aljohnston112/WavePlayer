@@ -17,6 +17,8 @@ import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -25,7 +27,6 @@ import com.example.waveplayer.activity_main.ViewModelActivityMain;
 import com.example.waveplayer.fragments.OnQueryTextListenerSearch;
 import com.example.waveplayer.random_playlist.Song;
 import com.example.waveplayer.ViewModelUserPickedSongs;
-import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.R;
 
 import java.util.List;
@@ -36,9 +37,9 @@ public class FragmentSelectSongs extends Fragment {
 
     private ViewModelActivityMain viewModelActivityMain;
 
-    private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
+    private BroadcastReceiver broadcastReceiverOnServiceConnected;
 
-    private OnClickListenerFABFragmentSelectSongs onClickListenerFABFragmentSelectSongs;
+    private View.OnClickListener onClickListenerFABFragmentSelectSongs;
 
     private RecyclerView recyclerViewSongList;
 
@@ -118,7 +119,10 @@ public class FragmentSelectSongs extends Fragment {
         viewModelActivityMain.setFabImage(R.drawable.ic_check_white_24dp);
         viewModelActivityMain.setFABText(R.string.fab_done);
         viewModelActivityMain.showFab(true);
-        onClickListenerFABFragmentSelectSongs = new OnClickListenerFABFragmentSelectSongs(this);
+        onClickListenerFABFragmentSelectSongs = (view) -> {
+                NavController navController = NavHostFragment.findNavController(this);
+                navController.popBackStack();
+        };
         viewModelActivityMain.setFabOnClickListener(onClickListenerFABFragmentSelectSongs);
     }
 
@@ -141,7 +145,7 @@ public class FragmentSelectSongs extends Fragment {
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
                 R.string.broadcast_receiver_action_service_connected));
-        broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
+        broadcastReceiverOnServiceConnected = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 setUpRecyclerView();

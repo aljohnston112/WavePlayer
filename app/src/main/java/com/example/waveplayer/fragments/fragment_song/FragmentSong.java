@@ -29,11 +29,8 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.waveplayer.activity_main.ActivityMain;
-import com.example.waveplayer.activity_main.OnSeekBarChangeListener;
-import com.example.waveplayer.activity_main.RunnableSongArtUpdater;
 import com.example.waveplayer.activity_main.ViewModelActivityMain;
 import com.example.waveplayer.databinding.FragmentSongBinding;
-import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.R;
 import com.example.waveplayer.media_controller.BitmapLoader;
 import com.example.waveplayer.media_controller.MediaPlayerWUri;
@@ -44,9 +41,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class FragmentSong extends Fragment
-        implements OnSeekBarChangeListener.OnSeekBarChangeCallback,
-        RunnableSongArtUpdater.SongArtUpdateCallback {
+public class FragmentSong extends Fragment {
 
     private FragmentSongBinding binding;
 
@@ -54,7 +49,7 @@ public class FragmentSong extends Fragment
 
     private BroadcastReceiver broadcastReceiver;
 
-    private OnSeekBarChangeListener onSeekBarChangeListener;
+    private SeekBar.OnSeekBarChangeListener onSeekBarChangeListener;
 
     private View.OnClickListener onClickListenerFragmentSong;
     private View.OnLongClickListener onLongClickListener;
@@ -66,7 +61,7 @@ public class FragmentSong extends Fragment
 
     private Runnable runnableSeekBarUpdater;
 
-    private RunnableSongArtUpdater runnableSongArtUpdater;
+    private Runnable runnableSongArtUpdater;
 
     private Observer<AudioUri> observerCurrentSong;
 
@@ -92,8 +87,57 @@ public class FragmentSong extends Fragment
         ActivityMain activityMain = (ActivityMain) requireActivity();
         activityMain.hideKeyboard(view);
         updateMainContent();
-        onSeekBarChangeListener = new OnSeekBarChangeListener(this);
-        runnableSongArtUpdater = new RunnableSongArtUpdater(this);
+        onSeekBarChangeListener = new SeekBar.OnSeekBarChangeListener(){
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                ActivityMain activityMain = (ActivityMain) requireActivity();
+                activityMain.seekTo(seekBar.getProgress());
+            }
+        };
+        runnableSongArtUpdater = () -> {
+            ActivityMain activityMain1 = (ActivityMain) requireActivity();
+            ImageView imageViewSongArt = binding.imageViewSongArt;
+            int songArtHeight = imageViewSongArt.getHeight();
+            int songArtWidth = imageViewSongArt.getWidth();
+            if (songArtWidth > songArtHeight) {
+                songArtWidth = songArtHeight;
+            } else {
+                songArtHeight = songArtWidth;
+            }
+            if (songArtHeight > 0 && songArtWidth > 0) {
+                Bitmap bitmap = BitmapLoader.getThumbnail(activityMain1.getCurrentUri(),
+                        songArtWidth, songArtHeight, activityMain1.getApplicationContext());
+                if (bitmap == null) {
+                    Drawable drawable = ResourcesCompat.getDrawable(imageViewSongArt.getResources(),
+                            R.drawable.music_note_black_48dp, null);
+                    if (drawable != null) {
+                        drawable.setBounds(0, 0, songArtWidth, songArtHeight);
+                        Bitmap bitmapDrawable = Bitmap.createBitmap(songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888);
+                        Canvas canvas = new Canvas(bitmapDrawable);
+                        Paint paint = new Paint();
+                        paint.setColor(imageViewSongArt.getResources().getColor(R.color.colorPrimary));
+                        canvas.drawRect(0, 0, songArtWidth, songArtHeight, paint);
+                        drawable.draw(canvas);
+                        Bitmap bitmapResized =
+                                BitmapLoader.getResizedBitmap(bitmapDrawable, songArtWidth, songArtHeight);
+                        bitmapDrawable.recycle();
+                        imageViewSongArt.setImageBitmap(bitmapResized);
+                    }
+                } else {
+                    imageViewSongArt.setImageBitmap(bitmap);
+                }
+            }
+        };
         updateSongUI();
         observerCurrentSong = s -> {
             updateSongUI();
@@ -272,7 +316,7 @@ public class FragmentSong extends Fragment
                 R.string.broadcast_receiver_action_service_connected));
         filterComplete.addAction(activityMain.getResources().getString(
                 R.string.broadcast_receiver_action_on_create_options_menu));
-        broadcastReceiver = new BroadcastReceiverOnServiceConnected() {
+        broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 String action = intent.getAction();
@@ -466,48 +510,6 @@ public class FragmentSong extends Fragment
         viewModelActivityMain.isPlaying().removeObservers(this);
         observerIsPlaying = null;
         viewModelActivityMain = null;
-    }
-
-    @Override
-    public void onStopTrackingTouch(SeekBar seekBar) {
-        ActivityMain activityMain = (ActivityMain) requireActivity();
-        activityMain.seekTo(seekBar.getProgress());
-    }
-
-    @Override
-    public void updateSongArtRun() {
-        ActivityMain activityMain = (ActivityMain) requireActivity();
-        ImageView imageViewSongArt = binding.imageViewSongArt;
-        int songArtHeight = imageViewSongArt.getHeight();
-        int songArtWidth = imageViewSongArt.getWidth();
-        if (songArtWidth > songArtHeight) {
-            songArtWidth = songArtHeight;
-        } else {
-            songArtHeight = songArtWidth;
-        }
-        if (songArtHeight > 0 && songArtWidth > 0) {
-            Bitmap bitmap = BitmapLoader.getThumbnail(activityMain.getCurrentUri(),
-                    songArtWidth, songArtHeight, activityMain.getApplicationContext());
-            if (bitmap == null) {
-                Drawable drawable = ResourcesCompat.getDrawable(imageViewSongArt.getResources(),
-                        R.drawable.music_note_black_48dp, null);
-                if (drawable != null) {
-                    drawable.setBounds(0, 0, songArtWidth, songArtHeight);
-                    Bitmap bitmapDrawable = Bitmap.createBitmap(songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888);
-                    Canvas canvas = new Canvas(bitmapDrawable);
-                    Paint paint = new Paint();
-                    paint.setColor(imageViewSongArt.getResources().getColor(R.color.colorPrimary));
-                    canvas.drawRect(0, 0, songArtWidth, songArtHeight, paint);
-                    drawable.draw(canvas);
-                    Bitmap bitmapResized =
-                            BitmapLoader.getResizedBitmap(bitmapDrawable, songArtWidth, songArtHeight);
-                    bitmapDrawable.recycle();
-                    imageViewSongArt.setImageBitmap(bitmapResized);
-                }
-            } else {
-                imageViewSongArt.setImageBitmap(bitmap);
-            }
-        }
     }
 
     private void setUpGood(View view) {

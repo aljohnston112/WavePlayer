@@ -29,14 +29,15 @@ import com.example.waveplayer.ViewModelUserPickedSongs;
 import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist;
 import com.example.waveplayer.activity_main.ViewModelActivityMain;
-import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.fragments.OnQueryTextListenerSearch;
 import com.example.waveplayer.fragments.RecyclerViewAdapterSongs;
-import com.example.waveplayer.media_controller.MediaData;
 import com.example.waveplayer.random_playlist.Song;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
+import com.google.android.material.snackbar.BaseTransientBottomBar;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG;
 import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_IS_SONG;
@@ -48,7 +49,7 @@ public class FragmentPlaylist extends Fragment implements
 
     private ViewModelActivityMain viewModelActivityMain;
 
-    private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
+    private BroadcastReceiver broadcastReceiverOnServiceConnected;
 
     private BroadcastReceiver broadcastReceiverOptionsMenuCreated;
 
@@ -58,9 +59,9 @@ public class FragmentPlaylist extends Fragment implements
 
     private ViewModelUserPickedSongs viewModelUserPickedSongs;
 
-    private OnClickListenerFABFragmentPlaylist onClickListenerFABFragmentPlaylist;
+    private View.OnClickListener onClickListenerFABFragmentPlaylist;
     private OnQueryTextListenerSearch onQueryTextListenerSearch;
-    private ItemTouchListenerSong itemTouchListenerSong;
+    private ItemTouchHelper.Callback itemTouchListenerSong;
     private ItemTouchHelper itemTouchHelper;
 
     @Override
@@ -121,7 +122,11 @@ public class FragmentPlaylist extends Fragment implements
         viewModelActivityMain.setFABText(R.string.fab_edit);
         viewModelActivityMain.showFab(true);
         viewModelActivityMain.setFabOnClickListener(null);
-        onClickListenerFABFragmentPlaylist = new OnClickListenerFABFragmentPlaylist(this);
+        onClickListenerFABFragmentPlaylist = view -> {
+            clearUserPickedSongs();
+            NavHostFragment.findNavController(this).navigate(
+                    FragmentPlaylistDirections.actionFragmentPlaylistToFragmentEditPlaylist());
+        };
         viewModelActivityMain.setFabOnClickListener(onClickListenerFABFragmentPlaylist);
     }
 
@@ -135,7 +140,75 @@ public class FragmentPlaylist extends Fragment implements
                 this,
                 new ArrayList<>(userPickedPlaylist.getSongs()));
         recyclerViewSongList.setAdapter(recyclerViewAdapterSongsList);
-        itemTouchListenerSong = new ItemTouchListenerSong(this, userPickedPlaylist);
+        itemTouchListenerSong = new ItemTouchHelper.Callback(){
+            @Override
+            public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+                int dragFlags = ItemTouchHelper.UP | ItemTouchHelper.DOWN;
+                int swipeFlags = ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT;
+                return makeMovementFlags(dragFlags, swipeFlags);
+            }
+
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView,
+                                  @NonNull RecyclerView.ViewHolder viewHolder,
+                                  @NonNull RecyclerView.ViewHolder target) {
+                RecyclerViewAdapterSongs recyclerViewAdapterSongsList =
+                        (RecyclerViewAdapterSongs) recyclerView.getAdapter();
+                if (recyclerViewAdapterSongsList != null) {
+                    Collections.swap(recyclerViewAdapterSongsList.getSongs(),
+                            viewHolder.getAdapterPosition(), target.getAdapterPosition());
+                    swapSongPositions(viewHolder.getAdapterPosition(), target.getAdapterPosition());
+                    recyclerViewAdapterSongsList.notifyItemMoved(
+                            viewHolder.getAdapterPosition(), target.getAdapterPosition());
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                ActivityMain activityMain = (ActivityMain) requireActivity();
+                int position = viewHolder.getAdapterPosition();
+                RecyclerView recyclerView = activityMain.findViewById(R.id.recycler_view_song_list);
+                RecyclerViewAdapterSongs recyclerViewAdapterSongs =
+                        (RecyclerViewAdapterSongs) recyclerView.getAdapter();
+                Song song = recyclerViewAdapterSongs.getSongs().get(position);
+                double probability = userPickedPlaylist.getProbability(song);
+                if (userPickedPlaylist.size() == 1) {
+                    activityMain.removePlaylist(userPickedPlaylist);
+                    setUserPickedPlaylist(null);
+                } else {
+                    userPickedPlaylist.remove(song);
+                }
+                recyclerViewAdapterSongs.getSongs().remove(position);
+                recyclerViewAdapterSongs.notifyItemRemoved(position);
+                activityMain.saveFile();
+                Snackbar snackbar = Snackbar.make(
+                        activityMain.findViewById(R.id.coordinatorLayoutActivityMain),
+                        R.string.song_removed, BaseTransientBottomBar.LENGTH_LONG);
+                View.OnClickListener undoListenerSongRemoved = v -> {
+                    userPickedPlaylist.add(song, probability);
+                    switchSongPosition(userPickedPlaylist,
+                            userPickedPlaylist.size() - 1, position);
+                    recyclerViewAdapterSongs.updateList(new ArrayList<>(userPickedPlaylist.getSongs()));
+                    recyclerViewAdapterSongs.notifyDataSetChanged();
+                    activityMain.saveFile();
+                };
+
+                snackbar.setAction(R.string.undo, undoListenerSongRemoved);
+                snackbar.show();
+            }
+
+            private void switchSongPosition(RandomPlaylist userPickedPlaylist, int oldPosition, int newPosition) {
+                userPickedPlaylist.switchSongPositions(oldPosition, newPosition);
+            }
+
+            private void swapSongPositions(int oldPosition, int newPosition) {
+                ActivityMain activityMain = (ActivityMain) requireActivity();
+                userPickedPlaylist.swapSongPositions(oldPosition, newPosition);
+                activityMain.saveFile();
+            }
+        };
         itemTouchHelper = new ItemTouchHelper(itemTouchListenerSong);
         itemTouchHelper.attachToRecyclerView(recyclerViewSongList);
     }
@@ -166,7 +239,7 @@ public class FragmentPlaylist extends Fragment implements
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
                 R.string.broadcast_receiver_action_service_connected));
-        broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
+        broadcastReceiverOnServiceConnected = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 setUpRecyclerView(randomPlaylist);

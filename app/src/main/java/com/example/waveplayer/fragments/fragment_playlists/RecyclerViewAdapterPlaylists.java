@@ -1,6 +1,9 @@
 package com.example.waveplayer.fragments.fragment_playlists;
 
+import android.os.Bundle;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -12,9 +15,14 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.R;
+import com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
+import com.example.waveplayer.random_playlist.Song;
 
 import java.util.List;
+
+import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST;
+import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_IS_SONG;
 
 public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerViewAdapterPlaylists.ViewHolder> {
 
@@ -22,7 +30,7 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
 
     public List<RandomPlaylist> randomPlaylists;
 
-    private OnCreateContextMenuListenerPlaylists onCreateContextMenuListenerPlaylists;
+    private View.OnCreateContextMenuListener onCreateContextMenuListenerPlaylists;
 
     private View.OnClickListener onClickListenerHandle;
 
@@ -51,7 +59,58 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
         holder.textViewPlaylistName.setText(randomPlaylists.get(position).getName());
         holder.handle.setOnCreateContextMenuListener(null);
         onCreateContextMenuListenerPlaylists =
-                new OnCreateContextMenuListenerPlaylists(fragmentPlaylists, holder.randomPlaylist);
+                new View.OnCreateContextMenuListener() {
+                    @Override
+                    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+                        final MenuItem itemAddToPlaylist = menu.add(R.string.add_to_playlist);
+                        itemAddToPlaylist.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                            @Override
+                            public boolean onMenuItemClick(MenuItem item) {
+                                contextMenuAddToPlaylist();
+                                return true;
+                            }
+                        });
+                        final MenuItem itemAddToQueue = menu.add(R.string.add_to_queue);
+                        itemAddToQueue.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                            @Override
+                            public boolean onMenuItemClick(MenuItem item) {
+                                contextMenuAddToQueue();
+                                return true;
+                            }
+                        });
+                    }
+
+                    private void contextMenuAddToPlaylist() {
+                        ActivityMain activityMain = ((ActivityMain) fragmentPlaylists.requireActivity());
+                        if (activityMain != null) {
+                            Bundle bundle = new Bundle();
+                            bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST, holder.randomPlaylist);
+                            bundle.putSerializable(BUNDLE_KEY_IS_SONG, false);
+                            DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist
+                                    = new DialogFragmentAddToPlaylist();
+                            dialogFragmentAddToPlaylist.setArguments(bundle);
+                            dialogFragmentAddToPlaylist.show(
+                                    fragmentPlaylists.getParentFragmentManager(), fragmentPlaylists.getTag());
+                        }
+                    }
+
+                    private void contextMenuAddToQueue() {
+                        ActivityMain activityMain = ((ActivityMain) fragmentPlaylists.requireActivity());
+                        for (Song song : holder.randomPlaylist.getSongs()) {
+                            activityMain.addToQueue(song.id);
+                        }
+                        activityMain.shuffling(false);
+                        activityMain.looping(false);
+                        activityMain.loopingOne(false);
+                        activityMain.showSongPane();
+                        // TODO stop MasterPlaylist from continuing after queue is done
+                        activityMain.setCurrentPlaylistToMaster();
+                        if (!activityMain.isPlaying()) {
+                            activityMain.goToFrontOfQueue();
+                            activityMain.playNext();
+                        }
+                    }
+                };
         holder.handle.setOnCreateContextMenuListener(onCreateContextMenuListenerPlaylists);
         onClickListenerHandle = v -> holder.handle.performLongClick();
         holder.handle.setOnClickListener(null);

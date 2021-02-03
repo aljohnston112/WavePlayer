@@ -11,6 +11,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.NavDestination;
 import androidx.navigation.fragment.NavHostFragment;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -27,7 +28,6 @@ import android.widget.TextView;
 import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.activity_main.ViewModelActivityMain;
 import com.example.waveplayer.databinding.FragmentPaneSongBinding;
-import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.R;
 import com.example.waveplayer.media_controller.BitmapLoader;
 import com.example.waveplayer.random_playlist.AudioUri;
@@ -38,7 +38,7 @@ public class FragmentPaneSong extends Fragment {
 
     private FragmentPaneSongBinding binding;
 
-    private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
+    private BroadcastReceiver broadcastReceiverOnServiceConnected;
 
     private View.OnLayoutChangeListener onLayoutChangeListenerSongPane;
 
@@ -178,7 +178,7 @@ public class FragmentPaneSong extends Fragment {
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
                 R.string.broadcast_receiver_action_service_connected));
-        broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
+        broadcastReceiverOnServiceConnected = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 // TODO

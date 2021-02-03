@@ -28,10 +28,8 @@ import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist;
 import com.example.waveplayer.activity_main.ViewModelActivityMain;
 import com.example.waveplayer.databinding.RecyclerViewSongListBinding;
-import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.fragments.OnQueryTextListenerSearch;
 import com.example.waveplayer.fragments.RecyclerViewAdapterSongs;
-import com.example.waveplayer.media_controller.MediaData;
 import com.example.waveplayer.random_playlist.Song;
 
 import java.util.ArrayList;
@@ -49,7 +47,7 @@ public class FragmentSongs extends Fragment implements
 
     private RecyclerViewSongListBinding binding;
 
-    private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
+    private BroadcastReceiver broadcastReceiverOnServiceConnected;
     private BroadcastReceiver broadcastReceiverOptionsMenuCreated;
 
     private OnQueryTextListenerSearch onQueryTextListenerSearch;
@@ -123,8 +121,7 @@ public class FragmentSongs extends Fragment implements
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
                 R.string.broadcast_receiver_action_service_connected));
-        broadcastReceiverOnServiceConnected =
-                new BroadcastReceiverOnServiceConnected() {
+        broadcastReceiverOnServiceConnected = new BroadcastReceiver() {
                     @Override
                     public void onReceive(Context context, Intent intent) {
                         setUpRecyclerView();

@@ -1,5 +1,6 @@
 package com.example.waveplayer.fragments.fragment_edit_playlist;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -21,10 +22,10 @@ import com.example.waveplayer.activity_main.ViewModelActivityMain;
 import com.example.waveplayer.random_playlist.Song;
 import com.example.waveplayer.ViewModelUserPickedPlaylist;
 import com.example.waveplayer.ViewModelUserPickedSongs;
-import com.example.waveplayer.fragments.BroadcastReceiverOnServiceConnected;
 import com.example.waveplayer.R;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class FragmentEditPlaylist extends Fragment {
@@ -35,12 +36,11 @@ public class FragmentEditPlaylist extends Fragment {
 
     private ViewModelUserPickedSongs viewModelUserPickedSongs;
 
-    private BroadcastReceiverOnServiceConnected broadcastReceiverOnServiceConnected;
+    private BroadcastReceiver broadcastReceiverOnServiceConnected;
 
-    private OnClickListenerFragmentEditPlaylistButtonSelectSongs
-            onClickListenerFragmentEditPlaylistButtonSelectSongs;
+    private View.OnClickListener onClickListenerFragmentEditPlaylistButtonSelectSongs;
 
-    private OnClickListenerFABFragmentEditPlaylist onClickListenerFABFragmentEditPlaylist;
+    private View.OnClickListener onClickListenerFABFragmentEditPlaylist;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -65,10 +65,15 @@ public class FragmentEditPlaylist extends Fragment {
         viewModelActivityMain.setActionBarTitle(getResources().getString(R.string.edit_playlist));
         updateFAB();
         onClickListenerFragmentEditPlaylistButtonSelectSongs =
-                new OnClickListenerFragmentEditPlaylistButtonSelectSongs(this);
+                view1 -> navigateToFragmentSelectSongs();
         view.findViewById(R.id.buttonEditSongs).setOnClickListener(
                 onClickListenerFragmentEditPlaylistButtonSelectSongs);
         setUpBroadcastReceiverServiceConnected();
+    }
+
+    private void navigateToFragmentSelectSongs() {
+        NavHostFragment.findNavController(this).navigate(
+                FragmentEditPlaylistDirections.actionFragmentEditPlaylistToFragmentSelectSongs());
     }
 
     @Override
@@ -78,7 +83,6 @@ public class FragmentEditPlaylist extends Fragment {
     }
 
     private void updateFAB() {
-        ActivityMain activityMain = (ActivityMain) requireActivity();
         View view = getView();
         viewModelActivityMain.setFabImage(R.drawable.ic_check_black_24dp);
         viewModelActivityMain.setFABText(R.string.fab_save);
@@ -95,11 +99,67 @@ public class FragmentEditPlaylist extends Fragment {
             }
             finalEditTextPlaylistName.setText(userPickedPlaylist.getName());
         }
-        onClickListenerFABFragmentEditPlaylist = new OnClickListenerFABFragmentEditPlaylist(
-                this,
-                userPickedPlaylist,
-                finalEditTextPlaylistName,
-                userPickedSongs);
+        onClickListenerFABFragmentEditPlaylist = new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                ActivityMain activityMain = (ActivityMain) requireActivity();
+                int playlistIndex = indexOfPlaylistWName(finalEditTextPlaylistName.getText().toString());
+                if (userPickedSongs.size() == 0) {
+                    activityMain.showToast(R.string.not_enough_songs_for_playlist);
+                } else if (finalEditTextPlaylistName.length() == 0) {
+                    activityMain.showToast(R.string.no_name_playlist);
+                } else if (playlistIndex != -1 && userPickedPlaylist == null) {
+                    activityMain.showToast(R.string.duplicate_name_playlist);
+                } else if (userPickedPlaylist == null) {
+                    activityMain.addPlaylist(new RandomPlaylist(finalEditTextPlaylistName.getText().toString(),
+                            userPickedSongs, activityMain.getMaxPercent(), false));
+                    for (Song song : userPickedSongs) {
+                        song.setSelected(false);
+                    }
+                    userPickedSongs.clear();
+                    activityMain.saveFile();
+                    popBackStack();
+                    activityMain.hideKeyboard(view);
+                } else {
+                    ArrayList<String> names = new ArrayList<>();
+                    for (RandomPlaylist randomPlaylist : activityMain.getPlaylists()) {
+                        names.add(randomPlaylist.getName());
+                    }
+                    if (userPickedPlaylist.getName().equals(
+                            finalEditTextPlaylistName.getText().toString()) ||
+                            !names.contains(finalEditTextPlaylistName.getText().toString())) {
+                        userPickedPlaylist.setName(finalEditTextPlaylistName.getText().toString());
+                        for (Song song : userPickedPlaylist.getSongs()) {
+                            if (!userPickedSongs.contains(song)) {
+                                userPickedPlaylist.remove(song);
+                            }
+                        }
+                        for (Song song : userPickedSongs) {
+                            userPickedPlaylist.add(song);
+                            song.setSelected(false);
+                        }
+                        activityMain.saveFile();
+                        popBackStack();
+                        activityMain.hideKeyboard(view);
+                    } else {
+                        activityMain.showToast(R.string.duplicate_name_playlist);
+                    }
+                }
+            }
+
+            private int indexOfPlaylistWName(String playlistName) {
+                ActivityMain activityMain = (ActivityMain) requireActivity();
+                int playlistIndex = -1;
+                int i = 0;
+                for (RandomPlaylist randomPlaylist : activityMain.getPlaylists()) {
+                    if (randomPlaylist.getName().equals(playlistName)) {
+                        playlistIndex = i;
+                    }
+                    i++;
+                }
+                return playlistIndex;
+            }
+        };
         viewModelActivityMain.setFabOnClickListener(onClickListenerFABFragmentEditPlaylist);
     }
 
@@ -109,7 +169,7 @@ public class FragmentEditPlaylist extends Fragment {
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
                 R.string.broadcast_receiver_action_service_connected));
-        broadcastReceiverOnServiceConnected = new BroadcastReceiverOnServiceConnected() {
+        broadcastReceiverOnServiceConnected = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 updateFAB();

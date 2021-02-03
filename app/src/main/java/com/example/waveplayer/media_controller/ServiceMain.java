@@ -425,40 +425,37 @@ public class ServiceMain extends Service {
 
     public void playNext() {
         // Log.v(TAG, "playNext start");
-        if (mediaController.getCurrentAudioUri() != null) {
-            RandomPlaylist randomPlaylist = getCurrentPlaylist();
-            if (randomPlaylist != null) {
-                randomPlaylist.bad(
-                        getApplicationContext(),
-                        MediaController.getInstance(getApplicationContext())
-                                .getSong(mediaController.getCurrentAudioUri().id),
-                        mediaController.getPercentChangeDown());
+        if(loaded) {
+            if (mediaController.getCurrentAudioUri() != null) {
+                RandomPlaylist randomPlaylist = getCurrentPlaylist();
+                if (randomPlaylist != null) {
+                    randomPlaylist.bad(
+                            getApplicationContext(),
+                            MediaController.getInstance(getApplicationContext())
+                                    .getSong(mediaController.getCurrentAudioUri().id),
+                            mediaController.getPercentChangeDown());
+                }
             }
+            mediaController.playNext(getApplicationContext());
+            sendBroadcastNewSong();
         }
-        mediaController.playNext(getApplicationContext());
-        sendBroadcastNewSong();
         // Log.v(TAG, "playNext end");
     }
 
     public void pauseOrPlay() {
-        if (mediaController.getCurrentAudioUri() != null) {
-            mediaController.pauseOrPlay(getApplicationContext());
+        if(loaded) {
+            if (mediaController.getCurrentAudioUri() != null) {
+                mediaController.pauseOrPlay(getApplicationContext());
+            }
+            updateNotification();
         }
-        updateNotification();
-        sendBroadcastPlayPause();
-    }
-
-    public void sendBroadcastPlayPause() {
-        Intent intent = new Intent();
-        intent.addCategory(Intent.CATEGORY_DEFAULT);
-        intent.setAction(getApplicationContext().getResources().getString(
-                R.string.broadcast_receiver_action_play_pause));
-        getApplicationContext().sendBroadcast(intent);
     }
 
     public void playPrevious() {
-        mediaController.playPrevious(getApplicationContext());
-        sendBroadcastNewSong();
+        if(loaded) {
+            mediaController.playPrevious(getApplicationContext());
+            sendBroadcastNewSong();
+        }
     }
 
     public void lowerProbabilities() {

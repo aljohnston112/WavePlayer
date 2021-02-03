@@ -10,10 +10,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 
 import com.example.waveplayer.R;
-import com.example.waveplayer.media_controller.MediaController;
-import com.example.waveplayer.media_controller.MediaData;
-import com.example.waveplayer.random_playlist.Song;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
+import com.example.waveplayer.random_playlist.Song;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,9 +32,9 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity().getApplicationContext());
         Bundle bundle = getArguments();
-        if (builder != null && bundle != null) {
+        if (bundle != null) {
             List<Integer> selectedPlaylistIndices = new ArrayList<>();
             builder.setTitle(R.string.add_to_playlist);
             setUpChoices(builder, selectedPlaylistIndices);
@@ -49,8 +47,13 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
     private void setUpChoices(AlertDialog.Builder builder,
                               List<Integer> selectedPlaylistIndices) {
         ActivityMain activityMain = (ActivityMain) requireActivity();
-        onMultiChoiceClickListener =
-                new OnMultiChoiceClickListenerAddToPlaylist(selectedPlaylistIndices);
+        onMultiChoiceClickListener = (dialog, which, isChecked) -> {
+                    if (isChecked) {
+                        selectedPlaylistIndices.add(which);
+                    } else if (selectedPlaylistIndices.contains(which)) {
+                        selectedPlaylistIndices.remove(Integer.valueOf(which));
+                    }
+                };
         builder.setMultiChoiceItems(
                 getPlaylistTitles(activityMain.getPlaylists()),
                 null, onMultiChoiceClickListener);
@@ -91,8 +94,20 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
                 }
             }
         };
-        onClickListenerNeutralButton = new OnClickListenerAddToPlaylistNeutralButton(
-                (ActivityMain) requireActivity(), isSong, song, randomPlaylist);
+        onClickListenerNeutralButton = (dialog, which) -> {
+            // Needed for FragmentEditPlaylist to make a new playlist
+            activityMain.setUserPickedPlaylist(null);
+            activityMain.clearUserPickedSongs();
+            if (isSong && song != null) {
+                activityMain.addUserPickedSong(song);
+            }
+            if (!isSong && randomPlaylist != null) {
+                for (Song songInPlaylist : randomPlaylist.getSongs()) {
+                    activityMain.addUserPickedSong(songInPlaylist);
+                }
+            }
+            activityMain.navigateTo(R.id.fragmentEditPlaylist);
+        };
         builder.setPositiveButton(R.string.add, onClickListenerPositiveButton)
                 .setNeutralButton(R.string.new_playlist, onClickListenerNeutralButton);
     }
