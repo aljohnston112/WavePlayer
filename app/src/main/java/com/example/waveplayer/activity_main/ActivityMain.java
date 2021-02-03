@@ -460,8 +460,6 @@ public class ActivityMain extends AppCompatActivity {
     protected void onStop() {
         // Log.v(TAG, "onStop started");
         super.onStop();
-        getApplicationContext().unbindService(connectionServiceMain);
-        connectionServiceMain = null;
         serviceDisconnected();
         FragmentManager fragmentManager = getSupportFragmentManager();
         Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
@@ -484,7 +482,6 @@ public class ActivityMain extends AppCompatActivity {
         observerFABText = null;
         observerFABImage = null;
         observerFABOnClickListener = null;
-        serviceMain = null;
         playlistToAddToQueue = null;
         // Log.v(TAG, "onStop ended");
     }
@@ -492,6 +489,10 @@ public class ActivityMain extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        // TODO do this onStop, by making LiveData for the MediaController
+        getApplicationContext().unbindService(connectionServiceMain);
+        connectionServiceMain = null;
+        serviceMain = null;
         binding = null;
         viewModelActivityMain = null;
     }
@@ -510,6 +511,8 @@ public class ActivityMain extends AppCompatActivity {
         super.onPause();
         // Log.v(TAG, "onPause ended");
     }
+
+
 
     public void navigateTo(final int id) {
         // Log.v(TAG, "navigateTo start");
@@ -597,42 +600,6 @@ public class ActivityMain extends AppCompatActivity {
         // Log.v(TAG, "saveFile start");
         SaveFile.saveFile(serviceMain.getApplicationContext());
         // Log.v(TAG, "saveFile end");
-    }
-
-    public void setSongPaneArtHeight(int songArtHeight) {
-        // Log.v(TAG, "setSongPaneArtHeight start");
-        if (serviceMain != null) {
-            serviceMain.setSongPaneArtHeight(songArtHeight);
-        }
-        // Log.v(TAG, "setSongPaneArtHeight end");
-    }
-
-    public int getSongPaneArtHeight() {
-        // Log.v(TAG, "getSongPaneArtHeight start");
-        if (serviceMain != null) {
-            // Log.v(TAG, "getSongPaneArtHeight end");
-            return serviceMain.getSongPaneArtHeight();
-        }
-        // Log.v(TAG, "getSongPaneArtHeight default end");
-        return -1;
-    }
-
-    public void setSongPaneArtWidth(int songArtWidth) {
-        // Log.v(TAG, "setSongPaneArtWidth start");
-        if (serviceMain != null) {
-            serviceMain.setSongPaneArtWidth(songArtWidth);
-        }
-        // Log.v(TAG, "setSongPaneArtWidth end");
-    }
-
-    public int getSongPaneArtWidth() {
-        // Log.v(TAG, "getSongPaneArtWidth start");
-        if (serviceMain != null) {
-            // Log.v(TAG, "getSongPaneArtWidth end");
-            return serviceMain.getSongPaneArtWidth();
-        }
-        // Log.v(TAG, "getSongPaneArtWidth default end");
-        return -1;
     }
 
     public void setUserPickedPlaylist(RandomPlaylist randomPlaylist) {

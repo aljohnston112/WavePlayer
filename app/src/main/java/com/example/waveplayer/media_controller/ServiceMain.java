@@ -44,59 +44,24 @@ public class ServiceMain extends Service {
     public static final ExecutorService executorServicePool = Executors.newCachedThreadPool();
 
     private static final String TAG = "ServiceMain";
+    private static final String TAG_ERROR = "ServiceMainErrors";
     private static final String FILE_ERROR_LOG = "error";
     private static final String NOTIFICATION_CHANNEL_ID = "PinkyPlayer";
     private static final Object LOCK = new Object();
+
+    private boolean serviceStarted = false;
+    private final IBinder serviceMainBinder = new ServiceMainBinder();
 
     private boolean loaded = false;
     private MediaController mediaController;
     private BroadcastReceiver broadcastReceiver;
 
+    private boolean notificationHasArt = false;
     private RemoteViews remoteViewsNotificationLayout;
     private RemoteViews remoteViewsNotificationLayoutWithoutArt;
     private RemoteViews remoteViewsNotificationLayoutWithArt;
     private NotificationCompat.Builder notificationCompatBuilder;
     private Notification notification;
-    private boolean hasArt = false;
-
-    public boolean loaded(){
-        return loaded;
-    }
-    public void loaded(boolean loaded) {
-        this.loaded = loaded;
-    }
-
-    private int songPaneArtHeight = 1;
-
-    public int getSongPaneArtHeight() {
-        // Log.v(TAG, "getSongPaneArtHeight start and end");
-        return songPaneArtHeight;
-    }
-
-    public void setSongPaneArtHeight(int songArtHeight) {
-        // Log.v(TAG, "setSongPaneArtHeight start");
-        this.songPaneArtHeight = songArtHeight;
-        // Log.v(TAG, "setSongPaneArtHeight end");
-    }
-
-    private int songPaneArtWidth = 1;
-
-    public int getSongPaneArtWidth() {
-        // Log.v(TAG, "getSongPaneArtWidth start and end");
-        return songPaneArtWidth;
-    }
-
-    public void setSongPaneArtWidth(int songArtWidth) {
-        // Log.v(TAG, "setSongPaneArtWidth start");
-        this.songPaneArtWidth = songArtWidth;
-        // Log.v(TAG, "setSongPaneArtWidth end");
-    }
-
-    // endregion ActivityMainUI
-
-    private boolean serviceStarted = false;
-
-    private final IBinder serviceMainBinder = new ServiceMainBinder();
 
     // region onCreate
 
@@ -105,9 +70,9 @@ public class ServiceMain extends Service {
         // Log.v(TAG, "onCreate started");
         super.onCreate();
         // Log.v(TAG, "onCreate is loading");
+        setUpExceptionSaver();
+        logLastThrownException();
         setUpBroadCastReceivers();
-        // setUpExceptionSaver();
-        // logLastThrownException();
         // Log.v(TAG, "onCreate done loading");
     }
 
@@ -149,15 +114,16 @@ public class ServiceMain extends Service {
         // Log.v(TAG, "Done setting up Broadcast receivers for notification buttons");
     }
 
-
     private void setUpExceptionSaver() {
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(@NonNull Thread paramThread, @NonNull Throwable paramThrowable) {
                 File file = new File(getBaseContext().getFilesDir(), FILE_ERROR_LOG);
+                file.delete();
                 try (PrintWriter pw = new PrintWriter(file)) {
                     paramThrowable.printStackTrace(pw);
                     pw.flush();
+                    paramThrowable.printStackTrace();
                     System.exit(1);
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
@@ -175,7 +141,7 @@ public class ServiceMain extends Service {
                 while ((sCurrentLine = bufferedReader.readLine()) != null) {
                     stringBuilder.append(sCurrentLine);
                 }
-                Log.e(TAG, stringBuilder.toString());
+                Log.e(TAG_ERROR, stringBuilder.toString());
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -205,9 +171,29 @@ public class ServiceMain extends Service {
         return START_STICKY;
     }
 
-    public void permissionGranted() {
-        ServiceMain.executorServicePool.execute(
-                () -> mediaController = MediaController.getInstance(getApplicationContext()));
+    public void updateNotification() {
+        String string = "Updating the notification";
+        // Log.v(TAG, string);
+        // TODO try to reuse RemoteViews
+        setUpNotificationBuilder();
+        setUpBroadCastsForNotificationButtons();
+        notification = notificationCompatBuilder.build();
+        updateSongArt();
+        updateNotificationSongName();
+        updateNotificationPlayButton();
+        remoteViewsNotificationLayout.removeAllViews(R.id.pane_notification_linear_layout);
+        if (notificationHasArt) {
+            remoteViewsNotificationLayout.addView(
+                    R.id.pane_notification_linear_layout, remoteViewsNotificationLayoutWithArt);
+        } else {
+            remoteViewsNotificationLayout.addView(
+                    R.id.pane_notification_linear_layout, remoteViewsNotificationLayoutWithoutArt);
+        }
+        notification.contentView = remoteViewsNotificationLayout;
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(NOTIFICATION_CHANNEL_ID.hashCode(), notification);
+        // Log.v(TAG, "Done updating the notification");
     }
 
     private void setUpNotificationBuilder() {
@@ -243,86 +229,6 @@ public class ServiceMain extends Service {
             notificationManager.createNotificationChannel(channel);
         }
         // Log.v(TAG, "Done setting up notification builder");
-    }
-
-    public void updateNotification() {
-        String string = "Updating the notification";
-        // Log.v(TAG, string);
-        setUpNotificationBuilder();
-        setUpBroadCastsForNotificationButtons();
-        notification = notificationCompatBuilder.build();
-        updateNotificationSongName();
-        updateNotificationPlayButton();
-        updateSongArt();
-        remoteViewsNotificationLayout.removeAllViews(R.id.pane_notification_linear_layout);
-        if (hasArt) {
-            remoteViewsNotificationLayout.addView(
-                    R.id.pane_notification_linear_layout, remoteViewsNotificationLayoutWithArt);
-        } else {
-            remoteViewsNotificationLayout.addView(
-                    R.id.pane_notification_linear_layout, remoteViewsNotificationLayoutWithoutArt);
-        }
-        notification.contentView = remoteViewsNotificationLayout;
-        NotificationManager notificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.notify(NOTIFICATION_CHANNEL_ID.hashCode(), notification);
-        // Log.v(TAG, "Done updating the notification");
-    }
-
-    private void updateSongArt() {
-        // Log.v(TAG, "updateSongArt for notification start");
-        // TODO update song art background
-        if (mediaController != null && mediaController.getCurrentAudioUri() != null) {
-            Bitmap bitmap = BitmapLoader.getThumbnail(
-                    mediaController.getCurrentUri(), 92, 92, getApplicationContext());
-            if (bitmap != null) {
-                BitmapLoader.getResizedBitmap(bitmap, songPaneArtWidth, songPaneArtHeight);
-                remoteViewsNotificationLayoutWithArt.setImageViewBitmap(
-                        R.id.imageViewNotificationSongPaneSongArtWArt, bitmap);
-                hasArt = true;
-            } else {
-                remoteViewsNotificationLayoutWithoutArt.setImageViewResource(
-                        R.id.imageViewNotificationSongPaneSongArt, R.drawable.music_note_black_48dp);
-                hasArt = false;
-            }
-        } else {
-            remoteViewsNotificationLayoutWithoutArt.setImageViewResource(
-                    R.id.imageViewNotificationSongPaneSongArt, R.drawable.music_note_black_48dp);
-            hasArt = false;
-        }
-        // Log.v(TAG, "updateSongArt for notification end");
-    }
-
-    private void updateNotificationSongName() {
-        // Log.v(TAG, "updateNotificationSongName start");
-        if (mediaController != null && mediaController.getCurrentAudioUri() != null) {
-            remoteViewsNotificationLayoutWithoutArt.setTextViewText(
-                    R.id.textViewNotificationSongPaneSongName, mediaController.getCurrentAudioUri().title);
-            remoteViewsNotificationLayoutWithArt.setTextViewText(
-                    R.id.textViewNotificationSongPaneSongNameWArt, mediaController.getCurrentAudioUri().title);
-        } else {
-            remoteViewsNotificationLayoutWithoutArt.setTextViewText(
-                    R.id.textViewNotificationSongPaneSongName, NOTIFICATION_CHANNEL_ID);
-            remoteViewsNotificationLayoutWithArt.setTextViewText(
-                    R.id.textViewNotificationSongPaneSongNameWArt, NOTIFICATION_CHANNEL_ID);
-        }
-        // Log.v(TAG, "updateNotificationSongName end");
-    }
-
-    void updateNotificationPlayButton() {
-        // Log.v(TAG, "updateNotificationPlayButton start");
-        if (mediaController != null && mediaController.isPlaying()) {
-            remoteViewsNotificationLayoutWithoutArt.setImageViewResource(
-                    R.id.imageButtonNotificationSongPanePlayPause, R.drawable.pause_black_24dp);
-            remoteViewsNotificationLayoutWithArt.setImageViewResource(
-                    R.id.imageButtonNotificationSongPanePlayPauseWArt, R.drawable.pause_black_24dp);
-        } else {
-            remoteViewsNotificationLayoutWithoutArt.setImageViewResource(
-                    R.id.imageButtonNotificationSongPanePlayPause, R.drawable.play_arrow_black_24dp);
-            remoteViewsNotificationLayoutWithArt.setImageViewResource(
-                    R.id.imageButtonNotificationSongPanePlayPauseWArt, R.drawable.play_arrow_black_24dp);
-        }
-        // Log.v(TAG, "updateNotificationPlayButton end");
     }
 
     private void setUpBroadCastsForNotificationButtons() {
@@ -366,6 +272,76 @@ public class ServiceMain extends Service {
                 R.id.imageButtonNotificationSongPanePrevWArt, pendingIntentPrev);
     }
 
+    private void updateSongArt() {
+        // Log.v(TAG, "updateSongArt for notification start");
+        // TODO update song art background
+        if (mediaController != null && mediaController.getCurrentAudioUri() != null) {
+            Bitmap bitmap = BitmapLoader.getThumbnail(
+                    mediaController.getCurrentUri(), 92, 92, getApplicationContext());
+            if (bitmap != null) {
+                // TODO why? Try to get height of imageView and make the width match
+                // BitmapLoader.getResizedBitmap(bitmap, songPaneArtWidth, songPaneArtHeight);
+                remoteViewsNotificationLayoutWithArt.setImageViewBitmap(
+                        R.id.imageViewNotificationSongPaneSongArtWArt, bitmap);
+                notificationHasArt = true;
+            } else {
+                remoteViewsNotificationLayoutWithoutArt.setImageViewResource(
+                        R.id.imageViewNotificationSongPaneSongArt, R.drawable.music_note_black_48dp);
+                notificationHasArt = false;
+            }
+        } else {
+            remoteViewsNotificationLayoutWithoutArt.setImageViewResource(
+                    R.id.imageViewNotificationSongPaneSongArt, R.drawable.music_note_black_48dp);
+            notificationHasArt = false;
+        }
+        // Log.v(TAG, "updateSongArt for notification end");
+    }
+
+    private void updateNotificationSongName() {
+        // Log.v(TAG, "updateNotificationSongName start");
+        if (mediaController != null && mediaController.getCurrentAudioUri() != null) {
+            if(notificationHasArt){
+                remoteViewsNotificationLayoutWithArt.setTextViewText(
+                        R.id.textViewNotificationSongPaneSongNameWArt, mediaController.getCurrentAudioUri().title);
+            } else {
+                remoteViewsNotificationLayoutWithoutArt.setTextViewText(
+                        R.id.textViewNotificationSongPaneSongName, mediaController.getCurrentAudioUri().title);
+            }
+        } else {
+            if(notificationHasArt) {
+                remoteViewsNotificationLayoutWithArt.setTextViewText(
+                        R.id.textViewNotificationSongPaneSongNameWArt, NOTIFICATION_CHANNEL_ID);
+
+            } else {
+                remoteViewsNotificationLayoutWithoutArt.setTextViewText(
+                        R.id.textViewNotificationSongPaneSongName, NOTIFICATION_CHANNEL_ID);
+            }
+        }
+        // Log.v(TAG, "updateNotificationSongName end");
+    }
+
+    void updateNotificationPlayButton() {
+        // Log.v(TAG, "updateNotificationPlayButton start");
+        if (mediaController != null && mediaController.isPlaying()) {
+            if(notificationHasArt) {
+                remoteViewsNotificationLayoutWithArt.setImageViewResource(
+                        R.id.imageButtonNotificationSongPanePlayPauseWArt, R.drawable.pause_black_24dp);
+            } else {
+                remoteViewsNotificationLayoutWithoutArt.setImageViewResource(
+                        R.id.imageButtonNotificationSongPanePlayPause, R.drawable.pause_black_24dp);
+            }
+        } else {
+                if(notificationHasArt) {
+                    remoteViewsNotificationLayoutWithArt.setImageViewResource(
+                            R.id.imageButtonNotificationSongPanePlayPauseWArt, R.drawable.play_arrow_black_24dp);
+                } else {
+                    remoteViewsNotificationLayoutWithoutArt.setImageViewResource(
+                            R.id.imageButtonNotificationSongPanePlayPause, R.drawable.play_arrow_black_24dp);
+                }
+        }
+        // Log.v(TAG, "updateNotificationPlayButton end");
+    }
+
     // endregion onStartCommand
 
     // region onBind
@@ -376,14 +352,6 @@ public class ServiceMain extends Service {
         return serviceMainBinder;
     }
 
-    public MediaPlayerWUri getCurrentMediaPlayerWUri() {
-        return mediaController.getCurrentMediaPlayerWUri();
-    }
-
-    public void goToFrontOfQueue() {
-        mediaController.goToFrontOfQueue();
-    }
-
     public class ServiceMainBinder extends Binder {
         public ServiceMain getService() {
             return ServiceMain.this;
@@ -391,15 +359,6 @@ public class ServiceMain extends Service {
     }
 
     // endregion onBind
-
-    @Override
-    public void onDestroy() {
-        // Log.v(TAG, "onDestroy started");
-        // TODO remove on release?
-        mediaController.releaseMediaPlayers();
-        Toast.makeText(this, "PinkyPlayer done", Toast.LENGTH_SHORT).show();
-        // Log.v(TAG, "onDestroy ended");
-    }
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
@@ -421,7 +380,35 @@ public class ServiceMain extends Service {
         // Log.v(TAG, "destroy ended");
     }
 
+    @Override
+    public void onDestroy() {
+        // Log.v(TAG, "onDestroy started");
+        if (mediaController.isPlaying()) {
+            mediaController.pauseOrPlay(getApplicationContext());
+        }
+        mediaController.releaseMediaPlayers();
+        unregisterReceiver(broadcastReceiver);
+        broadcastReceiver = null;
+        stopSelf();
+        // TODO remove on release?
+        Toast.makeText(this, "PinkyPlayer done", Toast.LENGTH_SHORT).show();
+        // Log.v(TAG, "onDestroy ended");
+    }
+
     // region mediaControls
+
+    public void permissionGranted() {
+        ServiceMain.executorServicePool.execute(
+                () -> mediaController = MediaController.getInstance(getApplicationContext()));
+    }
+
+    public MediaPlayerWUri getCurrentMediaPlayerWUri() {
+        return mediaController.getCurrentMediaPlayerWUri();
+    }
+
+    public void goToFrontOfQueue() {
+        mediaController.goToFrontOfQueue();
+    }
 
     public void playNext() {
         // Log.v(TAG, "playNext start");
@@ -440,6 +427,13 @@ public class ServiceMain extends Service {
             sendBroadcastNewSong();
         }
         // Log.v(TAG, "playNext end");
+    }
+
+    public boolean loaded(){
+        return loaded;
+    }
+    public void loaded(boolean loaded) {
+        this.loaded = loaded;
     }
 
     public void pauseOrPlay() {
