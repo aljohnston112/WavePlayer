@@ -46,11 +46,6 @@ public class FragmentLoading extends Fragment {
     private Observer<String> observerLoadingText;
 
     @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
-    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         setUpViewModels();
