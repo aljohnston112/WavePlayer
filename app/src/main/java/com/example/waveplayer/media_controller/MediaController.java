@@ -68,6 +68,8 @@ public class MediaController {
                 () -> currentPlaylist = mediaData.getMasterPlaylist());
     }
 
+    // region queue
+
     protected void addToQueue(Long songID) {
         songQueue.addToQueue(songID);
     }
@@ -83,6 +85,8 @@ public class MediaController {
     protected void goToFrontOfQueue() {
         songQueue.goToFront();
     }
+
+    // endregion queue
 
     protected RandomPlaylist getCurrentPlaylist() {
         return currentPlaylist;

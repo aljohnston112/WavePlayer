@@ -9,7 +9,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:context=".fragments.fragment_settings.FragmentSettings">
+        tools:context=".fragments.FragmentSettings">
 
         <EditText
             android:id="@+id/edit_text_n_songs"

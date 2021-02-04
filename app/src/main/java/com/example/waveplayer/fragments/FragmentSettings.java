@@ -1,4 +1,4 @@
-package com.example.waveplayer.fragments.fragment_settings;
+package com.example.waveplayer.fragments;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;

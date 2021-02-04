@@ -1,4 +1,4 @@
-package com.example.waveplayer.fragments.fragment_song;
+package com.example.waveplayer.fragments;
 
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
@@ -348,7 +348,7 @@ public class FragmentSong extends Fragment {
         final ImageButton buttonNext = view.findViewById(R.id.imageButtonNext);
         final ImageButton buttonLoop = view.findViewById(R.id.imageButtonRepeat);
         onClickListenerFragmentSong = clickedView -> {
-            synchronized (ActivityMain.lock) {
+            synchronized (ActivityMain.MUSIC_CONTROL_LOCK) {
                 if (clickedView.getId() == R.id.button_thumb_down) {
                     Song song = activityMain.getSong(activityMain.getCurrentAudioUri().id);
                     if (song != null) {
@@ -365,11 +365,11 @@ public class FragmentSong extends Fragment {
                     }
                 } else if (clickedView.getId() == R.id.imageButtonShuffle) {
                     ImageButton imageButton = (ImageButton) clickedView;
-                    if (activityMain.shuffling()) {
-                        activityMain.shuffling(false);
+                    if (activityMain.isShuffling()) {
+                        activityMain.setShuffling(false);
                         imageButton.setImageResource(R.drawable.ic_shuffle_white_24dp);
                     } else {
-                        activityMain.shuffling(true);
+                        activityMain.setShuffling(true);
                         imageButton.setImageResource(R.drawable.ic_shuffle_black_24dp);
                     }
                 } else if (clickedView.getId() == R.id.imageButtonPrev) {
@@ -380,16 +380,16 @@ public class FragmentSong extends Fragment {
                     activityMain.playNext();
                 } else if (clickedView.getId() == R.id.imageButtonRepeat) {
                     ImageButton imageButton = (ImageButton) clickedView;
-                    if (activityMain.loopingOne()) {
-                        activityMain.loopingOne(false);
+                    if (activityMain.isLoopingOne()) {
+                        activityMain.setLoopingOne(false);
                         imageButton.setImageResource(R.drawable.repeat_white_24dp);
-                    } else if (activityMain.looping()) {
-                        activityMain.looping(false);
-                        activityMain.loopingOne(true);
+                    } else if (activityMain.isLooping()) {
+                        activityMain.setLooping(false);
+                        activityMain.setLoopingOne(true);
                         imageButton.setImageResource(R.drawable.repeat_one_black_24dp);
                     } else {
-                        activityMain.looping(true);
-                        activityMain.loopingOne(false);
+                        activityMain.setLooping(true);
+                        activityMain.setLoopingOne(false);
                         imageButton.setImageResource(R.drawable.repeat_black_24dp);
                     }
                 }
@@ -431,33 +431,29 @@ public class FragmentSong extends Fragment {
         buttonPause.setOnTouchListener(onTouchListenerFragmentSongButtons);
         buttonNext.setOnTouchListener(onTouchListenerFragmentSongButtons);
         buttonLoop.setOnTouchListener(onTouchListenerFragmentSongButtons);
-        if (activityMain.shuffling()) {
+        if (activityMain.isShuffling()) {
             buttonShuffle.setImageResource(R.drawable.ic_shuffle_black_24dp);
         } else {
             buttonShuffle.setImageResource(R.drawable.ic_shuffle_white_24dp);
         }
-        if (activityMain.loopingOne()) {
+        if (activityMain.isLoopingOne()) {
             buttonLoop.setImageResource(R.drawable.repeat_one_black_24dp);
-        } else if (activityMain.looping()) {
+        } else if (activityMain.isLooping()) {
             buttonLoop.setImageResource(R.drawable.repeat_black_24dp);
         } else {
             buttonLoop.setImageResource(R.drawable.repeat_white_24dp);
         }
         onLayoutChangeListenerFragmentSongButtons =
-                new View.OnLayoutChangeListener(){
-                    @Override
-                    public void onLayoutChange(View view, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                        if(activityMain.fragmentSongVisible()) {
-                            setUpGood(view);
-                            setUpBad(view);
-                            setUpShuffle(view);
-                            setUpPrev(view);
-                            setUpPlay(view);
-                            setUpNext(view);
-                            setUpLoop(view);
-                        }
+                (view12, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+                    if(activityMain.fragmentSongVisible()) {
+                        setUpGood(view12);
+                        setUpBad(view12);
+                        setUpShuffle(view12);
+                        setUpPrev(view12);
+                        setUpPlay(view12);
+                        setUpNext(view12);
+                        setUpLoop(view12);
                     }
-
                 };
         view.addOnLayoutChangeListener(onLayoutChangeListenerFragmentSongButtons);
     }
@@ -555,7 +551,7 @@ public class FragmentSong extends Fragment {
         //noinspection SuspiciousNameCombination
         int height = width;
         Drawable drawable;
-        if (activityMain.shuffling()) {
+        if (activityMain.isShuffling()) {
             drawable = ResourcesCompat.getDrawable(view.getResources(),
                     R.drawable.ic_shuffle_black_24dp, null);
         } else {
@@ -638,10 +634,10 @@ public class FragmentSong extends Fragment {
         int height = width;
         Drawable drawable;
 
-        if (activityMain.loopingOne()) {
+        if (activityMain.isLoopingOne()) {
             drawable = ResourcesCompat.getDrawable(view.getResources(),
                     R.drawable.repeat_one_black_24dp, null);
-        } else if (activityMain.looping()) {
+        } else if (activityMain.isLooping()) {
             drawable = ResourcesCompat.getDrawable(view.getResources(),
                     R.drawable.repeat_black_24dp, null);
         } else {

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorOnPrimary"
-    tools:context=".fragments.fragment_title.FragmentTitle">
+    tools:context=".fragments.FragmentTitle">
 
     <Button
         android:id="@+id/button_playlists"

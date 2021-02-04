@@ -1,4 +1,4 @@
-package com.example.waveplayer.fragments.fragment_songs;
+package com.example.waveplayer.fragments;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -30,6 +30,7 @@ import com.example.waveplayer.activity_main.ViewModelActivityMain;
 import com.example.waveplayer.databinding.RecyclerViewSongListBinding;
 import com.example.waveplayer.fragments.OnQueryTextListenerSearch;
 import com.example.waveplayer.fragments.RecyclerViewAdapterSongs;
+import com.example.waveplayer.fragments.FragmentSongsDirections;
 import com.example.waveplayer.random_playlist.Song;
 
 import java.util.ArrayList;

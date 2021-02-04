@@ -1,4 +1,4 @@
-package com.example.waveplayer.fragments.fragment_pane_song;
+package com.example.waveplayer.fragments;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -151,7 +151,7 @@ public class FragmentPaneSong extends Fragment {
         // Log.v(TAG, "linking song pane buttons");
         onClickListenerSongPane = v -> {
             ActivityMain activityMain = (ActivityMain) requireActivity();
-            synchronized (ActivityMain.lock) {
+            synchronized (ActivityMain.MUSIC_CONTROL_LOCK) {
                 if (v.getId() == R.id.imageButtonSongPaneNext) {
                     activityMain.playNext();
                 } else if (v.getId() == R.id.imageButtonSongPanePlayPause) {

@@ -1,4 +1,4 @@
-package com.example.waveplayer.fragments.fragment_loading;
+package com.example.waveplayer.fragments;
 
 import android.Manifest;
 import android.content.Context;

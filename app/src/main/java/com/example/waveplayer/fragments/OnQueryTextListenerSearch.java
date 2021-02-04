@@ -4,16 +4,9 @@ import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.waveplayer.activity_main.ActivityMain;
-import com.example.waveplayer.fragments.fragment_select_songs.FragmentSelectSongs;
-import com.example.waveplayer.fragments.fragment_select_songs.RecyclerViewAdapterSelectSongs;
-import com.example.waveplayer.media_controller.MediaData;
 import com.example.waveplayer.random_playlist.Song;
 import com.example.waveplayer.R;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
-import com.example.waveplayer.fragments.fragment_playlists.RecyclerViewAdapterPlaylists;
-import com.example.waveplayer.fragments.fragment_playlist.FragmentPlaylist;
-import com.example.waveplayer.fragments.fragment_playlists.FragmentPlaylists;
-import com.example.waveplayer.fragments.fragment_songs.FragmentSongs;
 
 import java.util.ArrayList;
 import java.util.List;

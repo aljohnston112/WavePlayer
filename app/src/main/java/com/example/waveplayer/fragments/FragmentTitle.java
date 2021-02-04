@@ -1,4 +1,4 @@
-package com.example.waveplayer.fragments.fragment_title;
+package com.example.waveplayer.fragments;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -33,9 +33,10 @@ import com.example.waveplayer.random_playlist.RandomPlaylist;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.example.waveplayer.fragments.fragment_title.FragmentTitleDirections.actionFragmentTitleToFragmentPlaylists;
-import static com.example.waveplayer.fragments.fragment_title.FragmentTitleDirections.actionFragmentTitleToFragmentSettings;
-import static com.example.waveplayer.fragments.fragment_title.FragmentTitleDirections.actionFragmentTitleToFragmentSongs;
+import static com.example.waveplayer.fragments.FragmentTitleDirections.actionFragmentTitleToFragmentPlaylists;
+import static com.example.waveplayer.fragments.FragmentTitleDirections.actionFragmentTitleToFragmentSettings;
+import static com.example.waveplayer.fragments.FragmentTitleDirections.actionFragmentTitleToFragmentSongs;
+
 
 public class FragmentTitle extends Fragment {
 

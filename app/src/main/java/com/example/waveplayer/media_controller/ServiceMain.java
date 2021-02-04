@@ -46,15 +46,8 @@ public class ServiceMain extends Service {
     private static final String TAG = "ServiceMain";
     private static final String TAG_ERROR = "ServiceMainErrors";
     private static final String FILE_ERROR_LOG = "error";
-    private static final String NOTIFICATION_CHANNEL_ID = "PinkyPlayer";
     private static final Object LOCK = new Object();
-
-    private boolean serviceStarted = false;
-    private final IBinder serviceMainBinder = new ServiceMainBinder();
-
-    private boolean loaded = false;
-    private MediaController mediaController;
-    private BroadcastReceiver broadcastReceiver;
+    private static final String NOTIFICATION_CHANNEL_ID = "PinkyPlayer";
 
     private boolean notificationHasArt = false;
     private RemoteViews remoteViewsNotificationLayout;
@@ -62,6 +55,16 @@ public class ServiceMain extends Service {
     private RemoteViews remoteViewsNotificationLayoutWithArt;
     private NotificationCompat.Builder notificationCompatBuilder;
     private Notification notification;
+
+    private boolean serviceStarted = false;
+    private final IBinder serviceMainBinder = new ServiceMainBinder();
+
+    private BroadcastReceiver broadcastReceiver;
+
+    private boolean loaded = false;
+    private MediaController mediaController;
+
+    // region lifecycle
 
     // region onCreate
 
@@ -395,6 +398,8 @@ public class ServiceMain extends Service {
         // Log.v(TAG, "onDestroy ended");
     }
 
+    // endregion lifecycle
+
     // region mediaControls
 
     public void permissionGranted() {
@@ -402,38 +407,138 @@ public class ServiceMain extends Service {
                 () -> mediaController = MediaController.getInstance(getApplicationContext()));
     }
 
-    public MediaPlayerWUri getCurrentMediaPlayerWUri() {
-        return mediaController.getCurrentMediaPlayerWUri();
+    public boolean loaded(){
+        return loaded;
+    }
+    public void loaded(boolean loaded) {
+        this.loaded = loaded;
+    }
+
+    public Song getCurrentSong() {
+        if (getCurrentAudioUri() != null) {
+            return mediaController.getSong(getCurrentAudioUri().id);
+        }
+        return null;
+    }
+
+    public void sendBroadcastNewSong() {
+        Intent intent = new Intent();
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.setAction(getApplicationContext().getResources().getString(
+                R.string.broadcast_receiver_action_new_song));
+        getApplicationContext().sendBroadcast(intent);
+    }
+
+    // region mediaController
+
+    public void addToQueue(Long songID) {
+        // Log.v(TAG, "addToQueue start");
+        mediaController.addToQueue(songID);
+        // Log.v(TAG, "addToQueue end");
+    }
+
+    public boolean songQueueIsEmpty() {
+        return mediaController.songQueueIsEmpty();
+    }
+
+    public void clearSongQueue() {
+        mediaController.clearSongQueue();
     }
 
     public void goToFrontOfQueue() {
         mediaController.goToFrontOfQueue();
     }
 
-    public void playNext() {
-        // Log.v(TAG, "playNext start");
-        if(loaded) {
-            if (mediaController.getCurrentAudioUri() != null) {
-                RandomPlaylist randomPlaylist = getCurrentPlaylist();
-                if (randomPlaylist != null) {
-                    randomPlaylist.bad(
-                            getApplicationContext(),
-                            MediaController.getInstance(getApplicationContext())
-                                    .getSong(mediaController.getCurrentAudioUri().id),
-                            mediaController.getPercentChangeDown());
-                }
-            }
-            mediaController.playNext(getApplicationContext());
-            sendBroadcastNewSong();
-        }
-        // Log.v(TAG, "playNext end");
+    public RandomPlaylist getCurrentPlaylist() {
+        // Log.v(TAG, "getCurrentPlaylist start");
+        // Log.v(TAG, "getCurrentPlaylist end");
+        return mediaController.getCurrentPlaylist();
     }
 
-    public boolean loaded(){
-        return loaded;
+    public void setCurrentPlaylist(RandomPlaylist userPickedPlaylist) {
+        // Log.v(TAG, "setCurrentPlaylist start");
+        mediaController.setCurrentPlaylist(userPickedPlaylist);
+        // Log.v(TAG, "setCurrentPlaylist end");
     }
-    public void loaded(boolean loaded) {
-        this.loaded = loaded;
+
+    public void setCurrentPlaylistToMaster() {
+        // Log.v(TAG, "setCurrentPlaylistToMaster start");
+        mediaController.setCurrentPlaylistToMaster();
+        // Log.v(TAG, "setCurrentPlaylistToMaster end");
+    }
+
+    public void clearProbabilities() {
+        mediaController.clearProbabilities(getApplicationContext());
+    }
+
+    public void lowerProbabilities() {
+        mediaController.lowerProbabilities(getApplicationContext());
+    }
+
+    public AudioUri getCurrentAudioUri() {
+        // Log.v(TAG, "getCurrentAudioUri start");
+        // Log.v(TAG, "getCurrentAudioUri end");
+        return mediaController.getCurrentAudioUri();
+    }
+
+    public Uri getCurrentUri() {
+        return mediaController.getCurrentUri();
+    }
+
+    public int getCurrentTime() {
+        // Log.v(TAG, "getCurrentTime start");
+        // Log.v(TAG, "getCurrentTime end");
+        return mediaController.getCurrentTime();
+    }
+
+    public MediaPlayerWUri getCurrentMediaPlayerWUri() {
+        return mediaController.getCurrentMediaPlayerWUri();
+    }
+
+    public boolean isSongInProgress() {
+        return mediaController.isSongInProgress();
+    }
+
+    public boolean isPlaying() {
+        // Log.v(TAG, "isPlaying start");
+        // Log.v(TAG, "isPlaying end");
+        return mediaController.isPlaying();
+    }
+
+    public boolean isShuffling() {
+        // Log.v(TAG, "shuffling start");
+        // Log.v(TAG, "shuffling end");
+        return mediaController.isShuffling();
+    }
+
+    public void setShuffling(boolean shuffling) {
+        // Log.v(TAG, "set shuffling start");
+        mediaController.setShuffling(shuffling);
+        // Log.v(TAG, "set shuffling end");
+    }
+
+    public boolean isLooping() {
+        // Log.v(TAG, "looping start");
+        // Log.v(TAG, "looping end");
+        return mediaController.isLooping();
+    }
+
+    public void setLooping(boolean looping) {
+        // Log.v(TAG, "set looping start");
+        mediaController.setLooping(looping);
+        // Log.v(TAG, "set looping end");
+    }
+
+    public boolean isLoopingOne() {
+        // Log.v(TAG, "loopingOne start");
+        // Log.v(TAG, "loopingOne end");
+        return mediaController.isLoopingOne();
+    }
+
+    public void setLoopingOne(boolean loopingOne) {
+        // Log.v(TAG, "set loopingOne start");
+        mediaController.setLoopingOne(loopingOne);
+        // Log.v(TAG, "set loopingOne end");
     }
 
     public void pauseOrPlay() {
@@ -445,41 +550,29 @@ public class ServiceMain extends Service {
         }
     }
 
+    public void playNext() {
+        // Log.v(TAG, "playNext start");
+        if(loaded) {
+            if (mediaController.getCurrentAudioUri() != null) {
+                RandomPlaylist randomPlaylist = getCurrentPlaylist();
+                if (randomPlaylist != null) {
+                    randomPlaylist.bad(
+                            getApplicationContext(),
+                            mediaController.getSong(mediaController.getCurrentAudioUri().id),
+                            mediaController.getPercentChangeDown());
+                }
+            }
+            mediaController.playNext(getApplicationContext());
+            sendBroadcastNewSong();
+        }
+        // Log.v(TAG, "playNext end");
+    }
+
     public void playPrevious() {
         if(loaded) {
             mediaController.playPrevious(getApplicationContext());
             sendBroadcastNewSong();
         }
-    }
-
-    public void lowerProbabilities() {
-        mediaController.lowerProbabilities(getApplicationContext());
-    }
-
-    public boolean songQueueIsEmpty() {
-        return mediaController.songQueueIsEmpty();
-    }
-
-    public void clearProbabilities() {
-        mediaController.clearProbabilities(getApplicationContext());
-    }
-
-    // endregion mediaControls
-
-    public List<Song> getAllSongs() {
-        return mediaController.getAllSongs();
-    }
-
-    public int getCurrentTime() {
-        // Log.v(TAG, "getCurrentTime start");
-        // Log.v(TAG, "getCurrentTime end");
-        return mediaController.getCurrentTime();
-    }
-
-    public void addToQueue(Long songID) {
-        // Log.v(TAG, "addToQueue start");
-        mediaController.addToQueue(songID);
-        // Log.v(TAG, "addToQueue end");
     }
 
     public void seekTo(int progress) {
@@ -488,148 +581,12 @@ public class ServiceMain extends Service {
         // Log.v(TAG, "seekTo end");
     }
 
-    // endregion playbackControls
-
-    public boolean songInProgress() {
-        // Log.v(TAG, "songInProgress start");
-        // Log.v(TAG, "songInProgress end");
-        return (mediaController != null) && mediaController.isSongInProgress();
-    }
-
-    public boolean isPlaying() {
-        // Log.v(TAG, "isPlaying start");
-        // Log.v(TAG, "isPlaying end");
-        return mediaController.isPlaying();
-    }
-
-    public void setCurrentPlaylistToMaster() {
-        // Log.v(TAG, "setCurrentPlaylistToMaster start");
-        mediaController.setCurrentPlaylistToMaster();
-        // Log.v(TAG, "setCurrentPlaylistToMaster end");
-    }
-
-    public void setCurrentPlaylist(RandomPlaylist userPickedPlaylist) {
-        // Log.v(TAG, "setCurrentPlaylist start");
-        mediaController.setCurrentPlaylist(userPickedPlaylist);
-        // Log.v(TAG, "setCurrentPlaylist end");
-    }
-
-    public AudioUri getCurrentAudioUri() {
-        // Log.v(TAG, "getCurrentSong start");
-        // Log.v(TAG, "getCurrentSong end");
-        return mediaController.getCurrentAudioUri();
-    }
-
-    public RandomPlaylist getCurrentPlaylist() {
-        // Log.v(TAG, "getCurrentPlaylist start");
-        // Log.v(TAG, "getCurrentPlaylist end");
-        return mediaController.getCurrentPlaylist();
-    }
-
-    public boolean shuffling() {
-        // Log.v(TAG, "shuffling start");
-        // Log.v(TAG, "shuffling end");
-        return mediaController.isShuffling();
-    }
-
-    public void shuffling(boolean shuffling) {
-        // Log.v(TAG, "set shuffling start");
-        mediaController.setShuffling(shuffling);
-        // Log.v(TAG, "set shuffling end");
-    }
-
-    public boolean loopingOne() {
-        // Log.v(TAG, "loopingOne start");
-        // Log.v(TAG, "loopingOne end");
-        return mediaController.isLoopingOne();
-    }
-
-    public void loopingOne(boolean loopingOne) {
-        // Log.v(TAG, "set loopingOne start");
-        mediaController.setLoopingOne(loopingOne);
-        // Log.v(TAG, "set loopingOne end");
-    }
-
-    public boolean looping() {
-        // Log.v(TAG, "looping start");
-        // Log.v(TAG, "looping end");
-        return mediaController.isLooping();
-    }
-
-    public void looping(boolean looping) {
-        // Log.v(TAG, "set looping start");
-        mediaController.setLooping(looping);
-        // Log.v(TAG, "set looping end");
-    }
-
-    public void clearSongQueue() {
-        mediaController.clearSongQueue();
-    }
-
-    // region fragmentLoading
-
-    public Song getCurrentSong() {
-        if (getCurrentAudioUri() != null) {
-            return MediaController.getInstance(getApplicationContext())
-                    .getSong(getCurrentAudioUri().id);
-        }
-        return null;
-    }
-
-    public void sendBroadcastNewSong() {
-        Intent intent = new Intent();
-        intent.addCategory(Intent.CATEGORY_DEFAULT);
-        intent.setAction(getApplicationContext().getResources().getString(
-                        R.string.broadcast_receiver_action_new_song));
-        getApplicationContext().sendBroadcast(intent);
-    }
-
-    public Uri getCurrentUri() {
-        return mediaController.getCurrentUri();
-    }
-
-    public double getMaxPercent() {
-        return mediaController.getMaxPercent();
-    }
-
-    public void addPlaylist(RandomPlaylist randomPlaylist) {
-        mediaController.addPlaylist(randomPlaylist);
-    }
-
-    public List<RandomPlaylist> getPlaylists() {
-        return mediaController.getPlaylists();
-    }
-
     public Song getSong(long songID) {
         return mediaController.getSong(songID);
     }
 
-    public void removePlaylist(RandomPlaylist randomPlaylist) {
-        mediaController.removePlaylist(randomPlaylist);
-    }
-
-    public void addPlaylist(int position, RandomPlaylist randomPlaylist) {
-        mediaController.addPlaylist(position, randomPlaylist);
-    }
-
-    public double getPercentChangeUp() {
-        return mediaController.getPercentChangeUp();
-    }
-
-    public double getPercentChangeDown() {
-        return mediaController.getPercentChangeDown();
-    }
-
-    public void setMaxPercent(double maxPercent) {
-        mediaController.setMaxPercent(maxPercent);
-    }
-
-    public void setPercentChangeUp(double percentChangeUp) {
-        mediaController.setPercentChangeUp(percentChangeUp);
-    }
-
-    public void setPercentChangeDown(double percentChangeDown) {
-        mediaController.setPercentChangeDown(percentChangeDown);
+    public List<Song> getAllSongs() {
+        return mediaController.getAllSongs();
     }
 
     public RandomPlaylist getMasterPlaylist() {
@@ -640,8 +597,48 @@ public class ServiceMain extends Service {
         return mediaController.getPlaylist(playlistName);
     }
 
-    public boolean isSongInProgress() {
-        return mediaController.isSongInProgress();
+    public List<RandomPlaylist> getPlaylists() {
+        return mediaController.getPlaylists();
     }
+
+    public void addPlaylist(RandomPlaylist randomPlaylist) {
+        mediaController.addPlaylist(randomPlaylist);
+    }
+
+    public void addPlaylist(int position, RandomPlaylist randomPlaylist) {
+        mediaController.addPlaylist(position, randomPlaylist);
+    }
+
+
+    public void removePlaylist(RandomPlaylist randomPlaylist) {
+        mediaController.removePlaylist(randomPlaylist);
+    }
+
+    public double getMaxPercent() {
+        return mediaController.getMaxPercent();
+    }
+
+    public void setMaxPercent(double maxPercent) {
+        mediaController.setMaxPercent(maxPercent);
+    }
+
+    public double getPercentChangeUp() {
+        return mediaController.getPercentChangeUp();
+    }
+
+    public void setPercentChangeUp(double percentChangeUp) {
+        mediaController.setPercentChangeUp(percentChangeUp);
+    }
+
+    public double getPercentChangeDown() {
+        return mediaController.getPercentChangeDown();
+    }
+
+    public void setPercentChangeDown(double percentChangeDown) {
+        mediaController.setPercentChangeDown(percentChangeDown);
+    }
+
+    // endregion mediaController
+
 
 }

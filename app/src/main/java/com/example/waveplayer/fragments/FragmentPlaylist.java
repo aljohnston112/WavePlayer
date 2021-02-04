@@ -1,4 +1,4 @@
-package com.example.waveplayer.fragments.fragment_playlist;
+package com.example.waveplayer.fragments;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -31,6 +31,7 @@ import com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist;
 import com.example.waveplayer.activity_main.ViewModelActivityMain;
 import com.example.waveplayer.fragments.OnQueryTextListenerSearch;
 import com.example.waveplayer.fragments.RecyclerViewAdapterSongs;
+import com.example.waveplayer.fragments.FragmentPlaylistDirections;
 import com.example.waveplayer.random_playlist.Song;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 import com.google.android.material.snackbar.BaseTransientBottomBar;

@@ -1,4 +1,4 @@
-package com.example.waveplayer.fragments.fragment_edit_playlist;
+package com.example.waveplayer.fragments;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -19,6 +19,7 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.activity_main.ViewModelActivityMain;
+import com.example.waveplayer.fragments.FragmentEditPlaylistDirections;
 import com.example.waveplayer.random_playlist.Song;
 import com.example.waveplayer.ViewModelUserPickedPlaylist;
 import com.example.waveplayer.ViewModelUserPickedSongs;

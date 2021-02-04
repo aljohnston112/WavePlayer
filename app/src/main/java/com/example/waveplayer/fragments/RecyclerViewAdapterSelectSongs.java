@@ -1,4 +1,4 @@
-package com.example.waveplayer.fragments.fragment_select_songs;
+package com.example.waveplayer.fragments;
 
 import android.graphics.Color;
 import android.view.LayoutInflater;

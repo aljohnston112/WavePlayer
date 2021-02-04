@@ -1,4 +1,4 @@
-package com.example.waveplayer.fragments.fragment_playlists;
+package com.example.waveplayer.fragments;
 
 import android.os.Bundle;
 import android.view.ContextMenu;
@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.R;
 import com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist;
+import com.example.waveplayer.fragments.FragmentPlaylistsDirections;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
 import com.example.waveplayer.random_playlist.Song;
 
@@ -99,9 +100,9 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
                         for (Song song : holder.randomPlaylist.getSongs()) {
                             activityMain.addToQueue(song.id);
                         }
-                        activityMain.shuffling(false);
-                        activityMain.looping(false);
-                        activityMain.loopingOne(false);
+                        activityMain.setShuffling(false);
+                        activityMain.setLooping(false);
+                        activityMain.setLoopingOne(false);
                         activityMain.showSongPane();
                         // TODO stop MasterPlaylist from continuing after queue is done
                         activityMain.setCurrentPlaylistToMaster();
