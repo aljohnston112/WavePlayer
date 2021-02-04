@@ -1,6 +1,7 @@
 package com.example.waveplayer.fragments;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -26,43 +27,23 @@ import com.example.waveplayer.R;
 import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.activity_main.ViewModelActivityMain;
 import com.example.waveplayer.databinding.FragmentLoadingBinding;
-import com.example.waveplayer.media_controller.MediaController;
 import com.example.waveplayer.media_controller.ViewModelFragmentLoading;
-import com.example.waveplayer.media_controller.ServiceMain;
 
 public class FragmentLoading extends Fragment {
 
     private static final short REQUEST_CODE_PERMISSION = 245;
 
-    private ViewModelActivityMain viewModelActivityMain;
-
     private FragmentLoadingBinding binding;
 
-    private Handler handler = HandlerCompat.createAsync(Looper.myLooper());
+    private ViewModelActivityMain viewModelActivityMain;
+    private ViewModelFragmentLoading viewModel;
 
-    private Runnable runnableAskForPermission = this::askForPermissionAndFillMediaController;
+    private Handler  handler = HandlerCompat.createAsync(Looper.getMainLooper());
 
-    private Observer<Double> observerLoadingProgress = new Observer<Double>() {
-        @Override
-        public void onChanged(final Double loadingProgress) {
-            final ProgressBar progressBar = binding.progressBarLoading;
-            progressBar.post(() -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    progressBar.setProgress((int) Math.round(loadingProgress * 100), true);
-                } else {
-                    progressBar.setProgress((int) Math.round(loadingProgress * 100));
-                }
-            });
-        }
-    };
+    private Runnable runnableAskForPermission = this::askForPermissionAndCreateMediaController;
 
-    private Observer<String> observerLoadingText = new Observer<String>() {
-        @Override
-        public void onChanged(final String loadingText) {
-            final TextView textView = binding.textViewLoading;
-            textView.post(() -> textView.setText(loadingText));
-        }
-    };
+    private Observer<Double> observerLoadingProgress;
+    private Observer<String> observerLoadingText;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -72,51 +53,47 @@ public class FragmentLoading extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        setUpViewModels();
+        setUpObservers();
         binding = FragmentLoadingBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
 
-    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        setUpViewModel();
-        updateMainContent();
-        askForPermissionAndFillMediaController();
-    }
-
-    private void setUpViewModel() {
-        ViewModelFragmentLoading model =
-                new ViewModelProvider(this).get(ViewModelFragmentLoading.class);
+    private void setUpViewModels() {
+        viewModel = new ViewModelProvider(this).get(ViewModelFragmentLoading.class);
         viewModelActivityMain =
                 new ViewModelProvider(requireActivity()).get(ViewModelActivityMain.class);
-        model.getLoadingProgress().observe(getViewLifecycleOwner(), observerLoadingProgress);
-        model.getLoadingText().observe(getViewLifecycleOwner(), observerLoadingText);
     }
 
-    private void updateMainContent() {
-        viewModelActivityMain.setActionBarTitle(getResources().getString(R.string.loading));
-        viewModelActivityMain.showFab(false);
+    private void setUpObservers() {
+        observerLoadingProgress = loadingProgress -> {
+            final ProgressBar progressBar = binding.progressBarLoading;
+            progressBar.post(() -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    progressBar.setProgress((int) Math.round(loadingProgress * 100), true);
+                } else {
+                    progressBar.setProgress((int) Math.round(loadingProgress * 100));
+                }
+            });
+        };
+        observerLoadingText = loadingText -> {
+            final TextView textView = binding.textViewLoading;
+            textView.post(() -> textView.setText(loadingText));
+        };
+        viewModel.getLoadingProgress().observe(getViewLifecycleOwner(), observerLoadingProgress);
+        viewModel.getLoadingText().observe(getViewLifecycleOwner(), observerLoadingText);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        viewModelActivityMain.showFab(false);
+        updateMainContent();
+        askForPermissionAndCreateMediaController();
         ActivityMain activityMain = ((ActivityMain) requireActivity());
         activityMain.fragmentLoadingStarted();
     }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        binding = null;
-        runnableAskForPermission = null;
-        handler = null;
-        observerLoadingProgress = null;
-        observerLoadingText = null;
-        viewModelActivityMain = null;
-    }
-
-    void askForPermissionAndFillMediaController() {
+    void askForPermissionAndCreateMediaController() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Context context = requireActivity().getApplicationContext();
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -136,6 +113,17 @@ public class FragmentLoading extends Fragment {
     }
 
 
+    private void updateMainContent() {
+        viewModelActivityMain.setActionBarTitle(getResources().getString(R.string.loading));
+        viewModelActivityMain.showFab(false);
+    }
+
+    private void permissionGranted() {
+        ActivityMain activityMain = ((ActivityMain) requireActivity());
+        activityMain.permissionGranted();
+    }
+
+    @SuppressLint("ShowToast")
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -158,9 +146,18 @@ public class FragmentLoading extends Fragment {
         }
     }
 
-    private void permissionGranted() {
-        ActivityMain activityMain = ((ActivityMain) requireActivity());
-        activityMain.permissionGranted();
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        runnableAskForPermission = null;
+        handler = null;
+        viewModel.getLoadingProgress().removeObservers(getViewLifecycleOwner());
+        viewModel.getLoadingText().removeObservers(getViewLifecycleOwner());
+        observerLoadingProgress = null;
+        observerLoadingText = null;
+        viewModel = null;
+        viewModelActivityMain = null;
+        binding = null;
     }
 
 }

@@ -42,8 +42,10 @@ public class FragmentEditPlaylist extends Fragment {
     private View.OnClickListener onClickListenerButtonSelectSongs;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        createViewModels();
+        viewModelActivityMain.setActionBarTitle(getResources().getString(R.string.edit_playlist));
         binding = FragmentEditPlaylistBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
@@ -51,14 +53,11 @@ public class FragmentEditPlaylist extends Fragment {
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        createViewModels();
-        viewModelActivityMain.setActionBarTitle(getResources().getString(R.string.edit_playlist));
         // TODO don't think this is needed
         //  updateFAB();
-        onClickListenerButtonSelectSongs = button -> {
-            NavHostFragment.findNavController(this).navigate(
-                    FragmentEditPlaylistDirections.actionFragmentEditPlaylistToFragmentSelectSongs());
-        };
+        onClickListenerButtonSelectSongs = button ->
+                NavHostFragment.findNavController(this).navigate(
+                FragmentEditPlaylistDirections.actionFragmentEditPlaylistToFragmentSelectSongs());
         binding.buttonEditSongs.setOnClickListener(onClickListenerButtonSelectSongs);
         setUpBroadcastReceiverServiceConnected();
     }
