@@ -40,6 +40,7 @@ import com.example.waveplayer.R;
 import com.example.waveplayer.ViewModelUserPickedPlaylist;
 import com.example.waveplayer.ViewModelUserPickedSongs;
 import com.example.waveplayer.databinding.ActivityMainBinding;
+import com.example.waveplayer.fragments.FragmentEditPlaylist;
 import com.example.waveplayer.media_controller.MediaPlayerWUri;
 import com.example.waveplayer.media_controller.SaveFile;
 import com.example.waveplayer.random_playlist.Song;
@@ -857,6 +858,12 @@ public class ActivityMain extends AppCompatActivity {
 
     public void setPercentChangeDown(double percentChangeDown) {
         serviceMain.setPercentChangeDown(percentChangeDown);
+    }
+
+    public void popBackStack(Fragment fragment) {
+            NavController navController = NavHostFragment.findNavController(
+                    fragment);
+            navController.popBackStack();
     }
 
     // endregion serviceMain
