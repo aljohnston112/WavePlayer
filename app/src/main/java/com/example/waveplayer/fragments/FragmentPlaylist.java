@@ -41,7 +41,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG;
-import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_IS_SONG;
 
 public class FragmentPlaylist extends Fragment
         implements RecyclerViewAdapterSongs.ListenerCallbackSongs {
@@ -265,7 +264,6 @@ public class FragmentPlaylist extends Fragment
     public boolean onMenuItemClickAddToPlaylist(Song song) {
         Bundle bundle = new Bundle();
         bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, song);
-        bundle.putBoolean(BUNDLE_KEY_IS_SONG, true);
         DialogFragment dialogFragment = new DialogFragmentAddToPlaylist();
         dialogFragment.setArguments(bundle);
         dialogFragment.show(getParentFragmentManager(), getTag());
@@ -307,6 +305,8 @@ public class FragmentPlaylist extends Fragment
     public void onDestroyView() {
         super.onDestroyView();
         ActivityMain activityMain = (ActivityMain) requireActivity();
+        activityMain.unregisterReceiver(broadcastReceiver);
+        broadcastReceiver = null;
         itemTouchHelper.attachToRecyclerView(null);
         itemTouchHelperCallback = null;
         itemTouchHelper = null;
@@ -327,8 +327,6 @@ public class FragmentPlaylist extends Fragment
         recyclerViewSongList.setAdapter(null);
         recyclerViewAdapterSongs = null;
         recyclerViewSongList = null;
-        activityMain.unregisterReceiver(broadcastReceiver);
-        broadcastReceiver = null;
         viewModelActivityMain.setPlaylistToAddToQueue(null);
         viewModelUserPickedPlaylist = null;
         viewModelUserPickedSongs = null;

@@ -269,6 +269,8 @@ public class FragmentPlaylists extends Fragment
     public void onDestroyView() {
         ActivityMain activityMain = (ActivityMain) requireActivity();
         super.onDestroyView();
+        activityMain.unregisterReceiver(broadcastReceiver);
+        broadcastReceiver = null;
         itemTouchHelper.attachToRecyclerView(null);
         itemTouchHelperCallback = null;
         itemTouchHelper = null;
@@ -289,8 +291,6 @@ public class FragmentPlaylists extends Fragment
         recyclerViewPlaylists.setAdapter(null);
         recyclerViewAdapterPlaylists = null;
         recyclerViewPlaylists = null;
-        activityMain.unregisterReceiver(broadcastReceiver);
-        broadcastReceiver = null;
         viewModelUserPickedPlaylist = null;
         viewModelUserPickedSongs = null;
         viewModelActivityMain = null;

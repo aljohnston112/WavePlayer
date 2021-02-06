@@ -37,7 +37,7 @@ public class FragmentPaneSong extends Fragment {
 
     private ViewModelActivityMain viewModelActivityMain;
 
-    private BroadcastReceiver broadcastReceiverOnServiceConnected;
+    private BroadcastReceiver broadcastReceiver;
 
     private NavController.OnDestinationChangedListener onDestinationChangedListenerSongPane;
     private View.OnLayoutChangeListener onLayoutChangeListenerSongPane;
@@ -87,7 +87,7 @@ public class FragmentPaneSong extends Fragment {
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
         filterComplete.addAction(activityMain.getResources().getString(
                 R.string.broadcast_receiver_action_service_connected));
-        broadcastReceiverOnServiceConnected = new BroadcastReceiver() {
+        broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 // TODO
@@ -100,7 +100,7 @@ public class FragmentPaneSong extends Fragment {
                 }
             }
         };
-        activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
+        activityMain.registerReceiver(broadcastReceiver, filterComplete);
     }
 
     private void setUpRunnableSongArtUpdater() {
@@ -309,8 +309,8 @@ public class FragmentPaneSong extends Fragment {
         super.onDestroyView();
         ActivityMain activityMain = (ActivityMain) requireActivity();
         removeListeners();
-        activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
-        broadcastReceiverOnServiceConnected = null;
+        activityMain.unregisterReceiver(broadcastReceiver);
+        broadcastReceiver = null;
         runnableSongPaneArtUpdater = null;
         viewModelActivityMain.getCurrentSong().removeObservers(this);
         observerCurrentSong = null;

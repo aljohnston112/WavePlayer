@@ -51,11 +51,6 @@ public class FragmentSongs extends Fragment implements
     private SearchView.OnQueryTextListener onQueryTextListenerSearch;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
-    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         viewModelUserPickedPlaylist =
@@ -212,6 +207,8 @@ public class FragmentSongs extends Fragment implements
     public void onDestroyView() {
         super.onDestroyView();
         final ActivityMain activityMain = ((ActivityMain) requireActivity());
+        activityMain.unregisterReceiver(broadcastReceiver);
+        broadcastReceiver = null;
         View view = requireView();
         activityMain.hideKeyboard(view);
         Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
@@ -226,8 +223,6 @@ public class FragmentSongs extends Fragment implements
         recyclerViewSongs.setAdapter(null);
         recyclerViewAdapterSongs = null;
         recyclerViewSongs = null;
-        activityMain.unregisterReceiver(broadcastReceiver);
-        broadcastReceiver = null;
         viewModelUserPickedPlaylist = null;
         viewModelActivityMain = null;
         binding = null;

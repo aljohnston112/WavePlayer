@@ -196,6 +196,8 @@ public class FragmentSelectSongs extends Fragment
     public void onDestroyView() {
         super.onDestroyView();
         ActivityMain activityMain = (ActivityMain) requireActivity();
+        activityMain.unregisterReceiver(broadcastReceiver);
+        broadcastReceiver = null;
         viewModelActivityMain.setFabOnClickListener(null);
         onClickListenerFABFragmentSelectSongs = null;
         recyclerViewSongList.setAdapter(null);
@@ -210,8 +212,6 @@ public class FragmentSelectSongs extends Fragment
             searchView.onActionViewCollapsed();
         }
         onQueryTextListenerSearch = null;
-        activityMain.unregisterReceiver(broadcastReceiver);
-        broadcastReceiver = null;
         viewModelUserPickedSongs = null;
         viewModelActivityMain = null;
         binding = null;

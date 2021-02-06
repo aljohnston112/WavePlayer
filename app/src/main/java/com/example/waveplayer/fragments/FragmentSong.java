@@ -478,6 +478,8 @@ public class FragmentSong extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         ActivityMain activityMain = (ActivityMain) requireActivity();
+        activityMain.unregisterReceiver(broadcastReceiver);
+        broadcastReceiver = null;
         View view = getView();
         view.removeOnLayoutChangeListener(onLayoutChangeListenerFragmentSongButtons);
         onLayoutChangeListenerFragmentSongButtons = null;
@@ -514,8 +516,6 @@ public class FragmentSong extends Fragment {
         onSeekBarChangeListener = null;
         runnableSeekBarUpdater = null;
         runnableSongArtUpdater = null;
-        activityMain.unregisterReceiver(broadcastReceiver);
-        broadcastReceiver = null;
         viewModelActivityMain.getCurrentSong().removeObservers(this);
         observerCurrentSong = null;
         viewModelActivityMain.isPlaying().removeObservers(this);

@@ -27,11 +27,6 @@ public class FragmentSettings extends Fragment {
     private View.OnClickListener onClickListenerFAB;
 
     @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
-    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         viewModelActivityMain =
