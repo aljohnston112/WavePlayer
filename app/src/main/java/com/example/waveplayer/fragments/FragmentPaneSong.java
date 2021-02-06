@@ -91,7 +91,13 @@ public class FragmentPaneSong extends Fragment {
             @Override
             public void onReceive(Context context, Intent intent) {
                 // TODO
-                updateSongUI(activityMain.getCurrentAudioUri());
+                String action = intent.getAction();
+                if (action != null) {
+                    if (action.equals(getResources().getString(
+                            R.string.broadcast_receiver_action_service_connected))) {
+                        updateSongUI(activityMain.getCurrentAudioUri());
+                    }
+                }
             }
         };
         activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);

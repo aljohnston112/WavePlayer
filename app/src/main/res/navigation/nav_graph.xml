@@ -59,7 +59,7 @@
         android:id="@+id/fragmentPlaylist"
         android:name="com.example.waveplayer.fragments.FragmentPlaylist"
         android:label="fragment_playlist"
-        tools:layout="@layout/fragment_playlist" >
+        tools:layout="@layout/recycler_view_playlist_list" >
         <action
             android:id="@+id/action_fragmentPlaylist_to_fragmentSong"
             app:destination="@id/fragmentSong" />

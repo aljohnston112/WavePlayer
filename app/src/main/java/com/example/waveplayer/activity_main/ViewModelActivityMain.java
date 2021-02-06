@@ -2,11 +2,13 @@ package com.example.waveplayer.activity_main;
 
 import android.view.View;
 
+import androidx.annotation.GuardedBy;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.waveplayer.random_playlist.AudioUri;
+import com.example.waveplayer.random_playlist.RandomPlaylist;
 
 public class ViewModelActivityMain extends ViewModel {
 
@@ -80,4 +82,14 @@ public class ViewModelActivityMain extends ViewModel {
         this.isPlaying.postValue(isPlaying);
     }
 
+    @GuardedBy("this")
+    volatile private RandomPlaylist playlistToAddToQueue;
+
+    synchronized public RandomPlaylist getPlaylistToAddToQueue(){
+        return playlistToAddToQueue;
+    }
+
+    public void setPlaylistToAddToQueue(RandomPlaylist playlistToAddToQueue) {
+        this.playlistToAddToQueue = playlistToAddToQueue;
+    }
 }

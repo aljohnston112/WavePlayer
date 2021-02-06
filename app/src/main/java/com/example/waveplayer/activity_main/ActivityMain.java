@@ -629,24 +629,6 @@ public class ActivityMain extends AppCompatActivity {
         return serviceMain.isPlaying();
     }
 
-    public void isSong(boolean isSong) {
-        // Log.v(TAG, "isSong started");
-        this.isSong = isSong;
-        // Log.v(TAG, "isSong ended");
-    }
-
-    public void setSongToAddToQueue(Long songID) {
-        // Log.v(TAG, "setSongToAddToQueue started");
-        songToAddToQueue = songID;
-        // Log.v(TAG, "setSongToAddToQueue ened");
-    }
-
-    public void setPlaylistToAddToQueue(RandomPlaylist randomPlaylist) {
-        // Log.v(TAG, "setPlaylistToAddToQueue started");
-        this.playlistToAddToQueue = randomPlaylist;
-        // Log.v(TAG, "setPlaylistToAddToQueue ended");
-    }
-
     public void fragmentSongVisible(boolean fragmentSongVisible) {
         // Log.v(TAG, "fragmentSongVisible start");
         this.fragmentSongVisible = fragmentSongVisible;

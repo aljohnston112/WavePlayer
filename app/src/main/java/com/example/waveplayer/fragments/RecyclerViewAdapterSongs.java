@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.waveplayer.R;
@@ -18,25 +19,22 @@ import java.util.List;
 
 public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewAdapterSongs.ViewHolder> {
 
-    private List<Song> songs;
-
-    public List<Song> getSongs() {
-        return songs;
+    public interface ListenerCallbackSongs {
+        void onClickViewHolder(Song Song);
+        boolean onMenuItemClickAddToPlaylist(Song song);
+        boolean onMenuItemClickAddToQueue(Song song);
     }
 
     private ListenerCallbackSongs listenerCallbackSongs;
 
-    public interface ListenerCallbackSongs {
-        boolean onMenuItemClickAddToPlaylist(Song song);
-        boolean onMenuItemClickAddToQueue(Song song);
-        void onClickViewHolder(Song Song);
-    }
-
     private View.OnCreateContextMenuListener onCreateContextMenuListenerSongs;
+    private MenuItem.OnMenuItemClickListener onMenuItemClickListenerAddToPlaylist;
+    private MenuItem.OnMenuItemClickListener onMenuItemClickListenerAddToQueue;
 
     private View.OnClickListener onClickListenerViewHolder;
-
     private View.OnClickListener onClickListenerHandle;
+
+    private List<Song> songs;
 
     public RecyclerViewAdapterSongs(ListenerCallbackSongs listenerCallbackSongs, List<Song> items) {
         this.listenerCallbackSongs = listenerCallbackSongs;
@@ -57,20 +55,6 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        holder.song = songs.get(position);
-        holder.textViewSongName.setText(songs.get(position).title);
-
-        // onCreateContextMenu
-        onCreateContextMenuListenerSongs = (menu, v, menuInfo) -> {
-                    final MenuItem menuItemAddToPlaylist = menu.add(R.string.add_to_playlist);
-                    menuItemAddToPlaylist.setOnMenuItemClickListener(
-                            menuItem -> listenerCallbackSongs.onMenuItemClickAddToPlaylist(holder.song));
-                    final MenuItem menuItemAddToQueue = menu.add(R.string.add_to_queue);
-                    menuItemAddToQueue.setOnMenuItemClickListener(
-                            menuItem2 -> listenerCallbackSongs.onMenuItemClickAddToQueue(holder.song));
-                };
-        holder.handle.setOnCreateContextMenuListener(null);
-        holder.handle.setOnCreateContextMenuListener(onCreateContextMenuListenerSongs);
 
         // onClickListenerHandle
         onClickListenerHandle = v -> holder.handle.performLongClick();
@@ -78,13 +62,31 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
         holder.handle.setOnClickListener(onClickListenerHandle);
 
         // onClickListenerViewHolder
-        onClickListenerViewHolder = v -> ServiceMain.executorServiceFIFO.submit(() -> {
+        onClickListenerViewHolder = v ->  {
             if (position != RecyclerView.NO_POSITION) {
                 listenerCallbackSongs.onClickViewHolder(holder.song);
             }
-        });
+        };
         holder.songView.setOnClickListener(null);
         holder.songView.setOnClickListener(onClickListenerViewHolder);
+
+        holder.song = songs.get(position);
+        holder.textViewSongName.setText(songs.get(position).title);
+
+        // onCreateContextMenu
+        onMenuItemClickListenerAddToPlaylist = menuItem ->
+                listenerCallbackSongs.onMenuItemClickAddToPlaylist(holder.song);
+        onMenuItemClickListenerAddToQueue = menuItem2 ->
+                listenerCallbackSongs.onMenuItemClickAddToQueue(holder.song);
+        onCreateContextMenuListenerSongs = (menu, v, menuInfo) -> {
+                    final MenuItem menuItemAddToPlaylist = menu.add(R.string.add_to_playlist);
+                    menuItemAddToPlaylist.setOnMenuItemClickListener(onMenuItemClickListenerAddToPlaylist);
+                    final MenuItem menuItemAddToQueue = menu.add(R.string.add_to_queue);
+                    menuItemAddToQueue.setOnMenuItemClickListener(onMenuItemClickListenerAddToQueue);
+                };
+        holder.handle.setOnCreateContextMenuListener(null);
+        holder.handle.setOnCreateContextMenuListener(onCreateContextMenuListenerSongs);
+
     }
 
     @Override
@@ -92,6 +94,8 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
         super.onViewRecycled(holder);
         holder.handle.setOnCreateContextMenuListener(null);
         onCreateContextMenuListenerSongs = null;
+        onMenuItemClickListenerAddToPlaylist = null;
+        onMenuItemClickListenerAddToQueue = null;
         holder.handle.setOnClickListener(null);
         onClickListenerHandle = null;
         holder.songView.setOnClickListener(null);
@@ -105,12 +109,16 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
         return songs.size();
     }
 
+    public List<Song> getSongs() {
+        return songs;
+    }
+
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
         public final View songView;
         public final TextView textViewSongName;
+        public final ImageView handle;
         public Song song;
-        final ImageView handle;
 
         public ViewHolder(View view) {
             super(view);

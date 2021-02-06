@@ -57,7 +57,7 @@ public class FragmentEditPlaylist extends Fragment {
         //  updateFAB();
         onClickListenerButtonSelectSongs = button ->
                 NavHostFragment.findNavController(this).navigate(
-                FragmentEditPlaylistDirections.actionFragmentEditPlaylistToFragmentSelectSongs());
+                        FragmentEditPlaylistDirections.actionFragmentEditPlaylistToFragmentSelectSongs());
         binding.buttonEditSongs.setOnClickListener(onClickListenerButtonSelectSongs);
         setUpBroadcastReceiverServiceConnected();
     }
@@ -80,8 +80,14 @@ public class FragmentEditPlaylist extends Fragment {
         broadcastReceiverOnServiceConnected = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                // TODO is this needed if onResume has it?
-                //  updateFAB();
+                String action = intent.getAction();
+                if (action != null) {
+                    if (action.equals(getResources().getString(
+                            R.string.broadcast_receiver_action_service_connected))) {
+                        // TODO is this needed if onResume has it?
+                        //  updateFAB();
+                    }
+                }
             }
         };
         activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
@@ -103,6 +109,7 @@ public class FragmentEditPlaylist extends Fragment {
         // userPickedPlaylist is null when user is making a new playlist
         if (userPickedPlaylist != null) {
             // userPickedSongs.isEmpty() when the user is editing a playlist
+            // TODO if user is editing a playlist, unselects all the songs and returns here, ERROR
             if (userPickedSongs.isEmpty()) {
                 userPickedSongs.addAll(
                         viewModelUserPickedPlaylist.getUserPickedPlaylist().getSongs());
