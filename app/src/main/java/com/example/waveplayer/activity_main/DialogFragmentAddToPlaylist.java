@@ -18,25 +18,25 @@ import java.util.List;
 
 public class DialogFragmentAddToPlaylist extends DialogFragment {
 
-    // TODO get rid of bundles
+    // TODO get rid of bundles... probably not
     public static final String BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST = "ADD_TO_PLAYLIST_PLAYLIST";
     public static final String BUNDLE_KEY_ADD_TO_PLAYLIST_SONG = "ADD_TO_PLAYLIST_SONG";
     public static final String BUNDLE_KEY_IS_SONG = "IS_SONG";
 
     private DialogInterface.OnMultiChoiceClickListener onMultiChoiceClickListener;
 
-    private DialogInterface.OnClickListener onClickListenerPositiveButton;
-
-    private DialogInterface.OnClickListener onClickListenerNeutralButton;
+    // TODO add a cancel button
+    private DialogInterface.OnClickListener onClickListenerAddButton;
+    private DialogInterface.OnClickListener onClickListenerNewPlaylistButton;
 
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity().getApplicationContext());
+        builder.setTitle(R.string.add_to_playlist);
         Bundle bundle = getArguments();
         if (bundle != null) {
             List<Integer> selectedPlaylistIndices = new ArrayList<>();
-            builder.setTitle(R.string.add_to_playlist);
             setUpChoices(builder, selectedPlaylistIndices);
             setUpButtons(builder, bundle, selectedPlaylistIndices);
             return builder.create();
@@ -44,21 +44,20 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
         return null;
     }
 
-    private void setUpChoices(AlertDialog.Builder builder,
-                              List<Integer> selectedPlaylistIndices) {
+    private void setUpChoices(AlertDialog.Builder builder, List<Integer> selectedPlaylistIndices) {
         ActivityMain activityMain = (ActivityMain) requireActivity();
         onMultiChoiceClickListener = (dialog, which, isChecked) -> {
                     if (isChecked) {
                         selectedPlaylistIndices.add(which);
-                    } else if (selectedPlaylistIndices.contains(which)) {
+                    } else {
                         selectedPlaylistIndices.remove(Integer.valueOf(which));
                     }
                 };
-        builder.setMultiChoiceItems(
-                getPlaylistTitles(activityMain.getPlaylists()),
+        builder.setMultiChoiceItems(getPlaylistTitles(activityMain.getPlaylists()),
                 null, onMultiChoiceClickListener);
     }
 
+    // TODO put in MediaData at some point...
     private String[] getPlaylistTitles(List<RandomPlaylist> randomPlaylists) {
         List<String> titles = new ArrayList<>(randomPlaylists.size());
         for (RandomPlaylist randomPlaylist : randomPlaylists) {
@@ -76,11 +75,11 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
                               List<Integer> selectedPlaylistIndices) {
         ActivityMain activityMain = (ActivityMain) requireActivity();
         boolean isSong = bundle.getBoolean(BUNDLE_KEY_IS_SONG);
-        Song song = (Song) bundle.getSerializable(
-                BUNDLE_KEY_ADD_TO_PLAYLIST_SONG);
+        // These are here to prevent code duplication
+        Song song = (Song) bundle.getSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG);
         RandomPlaylist randomPlaylist = (RandomPlaylist) bundle.getSerializable(
                 BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST);
-        onClickListenerPositiveButton = (dialog, id) -> {
+        onClickListenerAddButton = (dialog, id) -> {
             if (isSong && song != null) {
                 for (int index : selectedPlaylistIndices) {
                     activityMain.getPlaylists().get(index).add(song);
@@ -94,8 +93,9 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
                 }
             }
         };
-        onClickListenerNeutralButton = (dialog, which) -> {
-            // Needed for FragmentEditPlaylist to make a new playlist
+        builder.setPositiveButton(R.string.add, onClickListenerAddButton);
+        onClickListenerNewPlaylistButton = (dialog, which) -> {
+            // UserPickedPlaylist need to be null for FragmentEditPlaylist to make a new playlist
             activityMain.setUserPickedPlaylist(null);
             activityMain.clearUserPickedSongs();
             if (isSong && song != null) {
@@ -108,15 +108,14 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
             }
             activityMain.navigateTo(R.id.fragmentEditPlaylist);
         };
-        builder.setPositiveButton(R.string.add, onClickListenerPositiveButton)
-                .setNeutralButton(R.string.new_playlist, onClickListenerNeutralButton);
+        builder.setNeutralButton(R.string.new_playlist, onClickListenerNewPlaylistButton);
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         onMultiChoiceClickListener = null;
-        onClickListenerPositiveButton = null;
-        onClickListenerNeutralButton = null;
+        onClickListenerAddButton = null;
+        onClickListenerNewPlaylistButton = null;
     }
 }
