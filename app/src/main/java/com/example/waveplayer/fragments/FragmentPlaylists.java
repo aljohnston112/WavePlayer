@@ -39,7 +39,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST;
-import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_IS_SONG;
 
 public class FragmentPlaylists extends Fragment
         implements RecyclerViewAdapterPlaylists.ListenerCallbackPlaylists {
@@ -235,7 +234,6 @@ public class FragmentPlaylists extends Fragment
     public boolean onMenuItemClickAddToPlaylist(RandomPlaylist randomPlaylist) {
         Bundle bundle = new Bundle();
         bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST, randomPlaylist);
-        bundle.putSerializable(BUNDLE_KEY_IS_SONG, false);
         DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist = new DialogFragmentAddToPlaylist();
         dialogFragmentAddToPlaylist.setArguments(bundle);
         dialogFragmentAddToPlaylist.show(getParentFragmentManager(), getTag());

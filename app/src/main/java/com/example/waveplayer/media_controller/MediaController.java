@@ -204,12 +204,12 @@ public class MediaController {
      *      isPlaying will be false
      *      if there is a current song.
      */
-    private void stopCurrentSong() {
+    private void stopCurrentSong(Context context) {
         if (currentAudioUri != null) {
             MediaPlayerWUri mediaPlayerWURI = mediaData.getMediaPlayerWUri(currentAudioUri.id);
             if (mediaPlayerWURI != null) {
                 if (mediaPlayerWURI.isPrepared() && mediaPlayerWURI.isPlaying()) {
-                    mediaPlayerWURI.stop();
+                    mediaPlayerWURI.stop(context, currentAudioUri);
                     mediaPlayerWURI.prepareAsync();
                 }
             } else {
@@ -232,7 +232,7 @@ public class MediaController {
      */
     protected void playNext(Context context) {
         Log.v(TAG, "playNext started");
-        stopCurrentSong();
+        stopCurrentSong(context);
         if (loopingOne) {
             playLoopingOne(context);
         } else if (!playNextInQueue(context)) {
@@ -286,7 +286,7 @@ public class MediaController {
             }
             mediaData.addMediaPlayerWUri(mediaPlayerWUri.id, mediaPlayerWUri);
         }
-        stopCurrentSong();
+        stopCurrentSong(context);
         if (requestAudioFocus(context)) {
             mediaPlayerWUri.shouldPlay(true);
             isPlaying = true;

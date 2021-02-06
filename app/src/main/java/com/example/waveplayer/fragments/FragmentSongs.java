@@ -44,9 +44,9 @@ public class FragmentSongs extends Fragment implements
 
     public static final String NAME = "FragmentSongs";
 
-    private ViewModelActivityMain viewModelActivityMain;
-
     private RecyclerViewSongListBinding binding;
+
+    private ViewModelActivityMain viewModelActivityMain;
 
     private BroadcastReceiver broadcastReceiverOnServiceConnected;
     private BroadcastReceiver broadcastReceiverOptionsMenuCreated;

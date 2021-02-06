@@ -58,23 +58,17 @@ public class FragmentSong extends Fragment {
 
     // For updating the SeekBar
     private ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-
     private Runnable runnableSeekBarUpdater;
-
     private Runnable runnableSongArtUpdater;
 
     private Observer<AudioUri> observerCurrentSong;
-
     private Observer<Boolean> observerIsPlaying;
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        viewModelActivityMain =
+                new ViewModelProvider(requireActivity()).get(ViewModelActivityMain.class);
         binding = FragmentSongBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
@@ -82,11 +76,11 @@ public class FragmentSong extends Fragment {
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        viewModelActivityMain =
-                new ViewModelProvider(requireActivity()).get(ViewModelActivityMain.class);
         ActivityMain activityMain = (ActivityMain) requireActivity();
         activityMain.hideKeyboard(view);
-        updateMainContent();
+        viewModelActivityMain.setSongToAddToQueue(activityMain.getCurrentSong().id);
+        viewModelActivityMain.setActionBarTitle(getResources().getString(R.string.now_playing));
+        viewModelActivityMain.showFab(false);
         onSeekBarChangeListener = new SeekBar.OnSeekBarChangeListener(){
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -105,7 +99,6 @@ public class FragmentSong extends Fragment {
             }
         };
         runnableSongArtUpdater = () -> {
-            ActivityMain activityMain1 = (ActivityMain) requireActivity();
             ImageView imageViewSongArt = binding.imageViewSongArt;
             int songArtHeight = imageViewSongArt.getHeight();
             int songArtWidth = imageViewSongArt.getWidth();
@@ -115,8 +108,8 @@ public class FragmentSong extends Fragment {
                 songArtHeight = songArtWidth;
             }
             if (songArtHeight > 0 && songArtWidth > 0) {
-                Bitmap bitmap = BitmapLoader.getThumbnail(activityMain1.getCurrentUri(),
-                        songArtWidth, songArtHeight, activityMain1.getApplicationContext());
+                Bitmap bitmap = BitmapLoader.getThumbnail(activityMain.getCurrentUri(),
+                        songArtWidth, songArtHeight, activityMain.getApplicationContext());
                 if (bitmap == null) {
                     Drawable drawable = ResourcesCompat.getDrawable(imageViewSongArt.getResources(),
                             R.drawable.music_note_black_48dp, null);
@@ -128,17 +121,13 @@ public class FragmentSong extends Fragment {
                         paint.setColor(imageViewSongArt.getResources().getColor(R.color.colorPrimary));
                         canvas.drawRect(0, 0, songArtWidth, songArtHeight, paint);
                         drawable.draw(canvas);
-                        Bitmap bitmapResized =
-                                BitmapLoader.getResizedBitmap(bitmapDrawable, songArtWidth, songArtHeight);
-                        bitmapDrawable.recycle();
-                        imageViewSongArt.setImageBitmap(bitmapResized);
+                        imageViewSongArt.setImageBitmap(bitmapDrawable);
                     }
                 } else {
                     imageViewSongArt.setImageBitmap(bitmap);
                 }
             }
         };
-        updateSongUI();
         observerCurrentSong = s -> {
             updateSongUI();
         };
@@ -148,93 +137,7 @@ public class FragmentSong extends Fragment {
         };
         viewModelActivityMain.isPlaying().observe(getViewLifecycleOwner(), observerIsPlaying);
         setUpButtons();
-        activityMain.isSong(true);
-        activityMain.setSongToAddToQueue(activityMain.getCurrentAudioUri().id);
         setUpBroadcastReceiver();
-    }
-
-    private void updateMainContent() {
-        viewModelActivityMain.setActionBarTitle(getResources().getString(R.string.now_playing));
-        viewModelActivityMain.showFab(false);
-        setUpToolbar();
-    }
-
-
-    private void setUpToolbar() {
-        ActivityMain activityMain = (ActivityMain) requireActivity();
-        Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
-        if (toolbar != null) {
-            Menu menu = toolbar.getMenu();
-            if (menu != null) {
-                menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).setVisible(true);
-                menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).setVisible(true);
-            }
-        }
-    }
-
-    private void updateSeekBar() {
-        // Log.v(TAG, "updateSeekBar start");
-        final ActivityMain activityMain = (ActivityMain) requireActivity();
-        Context context = activityMain.getApplicationContext();
-        SeekBar seekBar = binding.seekBar;
-        if (seekBar != null) {
-            AudioUri audioUri = activityMain.getCurrentAudioUri();
-            final int maxMillis;
-            if (audioUri != null) {
-                maxMillis = audioUri.getDuration(context);
-            } else {
-                maxMillis = 9999;
-            }
-            seekBar.setMax(maxMillis);
-            seekBar.setProgress(activityMain.getCurrentTime());
-            seekBar.setOnSeekBarChangeListener(onSeekBarChangeListener);
-            setUpSeekBarUpdater();
-        }
-        // Log.v(TAG, "updateSeekBar end");
-    }
-
-    private void setUpSeekBarUpdater() {
-        // Log.v(TAG, "setUpSeekBarUpdater start");
-        SeekBar seekBar = binding.seekBar;
-        TextView textViewCurrent = binding.editTextCurrentTime;
-        updateSeekBarUpdater(seekBar, textViewCurrent);
-        // Log.v(TAG, "setUpSeekBarUpdater end");
-    }
-
-    public void updateSeekBarUpdater(SeekBar seekBar, TextView textViewCurrent) {
-        // Log.v(TAG, "updateSeekBarUpdater start");
-        ActivityMain activityMain = (ActivityMain) requireActivity();
-        shutDownSeekBarUpdater();
-        scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-        MediaPlayerWUri mediaPlayerWUri = activityMain.getCurrentMediaPlayerWUri();
-        if (mediaPlayerWUri != null) {
-            runnableSeekBarUpdater = () -> seekBar.post(() -> {
-                if (mediaPlayerWUri.isPlaying()) {
-                    int currentMilliseconds = mediaPlayerWUri.getCurrentPosition();
-                    seekBar.setProgress(currentMilliseconds);
-                    final String currentTime = String.format(getResources().getConfiguration().locale,
-                            "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(currentMilliseconds),
-                            TimeUnit.MILLISECONDS.toMinutes(currentMilliseconds) -
-                                    TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(currentMilliseconds)),
-                            TimeUnit.MILLISECONDS.toSeconds(currentMilliseconds) -
-                                    TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(currentMilliseconds)));
-                    textViewCurrent.setText(currentTime);
-                }
-            });
-            scheduledExecutorService.scheduleAtFixedRate(
-                    runnableSeekBarUpdater, 0L, 1L, TimeUnit.SECONDS);
-        }
-        // Log.v(TAG, "updateSeekBarUpdater end");
-    }
-
-    public void shutDownSeekBarUpdater() {
-        // Log.v(TAG, "shutDownSeekBarUpdater start");
-        runnableSeekBarUpdater = null;
-        if (scheduledExecutorService != null) {
-            scheduledExecutorService.shutdown();
-            scheduledExecutorService = null;
-        }
-        // Log.v(TAG, "shutDownSeekBarUpdater end");
     }
 
     private void updateSongUI() {
@@ -251,9 +154,7 @@ public class FragmentSong extends Fragment {
     private void updateSongArt() {
         // Log.v(TAG, "updateSongArt start");
         final ImageView imageViewSongArt = binding.imageViewSongArt;
-        if (imageViewSongArt != null) {
             imageViewSongArt.post(runnableSongArtUpdater);
-        }
         // Log.v(TAG, "updateSongArt end");
     }
 
@@ -273,14 +174,20 @@ public class FragmentSong extends Fragment {
         final String stringEndTime = formatMillis(maxMillis);
         String stringCurrentTime = formatMillis(activityMain.getCurrentTime());
         TextView textViewCurrent = binding.editTextCurrentTime;
-        if (textViewCurrent != null) {
             textViewCurrent.setText(stringCurrentTime);
-        }
         TextView textViewEnd = binding.editTextEndTime;
-        if (textViewEnd != null) {
             textViewEnd.setText(stringEndTime);
-        }
         // Log.v(TAG, "updateTextViewTimes end");
+    }
+
+    private String formatMillis(int millis) {
+        // Log.v(TAG, "formatMillis start and end");
+        return String.format(getResources().getConfiguration().locale,
+                "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(millis),
+                TimeUnit.MILLISECONDS.toMinutes(millis) -
+                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
+                TimeUnit.MILLISECONDS.toSeconds(millis) -
+                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
     }
 
     private void updateSongPlayButton() {
@@ -298,55 +205,70 @@ public class FragmentSong extends Fragment {
         // Log.v(TAG, "updateSongPlayButton end");
     }
 
-    private String formatMillis(int millis) {
-        // Log.v(TAG, "formatMillis start and end");
-        return String.format(getResources().getConfiguration().locale,
-                "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(millis),
-                TimeUnit.MILLISECONDS.toMinutes(millis) -
-                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
-                TimeUnit.MILLISECONDS.toSeconds(millis) -
-                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
+    private void updateSeekBar() {
+        // Log.v(TAG, "updateSeekBar start");
+        final ActivityMain activityMain = (ActivityMain) requireActivity();
+        SeekBar seekBar = binding.seekBar;
+        AudioUri audioUri = activityMain.getCurrentAudioUri();
+        final int maxMillis;
+        if (audioUri != null) {
+            maxMillis = audioUri.getDuration(activityMain.getApplicationContext());
+        } else {
+            maxMillis = 9999;
+        }
+        seekBar.setMax(maxMillis);
+        seekBar.setProgress(activityMain.getCurrentTime());
+        seekBar.setOnSeekBarChangeListener(onSeekBarChangeListener);
+        setUpSeekBarUpdater();
+        // Log.v(TAG, "updateSeekBar end");
     }
 
-    private void setUpBroadcastReceiver() {
-        final ActivityMain activityMain = (ActivityMain) requireActivity();
-        IntentFilter filterComplete = new IntentFilter();
-        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
-        filterComplete.addAction(activityMain.getResources().getString(
-                R.string.broadcast_receiver_action_service_connected));
-        filterComplete.addAction(activityMain.getResources().getString(
-                R.string.broadcast_receiver_action_on_create_options_menu));
-        broadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                String action = intent.getAction();
-                if (action != null) {
-                    if (action.equals(getResources().getString(
-                            R.string.broadcast_receiver_action_service_connected))) {
-                        setUpButtons();
-                        updateSongUI();
-                    }
-                    if (action.equals(getResources().getString(
-                            R.string.broadcast_receiver_action_on_create_options_menu))) {
-                        setUpToolbar();
+    private void setUpSeekBarUpdater() {
+        // Log.v(TAG, "setUpSeekBarUpdater start");
+        SeekBar seekBar = binding.seekBar;
+        TextView textViewCurrent = binding.editTextCurrentTime;
+        ActivityMain activityMain = (ActivityMain) requireActivity();
+        shutDownSeekBarUpdater();
+        scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+        MediaPlayerWUri mediaPlayerWUri = activityMain.getCurrentMediaPlayerWUri();
+        if (mediaPlayerWUri != null) {
+            runnableSeekBarUpdater = () -> seekBar.post(() -> {
+                if (mediaPlayerWUri.isPrepared()) {
+                    int currentMilliseconds = mediaPlayerWUri.getCurrentPosition();
+                    if(seekBar.getProgress() != currentMilliseconds) {
+                        seekBar.setProgress(currentMilliseconds);
+                        final String currentTime = formatMillis(currentMilliseconds);
+                        textViewCurrent.setText(currentTime);
                     }
                 }
-            }
-        };
-        activityMain.registerReceiver(broadcastReceiver, filterComplete);
+            });
+            scheduledExecutorService.scheduleAtFixedRate(
+                    runnableSeekBarUpdater, 0L, 1L, TimeUnit.SECONDS);
+        }
+        // Log.v(TAG, "setUpSeekBarUpdater end");
+    }
+
+    public void shutDownSeekBarUpdater() {
+        // Log.v(TAG, "shutDownSeekBarUpdater start");
+        if (scheduledExecutorService != null) {
+            scheduledExecutorService.shutdown();
+            scheduledExecutorService = null;
+        }
+        runnableSeekBarUpdater = null;
+        // Log.v(TAG, "shutDownSeekBarUpdater end");
     }
 
     @SuppressLint("ClickableViewAccessibility")
     private void setUpButtons() {
         ActivityMain activityMain = (ActivityMain) requireActivity();
         View view = getView();
-        final ImageButton buttonBad = view.findViewById(R.id.button_thumb_down);
-        final ImageButton buttonGood = view.findViewById(R.id.button_thumb_up);
-        final ImageButton buttonShuffle = view.findViewById(R.id.imageButtonShuffle);
-        final ImageButton buttonPrev = view.findViewById(R.id.imageButtonPrev);
-        final ImageButton buttonPause = view.findViewById(R.id.imageButtonPlayPause);
-        final ImageButton buttonNext = view.findViewById(R.id.imageButtonNext);
-        final ImageButton buttonLoop = view.findViewById(R.id.imageButtonRepeat);
+        final ImageButton buttonBad = binding.buttonThumbDown;
+        final ImageButton buttonGood = binding.buttonThumbUp;
+        final ImageButton buttonShuffle = binding.imageButtonShuffle;
+        final ImageButton buttonPrev = binding.imageButtonPrev;
+        final ImageButton buttonPause = binding.imageButtonPlayPause;
+        final ImageButton buttonNext = binding.imageButtonNext;
+        final ImageButton buttonLoop = binding.imageButtonRepeat;
         onClickListenerFragmentSong = clickedView -> {
             synchronized (ActivityMain.MUSIC_CONTROL_LOCK) {
                 if (clickedView.getId() == R.id.button_thumb_down) {
@@ -359,8 +281,8 @@ public class FragmentSong extends Fragment {
                 } else if (clickedView.getId() == R.id.button_thumb_up) {
                     Song song = activityMain.getSong(activityMain.getCurrentAudioUri().id);
                     if (song != null) {
-                        activityMain.getCurrentPlaylist().good(activityMain.getApplicationContext(),
-                                song, activityMain.getPercentChangeUp(), true);
+                        activityMain.getCurrentPlaylist().globalGood(
+                                song, activityMain.getPercentChangeUp());
                         activityMain.saveFile();
                     }
                 } else if (clickedView.getId() == R.id.imageButtonShuffle) {
@@ -401,9 +323,10 @@ public class FragmentSong extends Fragment {
         buttonPrev.setOnClickListener(onClickListenerFragmentSong);
         buttonPause.setOnClickListener(onClickListenerFragmentSong);
         buttonNext.setOnClickListener(onClickListenerFragmentSong);
+        buttonLoop.setOnClickListener(onClickListenerFragmentSong);
         buttonNext.setLongClickable(true);
         onLongClickListener = v -> {
-            // TODO
+            // TODO change color of button
             activityMain.getCurrentPlaylist().globalBad(
                     activityMain.getSong(activityMain.getCurrentAudioUri().id),
                     activityMain.getPercentChangeDown());
@@ -411,7 +334,6 @@ public class FragmentSong extends Fragment {
 
         };
         buttonNext.setOnLongClickListener(onLongClickListener);
-        buttonLoop.setOnClickListener(onClickListenerFragmentSong);
         onTouchListenerFragmentSongButtons = (view1, motionEvent) -> {
             switch (motionEvent.getAction()) {
                 case MotionEvent.ACTION_DOWN:
@@ -446,16 +368,110 @@ public class FragmentSong extends Fragment {
         onLayoutChangeListenerFragmentSongButtons =
                 (view12, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
                     if(activityMain.fragmentSongVisible()) {
-                        setUpGood(view12);
-                        setUpBad(view12);
-                        setUpShuffle(view12);
-                        setUpPrev(view12);
-                        setUpPlay(view12);
-                        setUpNext(view12);
-                        setUpLoop(view12);
+                        setUpButton(binding.buttonThumbUp, R.drawable.thumb_up_alt_black_24dp);
+                        setUpButton(binding.buttonThumbDown, R.drawable.thumb_down_alt_black_24dp);
+                        setUpButton(binding.imageButtonPrev, R.drawable.skip_previous_black_24dp);
+                        setUpButton(binding.imageButtonNext, R.drawable.skip_next_black_24dp);
+                        setUpShuffle();
+                        setUpPlay();
+                        setUpLoop();
                     }
                 };
         view.addOnLayoutChangeListener(onLayoutChangeListenerFragmentSongButtons);
+    }
+
+    private void setUpButton(ImageView imageView, int drawableID){
+        int width = imageView.getMeasuredWidth();
+        //noinspection SuspiciousNameCombination
+        int height = width;
+        Drawable drawable = ResourcesCompat.getDrawable(
+                imageView.getResources(), drawableID, null);
+        if (drawable != null) {
+            drawable.setBounds(0, 0, width, height);
+            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            drawable.draw(canvas);
+            imageView.setImageBitmap(bitmap);
+        }
+    }
+
+    private void setUpShuffle() {
+        ActivityMain activityMain = (ActivityMain) requireActivity();
+        ImageView imageView = binding.imageButtonShuffle;
+        if (activityMain.isShuffling()) {
+            setUpButton(imageView, R.drawable.ic_shuffle_black_24dp);
+        } else {
+            setUpButton(imageView, R.drawable.ic_shuffle_white_24dp);
+        }
+    }
+
+    private void setUpPlay() {
+        ActivityMain activityMain = (ActivityMain) requireActivity();
+        ImageView imageView = binding.imageButtonPlayPause;
+        if (activityMain.isPlaying()) {
+            setUpButton(imageView, R.drawable.pause_black_24dp);
+        } else {
+            setUpButton(imageView, R.drawable.play_arrow_black_24dp);
+        }
+    }
+
+    private void setUpLoop() {
+        ActivityMain activityMain = (ActivityMain) requireActivity();
+        ImageView imageView = binding.imageButtonRepeat;
+        if (activityMain.isLoopingOne()) {
+            setUpButton(imageView, R.drawable.repeat_one_black_24dp);
+        } else if (activityMain.isLooping()) {
+            setUpButton(imageView, R.drawable.repeat_black_24dp);
+        } else {
+            setUpButton(imageView, R.drawable.repeat_white_24dp);
+        }
+    }
+
+    private void setUpBroadcastReceiver() {
+        final ActivityMain activityMain = (ActivityMain) requireActivity();
+        IntentFilter filterComplete = new IntentFilter();
+        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
+        filterComplete.addAction(activityMain.getResources().getString(
+                R.string.broadcast_receiver_action_service_connected));
+        filterComplete.addAction(activityMain.getResources().getString(
+                R.string.broadcast_receiver_action_on_create_options_menu));
+        broadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getAction();
+                if (action != null) {
+                    if (action.equals(getResources().getString(
+                            R.string.broadcast_receiver_action_service_connected))) {
+                        setUpButtons();
+                        updateSongUI();
+                    }
+                    if (action.equals(getResources().getString(
+                            R.string.broadcast_receiver_action_on_create_options_menu))) {
+                        setUpToolbar();
+                    }
+                }
+            }
+        };
+        activityMain.registerReceiver(broadcastReceiver, filterComplete);
+    }
+
+    private void setUpToolbar() {
+        ActivityMain activityMain = (ActivityMain) requireActivity();
+        Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
+        if (toolbar != null) {
+            Menu menu = toolbar.getMenu();
+            if (menu != null) {
+                menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).setVisible(true);
+                menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).setVisible(true);
+            }
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        setUpToolbar();
+        updateSongUI();
     }
 
     @Override
@@ -463,15 +479,15 @@ public class FragmentSong extends Fragment {
         super.onDestroyView();
         ActivityMain activityMain = (ActivityMain) requireActivity();
         View view = getView();
-        activityMain.unregisterReceiver(broadcastReceiver);
-        broadcastReceiver = null;
-        final ImageButton buttonBad = view.findViewById(R.id.button_thumb_down);
-        final ImageButton buttonGood = view.findViewById(R.id.button_thumb_up);
-        final ImageButton buttonShuffle = view.findViewById(R.id.imageButtonShuffle);
-        final ImageButton buttonPrev = view.findViewById(R.id.imageButtonPrev);
-        final ImageButton buttonPause = view.findViewById(R.id.imageButtonPlayPause);
-        final ImageButton buttonNext = view.findViewById(R.id.imageButtonNext);
-        final ImageButton buttonLoop = view.findViewById(R.id.imageButtonRepeat);
+        view.removeOnLayoutChangeListener(onLayoutChangeListenerFragmentSongButtons);
+        onLayoutChangeListenerFragmentSongButtons = null;
+        ImageButton buttonBad = binding.buttonThumbDown;
+        ImageButton buttonGood = binding.buttonThumbUp;
+        ImageButton buttonShuffle = binding.imageButtonShuffle;
+        ImageButton buttonPrev = binding.imageButtonPrev;
+        ImageButton buttonPause = binding.imageButtonPlayPause;
+        ImageButton buttonNext = binding.imageButtonNext;
+        ImageButton buttonLoop = binding.imageButtonRepeat;
         buttonBad.setOnClickListener(null);
         buttonGood.setOnClickListener(null);
         buttonShuffle.setOnClickListener(null);
@@ -490,169 +506,22 @@ public class FragmentSong extends Fragment {
         onClickListenerFragmentSong = null;
         onTouchListenerFragmentSongButtons = null;
         onLongClickListener = null;
-        view.removeOnLayoutChangeListener(onLayoutChangeListenerFragmentSongButtons);
-        onLayoutChangeListenerFragmentSongButtons = null;
-        activityMain.setSongToAddToQueue(null);
         shutDownSeekBarUpdater();
         SeekBar seekBar = binding.seekBar;
         if (seekBar != null) {
             seekBar.setOnSeekBarChangeListener(null);
         }
         onSeekBarChangeListener = null;
+        runnableSeekBarUpdater = null;
         runnableSongArtUpdater = null;
-        binding = null;
+        activityMain.unregisterReceiver(broadcastReceiver);
+        broadcastReceiver = null;
         viewModelActivityMain.getCurrentSong().removeObservers(this);
         observerCurrentSong = null;
         viewModelActivityMain.isPlaying().removeObservers(this);
         observerIsPlaying = null;
         viewModelActivityMain = null;
-    }
-
-    private void setUpGood(View view) {
-        ImageView imageView = view.findViewById(R.id.button_thumb_up);
-        int width = imageView.getMeasuredWidth();
-        //noinspection SuspiciousNameCombination
-        int height = width;
-        Drawable drawable = ResourcesCompat.getDrawable(view.getResources(),
-                R.drawable.thumb_up_alt_black_24dp, null);
-        if (drawable != null) {
-            drawable.setBounds(0, 0, width, height);
-            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(bitmap);
-            drawable.draw(canvas);
-            Bitmap bitmapResized = BitmapLoader.getResizedBitmap(bitmap, width, height);
-            bitmap.recycle();
-            imageView.setImageBitmap(bitmapResized);
-        }
-    }
-
-    private void setUpBad(View view) {
-        ImageView imageView = view.findViewById(R.id.button_thumb_down);
-        int width = imageView.getMeasuredWidth();
-        //noinspection SuspiciousNameCombination
-        int height = width;
-        Drawable drawable = ResourcesCompat.getDrawable(view.getResources(),
-                R.drawable.thumb_down_alt_black_24dp, null);
-        if (drawable != null) {
-            drawable.setBounds(0, 0, width, height);
-            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(bitmap);
-            drawable.draw(canvas);
-            Bitmap bitmapResized = BitmapLoader.getResizedBitmap(bitmap, width, height);
-            bitmap.recycle();
-            imageView.setImageBitmap(bitmapResized);
-        }
-    }
-
-    private void setUpShuffle(View view) {
-        ActivityMain activityMain = (ActivityMain) requireActivity();
-        ImageView imageView = view.findViewById(R.id.imageButtonShuffle);
-        int width = imageView.getMeasuredWidth();
-        //noinspection SuspiciousNameCombination
-        int height = width;
-        Drawable drawable;
-        if (activityMain.isShuffling()) {
-            drawable = ResourcesCompat.getDrawable(view.getResources(),
-                    R.drawable.ic_shuffle_black_24dp, null);
-        } else {
-            drawable = ResourcesCompat.getDrawable(view.getResources(),
-                    R.drawable.ic_shuffle_white_24dp, null);
-        }
-        if (drawable != null) {
-            drawable.setBounds(0, 0, width, height);
-            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(bitmap);
-            drawable.draw(canvas);
-            Bitmap bitmapResized = BitmapLoader.getResizedBitmap(bitmap, width, height);
-            bitmap.recycle();
-            imageView.setImageBitmap(bitmapResized);
-        }
-    }
-
-    private void setUpNext(View view) {
-        ImageView imageView = view.findViewById(R.id.imageButtonNext);
-        int width = imageView.getMeasuredWidth();
-        //noinspection SuspiciousNameCombination
-        int height = width;
-        Drawable drawable = ResourcesCompat.getDrawable(view.getResources(), R.drawable.skip_next_black_24dp, null);
-        if (drawable != null) {
-            drawable.setBounds(0, 0, width, height);
-            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(bitmap);
-            drawable.draw(canvas);
-            Bitmap bitmapResized = BitmapLoader.getResizedBitmap(bitmap, width, height);
-            bitmap.recycle();
-            imageView.setImageBitmap(bitmapResized);
-        }
-    }
-
-    private void setUpPlay(View view) {
-        ActivityMain activityMain = (ActivityMain) requireActivity();
-        ImageView imageView = view.findViewById(R.id.imageButtonPlayPause);
-        int width = imageView.getMeasuredWidth();
-        //noinspection SuspiciousNameCombination
-        int height = width;
-        Drawable drawable;
-        if (activityMain.isPlaying()) {
-            drawable = ResourcesCompat.getDrawable(view.getResources(), R.drawable.pause_black_24dp, null);
-        } else {
-            drawable = ResourcesCompat.getDrawable(view.getResources(), R.drawable.play_arrow_black_24dp, null);
-        }
-        if (drawable != null) {
-            drawable.setBounds(0, 0, width, height);
-            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(bitmap);
-            drawable.draw(canvas);
-            Bitmap bitmapResized = BitmapLoader.getResizedBitmap(bitmap, width, height);
-            bitmap.recycle();
-            imageView.setImageBitmap(bitmapResized);
-        }
-    }
-
-    private void setUpPrev(View view) {
-        ImageView imageView = view.findViewById(R.id.imageButtonPrev);
-        int width = imageView.getMeasuredWidth();
-        //noinspection SuspiciousNameCombination
-        int height = width;
-        Drawable drawable = ResourcesCompat.getDrawable(view.getResources(), R.drawable.skip_previous_black_24dp, null);
-        if (drawable != null) {
-            drawable.setBounds(0, 0, width, height);
-            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(bitmap);
-            drawable.draw(canvas);
-            Bitmap bitmapResized = BitmapLoader.getResizedBitmap(bitmap, width, height);
-            bitmap.recycle();
-            imageView.setImageBitmap(bitmapResized);
-        }
-    }
-
-    private void setUpLoop(View view) {
-        ActivityMain activityMain = (ActivityMain) requireActivity();
-        ImageView imageView = view.findViewById(R.id.imageButtonRepeat);
-        int width = imageView.getMeasuredWidth();
-        //noinspection SuspiciousNameCombination
-        int height = width;
-        Drawable drawable;
-
-        if (activityMain.isLoopingOne()) {
-            drawable = ResourcesCompat.getDrawable(view.getResources(),
-                    R.drawable.repeat_one_black_24dp, null);
-        } else if (activityMain.isLooping()) {
-            drawable = ResourcesCompat.getDrawable(view.getResources(),
-                    R.drawable.repeat_black_24dp, null);
-        } else {
-            drawable = ResourcesCompat.getDrawable(view.getResources(),
-                    R.drawable.repeat_white_24dp, null);
-        }
-        if (drawable != null) {
-            drawable.setBounds(0, 0, width, height);
-            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(bitmap);
-            drawable.draw(canvas);
-            Bitmap bitmapResized = BitmapLoader.getResizedBitmap(bitmap, width, height);
-            bitmap.recycle();
-            imageView.setImageBitmap(bitmapResized);
-        }
+        binding = null;
     }
 
 }

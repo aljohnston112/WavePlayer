@@ -21,7 +21,6 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
     // TODO get rid of bundles... probably not
     public static final String BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST = "ADD_TO_PLAYLIST_PLAYLIST";
     public static final String BUNDLE_KEY_ADD_TO_PLAYLIST_SONG = "ADD_TO_PLAYLIST_SONG";
-    public static final String BUNDLE_KEY_IS_SONG = "IS_SONG";
 
     private DialogInterface.OnMultiChoiceClickListener onMultiChoiceClickListener;
 
@@ -74,18 +73,17 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
     private void setUpButtons(AlertDialog.Builder builder, Bundle bundle,
                               List<Integer> selectedPlaylistIndices) {
         ActivityMain activityMain = (ActivityMain) requireActivity();
-        boolean isSong = bundle.getBoolean(BUNDLE_KEY_IS_SONG);
         // These are here to prevent code duplication
         Song song = (Song) bundle.getSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG);
         RandomPlaylist randomPlaylist = (RandomPlaylist) bundle.getSerializable(
                 BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST);
         onClickListenerAddButton = (dialog, id) -> {
-            if (isSong && song != null) {
+            if (song != null) {
                 for (int index : selectedPlaylistIndices) {
                     activityMain.getPlaylists().get(index).add(song);
                 }
             }
-            if (!isSong && randomPlaylist != null) {
+            if (randomPlaylist != null) {
                 for (Song randomPlaylistSong : randomPlaylist.getSongs()) {
                     for (int index : selectedPlaylistIndices) {
                         activityMain.getPlaylists().get(index).add(randomPlaylistSong);
@@ -98,10 +96,10 @@ public class DialogFragmentAddToPlaylist extends DialogFragment {
             // UserPickedPlaylist need to be null for FragmentEditPlaylist to make a new playlist
             activityMain.setUserPickedPlaylist(null);
             activityMain.clearUserPickedSongs();
-            if (isSong && song != null) {
+            if (song != null) {
                 activityMain.addUserPickedSong(song);
             }
-            if (!isSong && randomPlaylist != null) {
+            if (randomPlaylist != null) {
                 for (Song songInPlaylist : randomPlaylist.getSongs()) {
                     activityMain.addUserPickedSong(songInPlaylist);
                 }

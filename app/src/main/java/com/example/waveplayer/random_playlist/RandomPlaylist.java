@@ -207,4 +207,8 @@ public class RandomPlaylist implements Serializable {
     public void globalBad(Song song, double percentChangeDown) {
         probabilityFunction.bad(song, percentChangeDown);
     }
+
+    public void globalGood(Song song, double percentChangeUp) {
+        probabilityFunction.good(song, percentChangeUp, true);
+    }
 }

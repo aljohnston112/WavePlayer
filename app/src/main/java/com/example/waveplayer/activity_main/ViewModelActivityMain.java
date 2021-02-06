@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.waveplayer.random_playlist.AudioUri;
 import com.example.waveplayer.random_playlist.RandomPlaylist;
+import com.example.waveplayer.random_playlist.Song;
 
 public class ViewModelActivityMain extends ViewModel {
 
@@ -89,7 +90,21 @@ public class ViewModelActivityMain extends ViewModel {
         return playlistToAddToQueue;
     }
 
-    public void setPlaylistToAddToQueue(RandomPlaylist playlistToAddToQueue) {
+    synchronized public void setPlaylistToAddToQueue(RandomPlaylist playlistToAddToQueue) {
         this.playlistToAddToQueue = playlistToAddToQueue;
+        this.songToAddToQueue = null;
     }
+
+    @GuardedBy("this")
+    volatile private Long songToAddToQueue;
+
+    synchronized public Long getSongToAddToQueue(){
+        return songToAddToQueue;
+    }
+
+    synchronized public void setSongToAddToQueue(Long songToAddToQueue) {
+        this.songToAddToQueue = songToAddToQueue;
+        this.playlistToAddToQueue = null;
+    }
+
 }

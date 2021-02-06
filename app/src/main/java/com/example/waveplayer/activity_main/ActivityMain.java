@@ -40,7 +40,6 @@ import com.example.waveplayer.R;
 import com.example.waveplayer.ViewModelUserPickedPlaylist;
 import com.example.waveplayer.ViewModelUserPickedSongs;
 import com.example.waveplayer.databinding.ActivityMainBinding;
-import com.example.waveplayer.fragments.FragmentEditPlaylist;
 import com.example.waveplayer.media_controller.MediaPlayerWUri;
 import com.example.waveplayer.media_controller.SaveFile;
 import com.example.waveplayer.random_playlist.Song;
@@ -51,11 +50,6 @@ import com.google.android.material.floatingactionbutton.ExtendedFloatingActionBu
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-
-import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST;
-import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG;
-import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_IS_SONG;
 
 public class ActivityMain extends AppCompatActivity {
 
@@ -96,11 +90,6 @@ public class ActivityMain extends AppCompatActivity {
     private BroadcastReceiver broadcastReceiver;
 
     private NavController.OnDestinationChangedListener onDestinationChangedListenerToolbar;
-
-    // TODO put in ViewModel?
-    private boolean isSong;
-    private Long songToAddToQueue;
-    private RandomPlaylist playlistToAddToQueue;
 
     private boolean fragmentSongVisible = false;
 
@@ -228,31 +217,30 @@ public class ActivityMain extends AppCompatActivity {
 
     private void setUpDestinationChangedListenerForToolbar() {
         // Log.v(TAG, "setUpDestinationChangedListenerForToolbar started");
-        onDestinationChangedListenerToolbar = (controller, destination, arguments) -> {
-            runOnUiThread(() -> {
-                Toolbar toolbar = binding.toolbar;
-                Menu menu = toolbar.getMenu();
-                if (menu.size() > 0) {
-                    menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(
-                            destination.getId() == R.id.fragmentPlaylist ||
-                                    destination.getId() == R.id.fragmentSongs);
-                    menu.getItem(ActivityMain.MENU_ACTION_LOWER_PROBS_INDEX).setVisible(
-                            destination.getId() == R.id.fragmentPlaylist ||
-                                    destination.getId() == R.id.fragmentSongs
-                    );
-                    menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).setVisible(
-                            destination.getId() == R.id.fragmentSong ||
-                                    destination.getId() == R.id.fragmentPlaylist);
-                    menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(
-                            destination.getId() == R.id.fragmentSongs ||
-                                    destination.getId() == R.id.fragmentPlaylist ||
-                                    destination.getId() == R.id.FragmentPlaylists);
-                    menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).setVisible(
-                            destination.getId() == R.id.fragmentSong ||
-                                    destination.getId() == R.id.fragmentPlaylist);
-                }
-            });
-        };
+        onDestinationChangedListenerToolbar = (controller, destination, arguments) ->
+                runOnUiThread(() -> {
+                    Toolbar toolbar = binding.toolbar;
+                    Menu menu = toolbar.getMenu();
+                    if (menu.size() > 0) {
+                        menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).setVisible(
+                                destination.getId() == R.id.fragmentPlaylist ||
+                                        destination.getId() == R.id.fragmentSongs);
+                        menu.getItem(ActivityMain.MENU_ACTION_LOWER_PROBS_INDEX).setVisible(
+                                destination.getId() == R.id.fragmentPlaylist ||
+                                        destination.getId() == R.id.fragmentSongs
+                        );
+                        menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).setVisible(
+                                destination.getId() == R.id.fragmentSong ||
+                                        destination.getId() == R.id.fragmentPlaylist);
+                        menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(
+                                destination.getId() == R.id.fragmentSongs ||
+                                        destination.getId() == R.id.fragmentPlaylist ||
+                                        destination.getId() == R.id.FragmentPlaylists);
+                        menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).setVisible(
+                                destination.getId() == R.id.fragmentSong ||
+                                        destination.getId() == R.id.fragmentPlaylist);
+                    }
+                });
         FragmentManager fragmentManager = getSupportFragmentManager();
         Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
         if (fragment != null) {
@@ -465,8 +453,6 @@ public class ActivityMain extends AppCompatActivity {
         onDestinationChangedListenerToolbar = null;
         ExtendedFloatingActionButton fab = binding.fab;
         fab.setOnClickListener(null);
-        songToAddToQueue = null;
-        playlistToAddToQueue = null;
         observerActionBarTitle = null;
         observerShowFAB = null;
         observerFABText = null;
@@ -513,25 +499,15 @@ public class ActivityMain extends AppCompatActivity {
         } else if (item.getItemId() == R.id.action_lower_probs) {
             lowerProbabilities();
             return true;
-        } else if (item.getItemId() == R.id.action_add_to_playlist) {
-            FragmentManager fragmentManager = getSupportFragmentManager();
-            Fragment fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment);
-            if (fragment != null) {
-                DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist =
-                        new DialogFragmentAddToPlaylist();
-                dialogFragmentAddToPlaylist.setArguments(loadBundleForAddToPlaylist(isSong));
-                dialogFragmentAddToPlaylist.show(fragmentManager, fragment.getTag());
-            }
-            return true;
         } else if (item.getItemId() == R.id.action_add_to_queue) {
-            if (isSongInProgress() && songToAddToQueue != null) {
-                addToQueue(songToAddToQueue);
-            } else if (playlistToAddToQueue != null) {
-                for (Song songs : playlistToAddToQueue.getSongs()) {
+            if (isSongInProgress() && viewModelActivityMain.getSongToAddToQueue() != null) {
+                addToQueue(viewModelActivityMain.getSongToAddToQueue());
+            } else if (viewModelActivityMain.getPlaylistToAddToQueue() != null) {
+                for (Song songs : viewModelActivityMain.getPlaylistToAddToQueue().getSongs()) {
                     addToQueue(songs.id);
                 }
                 if (songQueueIsEmpty()) {
-                    setCurrentPlaylist(playlistToAddToQueue);
+                    setCurrentPlaylist(viewModelActivityMain.getPlaylistToAddToQueue());
                 }
                 if (!fragmentSongVisible() && isSongInProgress()) {
                     showSongPane();
@@ -548,17 +524,6 @@ public class ActivityMain extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private Bundle loadBundleForAddToPlaylist(boolean isSong) {
-        // Log.v(TAG, "loadBundleForAddToPlaylist start");
-        Bundle bundle = new Bundle();
-        bundle.putBoolean(BUNDLE_KEY_IS_SONG, isSong);
-        bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, getSong(getCurrentAudioUri().id));
-        bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST,
-                viewModelUserPickedPlaylist.getUserPickedPlaylist());
-        // Log.v(TAG, "loadBundleForAddToPlaylist end");
-        return bundle;
-    }
-
     public void saveFile() {
         // Log.v(TAG, "saveFile start");
         SaveFile.saveFile(serviceMain.getApplicationContext());
@@ -568,7 +533,7 @@ public class ActivityMain extends AppCompatActivity {
     public void showToast(int idMessage) {
         // Log.v(TAG, "showToast start");
         Toast toast = Toast.makeText(getApplicationContext(), idMessage, Toast.LENGTH_LONG);
-        if(toast.getView() != null) {
+        if (toast.getView() != null) {
             toast.getView().getBackground().setColorFilter(
                     getResources().getColor(R.color.colorPrimary), PorterDuff.Mode.SRC_IN);
         }
@@ -762,15 +727,6 @@ public class ActivityMain extends AppCompatActivity {
 
     public void playNext() {
         // Log.v(TAG, "playNext start");
-        if (serviceMain.getCurrentAudioUri() != null) {
-            RandomPlaylist randomPlaylist = getCurrentPlaylist();
-            if (randomPlaylist != null) {
-                randomPlaylist.bad(
-                        getApplicationContext(),
-                        serviceMain.getSong(serviceMain.getCurrentAudioUri().id),
-                        serviceMain.getPercentChangeDown());
-            }
-        }
         serviceMain.playNext();
         // Log.v(TAG, "playNext end");
     }
@@ -843,9 +799,9 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     public void popBackStack(Fragment fragment) {
-            NavController navController = NavHostFragment.findNavController(
-                    fragment);
-            navController.popBackStack();
+        NavController navController = NavHostFragment.findNavController(
+                fragment);
+        navController.popBackStack();
     }
 
     // endregion serviceMain

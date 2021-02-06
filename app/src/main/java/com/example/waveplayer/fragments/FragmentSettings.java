@@ -17,15 +17,14 @@ import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.R;
 import com.example.waveplayer.activity_main.ViewModelActivityMain;
 import com.example.waveplayer.databinding.FragmentSettingsBinding;
-import com.example.waveplayer.media_controller.MediaData;
 
 public class FragmentSettings extends Fragment {
 
-    private ViewModelActivityMain viewModelActivityMain;
-
     private FragmentSettingsBinding binding;
 
-    private View.OnClickListener onClickListenerFABFragmentSettings;
+    private ViewModelActivityMain viewModelActivityMain;
+
+    private View.OnClickListener onClickListenerFAB;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -35,34 +34,28 @@ public class FragmentSettings extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        viewModelActivityMain =
+                new ViewModelProvider(requireActivity()).get(ViewModelActivityMain.class);
         binding = FragmentSettingsBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
 
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        viewModelActivityMain =
-                new ViewModelProvider(requireActivity()).get(ViewModelActivityMain.class);
-        updateMainContent();
-        loadSettings();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        updateFAB();
-    }
-
-    private void updateMainContent() {
         viewModelActivityMain.setActionBarTitle(getResources().getString(R.string.settings));
         updateFAB();
+        loadSettings();
     }
 
     private void updateFAB() {
-        ActivityMain activityMain = (ActivityMain) requireActivity();
         viewModelActivityMain.setFabImage(R.drawable.ic_check_black_24dp);
         viewModelActivityMain.setFABText(R.string.fab_save);
-        onClickListenerFABFragmentSettings = (view) -> {
+        onClickListenerFAB = (view) -> {
                 int nSongs = getNSongs();
                 if (nSongs == -1) {
                     return;
@@ -77,9 +70,11 @@ public class FragmentSettings extends Fragment {
                 }
                 updateSettings(nSongs, percentChangeUp, percentChangeDown);
                 NavController navController = NavHostFragment.findNavController(this);
-                navController.popBackStack();
+                if(navController.getCurrentDestination().getId() == R.id.FragmentSettings) {
+                    navController.popBackStack();
+                }
         };
-        viewModelActivityMain.setFabOnClickListener(onClickListenerFABFragmentSettings);
+        viewModelActivityMain.setFabOnClickListener(onClickListenerFAB);
         viewModelActivityMain.showFab(true);
     }
 
@@ -156,9 +151,9 @@ public class FragmentSettings extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         viewModelActivityMain.setFabOnClickListener(null);
-        onClickListenerFABFragmentSettings = null;
-        binding = null;
+        onClickListenerFAB = null;
         viewModelActivityMain = null;
+        binding = null;
     }
 
 }

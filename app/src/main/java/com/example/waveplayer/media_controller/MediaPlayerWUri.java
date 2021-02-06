@@ -100,12 +100,13 @@ public class MediaPlayerWUri {
         }
     }
 
-    public void stop() {
+    public void stop(final Context context, AudioUri audioUri) {
         Log.v(TAG, "MediaPlayer stopped");
         synchronized (lock) {
             isPrepared = false;
             shouldPlay = false;
             mediaPlayer.stop();
+            resetIfMKV(audioUri, context);
         }
     }
 
