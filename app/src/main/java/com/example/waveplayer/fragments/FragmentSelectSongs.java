@@ -24,31 +24,32 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.waveplayer.activity_main.ActivityMain;
 import com.example.waveplayer.activity_main.ViewModelActivityMain;
+import com.example.waveplayer.databinding.RecyclerViewSongListBinding;
 import com.example.waveplayer.random_playlist.Song;
 import com.example.waveplayer.ViewModelUserPickedSongs;
 import com.example.waveplayer.R;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class FragmentSelectSongs extends Fragment {
+public class FragmentSelectSongs extends Fragment
+        implements RecyclerViewAdapterSelectSongs.ListenerCallbackSelectSongs {
 
     public static final String NAME = "FragmentSelectSongs";
 
+    private RecyclerViewSongListBinding binding;
+
     private ViewModelActivityMain viewModelActivityMain;
-
-    private BroadcastReceiver broadcastReceiverOnServiceConnected;
-
-    private View.OnClickListener onClickListenerFABFragmentSelectSongs;
-
-    private RecyclerView recyclerViewSongList;
-
     private ViewModelUserPickedSongs viewModelUserPickedSongs;
 
-    private OnQueryTextListenerSearch onQueryTextListenerSearch;
+    private BroadcastReceiver broadcastReceiver;
 
-    private BroadcastReceiver broadcastReceiverOptionsMenuCreated;
+    private RecyclerView recyclerViewSongList;
+    private RecyclerViewAdapterSelectSongs recyclerViewAdapter;
 
-    // TODO search functionality
+    private View.OnClickListener onClickListenerFABFragmentSelectSongs;
+    private SearchView.OnQueryTextListener onQueryTextListenerSearch;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -58,30 +59,52 @@ public class FragmentSelectSongs extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.recycler_view_song_list, container, false);
+        createViewModels();
+        binding = RecyclerViewSongListBinding.inflate(inflater, container, false);
+        return binding.getRoot();
+    }
+
+    private void createViewModels() {
+        viewModelUserPickedSongs =
+                new ViewModelProvider(requireActivity()).get(ViewModelUserPickedSongs.class);
+        viewModelActivityMain =
+                new ViewModelProvider(requireActivity()).get(ViewModelActivityMain.class);
     }
 
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        viewModelUserPickedSongs =
-                new ViewModelProvider(requireActivity()).get(ViewModelUserPickedSongs.class);
-        viewModelActivityMain =
-                new ViewModelProvider(requireActivity()).get(ViewModelActivityMain.class);
         ActivityMain activityMain = (ActivityMain) requireActivity();
         activityMain.hideKeyboard(view);
         viewModelActivityMain.setActionBarTitle(getResources().getString(R.string.select_songs));
-        updateFAB();
+        setUpBroadcastReceiver();
         setUpRecyclerView();
-        setUpToolbar();
-        setUpBroadcastReceiverServiceConnected();
-        setUpBroadcastReceiverOnOptionsMenuCreated();
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        updateFAB();
+    private void setUpBroadcastReceiver() {
+        ActivityMain activityMain = (ActivityMain) requireActivity();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
+        intentFilter.addAction(activityMain.getResources().getString(
+                R.string.broadcast_receiver_action_service_connected));
+        intentFilter.addAction(activityMain.getResources().getString(
+                R.string.broadcast_receiver_action_on_create_options_menu));
+        broadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getAction();
+                if (action != null) {
+                    if (action.equals(getResources().getString(
+                            R.string.broadcast_receiver_action_on_create_options_menu))) {
+                        setUpToolbar();
+                    } else if (action.equals(getResources().getString(
+                            R.string.broadcast_receiver_action_service_connected))) {
+                        setUpRecyclerView();
+                    }
+                }
+            }
+        };
+        activityMain.registerReceiver(broadcastReceiver, intentFilter);
     }
 
     private void setUpToolbar() {
@@ -92,26 +115,53 @@ public class FragmentSelectSongs extends Fragment {
             menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).setVisible(true);
             MenuItem itemSearch = menu.findItem(R.id.action_search);
             if (itemSearch != null) {
-                onQueryTextListenerSearch = new OnQueryTextListenerSearch(activityMain, NAME);
+                onQueryTextListenerSearch = new SearchView.OnQueryTextListener() {
+
+                    @Override
+                    public boolean onQueryTextSubmit(String query) {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onQueryTextChange(String newText) {
+                        List<Song> songs = activityMain.getAllSongs();
+                        List<Song> sifted = new ArrayList<>();
+                        if (!newText.equals("")) {
+                            for (Song song : songs) {
+                                if (song.title.toLowerCase().contains(newText.toLowerCase())) {
+                                    sifted.add(song);
+                                }
+                            }
+                            recyclerViewAdapter.updateList(sifted);
+                        } else {
+                            recyclerViewAdapter.updateList(songs);
+                        }
+                        return true;
+                    }
+                };
                 SearchView searchView = (SearchView) itemSearch.getActionView();
                 searchView.setOnQueryTextListener(onQueryTextListenerSearch);
             }
         }
     }
 
-    private void setUpBroadcastReceiverOnOptionsMenuCreated() {
+    private void setUpRecyclerView() {
         ActivityMain activityMain = (ActivityMain) requireActivity();
-        IntentFilter filterComplete = new IntentFilter();
-        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
-        filterComplete.addAction(activityMain.getResources().getString(
-                R.string.broadcast_receiver_action_on_create_options_menu));
-        broadcastReceiverOptionsMenuCreated = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                setUpToolbar();
-            }
-        };
-        activityMain.registerReceiver(broadcastReceiverOptionsMenuCreated, filterComplete);
+        recyclerViewSongList = binding.recyclerViewSongList;
+        recyclerViewSongList.setLayoutManager(new LinearLayoutManager(recyclerViewSongList.getContext()));
+        for (Song song : viewModelUserPickedSongs.getUserPickedSongs()) {
+            song.setSelected(true);
+        }
+        recyclerViewAdapter = new RecyclerViewAdapterSelectSongs(
+                this, activityMain.getAllSongs());
+        recyclerViewSongList.setAdapter(recyclerViewAdapter);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        setUpToolbar();
+        updateFAB();
     }
 
     private void updateFAB() {
@@ -119,51 +169,38 @@ public class FragmentSelectSongs extends Fragment {
         viewModelActivityMain.setFABText(R.string.fab_done);
         viewModelActivityMain.showFab(true);
         onClickListenerFABFragmentSelectSongs = (view) -> {
-                NavController navController = NavHostFragment.findNavController(this);
+            NavController navController = NavHostFragment.findNavController(this);
+            if (navController.getCurrentDestination().getId() == R.id.FragmentSelectSongs) {
                 navController.popBackStack();
+            }
         };
         viewModelActivityMain.setFabOnClickListener(onClickListenerFABFragmentSelectSongs);
     }
 
-    private void setUpRecyclerView() {
-        View view = getView();
-        recyclerViewSongList = view.findViewById(R.id.recycler_view_song_list);
-        recyclerViewSongList.setLayoutManager(
-                new LinearLayoutManager(recyclerViewSongList.getContext()));
-        for (Song song : viewModelUserPickedSongs.getUserPickedSongs()) {
-            song.setSelected(true);
-        }
-        RecyclerViewAdapterSelectSongs recyclerViewAdapterSelectSongs =
-                new RecyclerViewAdapterSelectSongs(this);
-        recyclerViewSongList.setAdapter(recyclerViewAdapterSelectSongs);
+    @Override
+    public List<Song> getUserPickedSongs() {
+        return viewModelUserPickedSongs.getUserPickedSongs();
     }
 
-    private void setUpBroadcastReceiverServiceConnected() {
-        ActivityMain activityMain = (ActivityMain) requireActivity();
-        IntentFilter filterComplete = new IntentFilter();
-        filterComplete.addCategory(Intent.CATEGORY_DEFAULT);
-        filterComplete.addAction(activityMain.getResources().getString(
-                R.string.broadcast_receiver_action_service_connected));
-        broadcastReceiverOnServiceConnected = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                setUpRecyclerView();
-            }
-        };
-        activityMain.registerReceiver(broadcastReceiverOnServiceConnected, filterComplete);
+    @Override
+    public void removeUserPickedSong(Song song) {
+        viewModelUserPickedSongs.removeUserPickedSong(song);
+    }
+
+    @Override
+    public void addUserPickedSong(Song song) {
+        viewModelUserPickedSongs.addUserPickedSong(song);
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         ActivityMain activityMain = (ActivityMain) requireActivity();
-        recyclerViewSongList.setAdapter(null);
-        activityMain.unregisterReceiver(broadcastReceiverOnServiceConnected);
-        broadcastReceiverOnServiceConnected = null;
+        viewModelActivityMain.setFabOnClickListener(null);
         onClickListenerFABFragmentSelectSongs = null;
-        viewModelUserPickedSongs = null;
-        activityMain.unregisterReceiver(broadcastReceiverOptionsMenuCreated);
-        broadcastReceiverOptionsMenuCreated = null;
+        recyclerViewSongList.setAdapter(null);
+        recyclerViewAdapter = null;
+        recyclerViewSongList = null;
         Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
         Menu menu = toolbar.getMenu();
         if (menu != null) {
@@ -173,18 +210,11 @@ public class FragmentSelectSongs extends Fragment {
             searchView.onActionViewCollapsed();
         }
         onQueryTextListenerSearch = null;
+        activityMain.unregisterReceiver(broadcastReceiver);
+        broadcastReceiver = null;
+        viewModelUserPickedSongs = null;
         viewModelActivityMain = null;
+        binding = null;
     }
 
-    public List<Song> getUserPickedSongs() {
-        return viewModelUserPickedSongs.getUserPickedSongs();
-    }
-
-    public void removeUserPickedSong(Song song) {
-        viewModelUserPickedSongs.removeUserPickedSong(song);
-    }
-
-    public void addUserPickedSong(Song song) {
-        viewModelUserPickedSongs.addUserPickedSong(song);
-    }
 }
