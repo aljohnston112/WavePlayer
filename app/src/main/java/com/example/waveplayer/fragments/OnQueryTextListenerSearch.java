@@ -50,26 +50,6 @@ public class OnQueryTextListenerSearch implements SearchView.OnQueryTextListener
                 }
                 return true;
             }
-            case FragmentPlaylists.NAME: {
-                RecyclerView recyclerViewPlaylists = activityMain.findViewById(R.id.recycler_view_playlist_list);
-                if (recyclerViewPlaylists != null) {
-                    RecyclerViewAdapterPlaylists recyclerViewAdapterPlaylists =
-                            (RecyclerViewAdapterPlaylists) recyclerViewPlaylists.getAdapter();
-                    List<RandomPlaylist> playlists = activityMain.getPlaylists();
-                    List<RandomPlaylist> sifted = new ArrayList<>();
-                    if (!newText.equals("")) {
-                        for (RandomPlaylist randomPlaylist : playlists) {
-                            if (randomPlaylist.getName().toLowerCase().contains(newText.toLowerCase())) {
-                                sifted.add(randomPlaylist);
-                            }
-                        }
-                        recyclerViewAdapterPlaylists.updateList(sifted);
-                    } else {
-                        recyclerViewAdapterPlaylists.updateList(playlists);
-                    }
-                }
-                return true;
-            }
             case FragmentSelectSongs.NAME: {
                 RecyclerView recyclerViewSelectSongs = activityMain.findViewById(R.id.recycler_view_song_list);
                 if (recyclerViewSelectSongs != null) {

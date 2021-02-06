@@ -141,6 +141,7 @@ public class FragmentPlaylist extends Fragment
 
                         @Override
                         public boolean onQueryTextChange(String newText) {
+                            // TODO fix bug where you can reorder songs when sifted
                             List<Song> songs = activityMain.getUserPickedPlaylist().getSongs();
                             List<Song> sifted = new ArrayList<>();
                             if (!newText.equals("")) {
@@ -203,7 +204,7 @@ public class FragmentPlaylist extends Fragment
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 ActivityMain activityMain = (ActivityMain) requireActivity();
                 int position = viewHolder.getAdapterPosition();
-                Song song = recyclerViewAdapterSongs.getSongs().get(position);
+                Song song = userPickedPlaylist.getSongs().get(position);
                 double probability = userPickedPlaylist.getProbability(song);
                 if (userPickedPlaylist.size() == 1) {
                     activityMain.removePlaylist(userPickedPlaylist);
@@ -273,7 +274,8 @@ public class FragmentPlaylist extends Fragment
 
     @Override
     public boolean onMenuItemClickAddToQueue(Song song) {
-        // TODO fix how MasterPlaylist continues after queue is depleted
+        // TODO fix how music continues after queue is depleted
+        // shuffle is off and looping is on or something like that?
         ActivityMain activityMain = (ActivityMain) requireActivity();
         activityMain.addToQueue(song.id);
         if (!activityMain.isSongInProgress()) {
@@ -308,6 +310,7 @@ public class FragmentPlaylist extends Fragment
         itemTouchHelper.attachToRecyclerView(null);
         itemTouchHelperCallback = null;
         itemTouchHelper = null;
+        undoListenerSongRemoved = null;
         Toolbar toolbar = activityMain.findViewById(R.id.toolbar);
         if (toolbar != null) {
             Menu menu = toolbar.getMenu();

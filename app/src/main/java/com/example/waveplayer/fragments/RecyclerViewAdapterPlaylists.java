@@ -25,21 +25,30 @@ import java.util.List;
 import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST;
 import static com.example.waveplayer.activity_main.DialogFragmentAddToPlaylist.BUNDLE_KEY_IS_SONG;
 
-public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerViewAdapterPlaylists.ViewHolder> {
+public class RecyclerViewAdapterPlaylists
+        extends RecyclerView.Adapter<RecyclerViewAdapterPlaylists.ViewHolder> {
 
-    private final FragmentPlaylists fragmentPlaylists;
+    public interface ListenerCallbackPlaylists {
+        void onClickViewHolder(RandomPlaylist randomPlaylist);
+        boolean onMenuItemClickAddToPlaylist(RandomPlaylist randomPlaylist);
+        boolean onMenuItemClickAddToQueue(RandomPlaylist randomPlaylist);
+    }
 
-    public List<RandomPlaylist> randomPlaylists;
+    private ListenerCallbackPlaylists listenerCallbackPlaylists;
+
+    private List<RandomPlaylist> randomPlaylists;
 
     private View.OnCreateContextMenuListener onCreateContextMenuListenerPlaylists;
+    private MenuItem.OnMenuItemClickListener onMenuItemClickListenerAddToPlaylist;
+    private MenuItem.OnMenuItemClickListener onMenuItemClickListenerAddToQueue;
 
     private View.OnClickListener onClickListenerHandle;
-
     private View.OnClickListener onClickListenerViewHolder;
 
-    public RecyclerViewAdapterPlaylists(FragmentPlaylists fragmentPlaylists, List<RandomPlaylist> items) {
-        this.fragmentPlaylists = fragmentPlaylists;
-        randomPlaylists = items;
+    public RecyclerViewAdapterPlaylists(ListenerCallbackPlaylists listenerCallbackPlaylists,
+                                        List<RandomPlaylist> randomPlaylists) {
+        this.listenerCallbackPlaylists = listenerCallbackPlaylists;
+        this.randomPlaylists = randomPlaylists;
     }
 
     public void updateList(List<RandomPlaylist> randomPlaylists) {
@@ -58,73 +67,28 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.randomPlaylist = randomPlaylists.get(position);
         holder.textViewPlaylistName.setText(randomPlaylists.get(position).getName());
-        holder.handle.setOnCreateContextMenuListener(null);
+
+        onMenuItemClickListenerAddToPlaylist = menuItem ->
+                listenerCallbackPlaylists.onMenuItemClickAddToPlaylist(holder.randomPlaylist);
+        onMenuItemClickListenerAddToQueue = menuItem2 ->
+                listenerCallbackPlaylists.onMenuItemClickAddToQueue(holder.randomPlaylist);
         onCreateContextMenuListenerPlaylists =
-                new View.OnCreateContextMenuListener() {
-                    @Override
-                    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-                        final MenuItem itemAddToPlaylist = menu.add(R.string.add_to_playlist);
-                        itemAddToPlaylist.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                            @Override
-                            public boolean onMenuItemClick(MenuItem item) {
-                                contextMenuAddToPlaylist();
-                                return true;
-                            }
-                        });
-                        final MenuItem itemAddToQueue = menu.add(R.string.add_to_queue);
-                        itemAddToQueue.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                            @Override
-                            public boolean onMenuItemClick(MenuItem item) {
-                                contextMenuAddToQueue();
-                                return true;
-                            }
-                        });
-                    }
-
-                    private void contextMenuAddToPlaylist() {
-                        ActivityMain activityMain = ((ActivityMain) fragmentPlaylists.requireActivity());
-                        if (activityMain != null) {
-                            Bundle bundle = new Bundle();
-                            bundle.putSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST, holder.randomPlaylist);
-                            bundle.putSerializable(BUNDLE_KEY_IS_SONG, false);
-                            DialogFragmentAddToPlaylist dialogFragmentAddToPlaylist
-                                    = new DialogFragmentAddToPlaylist();
-                            dialogFragmentAddToPlaylist.setArguments(bundle);
-                            dialogFragmentAddToPlaylist.show(
-                                    fragmentPlaylists.getParentFragmentManager(), fragmentPlaylists.getTag());
-                        }
-                    }
-
-                    private void contextMenuAddToQueue() {
-                        ActivityMain activityMain = ((ActivityMain) fragmentPlaylists.requireActivity());
-                        for (Song song : holder.randomPlaylist.getSongs()) {
-                            activityMain.addToQueue(song.id);
-                        }
-                        activityMain.setShuffling(false);
-                        activityMain.setLooping(false);
-                        activityMain.setLoopingOne(false);
-                        activityMain.showSongPane();
-                        // TODO stop MasterPlaylist from continuing after queue is done
-                        activityMain.setCurrentPlaylistToMaster();
-                        if (!activityMain.isPlaying()) {
-                            activityMain.goToFrontOfQueue();
-                            activityMain.playNext();
-                        }
-                    }
+                (menu, v, menuInfo) -> {
+                    MenuItem itemAddToPlaylist = menu.add(R.string.add_to_playlist);
+                    itemAddToPlaylist.setOnMenuItemClickListener(onMenuItemClickListenerAddToPlaylist);
+                    MenuItem itemAddToQueue = menu.add(R.string.add_to_queue);
+                    itemAddToQueue.setOnMenuItemClickListener(onMenuItemClickListenerAddToQueue);
                 };
+        holder.handle.setOnCreateContextMenuListener(null);
         holder.handle.setOnCreateContextMenuListener(onCreateContextMenuListenerPlaylists);
+
         onClickListenerHandle = v -> holder.handle.performLongClick();
         holder.handle.setOnClickListener(null);
         holder.handle.setOnClickListener(onClickListenerHandle);
+
         onClickListenerViewHolder = v -> {
-            int position1 = holder.getAdapterPosition();
-            if (position1 != RecyclerView.NO_POSITION) {
-                ActivityMain activityMain = ((ActivityMain) fragmentPlaylists.getActivity());
-                if (activityMain != null) {
-                    fragmentPlaylists.setUserPickedPlaylist(holder.randomPlaylist);
-                }
-                NavHostFragment.findNavController(fragmentPlaylists).navigate(
-                        FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentPlaylist());
+            if (position != RecyclerView.NO_POSITION) {
+                listenerCallbackPlaylists.onClickViewHolder(holder.randomPlaylist);
             }
         };
         holder.playlistView.setOnClickListener(null);
@@ -134,13 +98,16 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
     @Override
     public void onViewRecycled(@NonNull ViewHolder holder) {
         super.onViewRecycled(holder);
-        onCreateContextMenuListenerPlaylists = null;
         holder.handle.setOnCreateContextMenuListener(null);
-        onClickListenerHandle = null;
+        onCreateContextMenuListenerPlaylists = null;
+        onMenuItemClickListenerAddToPlaylist = null;
+        onMenuItemClickListenerAddToQueue = null;
         holder.handle.setOnClickListener(null);
-        onClickListenerViewHolder = null;
+        onClickListenerHandle = null;
         holder.playlistView.setOnClickListener(null);
+        onClickListenerViewHolder = null;
         holder.randomPlaylist = null;
+        listenerCallbackPlaylists = null;
     }
 
     @Override
@@ -152,8 +119,8 @@ public class RecyclerViewAdapterPlaylists extends RecyclerView.Adapter<RecyclerV
 
         final public View playlistView;
         final public TextView textViewPlaylistName;
-        public RandomPlaylist randomPlaylist;
         final ImageView handle;
+        public RandomPlaylist randomPlaylist;
 
         public ViewHolder(View view) {
             super(view);

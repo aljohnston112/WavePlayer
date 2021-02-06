@@ -20,7 +20,7 @@ import java.util.List;
 public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewAdapterSongs.ViewHolder> {
 
     public interface ListenerCallbackSongs {
-        void onClickViewHolder(Song Song);
+        void onClickViewHolder(Song song);
         boolean onMenuItemClickAddToPlaylist(Song song);
         boolean onMenuItemClickAddToQueue(Song song);
     }
@@ -79,9 +79,9 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
         onMenuItemClickListenerAddToQueue = menuItem2 ->
                 listenerCallbackSongs.onMenuItemClickAddToQueue(holder.song);
         onCreateContextMenuListenerSongs = (menu, v, menuInfo) -> {
-                    final MenuItem menuItemAddToPlaylist = menu.add(R.string.add_to_playlist);
+                    MenuItem menuItemAddToPlaylist = menu.add(R.string.add_to_playlist);
                     menuItemAddToPlaylist.setOnMenuItemClickListener(onMenuItemClickListenerAddToPlaylist);
-                    final MenuItem menuItemAddToQueue = menu.add(R.string.add_to_queue);
+                    MenuItem menuItemAddToQueue = menu.add(R.string.add_to_queue);
                     menuItemAddToQueue.setOnMenuItemClickListener(onMenuItemClickListenerAddToQueue);
                 };
         holder.handle.setOnCreateContextMenuListener(null);
@@ -107,10 +107,6 @@ public class RecyclerViewAdapterSongs extends RecyclerView.Adapter<RecyclerViewA
     @Override
     public int getItemCount() {
         return songs.size();
-    }
-
-    public List<Song> getSongs() {
-        return songs;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
