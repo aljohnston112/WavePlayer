@@ -27,11 +27,12 @@
     <string name="song_removed">Song removed from playlist</string>
     <string name="undo">Undo</string>
     <string name="pick_folder">Pick a folder with: </string>
-    <string name="add_to_playlist">Add to playlist</string>
     <string name="rename_playlist">Rename playlist</string>
     <string name="add">Add</string>
     <string name="cancel">Cancel</string>
     <string name="search">Search</string>
+
+    <string name="add_to_playlist">Add to playlist</string>
     <string name="add_to_queue">Add to queue</string>
 
     <!--FAB text-->
