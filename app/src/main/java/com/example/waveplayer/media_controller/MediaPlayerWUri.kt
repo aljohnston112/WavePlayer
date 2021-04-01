@@ -5,12 +5,12 @@ import android.media.MediaPlayer
 import android.media.MediaPlayer.OnCompletionListener
 import android.media.MediaPlayer.OnPreparedListener
 import android.os.Build
-import android.util.Log
 import com.example.waveplayer.random_playlist.AudioUri
 import com.example.waveplayer.random_playlist.SongQueue
 import java.util.*
 
 class MediaPlayerWUri internal constructor(context: Context, private var mediaPlayer: MediaPlayer, val id: Long) {
+
     @Volatile
     private var isPrepared: Boolean = true
     fun isPrepared(): Boolean {
@@ -113,7 +113,7 @@ class MediaPlayerWUri internal constructor(context: Context, private var mediaPl
                 val queue = SongQueue.getInstance()
                 mediaPlayer.reset()
                 mediaPlayer.release()
-                mediaPlayer = MediaPlayer.create(context, audioUri.uri)
+                mediaPlayer = MediaPlayer.create(context, audioUri.getUri())
                 mediaPlayer.setOnPreparedListener(null)
                 mediaPlayer.setOnErrorListener(null)
                 mediaPlayer.setOnPreparedListener(mOnPreparedListener)
@@ -122,7 +122,7 @@ class MediaPlayerWUri internal constructor(context: Context, private var mediaPl
                         mediaController.releaseMediaPlayers()
                         queue.addToQueue(audioUri.id)
                         if (!mediaController.isSongInProgress()) {
-                            mediaController.playNext(context)
+                            mediaController.playNext()
                         }
                         return@OnErrorListener false
                     }
@@ -160,7 +160,7 @@ class MediaPlayerWUri internal constructor(context: Context, private var mediaPl
                 mediaController.releaseMediaPlayers()
                 queue.addToQueue(id)
                 if (!mediaController.isSongInProgress()) {
-                    mediaController.playNext(context)
+                    mediaController.playNext()
                 }
                 return@OnErrorListener false
             }

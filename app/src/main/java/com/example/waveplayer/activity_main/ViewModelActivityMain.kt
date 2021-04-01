@@ -4,7 +4,6 @@ import android.view.View
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.waveplayer.random_playlist.AudioUri
 import com.example.waveplayer.random_playlist.RandomPlaylist
 
 class ViewModelActivityMain : ViewModel() {
@@ -38,21 +37,15 @@ class ViewModelActivityMain : ViewModel() {
         this._fabOnClickListener.postValue(fabOnClickListener)
     }
 
-    private val _currentSong: MutableLiveData<AudioUri> = MutableLiveData()
-    val currentSong =_currentSong as LiveData<AudioUri>
-    fun setCurrentSong(audioUri: AudioUri) {
-        _currentSong.postValue(audioUri)
-    }
-
-    private val _playlistToAddToQueue = MutableLiveData<RandomPlaylist>()
-    val playlistToAddToQueue = _playlistToAddToQueue as LiveData<RandomPlaylist>
-    fun setPlaylistToAddToQueue(playlistToAddToQueue: RandomPlaylist) {
+    private val _playlistToAddToQueue = MutableLiveData<RandomPlaylist?>()
+    val playlistToAddToQueue = _playlistToAddToQueue as LiveData<RandomPlaylist?>
+    fun setPlaylistToAddToQueue(playlistToAddToQueue: RandomPlaylist?) {
         _playlistToAddToQueue.value = playlistToAddToQueue
     }
 
-    private val _songToAddToQueue = MutableLiveData<Long>()
-    val songToAddToQueue = _songToAddToQueue as LiveData<Long>
-    fun setSongToAddToQueue(songToAddToQueue: Long) {
+    private val _songToAddToQueue = MutableLiveData<Long?>()
+    val songToAddToQueue = _songToAddToQueue as LiveData<Long?>
+    fun setSongToAddToQueue(songToAddToQueue: Long?) {
         _songToAddToQueue.value = songToAddToQueue
     }
     

@@ -5,21 +5,22 @@ import androidx.lifecycle.ViewModel
 import com.example.waveplayer.random_playlist.Song
 import java.util.*
 
-class ViewModelUserPickedSongs constructor() : ViewModel() {
+class ViewModelUserPickedSongs : ViewModel() {
+
     @GuardedBy("this")
-    private val userPickedSongs: MutableList<Song?>? = ArrayList()
+    private val userPickedSongs: MutableList<Song> = ArrayList()
     @Synchronized
-    fun getUserPickedSongs(): MutableList<Song?>? {
+    fun getUserPickedSongs(): List<Song> {
         return userPickedSongs
     }
 
     @Synchronized
-    fun addUserPickedSong(songs: Song?) {
+    fun addUserPickedSong(songs: Song) {
         userPickedSongs.add(songs)
     }
 
     @Synchronized
-    fun removeUserPickedSong(song: Song?) {
+    fun removeUserPickedSong(song: Song) {
         userPickedSongs.remove(song)
     }
 

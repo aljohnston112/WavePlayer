@@ -12,6 +12,7 @@ import java.util.*
  * @since Copyright 2020
 </T> */
 open class ProbFun<T : Comparable<T>> : Serializable {
+
     // The set of elements to be picked from, mapped to the probabilities of getting picked
     private lateinit var probabilityMap: MutableMap<T, Double>
     fun getKeys(): MutableList<T> {

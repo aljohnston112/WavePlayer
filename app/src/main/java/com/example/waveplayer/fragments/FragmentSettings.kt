@@ -1,17 +1,39 @@
 package com.example.waveplayer.fragments
 
+import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
+import android.widget.EditText
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.navigation.NavController
+import androidx.navigation.fragment.NavHostFragment
+import com.example.waveplayer.R
+import com.example.waveplayer.activity_main.ActivityMain
+import com.example.waveplayer.activity_main.ViewModelActivityMain
 import com.example.waveplayer.databinding.FragmentSettingsBinding
+import com.example.waveplayer.media_controller.MediaData
+import kotlin.math.roundToInt
 
 class FragmentSettings : Fragment() {
-    private var binding: FragmentSettingsBinding? = null
-    private var viewModelActivityMain: ViewModelActivityMain? = null
-    private var onClickListenerFAB: View.OnClickListener? = null
+
+    private var _binding: FragmentSettingsBinding? = null
+    private val binding get() = _binding!!
+
+    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
+
+    private lateinit var mediaData: MediaData
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        mediaData = MediaData.getInstance(requireActivity().applicationContext)
+
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View? {
-        viewModelActivityMain = ViewModelProvider(requireActivity()).get<ViewModelActivityMain?>(ViewModelActivityMain::class.java)
-        binding = FragmentSettingsBinding.inflate(inflater, container, false)
+                              savedInstanceState: Bundle?): View {
+        _binding = FragmentSettingsBinding.inflate(inflater, container, false)
         return binding.getRoot()
     }
 
@@ -29,26 +51,25 @@ class FragmentSettings : Fragment() {
     private fun updateFAB() {
         viewModelActivityMain.setFabImage(R.drawable.ic_check_black_24dp)
         viewModelActivityMain.setFABText(R.string.fab_save)
-        onClickListenerFAB = label@ View.OnClickListener { view: View? ->
+        viewModelActivityMain.setFabOnClickListener{
             val nSongs = getNSongs()
             if (nSongs == -1) {
-                return@label
+                return@setFabOnClickListener
             }
             val percentChangeUp = getPercentChangeUp()
             if (percentChangeUp == -1) {
-                return@label
+                return@setFabOnClickListener
             }
             val percentChangeDown = getPercentChangeDown()
             if (percentChangeDown == -1) {
-                return@label
+                return@setFabOnClickListener
             }
             updateSettings(nSongs, percentChangeUp, percentChangeDown)
             val navController: NavController = NavHostFragment.findNavController(this)
-            if (navController.getCurrentDestination().getId() == R.id.FragmentSettings) {
+            if (navController.currentDestination?.id == R.id.FragmentSettings) {
                 navController.popBackStack()
             }
         }
-        viewModelActivityMain.setFabOnClickListener(onClickListenerFAB)
         viewModelActivityMain.showFab(true)
     }
 
@@ -56,13 +77,12 @@ class FragmentSettings : Fragment() {
         val editTextNSongs: EditText = binding.editTextNSongs
         var nSongs = -1
         try {
-            nSongs = editTextNSongs.getText().toString().toInt()
+            nSongs = editTextNSongs.text.toString().toInt()
         } catch (e: NumberFormatException) {
             e.printStackTrace()
         }
         if (nSongs < 1) {
-            val activityMain: ActivityMain = requireActivity() as ActivityMain
-            activityMain.showToast(R.string.max_percent_error)
+            (requireActivity() as ActivityMain).showToast(R.string.max_percent_error)
             nSongs = -1
         }
         return nSongs
@@ -72,29 +92,27 @@ class FragmentSettings : Fragment() {
         val editTextPercentChangeUp: EditText = binding.editTextPercentChangeUp
         var percentChangeUp = -1
         try {
-            percentChangeUp = editTextPercentChangeUp.getText().toString().toInt()
+            percentChangeUp = editTextPercentChangeUp.text.toString().toInt()
         } catch (e: NumberFormatException) {
             e.printStackTrace()
         }
         if (percentChangeUp < 1 || percentChangeUp > 100) {
-            val activityMain: ActivityMain = requireActivity() as ActivityMain
-            activityMain.showToast(R.string.percent_change_error)
+            (requireActivity() as ActivityMain).showToast(R.string.percent_change_error)
             percentChangeUp = -1
         }
         return percentChangeUp
     }
 
     private fun getPercentChangeDown(): Int {
-        val activityMain: ActivityMain = requireActivity() as ActivityMain
         val editTextPercentChangeDown: EditText = binding.editTextPercentChangeDown
         var percentChangeDown = -1
         try {
-            percentChangeDown = editTextPercentChangeDown.getText().toString().toInt()
+            percentChangeDown = editTextPercentChangeDown.text.toString().toInt()
         } catch (e: NumberFormatException) {
             e.printStackTrace()
         }
         if (percentChangeDown < 1 || percentChangeDown > 100) {
-            activityMain.showToast(R.string.percent_change_error)
+            (requireActivity() as ActivityMain).showToast(R.string.percent_change_error)
             percentChangeDown = -1
         }
         return percentChangeDown
@@ -102,28 +120,30 @@ class FragmentSettings : Fragment() {
 
     private fun updateSettings(nSongs: Int, percentChangeUp: Int, percentChangeDown: Int) {
         val activityMain: ActivityMain = requireActivity() as ActivityMain
-        val maxPercent = 1.0 / nSongs as Double
-        activityMain.setMaxPercent(maxPercent)
-        activityMain.setPercentChangeUp(percentChangeUp as Double / 100.0)
-        activityMain.setPercentChangeDown(percentChangeDown as Double / 100.0)
+        val maxPercent = 1.0 / nSongs.toDouble()
+        mediaData.setMaxPercent(maxPercent)
+        mediaData.setPercentChangeUp(percentChangeUp.toDouble() / 100.0)
+        mediaData.setPercentChangeDown(percentChangeDown.toDouble() / 100.0)
         activityMain.saveFile()
     }
 
     private fun loadSettings() {
-        val activityMain: ActivityMain = requireActivity() as ActivityMain
         val editTextNSongs: EditText = binding.editTextNSongs
         val editTextPercentChangeUp: EditText = binding.editTextPercentChangeUp
         val editTextPercentChangeDown: EditText = binding.editTextPercentChangeDown
-        editTextNSongs.setText(Math.round(1.0 / activityMain.getMaxPercent()) as Int.toString())
-        editTextPercentChangeUp.setText(Math.round(activityMain.getPercentChangeUp() * 100.0) as Int.toString())
-        editTextPercentChangeDown.setText(Math.round(activityMain.getPercentChangeDown() * 100.0) as Int.toString())
+        editTextNSongs.setText((1.0 / mediaData.getMaxPercent()).roundToInt().toString())
+        editTextPercentChangeUp.setText((mediaData.getPercentChangeUp() * 100.0).roundToInt().toString())
+        editTextPercentChangeDown.setText((mediaData.getPercentChangeDown() * 100.0).roundToInt().toString())
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     override fun onDestroy() {
-        super.onDestroyView()
+        super.onDestroy()
         viewModelActivityMain.setFabOnClickListener(null)
-        onClickListenerFAB = null
-        viewModelActivityMain = null
-        binding = null
     }
+
 }

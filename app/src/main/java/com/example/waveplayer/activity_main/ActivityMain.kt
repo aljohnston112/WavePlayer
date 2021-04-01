@@ -64,8 +64,8 @@ class ActivityMain : AppCompatActivity() {
     private lateinit var onDestinationChangedListenerToolbar: NavController.OnDestinationChangedListener
     private var fragmentSongVisible = false
 
-    private val mediaController = MediaController.getInstance(applicationContext)
-    private val mediaData = MediaData.getInstance(applicationContext)
+    private lateinit var mediaController: MediaController
+    private lateinit var mediaData: MediaData
     private val songQueue = SongQueue.getInstance()
 
     // region lifecycle
@@ -75,6 +75,8 @@ class ActivityMain : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setUpViewModelActivityMainObservers()
+        mediaController = MediaController.getInstance(applicationContext)
+        mediaData = MediaData.getInstance(applicationContext)
     }
 
     private fun setUpViewModelActivityMainObservers() {
@@ -192,14 +194,14 @@ class ActivityMain : AppCompatActivity() {
 
     private fun setUpAfterServiceConnection() {
         if (serviceMain?.loaded() == true) {
-            if (mediaController.isPlaying().getValue() == true && !fragmentSongVisible()) {
+            if (mediaController.isPlaying.value == true && !fragmentSongVisible()) {
                 hideSongPane()
                 navigateTo(R.id.fragmentSong)
             } else {
                 navigateTo(R.id.FragmentTitle)
             }
         } else {
-            val fragmentManager: FragmentManager = getSupportFragmentManager()
+            val fragmentManager: FragmentManager = supportFragmentManager
             val fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment)
             if (fragment != null) {
                 NavHostFragment.findNavController(fragment).popBackStack(R.id.fragmentLoading, true)
@@ -236,8 +238,7 @@ class ActivityMain : AppCompatActivity() {
                         navigateTo(R.id.FragmentTitle)
                     }
                     (resources.getString(R.string.broadcast_receiver_action_new_song)) -> {
-                        // TODO serviceMain.setCurrentSong()... might not be needed
-                        mediaController.getCurrentAudioUri()?.let { viewModelActivityMain.setCurrentSong(it) }
+
                     }
                 }
             }
@@ -250,7 +251,7 @@ class ActivityMain : AppCompatActivity() {
         registerReceiver(broadcastReceiverServiceMain, filter)
     }
 
-    private fun hideSongPane() {
+    fun hideSongPane() {
         val fragmentPaneSong: View = binding.fragmentSongPane
         if (fragmentPaneSong.visibility != View.INVISIBLE) {
             runOnUiThread {
@@ -264,7 +265,7 @@ class ActivityMain : AppCompatActivity() {
         }
     }
 
-    private fun showSongPane() {
+    fun showSongPane() {
         val fragmentPaneSong: View = binding.fragmentSongPane
         if (fragmentPaneSong.visibility != View.VISIBLE) {
             runOnUiThread {
@@ -396,7 +397,7 @@ class ActivityMain : AppCompatActivity() {
         this.fragmentSongVisible = fragmentSongVisible
     }
 
-    private fun fragmentSongVisible(): Boolean {
+    fun fragmentSongVisible(): Boolean {
         return fragmentSongVisible
     }
 

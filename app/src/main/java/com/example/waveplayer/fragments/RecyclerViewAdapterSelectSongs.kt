@@ -10,15 +10,18 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.waveplayer.R
 import com.example.waveplayer.random_playlist.Song
 
-class RecyclerViewAdapterSelectSongs(private val listenerCallbackSelectSongs: ListenerCallbackSelectSongs?,
-                                     private var allSongs: MutableList<Song?>?) : RecyclerView.Adapter<RecyclerViewAdapterSelectSongs.ViewHolder?>() {
+class RecyclerViewAdapterSelectSongs(
+        private val listenerCallbackSelectSongs: ListenerCallbackSelectSongs,
+        private var allSongs: List<Song>
+) : RecyclerView.Adapter<RecyclerViewAdapterSelectSongs.ViewHolder>() {
+
     interface ListenerCallbackSelectSongs {
-        open fun getUserPickedSongs(): MutableList<Song?>?
-        open fun removeUserPickedSong(song: Song?)
-        open fun addUserPickedSong(song: Song?)
+        fun getUserPickedSongs(): List<Song>
+        fun removeUserPickedSong(song: Song)
+        fun addUserPickedSong(song: Song)
     }
 
-    fun updateList(songs: MutableList<Song?>?) {
+    fun updateList(songs: List<Song>) {
         allSongs = songs
         notifyDataSetChanged()
     }
@@ -29,7 +32,7 @@ class RecyclerViewAdapterSelectSongs(private val listenerCallbackSelectSongs: Li
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val linearLayout: ConstraintLayout = holder.songView.findViewById(R.id.constraint_layout_song_name)
+        val linearLayout: ConstraintLayout = holder.itemView.findViewById(R.id.constraint_layout_song_name)
         val userPickedSongs = listenerCallbackSelectSongs.getUserPickedSongs()
         if (userPickedSongs.contains(allSongs.get(position))) {
             allSongs.get(position).setSelected(true)
@@ -45,31 +48,17 @@ class RecyclerViewAdapterSelectSongs(private val listenerCallbackSelectSongs: Li
         holder.textViewSongName.setText(allSongs.get(position).title)
     }
 
-    override fun onViewRecycled(holder: ViewHolder) {
-        super.onViewRecycled(holder)
-        /*
-        holder.songView.setOnClickListener(null);
-        onClickListener = null;
-        holder.song = null;
-        listenerCallbackSelectSongs = null;
-
-         */
-    }
-
     override fun getItemCount(): Int {
         return allSongs.size
     }
 
-    inner class ViewHolder(view: View?) : RecyclerView.ViewHolder(view) {
-        val songView: View?
-        val textViewSongName: TextView?
-        var song: Song? = null
+    inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val textViewSongName: TextView = view.findViewById(R.id.text_view_songs_name)
+        lateinit var song: Song
 
         init {
             // TODO invisible or gone?
             view.findViewById<View?>(R.id.song_handle).visibility = View.GONE
-            songView = view
-            textViewSongName = view.findViewById(R.id.text_view_songs_name)
             val constraintLayout: ConstraintLayout = view.findViewById(R.id.constraint_layout_song_name)
             // TODO color resources
             val onClickListener = View.OnClickListener { v: View? ->

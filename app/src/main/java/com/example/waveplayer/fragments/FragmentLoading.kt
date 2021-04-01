@@ -1,81 +1,98 @@
 package com.example.waveplayer.fragments
 
 import android.Manifest
+import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
+import android.widget.ProgressBar
+import android.widget.TextView
+import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.os.HandlerCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
+import androidx.fragment.app.activityViewModels
+import com.example.waveplayer.R
+import com.example.waveplayer.activity_main.ViewModelActivityMain
 import com.example.waveplayer.databinding.FragmentLoadingBinding
+import com.example.waveplayer.media_controller.MediaData
+import com.example.waveplayer.media_controller.ViewModelFragmentLoading
+import kotlin.math.roundToInt
 
 class FragmentLoading : Fragment() {
-    private var binding: FragmentLoadingBinding? = null
-    private var viewModelActivityMain: ViewModelActivityMain? = null
-    private var viewModel: ViewModelFragmentLoading? = null
-    private var broadcastReceiver: BroadcastReceiver? = null
-    private var handler: Handler? = HandlerCompat.createAsync(Looper.getMainLooper())
-    private var runnableAskForPermission: Runnable? = Runnable { askForPermissionAndCreateMediaController() }
-    private var observerLoadingProgress: Observer<Double?>? = null
-    private var observerLoadingText: Observer<String?>? = null
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View? {
-        setUpViewModels()
-        setUpObservers()
-        binding = FragmentLoadingBinding.inflate(inflater, container, false)
-        return binding.getRoot()
+    private var _binding: FragmentLoadingBinding? = null
+    private val binding get() = _binding!!
+
+    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
+    private val viewModelFragmentLoading by activityViewModels<ViewModelFragmentLoading>()
+
+    private var broadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val action: String? = intent.action
+            if (action != null) {
+                if (action == resources.getString(
+                                R.string.broadcast_receiver_action_service_connected
+                        )
+                ) {
+                    // TODO is this needed if onResume has it?
+                    askForPermissionAndCreateMediaController()
+                }
+            }
+        }
     }
 
-    private fun setUpViewModels() {
-        viewModel = ViewModelProvider(this).get<ViewModelFragmentLoading?>(ViewModelFragmentLoading::class.java)
-        viewModelActivityMain = ViewModelProvider(requireActivity()).get<ViewModelActivityMain?>(ViewModelActivityMain::class.java)
+    private var handler: Handler = HandlerCompat.createAsync(Looper.getMainLooper())
+    private var runnableAskForPermission = Runnable { askForPermissionAndCreateMediaController() }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
+                              savedInstanceState: Bundle?): View {
+        setUpObservers()
+        _binding = FragmentLoadingBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     private fun setUpObservers() {
-        observerLoadingProgress = Observer { loadingProgress: Double? ->
+        viewModelFragmentLoading.getLoadingProgress().observe(viewLifecycleOwner){ loadingProgress: Double? ->
             val progressBar: ProgressBar = binding.progressBarLoading
-            progressBar.post(Runnable {
+            progressBar.post {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    progressBar.setProgress(Math.round(loadingProgress * 100) as Int, true)
+                    if (loadingProgress != null) {
+                        progressBar.setProgress((loadingProgress * 100.0).roundToInt(), true)
+                    }
                 } else {
-                    progressBar.setProgress(Math.round(loadingProgress * 100) as Int)
+                    if (loadingProgress != null) {
+                        progressBar.progress = (loadingProgress * 100.0).roundToInt()
+                    }
                 }
-            })
+            }
         }
-        observerLoadingText = Observer { loadingText: String? ->
+        viewModelFragmentLoading.getLoadingText().observe(viewLifecycleOwner) { loadingText: String? ->
             val textView: TextView = binding.textViewLoading
-            textView.post(Runnable { textView.setText(loadingText) })
+            textView.post { textView.text = loadingText }
         }
-        viewModel.getLoadingProgress().observe(viewLifecycleOwner, observerLoadingProgress)
-        viewModel.getLoadingText().observe(viewLifecycleOwner, observerLoadingText)
     }
 
     override fun onResume() {
         super.onResume()
         updateMainContent()
         setUpBroadcastReceiver()
-        val activityMain: ActivityMain = requireActivity() as ActivityMain
-        activityMain.fragmentLoadingStarted()
     }
 
     private fun setUpBroadcastReceiver() {
-        val activityMain: ActivityMain = requireActivity() as ActivityMain
         val filterComplete = IntentFilter()
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT)
-        filterComplete.addAction(activityMain.getResources().getString(
+        filterComplete.addAction(requireActivity().resources.getString(
                 R.string.broadcast_receiver_action_service_connected))
-        broadcastReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                val action: String = intent.getAction()
-                if (action != null) {
-                    if (action == resources.getString(
-                                    R.string.broadcast_receiver_action_service_connected)) {
-                        // TODO is this needed if onResume has it?
-                        askForPermissionAndCreateMediaController()
-                    }
-                }
-            }
-        }
-        activityMain.registerReceiver(broadcastReceiver, filterComplete)
+        requireActivity().registerReceiver(broadcastReceiver, filterComplete)
     }
 
     fun askForPermissionAndCreateMediaController() {
@@ -102,8 +119,7 @@ class FragmentLoading : Fragment() {
     }
 
     private fun permissionGranted() {
-        val activityMain: ActivityMain = requireActivity() as ActivityMain
-        activityMain.permissionGranted()
+        MediaData.getInstance(requireContext().applicationContext).loadData(requireContext().applicationContext)
     }
 
     @SuppressLint("ShowToast")
@@ -113,8 +129,7 @@ class FragmentLoading : Fragment() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (requestCode == REQUEST_CODE_PERMISSION.toInt() && grantResults.size > 1 && grantResults[0] != PackageManager.PERMISSION_GRANTED ||
                     grantResults[1] != PackageManager.PERMISSION_GRANTED) {
-                val toast: Toast
-                toast = if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                val toast: Toast = if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                     Toast.makeText(context, R.string.permission_read_needed, Toast.LENGTH_LONG)
                 } else {
                     Toast.makeText(context, R.string.permission_write_needed, Toast.LENGTH_LONG)
@@ -127,25 +142,18 @@ class FragmentLoading : Fragment() {
         }
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
     override fun onDestroy() {
         super.onDestroy()
-        val activityMain: ActivityMain = requireActivity() as ActivityMain
-        activityMain.unregisterReceiver(broadcastReceiver)
-        broadcastReceiver = null
-        runnableAskForPermission = null
-        handler = null
-        /*
-        viewModel.getLoadingProgress().removeObservers(getViewLifecycleOwner());
-        viewModel.getLoadingText().removeObservers(getViewLifecycleOwner());
-
-         */observerLoadingProgress = null
-        observerLoadingText = null
-        viewModel = null
-        viewModelActivityMain = null
-        binding = null
+        requireActivity().unregisterReceiver(broadcastReceiver)
     }
 
     companion object {
         private const val REQUEST_CODE_PERMISSION: Short = 245
     }
+
 }

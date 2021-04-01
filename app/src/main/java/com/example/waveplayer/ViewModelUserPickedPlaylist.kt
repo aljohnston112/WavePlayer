@@ -4,7 +4,8 @@ import androidx.annotation.GuardedBy
 import androidx.lifecycle.ViewModel
 import com.example.waveplayer.random_playlist.RandomPlaylist
 
-class ViewModelUserPickedPlaylist constructor() : ViewModel() {
+class ViewModelUserPickedPlaylist : ViewModel() {
+
     @GuardedBy("this")
     @Volatile
     private var userPickedPlaylist: RandomPlaylist? = null
@@ -17,4 +18,5 @@ class ViewModelUserPickedPlaylist constructor() : ViewModel() {
     fun setUserPickedPlaylist(userPickedPlaylist: RandomPlaylist?) {
         this.userPickedPlaylist = userPickedPlaylist
     }
+
 }

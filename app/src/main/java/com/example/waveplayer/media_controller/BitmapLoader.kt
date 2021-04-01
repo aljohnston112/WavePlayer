@@ -14,7 +14,8 @@ import java.io.IOException
 import java.io.InputStream
 
 object BitmapLoader {
-    fun getThumbnail(uri: Uri?, width: Int, height: Int, context: Context?): Bitmap? {
+
+    fun getThumbnail(uri: Uri, width: Int, height: Int, context: Context): Bitmap? {
         var bitmap: Bitmap? = null
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             try {
@@ -24,16 +25,16 @@ object BitmapLoader {
                 e.printStackTrace()
             }
         } else {
-            val mmr: MediaMetadataRetriever? = MediaMetadataRetriever()
+            val mmr = MediaMetadataRetriever()
             try {
-                mmr.setDataSource(context.getContentResolver().openFileDescriptor(
-                        uri, "r").getFileDescriptor())
+                mmr.setDataSource(context.contentResolver.openFileDescriptor(
+                        uri, "r")?.fileDescriptor)
             } catch (e: FileNotFoundException) {
                 e.printStackTrace()
             }
             var inputStream: InputStream? = null
-            if (mmr.getEmbeddedPicture() != null) {
-                inputStream = ByteArrayInputStream(mmr.getEmbeddedPicture())
+            if (mmr.embeddedPicture != null) {
+                inputStream = ByteArrayInputStream(mmr.embeddedPicture)
             }
             mmr.release()
             bitmap = BitmapFactory.decodeStream(inputStream)
@@ -44,12 +45,12 @@ object BitmapLoader {
         return bitmap
     }
 
-    fun getResizedBitmap(bm: Bitmap?, newWidth: Int, newHeight: Int): Bitmap? {
-        val width: Int = bm.getWidth()
-        val height: Int = bm.getHeight()
-        val scaleWidth: Float = (newWidth as Float) / width
-        val scaleHeight: Float = (newHeight as Float) / height
-        val matrix: Matrix? = Matrix()
+    fun getResizedBitmap(bm: Bitmap, newWidth: Int, newHeight: Int): Bitmap? {
+        val width: Int = bm.width
+        val height: Int = bm.height
+        val scaleWidth: Float = (newWidth.toFloat()) / width
+        val scaleHeight: Float = (newHeight.toFloat()) / height
+        val matrix: Matrix = Matrix()
         matrix.postScale(scaleWidth, scaleHeight)
         return Bitmap.createScaledBitmap(bm, newWidth, newHeight, true)
     }

@@ -50,14 +50,16 @@ class ServiceMain : LifecycleService() {
         }
     }
     private var loaded = false
-    private var mediaController: MediaController = MediaController.getInstance(applicationContext)
-    private val mediaData = MediaData.getInstance(applicationContext)
+    private lateinit var mediaController: MediaController
+    private lateinit var mediaData: MediaData
     private val songQueue = SongQueue.getInstance()
 
     // region lifecycle
     // region onCreate
     override fun onCreate() {
         super.onCreate()
+        mediaController = MediaController.getInstance(applicationContext)
+        mediaData = MediaData.getInstance(applicationContext)
         setUpExceptionSaver()
         logLastThrownException()
         setUpBroadCastReceivers()
@@ -118,7 +120,7 @@ class ServiceMain : LifecycleService() {
             updateNotification()
             notification = notificationCompatBuilder?.build()
             startForeground(NOTIFICATION_CHANNEL_ID.hashCode(), notification)
-            mediaController.isPlaying().observe(this){
+            mediaController.isPlaying.observe(this){
                 updateNotification()
             }
         }
@@ -221,9 +223,11 @@ class ServiceMain : LifecycleService() {
 
     private fun updateSongArt() {
         // TODO update song art background
-        if (mediaController.getCurrentAudioUri() != null) {
-            val bitmap = BitmapLoader.getThumbnail(
-                    mediaController.getCurrentUri(), 92, 92, applicationContext)
+        if (mediaController.currentAudioUri.value != null) {
+            val bitmap = mediaController.getCurrentUri()?.let {
+                BitmapLoader.getThumbnail(
+                        it, 92, 92, applicationContext)
+            }
             if (bitmap != null) {
                 // TODO why? Try to get height of imageView and make the width match
                 // BitmapLoader.getResizedBitmap(bitmap, songPaneArtWidth, songPaneArtHeight);
@@ -243,14 +247,14 @@ class ServiceMain : LifecycleService() {
     }
 
     private fun updateNotificationSongName() {
-        if (mediaController.getCurrentAudioUri() != null) {
+        if (mediaController.currentAudioUri.value != null) {
             if (notificationHasArt) {
-                mediaController.getCurrentAudioUri()?.title?.let{
+                mediaController.currentAudioUri.value?.title?.let{
                     remoteViewsNotificationLayoutWithArt?.setTextViewText(
                             R.id.textViewNotificationSongPaneSongNameWArt, it)
                 }
             } else {
-                mediaController.getCurrentAudioUri()?.title?.let{
+                mediaController.currentAudioUri.value?.title?.let{
                     remoteViewsNotificationLayoutWithoutArt?.setTextViewText(
                             R.id.textViewNotificationSongPaneSongName, it)
                 }
@@ -267,7 +271,7 @@ class ServiceMain : LifecycleService() {
     }
 
     private fun updateNotificationPlayButton() {
-        if (mediaController.isPlaying().value == true) {
+        if (mediaController.isPlaying.value == true) {
             if (notificationHasArt) {
                 remoteViewsNotificationLayoutWithArt?.setImageViewResource(
                         R.id.imageButtonNotificationSongPanePlayPauseWArt, R.drawable.pause_black_24dp)
@@ -306,7 +310,7 @@ class ServiceMain : LifecycleService() {
     }
 
     private fun taskRemoved() {
-        if (mediaController.isPlaying().value == true) {
+        if (mediaController.isPlaying.value == true) {
             mediaController.pauseOrPlay()
         }
         mediaController.releaseMediaPlayers()
@@ -316,7 +320,7 @@ class ServiceMain : LifecycleService() {
 
     override fun onDestroy() {
         super.onDestroy()
-        if (mediaController.isPlaying().value == true) {
+        if (mediaController.isPlaying.value == true) {
             mediaController.pauseOrPlay()
         }
         mediaController.releaseMediaPlayers()

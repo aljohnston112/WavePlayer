@@ -5,14 +5,15 @@ import java.util.*
 
 class NestedProbMap : Serializable {
     // The ProbFun used to determine if a song should play during a specific hour
-    private val probabilityFunctionHours: ProbMap<Int?>? = ProbMap()
+    private val probabilityFunctionHours: ProbMap<Int> = ProbMap()
 
     // The ProbFun used to determine if a song should play during a specific day
-    private val probabilityFunctionDays: ProbMap<Int?>? = ProbMap()
+    private val probabilityFunctionDays: ProbMap<Int> = ProbMap()
 
     // The ProbFun used to determine if a song should play during a specific month
-    private val probabilityFunctionMonths: ProbMap<Int?>? = ProbMap()
-    fun outcome(random: Random?): Boolean {
+    private val probabilityFunctionMonths: ProbMap<Int> = ProbMap()
+
+    fun outcome(random: Random): Boolean {
         val date = Calendar.getInstance()
         return probabilityFunctionHours.outcome(date[Calendar.HOUR_OF_DAY], random) &&
                 probabilityFunctionDays.outcome(date[Calendar.DAY_OF_WEEK] - 1, random) &&

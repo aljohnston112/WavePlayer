@@ -13,11 +13,7 @@ class AudioUri(
         val artist: String,
         val title: String,
         val id: Long
-        ) : Comparable<AudioUri>, Serializable {
-
-    val uri: Uri by lazy{
-        getUri(id)
-    }
+) : Comparable<AudioUri>, Serializable {
 
     private val nestProbMap: NestedProbMap = NestedProbMap()
 
@@ -25,7 +21,7 @@ class AudioUri(
     fun getDuration(context: Context): Int {
         if (duration == -1) {
             val mediaMetadataRetriever = MediaMetadataRetriever()
-            mediaMetadataRetriever.setDataSource(context, uri)
+            mediaMetadataRetriever.setDataSource(context, getUri(id))
             var time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
             if (time == null) {
                 time = "00:00:00"
@@ -57,11 +53,15 @@ class AudioUri(
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is AudioUri && uri == other.uri
+        return other is AudioUri && getUri(id) == getUri(other.id)
     }
 
     override fun hashCode(): Int {
-        return uri.toString().hashCode()
+        return getUri(id).toString().hashCode()
+    }
+
+    fun getUri(): Uri {
+        return AudioUri.getUri(id)
     }
 
     companion object {
@@ -71,7 +71,9 @@ class AudioUri(
                 try {
                     context.openFileInput(songID.toString()).use { fileInputStream ->
                         ObjectInputStream(fileInputStream).use { objectInputStream ->
-                            return objectInputStream.readObject() as AudioUri } }
+                            return objectInputStream.readObject() as AudioUri
+                        }
+                    }
                 } catch (e: FileNotFoundException) {
                     e.printStackTrace()
                 } catch (e: IOException) {
@@ -88,4 +90,5 @@ class AudioUri(
         }
 
     }
+
 }

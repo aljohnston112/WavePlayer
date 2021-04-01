@@ -18,6 +18,7 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.ExecutorService
 
 class MediaData(context: Context) {
+
     private val _loadingText: MutableLiveData<String> = MutableLiveData()
     val loadingText = _loadingText as LiveData<String>
 
@@ -25,7 +26,7 @@ class MediaData(context: Context) {
     val loadingProgress = _loadingProgress as LiveData<Double>
 
     private val songIDToMediaPlayerWUriHashMap: HashMap<Long, MediaPlayerWUri> = HashMap()
-    private val playlists: ArrayList<RandomPlaylist> = ArrayList()
+    private val playlists: MutableList<RandomPlaylist> = mutableListOf()
     private var songDAO: SongDAO
     private var masterPlaylist: RandomPlaylist? = null
     private var settings = Settings(0.1, 0.1, 0.5, 0.0)
@@ -49,7 +50,7 @@ class MediaData(context: Context) {
         }
     }
 
-    fun getPlaylists(): ArrayList<RandomPlaylist> {
+    fun getPlaylists(): List<RandomPlaylist> {
         return playlists
     }
 
@@ -136,7 +137,7 @@ class MediaData(context: Context) {
         return settings.lowerProb
     }
 
-    private fun loadData(context: Context) {
+    fun loadData(context: Context) {
         ServiceMain.executorServiceFIFO.execute { SaveFile.loadSaveFile(context, this) }
         getSongsFromMediaStore(context)
     }
@@ -175,7 +176,11 @@ class MediaData(context: Context) {
                         if (!file.exists() || songDAO.getSong(id) == null) {
                             val audioURI = AudioUri(displayName, artist, title, id)
                             try {
-                                context.openFileOutput(id.toString(), Context.MODE_PRIVATE).use { fos -> ObjectOutputStream(fos).use { objectOutputStream -> objectOutputStream.writeObject(audioURI) } }
+                                context.openFileOutput(id.toString(), Context.MODE_PRIVATE).use { fos ->
+                                    ObjectOutputStream(fos).use { objectOutputStream ->
+                                        objectOutputStream.writeObject(audioURI)
+                                    }
+                                }
                             } catch (e: FileNotFoundException) {
                                 e.printStackTrace()
                             } catch (e: IOException) {
@@ -266,14 +271,13 @@ class MediaData(context: Context) {
     init {
         val songDatabase = Room.databaseBuilder(context, SongDatabase::class.java, SONG_DATABASE_NAME).build()
         songDAO = songDatabase.songDAO()
-        loadData(context)
     }
 
     companion object {
         const val SONG_DATABASE_NAME: String = "SONG_DATABASE_NAME"
         private val MEDIA_DATA_LOCK: Any = Any()
         private const val MASTER_PLAYLIST_NAME: String = "MASTER_PLAYLIST_NAME"
-        private lateinit var INSTANCE: MediaData
+        private var INSTANCE: MediaData? = null
 
         /** Returns a singleton instance of this class.
          * loadData(Context context) must be called for methods on the singleton to function properly.
@@ -281,10 +285,10 @@ class MediaData(context: Context) {
          */
         fun getInstance(context: Context): MediaData {
             synchronized(MEDIA_DATA_LOCK) {
-                if (!this::INSTANCE::isInitialized.get()) {
+                if (INSTANCE == null) {
                     INSTANCE = MediaData(context)
                 }
-                return INSTANCE
+                return INSTANCE!!
             }
         }
     }
