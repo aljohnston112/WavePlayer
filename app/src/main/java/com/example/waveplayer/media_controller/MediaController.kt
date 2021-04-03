@@ -219,6 +219,8 @@ class MediaController private constructor(val context: Context) {
      * @param songID The id of the song to make and play.
      */
     private fun makeIfNeededAndPlay(context: Context, songID: Long) {
+        _currentAudioUri.value = AudioUri.getAudioUri(context, songID)
+        currentPlaylist?.setIndexTo(songID)
         var mediaPlayerWUri: MediaPlayerWUri? = mediaData.getMediaPlayerWUri(songID)
         if (mediaPlayerWUri == null) {
             try {
@@ -242,8 +244,6 @@ class MediaController private constructor(val context: Context) {
             _isPlaying.postValue(true)
             songInProgress = true
         }
-        _currentAudioUri.value = mediaPlayerWUri?.id?.let { AudioUri.getAudioUri(context, it) }
-        mediaPlayerWUri?.id?.let { currentPlaylist?.setIndexTo(it) }
     }
 
     /** Plays the next song in the queue
@@ -268,11 +268,15 @@ class MediaController private constructor(val context: Context) {
                 return false
             }
         } else if (shuffling) {
-            _currentAudioUri.value = currentPlaylist?.next(context, random)
-            _currentAudioUri.value?.id?.let { currentPlaylist?.setIndexTo(it) }
-            _currentAudioUri.value?.id?.let { songQueue.addToQueue(it) }
-            makeIfNeededAndPlay(context, songQueue.next())
-            return true
+            return if (songQueue.hasNext()) {
+                makeIfNeededAndPlay(context, songQueue.next())
+                _currentAudioUri.value = currentPlaylist?.next(context, random)
+                _currentAudioUri.value?.id?.let { currentPlaylist?.setIndexTo(it) }
+                _currentAudioUri.value?.id?.let { songQueue.addToQueue(it) }
+                true
+            } else {
+                false
+            }
         }
         return false
     }
@@ -287,11 +291,12 @@ class MediaController private constructor(val context: Context) {
      * @param context Context used to request audio focus and make a MediaPlayer if needed.
      */
     private fun playNextInPlaylist() {
-        _currentAudioUri.value = currentPlaylist?.next(context, random, looping, shuffling)
-        if (_currentAudioUri.value != null) {
-            _currentAudioUri.value?.id?.let { currentPlaylist?.setIndexTo(it) }
-            _currentAudioUri.value?.id?.let { songQueue.addToQueue(it) }
+        val cau = currentPlaylist?.next(context, random, looping, shuffling)
+        if (cau != null) {
+            currentPlaylist?.setIndexTo(cau.id)
+            songQueue.addToQueue(cau.id)
             makeIfNeededAndPlay(context, songQueue.next())
+            _currentAudioUri.value = cau as AudioUri
         } else {
             _isPlaying.postValue(false)
             songInProgress = false
@@ -315,12 +320,12 @@ class MediaController private constructor(val context: Context) {
             } else if (looping) {
                 if (shuffling) {
                     songQueue.goToBack()
-                    if (songQueue.hasPrevious()) {
+                    return if (songQueue.hasPrevious()) {
                         makeIfNeededAndPlay(context, songQueue.previous())
                         songQueue.next()
-                        return true
+                        true
                     } else {
-                        return false
+                        false
                     }
                 }
             } else {
@@ -440,9 +445,9 @@ class MediaController private constructor(val context: Context) {
 
     init {
         onCompletionListener = OnCompletionListener {
+            playNext()
             val audioUri: AudioUri? = currentAudioUri.value
             audioUri?.id?.let { it1 -> MediaData.getInstance(context).getMediaPlayerWUri(it1)?.resetIfMKV(audioUri, context) }
-            playNext()
             val intent = Intent()
             intent.addCategory(Intent.CATEGORY_DEFAULT)
             intent.action = context.resources.getString(R.string.broadcast_receiver_action_new_song)

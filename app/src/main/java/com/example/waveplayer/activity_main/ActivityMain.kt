@@ -22,6 +22,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
+import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.navigation.NavController
@@ -74,6 +75,7 @@ class ActivityMain : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.viewModelActivityMain = viewModelActivityMain
         setUpViewModelActivityMainObservers()
         mediaController = MediaController.getInstance(applicationContext)
         mediaData = MediaData.getInstance(applicationContext)
@@ -212,20 +214,17 @@ class ActivityMain : AppCompatActivity() {
     }
 
     fun navigateTo(id: Int) {
-        // Log.v(TAG, "navigateTo start");
-        runOnUiThread(Runnable {
-            val fragmentManager: FragmentManager = getSupportFragmentManager()
+        runOnUiThread {
+            val fragmentManager: FragmentManager = supportFragmentManager
             val fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment)
             if (fragment != null) {
                 val navController: NavController = NavHostFragment.findNavController(fragment)
                 navController.navigate(id)
             }
-        })
-        // Log.v(TAG, "navigateTo end");
+        }
     }
 
-    fun setUpBroadcastReceiver() {
-        // Log.v(TAG, "setting up BroadcastReceivers");
+    private fun setUpBroadcastReceiver() {
         broadcastReceiverServiceMain = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 when (intent.action) {
@@ -359,6 +358,18 @@ class ActivityMain : AppCompatActivity() {
                         showSongPane()
                     }
                 }
+                return true
+            }
+            R.id.action_add_to_playlist ->{
+                val bundle = Bundle()
+                bundle.putSerializable(
+                        DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG,
+                        viewModelActivityMain.songToAddToQueue.value?.let { mediaData.getSong(it) }
+                )
+                val dialogFragment: DialogFragment = DialogFragmentAddToPlaylist()
+                dialogFragment.arguments = bundle
+                dialogFragment.show(supportFragmentManager, "TAG")
+                return true
             }
         }
         return super.onOptionsItemSelected(item)

@@ -332,9 +332,6 @@ class ServiceMain : LifecycleService() {
 
     // endregion lifecycle
     // region mediaControls
-    fun permissionGranted() {
-        executorServicePool.execute { mediaController = MediaController.getInstance(applicationContext) }
-    }
 
     fun loaded(): Boolean {
         return loaded

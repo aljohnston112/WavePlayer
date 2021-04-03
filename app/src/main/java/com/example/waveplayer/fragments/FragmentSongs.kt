@@ -193,14 +193,14 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
 
     override fun onDestroyView() {
         super.onDestroyView()
+        val activityMain: ActivityMain = requireActivity() as ActivityMain
+        activityMain.hideKeyboard(requireView())
         _binding = null
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        val activityMain: ActivityMain = requireActivity() as ActivityMain
         requireActivity().unregisterReceiver(broadcastReceiver)
-        activityMain.hideKeyboard(requireView())
         val toolbar: Toolbar = requireActivity().findViewById(R.id.toolbar)
         val menu = toolbar.menu
         if (menu != null) {

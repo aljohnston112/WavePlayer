@@ -237,7 +237,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
 
     override fun onMenuItemClickAddToPlaylist(song: Song): Boolean {
         val bundle = Bundle()
-        bundle.putSerializable(DialogFragmentAddToPlaylist.Companion.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, song)
+        bundle.putSerializable(DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, song)
         val dialogFragment: DialogFragment = DialogFragmentAddToPlaylist()
         dialogFragment.arguments = bundle
         dialogFragment.show(parentFragmentManager, tag)

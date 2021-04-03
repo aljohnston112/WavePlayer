@@ -9,7 +9,7 @@ import java.util.*
  * @since Copyright 2019
  * A playlist where a group of media files are picked from randomly.
  */
-class RandomPlaylist(name: String, music: MutableList<Song>, maxPercent: Double,
+class RandomPlaylist constructor(name: String, music: MutableList<Song>, maxPercent: Double,
                      comparable: Boolean) : Serializable {
     private val playlistArray: MutableList<Long> = ArrayList()
 

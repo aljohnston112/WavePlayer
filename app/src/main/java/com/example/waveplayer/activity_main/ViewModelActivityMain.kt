@@ -10,31 +10,31 @@ class ViewModelActivityMain : ViewModel() {
     private val _showFab: MutableLiveData<Boolean> = MutableLiveData(false)
     val showFab = _showFab as LiveData<Boolean>
     fun showFab(showFAB: Boolean) {
-        this._showFab.postValue(showFAB)
+        this._showFab.value = (showFAB)
     }
     
     private val _actionBarTitle: MutableLiveData<String> = MutableLiveData()
     val actionBarTitle = _actionBarTitle as LiveData<String>
     fun setActionBarTitle(actionBarTitle: String) {
-        this._actionBarTitle.postValue(actionBarTitle)
+        this._actionBarTitle.value = (actionBarTitle)
     }
 
     private val _fabText: MutableLiveData<Int> = MutableLiveData()
     val fabText = _fabText as LiveData<Int>
     fun setFABText(fabText: Int) {
-        this._fabText.postValue(fabText)
+        this._fabText.value = (fabText)
     }
 
     private val _fabImage: MutableLiveData<Int> = MutableLiveData()
     val fabImage = _fabImage as LiveData<Int>
     fun setFabImage(fabImage: Int) {
-        this._fabImage.postValue(fabImage)
+        this._fabImage.value = (fabImage)
     }
 
     private val _fabOnClickListener: MutableLiveData<View.OnClickListener> = MutableLiveData()
     val fabOnClickListener =_fabOnClickListener as LiveData<View.OnClickListener>
     fun setFabOnClickListener(fabOnClickListener: View.OnClickListener?) {
-        this._fabOnClickListener.postValue(fabOnClickListener)
+        this._fabOnClickListener.value = (fabOnClickListener)
     }
 
     private val _playlistToAddToQueue = MutableLiveData<RandomPlaylist?>()

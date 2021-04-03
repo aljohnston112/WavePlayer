@@ -64,7 +64,7 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
             savedInstanceState: Bundle?
     ): View {
         _binding = RecyclerViewSongListBinding.inflate(inflater, container, false)
-        return binding.getRoot()
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -125,7 +125,6 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
     }
 
     private fun setUpRecyclerView() {
-        val activityMain: ActivityMain = requireActivity() as ActivityMain
         recyclerViewSongList = binding.recyclerViewSongList
         recyclerViewSongList?.layoutManager = LinearLayoutManager(requireContext())
         for (song in viewModelUserPickedSongs.getUserPickedSongs()) {

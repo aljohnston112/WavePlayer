@@ -138,8 +138,8 @@ class MediaData(context: Context) {
     }
 
     fun loadData(context: Context) {
-        ServiceMain.executorServiceFIFO.execute { SaveFile.loadSaveFile(context, this) }
-        getSongsFromMediaStore(context)
+         SaveFile.loadSaveFile(context, this)
+         getSongsFromMediaStore(context)
     }
 
     private fun getSongsFromMediaStore(context: Context) {
@@ -173,7 +173,8 @@ class MediaData(context: Context) {
                         val artist = cursor.getString(artistCol)
                         val file = File(context.filesDir, id.toString())
                         // TODO put in user triggered scan
-                        if (!file.exists() || songDAO.getSong(id) == null) {
+                        if (!file.exists() || (masterPlaylist?.contains(Song(id, title)) != true) ||
+                                (songDAO.getSong(id) == null)) {
                             val audioURI = AudioUri(displayName, artist, title, id)
                             try {
                                 context.openFileOutput(id.toString(), Context.MODE_PRIVATE).use { fos ->
@@ -189,6 +190,7 @@ class MediaData(context: Context) {
                             newSongs.add(Song(id, title))
                         }
                         filesThatExist.add(id)
+                        newSongs.add(Song(id, title))
                         _loadingProgress.postValue(j.toDouble() / i.toDouble())
                         j++
                     }
@@ -237,9 +239,10 @@ class MediaData(context: Context) {
         if(ids != null) {
             for((j, songID) in ids.withIndex()) {
                 if (!filesThatExist.contains(songID)) {
-                    songDAO.getSong(songID)?.let { masterPlaylist?.remove(it) }
+                    songDAO.getSong(songID)?.let {
+                        masterPlaylist?.remove(it)
+                        songDAO.delete(it) }
                     songIDToMediaPlayerWUriHashMap.remove(songID)
-                    songDAO.delete(songDAO.getSong(songID))
                 }
                 _loadingProgress.postValue(j.toDouble() / i.toDouble())
             }

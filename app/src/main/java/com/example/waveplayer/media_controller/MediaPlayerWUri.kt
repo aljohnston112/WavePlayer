@@ -9,10 +9,14 @@ import com.example.waveplayer.random_playlist.AudioUri
 import com.example.waveplayer.random_playlist.SongQueue
 import java.util.*
 
-class MediaPlayerWUri internal constructor(context: Context, private var mediaPlayer: MediaPlayer, val id: Long) {
+class MediaPlayerWUri constructor(
+        context: Context,
+        private var mediaPlayer: MediaPlayer,
+        val id: Long
+        ) {
 
     @Volatile
-    private var isPrepared: Boolean = true
+    private var isPrepared: Boolean = false
     fun isPrepared(): Boolean {
         synchronized(lock) { return isPrepared }
     }
@@ -20,6 +24,7 @@ class MediaPlayerWUri internal constructor(context: Context, private var mediaPl
     @Volatile
     private var shouldPlay: Boolean = false
     private var onErrorListener: MediaPlayer.OnErrorListener?
+
     fun shouldPlay(shouldPlay: Boolean) {
         synchronized(lock) {
             if (shouldPlay && isPrepared) {

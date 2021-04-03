@@ -68,9 +68,11 @@
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                android:background="?attr/colorPrimary"
+                android:background="@color/colorPrimary"
+                android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
                 app:popupTheme="@style/AppTheme.PopupOverlay"
-                app:title="@{viewModelActivityMain.actionBarTitle}" />
+                app:title="@{viewModelActivityMain.actionBarTitle}"
+                app:titleTextColor="@color/colorOnPrimary" />
 
         </com.google.android.material.appbar.AppBarLayout>
 
