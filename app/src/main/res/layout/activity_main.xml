@@ -19,12 +19,13 @@
 
             <androidx.fragment.app.FragmentContainerView
                 android:id="@+id/fragmentSongPane"
-                android:name="com.example.waveplayer.fragments.FragmentPaneSong"
+                android:name="com.example.waveplayer2.fragments.FragmentPaneSong"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintStart_toStartOf="parent"
+                tools:layout="@layout/fragment_pane_song" />
 
             <androidx.fragment.app.FragmentContainerView
                 android:id="@+id/nav_host_fragment"
@@ -60,19 +61,20 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/app_bar_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:theme="@style/AppTheme.AppBarOverlay">
+            android:theme="@style/ThemeOverlay.MaterialComponents.ActionBar"
+            >
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:background="@color/colorPrimary"
-                android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
-                app:popupTheme="@style/AppTheme.PopupOverlay"
-                app:title="@{viewModelActivityMain.actionBarTitle}"
-                app:titleTextColor="@color/colorOnPrimary" />
+                app:titleTextColor="@color/colorOnPrimary"
+                android:theme="@style/ThemeOverlay.MaterialComponents.ActionBar"
+                app:popupTheme="@style/ThemeOverlay.MaterialComponents.Light" />
 
         </com.google.android.material.appbar.AppBarLayout>
 
@@ -82,7 +84,7 @@
 
         <variable
             name="viewModelActivityMain"
-            type="com.example.waveplayer.activity_main.ViewModelActivityMain" />
+            type="com.example.waveplayer2.activity_main.ViewModelActivityMain" />
 
     </data>
 

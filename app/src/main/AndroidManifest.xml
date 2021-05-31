@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.waveplayer">
+    package="com.example.waveplayer2">
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -12,12 +12,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <service android:name=".media_controller.ServiceMain"
+        <service android:name="com.example.waveplayer2.media_controller.ServiceMain"
             android:exported="false"
             android:description="@string/service_description"
            />
         <activity
-            android:name=".activity_main.ActivityMain"
+            android:name="com.example.waveplayer2.activity_main.ActivityMain"
             android:label="@string/app_name"
             android:launchMode="singleTop">
             <intent-filter>
