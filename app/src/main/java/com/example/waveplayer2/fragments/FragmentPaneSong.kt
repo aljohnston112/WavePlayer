@@ -48,6 +48,7 @@ class FragmentPaneSong : Fragment() {
             if (mediaController.isSongInProgress()) {
                 activityMain.fragmentSongVisible(false)
                 activityMain.showSongPane()
+                updateSongUI(mediaController.currentAudioUri.value)
             }
         } else {
             activityMain.fragmentSongVisible(true)
@@ -93,7 +94,7 @@ class FragmentPaneSong : Fragment() {
             savedInstanceState: Bundle?
     ): View {
         _binding = FragmentPaneSongBinding.inflate(inflater, container, false)
-        return binding.getRoot()
+        return binding.root
     }
 
     private fun setUpObservers() {
@@ -121,6 +122,8 @@ class FragmentPaneSong : Fragment() {
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT)
         filterComplete.addAction(requireActivity().resources.getString(
                 R.string.broadcast_receiver_action_service_connected))
+        filterComplete.addAction(requireActivity().resources.getString(
+            R.string.broadcast_receiver_action_loaded))
         requireActivity().registerReceiver(broadcastReceiver, filterComplete)
     }
 

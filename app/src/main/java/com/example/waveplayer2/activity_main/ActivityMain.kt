@@ -121,13 +121,13 @@ class ActivityMain : AppCompatActivity() {
     private fun setUpToolbar() {
         val toolbar: Toolbar = binding.toolbar
         setSupportActionBar(toolbar)
-        toolbar.setTitleTextColor(ContextCompat.getColor(applicationContext, R.color.colorPrimary))
+        toolbar.setTitleTextColor(ContextCompat.getColor(applicationContext, R.color.colorOnPrimary))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             toolbar.overflowIcon?.colorFilter =
                     BlendModeColorFilter(resources.getColor(R.color.colorOnPrimary, theme), BlendMode.SRC_ATOP)
         } else {
             toolbar.overflowIcon?.setColorFilter(
-                    resources.getColor(R.color.colorOnPrimary), PorterDuff.Mode.SRC_ATOP)
+                ContextCompat.getColor(applicationContext, R.color.colorOnPrimary), PorterDuff.Mode.SRC_ATOP)
         }
         centerToolbarTitleAndSetTextSize()
         setUpDestinationChangedListenerForToolbar()
@@ -150,7 +150,6 @@ class ActivityMain : AppCompatActivity() {
                 appCompatTextView.layoutParams = params
                 appCompatTextView.textAlignment = View.TEXT_ALIGNMENT_CENTER
                 appCompatTextView.textSize = 28f
-                appCompatTextView.setTextColor(resources.getColor(R.color.colorOnPrimary))
             }
         }
     }
@@ -391,7 +390,7 @@ class ActivityMain : AppCompatActivity() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 toast.view?.background?.colorFilter = BlendModeColorFilter(
-                        resources.getColor(R.color.colorPrimary, theme),
+                    ContextCompat.getColor(applicationContext, R.color.colorPrimary),
                         BlendMode.SRC_IN
                 )
             } else{
