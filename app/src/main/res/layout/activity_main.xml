@@ -84,7 +84,7 @@
 
         <variable
             name="viewModelActivityMain"
-            type="com.example.waveplayer2.activity_main.ViewModelActivityMain" />
+            type="com.example.pinky_player.activity_main.ViewModelActivityMain" />
 
     </data>
 
