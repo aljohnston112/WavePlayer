@@ -19,7 +19,7 @@
 
             <androidx.fragment.app.FragmentContainerView
                 android:id="@+id/fragmentSongPane"
-                android:name="com.example.waveplayer2.fragments.FragmentPaneSong"
+                android:name="com.fourthFinger.pinkyPlayer.fragments.FragmentPaneSong"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -84,7 +84,7 @@
 
         <variable
             name="viewModelActivityMain"
-            type="com.example.pinky_player.activity_main.ViewModelActivityMain" />
+            type="com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain" />
 
     </data>
 

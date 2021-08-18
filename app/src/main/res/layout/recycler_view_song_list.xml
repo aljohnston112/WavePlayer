@@ -9,7 +9,7 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view_song_list"
-        android:name="com.example.waveplayer2.FragmentSongs"
+        android:name="com.example.pinky_player.FragmentSongs"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layoutManager="LinearLayoutManager"
