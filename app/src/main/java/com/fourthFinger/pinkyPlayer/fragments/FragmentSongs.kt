@@ -188,7 +188,11 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
     }
 
     override fun onClickViewHolder(song: Song) {
-        if (song == mediaData.getSong(mediaController.audioUri.id)) {
+        val a = mediaController.getCurrentAudioUri()
+        if (
+            a != null &&
+            song == mediaData.getSong(a.id)
+        ) {
             mediaController.seekTo(0)
         }
         mediaController.setCurrentPlaylistToMaster()

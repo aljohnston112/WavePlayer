@@ -20,12 +20,16 @@ import kotlin.properties.Delegates
 
 class MediaController private constructor(val context: Context) {
     
-    lateinit var audioUri: AudioUri
+    private var audioUri: AudioUri? = null
+
+    fun getCurrentAudioUri(): AudioUri? {
+        return audioUri
+    }
 
     private var isPlaying by Delegates.notNull<Boolean>()
 
-    fun getCurrentUri(): Uri {
-        return audioUri.getUri()
+    fun getCurrentUri(): Uri? {
+        return audioUri?.getUri()
     }
 
     private val onCompletionListener: OnCompletionListener
@@ -98,7 +102,7 @@ class MediaController private constructor(val context: Context) {
     }
 
     fun getCurrentMediaPlayerWUri(): MediaPlayerWUri? {
-        return getMediaPlayerWUri(audioUri.id)
+        return audioUri?.id?.let { getMediaPlayerWUri(it) }
     }
 
     fun removeMediaPlayerWUri(songID: Long) {
@@ -165,14 +169,18 @@ class MediaController private constructor(val context: Context) {
      * if there is a current song.
      */
     private fun stopCurrentSong() {
-        getMediaPlayerWUri(audioUri.id)?.let {
-            if (it.isPrepared() && it.isPlaying()) {
-                it.stop(context, audioUri)
-                it.prepareAsync()
+        audioUri?.let { a ->
+            a.id.let { it2 ->
+            getMediaPlayerWUri(it2)?.let { it ->
+                if (it.isPrepared() && it.isPlaying()) {
+                    it.stop(context, a)
+                    it.prepareAsync()
+                }
             }
         } ?: releaseMediaPlayers()
-        songInProgress = false
-        mediaData.setIsPlaying(false)
+            songInProgress = false
+            mediaData.setIsPlaying(false)
+        }
     }
 
     /** Plays the next song.
@@ -360,19 +368,21 @@ class MediaController private constructor(val context: Context) {
     private fun playLoopingOne() {
         val mediaPlayerWURI: MediaPlayerWUri? = getCurrentMediaPlayerWUri()
         if (mediaPlayerWURI != null) {
-            mediaPlayerWURI.seekTo(context, audioUri, 0)
-            mediaPlayerWURI.shouldPlay(true)
-            mediaData.setIsPlaying(true)
-            songInProgress = true
-            // TODO make a setting?
-            //addToQueueAtCurrentIndex(currentSong.getUri());
+            audioUri?.let {
+                mediaPlayerWURI.seekTo(context, it, 0)
+                mediaPlayerWURI.shouldPlay(true)
+                mediaData.setIsPlaying(true)
+                songInProgress = true
+                // TODO make a setting?
+                //addToQueueAtCurrentIndex(currentSong.getUri());
+            }
         } else {
-            makeIfNeededAndPlay(context, audioUri.id)
+            audioUri?.let { makeIfNeededAndPlay(context, it.id) }
         }
     }
 
     fun seekTo(progress: Int) {
-        getCurrentMediaPlayerWUri()?.seekTo(context, audioUri, progress)
+        audioUri?.let { getCurrentMediaPlayerWUri()?.seekTo(context, it, progress) }
         if (!isPlaying) {
             pauseOrPlay()
         }

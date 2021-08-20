@@ -42,6 +42,7 @@ class FragmentPaneSong : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mediaController = getInstance(requireActivity().applicationContext)
+        mediaData = MediaData.getInstance(requireActivity().applicationContext)
     }
 
     private val onDestinationChangedListenerSongPane = { _: NavController?, destination: NavDestination?, _: Bundle? ->
@@ -153,16 +154,20 @@ class FragmentPaneSong : Fragment() {
 
     private fun getDefaultBitmap(songArtWidth: Int, songArtHeight: Int): Bitmap? {
         // TODO cache bitmap
-        val imageViewSongPaneSongArt: ImageView = binding.imageViewSongPaneSongArt
-        val drawableSongArt: Drawable? = ResourcesCompat.getDrawable(
-                imageViewSongPaneSongArt.resources, R.drawable.music_note_black_48dp, null)
-        if (drawableSongArt != null) {
-            drawableSongArt.setBounds(0, 0, songArtWidth, songArtHeight)
-            val bitmapSongArt: Bitmap = Bitmap.createBitmap(
-                    songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888)
-            val canvas = Canvas(bitmapSongArt)
-            drawableSongArt.draw(canvas)
-            return bitmapSongArt
+        if(songArtHeight > 0 && songArtWidth > 0) {
+            val imageViewSongPaneSongArt: ImageView = binding.imageViewSongPaneSongArt
+            val drawableSongArt: Drawable? = ResourcesCompat.getDrawable(
+                imageViewSongPaneSongArt.resources, R.drawable.music_note_black_48dp, null
+            )
+            if (drawableSongArt != null) {
+                drawableSongArt.setBounds(0, 0, songArtWidth, songArtHeight)
+                val bitmapSongArt: Bitmap = Bitmap.createBitmap(
+                    songArtWidth, songArtHeight, Bitmap.Config.ARGB_8888
+                )
+                val canvas = Canvas(bitmapSongArt)
+                drawableSongArt.draw(canvas)
+                return bitmapSongArt
+            }
         }
         return null
     }
