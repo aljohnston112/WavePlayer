@@ -26,10 +26,10 @@ class MediaData private constructor(val context: Context) {
         _currentAudioUri.value = audioUri
     }
 
-    private val _isPlaying: MutableLiveData<Boolean> = MutableLiveData()
+    private val _isPlaying: MutableLiveData<Boolean> = MutableLiveData(false)
     val isPlaying = _isPlaying as LiveData<Boolean>
     fun setIsPlaying(isPlaying: Boolean) {
-        this._isPlaying.postValue(isPlaying)
+        this._isPlaying.setValue(isPlaying)
     }
 
     private val _loadingText: MutableLiveData<String> = MutableLiveData()
@@ -71,46 +71,6 @@ class MediaData private constructor(val context: Context) {
     }
     fun getAllSongs(): List<Song>? {
         return masterPlaylist?.getSongs()
-    }
-
-    private var settings = Settings(0.1, 0.1, 0.5, 0.0)
-    fun getSettings(): Settings {
-        return settings
-    }
-    fun setSettings(settings: Settings) {
-        this.settings = settings
-    }
-    fun getMaxPercent(): Double {
-        return settings.maxPercent
-    }
-    fun setMaxPercent(maxPercent: Double) {
-        masterPlaylist?.setMaxPercent(maxPercent)
-        for (randomPlaylist in playlists) {
-            randomPlaylist.setMaxPercent(maxPercent)
-        }
-        settings = Settings(
-            maxPercent, settings.percentChangeUp, settings.percentChangeDown, settings.lowerProb)
-    }
-    fun setPercentChangeUp(percentChangeUp: Double) {
-        settings = Settings(
-            settings.maxPercent, percentChangeUp, settings.percentChangeDown, settings.lowerProb)
-    }
-    fun getPercentChangeUp(): Double {
-        return settings.percentChangeUp
-    }
-    fun setPercentChangeDown(percentChangeDown: Double) {
-        settings = Settings(
-            settings.maxPercent, settings.percentChangeUp, percentChangeDown, settings.lowerProb)
-    }
-    fun getPercentChangeDown(): Double {
-        return settings.percentChangeDown
-    }
-    fun setLowerProb(lowerProb: Double) {
-        settings = Settings(
-            settings.maxPercent, settings.percentChangeUp, settings.percentChangeDown, lowerProb)
-    }
-    fun getLowerProb(): Double {
-        return settings.lowerProb
     }
 
     private var songDAO: SongDAO
@@ -199,15 +159,17 @@ class MediaData private constructor(val context: Context) {
                 masterPlaylist = RandomPlaylist(
                         MASTER_PLAYLIST_NAME,
                         ArrayList(newSongs),
-                        settings.maxPercent,
                         true
                 )
             }
         }
         executorServiceFIFO.execute {
+
+            /* TODO why is this needed? Find a place to set the default value
             if (settings.lowerProb == 0.0) {
                 setLowerProb(2.0 / (masterPlaylist?.size()?:2).toDouble())
             }
+            */
             SaveFile.saveFile(context)
             val intent = Intent()
             intent.addCategory(Intent.CATEGORY_DEFAULT)

@@ -267,10 +267,7 @@ class FragmentSong : Fragment() {
                             mediaData.getSong(it)
                         }
                         if (song != null) {
-                            mediaController.getCurrentPlaylist()?.globalBad(
-                                    song,
-                                    mediaData.getPercentChangeDown()
-                            )
+                            mediaController.getCurrentPlaylist()?.globalBad(song)
                             activityMain.saveFile()
                         }
                     }
@@ -279,10 +276,7 @@ class FragmentSong : Fragment() {
                             mediaData.getSong(it)
                         }
                         if (song != null) {
-                            mediaController.getCurrentPlaylist()?.globalGood(
-                                    song,
-                                    mediaData.getPercentChangeUp()
-                            )
+                            mediaController.getCurrentPlaylist()?.globalGood(song)
                             activityMain.saveFile()
                         }
                     }
@@ -337,10 +331,7 @@ class FragmentSong : Fragment() {
             // TODO change color of button
             currentAudioUri?.id?.let { id ->
                 mediaData.getSong(id)?.let {
-                    mediaController.getCurrentPlaylist()?.globalBad(
-                            it,
-                            mediaData.getPercentChangeDown()
-                    )
+                    mediaController.getCurrentPlaylist()?.globalBad(it)
                 }
             }
             true

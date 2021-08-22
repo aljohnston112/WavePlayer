@@ -40,6 +40,7 @@ class FragmentTitle : Fragment() {
     }
 
     private val onClickListenerFragmentTitleButtons = View.OnClickListener { view: View? ->
+        // Add certainButtonClicked methods to a ViewModel
         if (view?.id == R.id.button_playlists) {
             val navController: NavController = NavHostFragment.findNavController(this)
             if (navController.currentDestination?.id == R.id.FragmentTitle) {
@@ -111,7 +112,6 @@ class FragmentTitle : Fragment() {
                                     RandomPlaylist(
                                             it,
                                             songs,
-                                            mediaData.getMaxPercent(),
                                             false
                                     )
                                 }

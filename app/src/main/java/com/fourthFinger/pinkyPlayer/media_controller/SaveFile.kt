@@ -3,6 +3,7 @@ package com.fourthFinger.pinkyPlayer.media_controller
 import android.content.Context
 import androidx.room.Room
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
+import com.fourthFinger.pinkyPlayer.random_playlist.SettingsRepo
 import com.fourthFinger.pinkyPlayer.random_playlist.SongDatabase
 import java.io.*
 
@@ -12,6 +13,8 @@ object SaveFile {
     private const val FILE_SAVE2: String = "playlists2"
     private const val FILE_SAVE3: String = "playlists3"
     private const val SAVE_FILE_VERIFICATION_NUMBER = 8479145830949658990L
+
+    private val settingsRepo = SettingsRepo.getInstance()
 
     fun loadSaveFile(context: Context, mediaData: MediaData) {
         ServiceMain.executorServiceFIFO.submit {
@@ -34,7 +37,7 @@ object SaveFile {
             try {
                 context.openFileInput(fileSave).use { fileInputStream ->
                     ObjectInputStream(fileInputStream).use { objectInputStream ->
-                        mediaData.setSettings(objectInputStream.readObject() as Settings)
+                        settingsRepo.setSettings(objectInputStream.readObject() as Settings)
                         mediaData.setMasterPlaylist(objectInputStream.readObject() as RandomPlaylist)
                         val playlistSize = objectInputStream.readInt()
                         for (i in 0 until playlistSize) {
@@ -70,7 +73,7 @@ object SaveFile {
             try {
                 context.openFileOutput(FILE_SAVE, Context.MODE_PRIVATE).use { fos ->
                     ObjectOutputStream(fos).use { objectOutputStream ->
-                        objectOutputStream.writeObject(mediaData.getSettings())
+                        objectOutputStream.writeObject(settingsRepo.getSettings())
                         objectOutputStream.writeObject(mediaData.getMasterPlaylist())
                         objectOutputStream.writeInt(mediaData.getPlaylists().size)
                         for (randomPlaylist in mediaData.getPlaylists()) {

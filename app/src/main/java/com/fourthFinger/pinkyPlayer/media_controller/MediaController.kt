@@ -13,6 +13,7 @@ import android.os.Build
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
+import com.fourthFinger.pinkyPlayer.random_playlist.SettingsRepo
 import com.fourthFinger.pinkyPlayer.random_playlist.SongQueue
 import java.util.*
 import java.util.concurrent.Callable
@@ -73,7 +74,7 @@ class MediaController private constructor(val context: Context) {
     }
 
     fun lowerProbabilities(context: Context) {
-        currentPlaylist?.lowerProbabilities(context, mediaData.getLowerProb())
+        currentPlaylist?.lowerProbabilities(context, SettingsRepo.getInstance().getLowerProb())
     }
 
     fun getCurrentTime(): Int {
@@ -232,7 +233,7 @@ class MediaController private constructor(val context: Context) {
         stopCurrentSong()
         val audioUriCurrent = AudioUri.getAudioUri(context, songID)
         if(audioUriCurrent != null) {
-            audioUri = audioUriCurrent
+            mediaData.setCurrentAudioUri(audioUriCurrent)
         }
         currentPlaylist?.setIndexTo(songID)
         var mediaPlayerWUri: MediaPlayerWUri? = getMediaPlayerWUri(songID)
@@ -308,7 +309,7 @@ class MediaController private constructor(val context: Context) {
             currentPlaylist?.setIndexTo(audioUriCurrent.id)
             songQueue.addToQueue(audioUriCurrent.id)
             makeIfNeededAndPlay(context, songQueue.next())
-            audioUri = audioUriCurrent
+            mediaData.setCurrentAudioUri(audioUriCurrent)
         } else {
             mediaData.setIsPlaying(false)
             songInProgress = false
@@ -354,7 +355,7 @@ class MediaController private constructor(val context: Context) {
     private fun playPreviousInPlaylist() {
         val audioUriCurrent = currentPlaylist?.previous(context, random, looping, shuffling)
         if (audioUriCurrent != null) {
-            audioUri = audioUriCurrent
+            mediaData.setCurrentAudioUri(audioUriCurrent)
         }
         makeIfNeededAndPlay(context, songQueue.next())
     }

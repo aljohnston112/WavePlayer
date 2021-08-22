@@ -13,6 +13,8 @@ import java.util.*
 </T> */
 open class ProbFun<T : Comparable<T>> : Serializable {
 
+     @Transient val settingsRepo = SettingsRepo.getInstance()
+
     // The set of elements to be picked from, mapped to the probabilities of getting picked
     private lateinit var probabilityMap: MutableMap<T, Double>
     fun getKeys(): MutableList<T> {
@@ -22,22 +24,16 @@ open class ProbFun<T : Comparable<T>> : Serializable {
     // The unique id of this ProbFunTree
     private var id = 0
     private var roundingError = 0.0
-    private var maxPercent: Double
-    fun setMaxPercent(maxPercent: Double) {
-        this.maxPercent = maxPercent
-    }
 
-    protected constructor(choices: MutableSet<T>, maxPercent: Double, comparable: Boolean) {
+    protected constructor(choices: MutableSet<T>, comparable: Boolean) {
         Objects.requireNonNull(choices)
         require(choices.size >= 1) { "Must have at least 1 element in the choices passed to the ProbFunTree constructor\n" }
-        require(!(maxPercent <= 0 || maxPercent > 1.0)) { "maxPercent passed into the ProbFunTree constructor must be above 0 and 1.0 or under" }
         // Invariants secured
         if (comparable) {
             probabilityMap = TreeMap()
         } else {
             probabilityMap = LinkedHashMap()
         }
-        this.maxPercent = maxPercent
         for (choice in choices) {
             probabilityMap[choice] = 1.0 / choices.size
         }
@@ -195,18 +191,18 @@ open class ProbFun<T : Comparable<T>> : Serializable {
      * @throws NullPointerException     if element is null.
      * @throws IllegalArgumentException if the percent isn't between 0 and 1 exclusive.
      */
-    fun good(element: T, percent: Double, scale: Boolean): Double {
-        var percent = percent
+    fun good(element: T, scale: Boolean): Double {
+        var percent = settingsRepo.getPercentChangeUp()
         require(!(percent >= 1.0 || percent <= 0.0)) { "percent passed to good() is not between 0.0 and 1.0 (exclusive)" }
         // Invariants secured
         val oldProb = probabilityMap[element] ?: return -1.0
         var add = probToAddForGood(oldProb, percent)
         if (scale) {
-            while (oldProb + add >= maxPercent - roundingError) {
+            while (oldProb + add >= settingsRepo.getMaxPercent() - roundingError) {
                 percent *= percent
                 add = probToAddForGood(oldProb, percent)
             }
-        } else if (oldProb + add >= maxPercent - roundingError) {
+        } else if (oldProb + add >= settingsRepo.getMaxPercent() - roundingError) {
             return oldProb
         }
         val goodProbability = oldProb + add
@@ -240,8 +236,9 @@ open class ProbFun<T : Comparable<T>> : Serializable {
      * @throws NullPointerException     if element is null.
      * @throws IllegalArgumentException if the percent isn't between 0 and 1 exclusive.
      */
-    fun bad(element: T, percent: Double): Double {
+    fun bad(element: T): Double {
         Objects.requireNonNull(element)
+        val percent = settingsRepo.getPercentChangeDown()
         require(!(percent >= 1.0 || percent <= 0.0)) { "percent passed to good() is not between 0.0 and 1.0 (exclusive)" }
         // Invariants secured
         val oldProb = probabilityMap[element] ?: return -1.0
@@ -307,7 +304,6 @@ open class ProbFun<T : Comparable<T>> : Serializable {
         for ((key, value) in probFun.probabilityMap) {
             probabilityMap[key] = value
         }
-        maxPercent = probFun.maxPercent
         roundingError = probFun.roundingError
         id = 0
     }

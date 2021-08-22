@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.EditText
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.fourthFinger.pinkyPlayer.R
@@ -22,6 +23,7 @@ class FragmentSettings : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
+    private val viewModelSettings by activityViewModels<ViewModelSettings>()
 
     private lateinit var mediaData: MediaData
 
@@ -52,6 +54,7 @@ class FragmentSettings : Fragment() {
         viewModelActivityMain.setFabImage(R.drawable.ic_check_black_24dp)
         viewModelActivityMain.setFABText(R.string.fab_save)
         viewModelActivityMain.setFabOnClickListener{
+            // TODO validate in ViewModel
             val nSongs = getNSongs()
             if (nSongs == -1) {
                 return@setFabOnClickListener
@@ -120,10 +123,7 @@ class FragmentSettings : Fragment() {
 
     private fun updateSettings(nSongs: Int, percentChangeUp: Int, percentChangeDown: Int) {
         val activityMain: ActivityMain = requireActivity() as ActivityMain
-        val maxPercent = 1.0 / nSongs.toDouble()
-        mediaData.setMaxPercent(maxPercent)
-        mediaData.setPercentChangeUp(percentChangeUp.toDouble() / 100.0)
-        mediaData.setPercentChangeDown(percentChangeDown.toDouble() / 100.0)
+        viewModelSettings.setSettings(nSongs, percentChangeDown, percentChangeUp)
         activityMain.saveFile()
     }
 
@@ -131,9 +131,9 @@ class FragmentSettings : Fragment() {
         val editTextNSongs: EditText = binding.editTextNSongs
         val editTextPercentChangeUp: EditText = binding.editTextPercentChangeUp
         val editTextPercentChangeDown: EditText = binding.editTextPercentChangeDown
-        editTextNSongs.setText((1.0 / mediaData.getMaxPercent()).roundToInt().toString())
-        editTextPercentChangeUp.setText((mediaData.getPercentChangeUp() * 100.0).roundToInt().toString())
-        editTextPercentChangeDown.setText((mediaData.getPercentChangeDown() * 100.0).roundToInt().toString())
+        editTextNSongs.setText(viewModelSettings.getNSongs())
+        editTextPercentChangeUp.setText(viewModelSettings.getPercentChangeUp())
+        editTextPercentChangeDown.setText(viewModelSettings.getPercentChangeDown())
     }
 
     override fun onDestroyView() {

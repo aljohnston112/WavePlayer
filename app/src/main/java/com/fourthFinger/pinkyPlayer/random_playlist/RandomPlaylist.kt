@@ -9,8 +9,12 @@ import java.util.*
  * @since Copyright 2019
  * A playlist where a group of media files are picked from randomly.
  */
-class RandomPlaylist constructor(name: String, music: MutableList<Song>, maxPercent: Double,
-                     comparable: Boolean) : Serializable {
+class RandomPlaylist constructor(
+    name: String,
+    music: MutableList<Song>,
+    comparable: Boolean
+) : Serializable {
+
     private val playlistArray: MutableList<Long> = ArrayList()
 
     @Transient
@@ -57,19 +61,15 @@ class RandomPlaylist constructor(name: String, music: MutableList<Song>, maxPerc
         return playlistArray.contains(songID)
     }
 
-    fun setMaxPercent(maxPercent: Double) {
-        probabilityFunction.setMaxPercent(maxPercent)
-    }
-
     fun good(context: Context, song: Song, percent: Double, scale: Boolean) {
         if (AudioUri.getAudioUri(context, song.id)?.good(percent) == true) {
-            probabilityFunction.good(song, percent, scale)
+            probabilityFunction.good(song, scale)
         }
     }
 
     fun bad(context: Context, song: Song, percent: Double) {
         if (AudioUri.getAudioUri(context, song.id)?.bad(percent) == true) {
-            probabilityFunction.bad(song, percent)
+            probabilityFunction.bad(song)
         }
     }
 
@@ -125,7 +125,12 @@ class RandomPlaylist constructor(name: String, music: MutableList<Song>, maxPerc
         }
     }
 
-    fun previous(context: Context, random: Random, looping: Boolean, shuffling: Boolean): AudioUri? {
+    fun previous(
+        context: Context,
+        random: Random,
+        looping: Boolean,
+        shuffling: Boolean
+    ): AudioUri? {
         return if (shuffling) {
             next(context, random)
         } else {
@@ -148,19 +153,18 @@ class RandomPlaylist constructor(name: String, music: MutableList<Song>, maxPerc
     }
 
      */
+
     fun setIndexTo(songID: Long) {
-        if (playlistArray != null) {
-            val i = playlistArray.indexOf(songID)
-            playlistIterator = playlistArray.listIterator(i + 1)
-        }
+        val i = playlistArray.indexOf(songID)
+        playlistIterator = playlistArray.listIterator(i + 1)
     }
 
-    fun globalBad(song: Song, percentChangeDown: Double) {
-        probabilityFunction.bad(song, percentChangeDown)
+    fun globalBad(song: Song) {
+        probabilityFunction.bad(song)
     }
 
-    fun globalGood(song: Song, percentChangeUp: Double) {
-        probabilityFunction.good(song, percentChangeUp, true)
+    fun globalGood(song: Song) {
+        probabilityFunction.good(song, true)
     }
 
     companion object {
@@ -172,8 +176,6 @@ class RandomPlaylist constructor(name: String, music: MutableList<Song>, maxPerc
      *
      * @param name            The name of this RandomPlaylist.
      * @param music           The List of AudioURIs to add to this playlist.
-     * @param maxPercent      The max percentage that any AudioUri can have
-     * of being returned when fun() is called.
      * @throws IllegalArgumentException if there is not at least one AudioURI in music.
      * @throws IllegalArgumentException if folder is not a directory.
      */
@@ -181,9 +183,9 @@ class RandomPlaylist constructor(name: String, music: MutableList<Song>, maxPerc
         require(music.isNotEmpty()) { "List music must contain at least one AudioURI" }
         val files: MutableSet<Song> = LinkedHashSet(music)
         probabilityFunction = if (comparable) {
-            ProbFunTreeMap(files, maxPercent)
+            ProbFunTreeMap(files)
         } else {
-            ProbFunLinkedMap(files, maxPercent)
+            ProbFunLinkedMap(files)
         }
         this.name = name
         for (song in music) {

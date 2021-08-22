@@ -39,8 +39,10 @@ class FragmentEditPlaylist : Fragment() {
         mediaData = MediaData.getInstance(requireActivity().applicationContext)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         viewModelActivityMain.setActionBarTitle(resources.getString(R.string.edit_playlist))
         _binding = FragmentEditPlaylistBinding.inflate(inflater, container, false)
         return binding.root
@@ -56,9 +58,10 @@ class FragmentEditPlaylist : Fragment() {
         }
         // TODO don't think this is needed
         //  updateFAB();
-        binding.buttonEditSongs.setOnClickListener(){
+        binding.buttonEditSongs.setOnClickListener() {
             NavHostFragment.findNavController(this).navigate(
-                    FragmentEditPlaylistDirections.actionFragmentEditPlaylistToFragmentSelectSongs())
+                FragmentEditPlaylistDirections.actionFragmentEditPlaylistToFragmentSelectSongs()
+            )
         }
 
     }
@@ -67,14 +70,19 @@ class FragmentEditPlaylist : Fragment() {
         val activityMain: ActivityMain = requireActivity() as ActivityMain
         val filterComplete = IntentFilter()
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT)
-        filterComplete.addAction(activityMain.getResources().getString(
-                R.string.broadcast_receiver_action_service_connected))
+        filterComplete.addAction(
+            activityMain.getResources().getString(
+                R.string.broadcast_receiver_action_service_connected
+            )
+        )
         broadcastReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 val action: String? = intent.action
                 if (action != null) {
                     if (action == resources.getString(
-                                    R.string.broadcast_receiver_action_service_connected)) {
+                            R.string.broadcast_receiver_action_service_connected
+                        )
+                    ) {
                         // TODO is this needed if onResume has it?
                         //  updateFAB();
                     }
@@ -101,11 +109,12 @@ class FragmentEditPlaylist : Fragment() {
             // userPickedSongs.isEmpty() when the user is editing a playlist
             // TODO if user is editing a playlist, unselects all the songs and returns here, ERROR
             if (userPickedSongs.isEmpty()) {
-                viewModelUserPickedPlaylist.getUserPickedPlaylist()?.getSongs()?.let { userPickedSongs.addAll(it) }
+                viewModelUserPickedPlaylist.getUserPickedPlaylist()?.getSongs()
+                    ?.let { userPickedSongs.addAll(it) }
                 finalEditTextPlaylistName.setText(userPickedPlaylist.getName())
             }
         }
-        viewModelActivityMain.setFabOnClickListener{ view: View ->
+        viewModelActivityMain.setFabOnClickListener { view: View ->
             val activityMain: ActivityMain = requireActivity() as ActivityMain
             val playlistIndex = indexOfPlaylistWName(finalEditTextPlaylistName.text.toString())
             if (userPickedSongs.size == 0) {
@@ -116,8 +125,13 @@ class FragmentEditPlaylist : Fragment() {
                 activityMain.showToast(R.string.duplicate_name_playlist)
             } else if (userPickedPlaylist == null) {
                 // userPickedPlaylist is null when user is making a new playlist
-                mediaData.addPlaylist(RandomPlaylist(finalEditTextPlaylistName.text.toString(),
-                        userPickedSongs, mediaData.getMaxPercent(), false))
+                mediaData.addPlaylist(
+                    RandomPlaylist(
+                        finalEditTextPlaylistName.text.toString(),
+                        userPickedSongs,
+                        false
+                    )
+                )
                 for (song in userPickedSongs) {
                     song.setSelected(false)
                 }
@@ -132,8 +146,9 @@ class FragmentEditPlaylist : Fragment() {
                     playlistNames.add(randomPlaylist.getName())
                 }
                 if (userPickedPlaylist.getName() ==
-                        finalEditTextPlaylistName.text.toString() ||
-                        !playlistNames.contains(finalEditTextPlaylistName.text.toString())) {
+                    finalEditTextPlaylistName.text.toString() ||
+                    !playlistNames.contains(finalEditTextPlaylistName.text.toString())
+                ) {
                     userPickedPlaylist.setName(finalEditTextPlaylistName.text.toString())
                     for (song in userPickedPlaylist.getSongs()) {
                         if (!userPickedSongs.contains(song)) {
