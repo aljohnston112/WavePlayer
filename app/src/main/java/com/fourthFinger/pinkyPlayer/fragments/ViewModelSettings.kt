@@ -1,7 +1,7 @@
 package com.fourthFinger.pinkyPlayer.fragments
 
 import androidx.lifecycle.ViewModel
-import com.fourthFinger.pinkyPlayer.media_controller.Settings
+import com.fourthFinger.pinkyPlayer.random_playlist.Settings
 import com.fourthFinger.pinkyPlayer.random_playlist.SettingsRepo
 import kotlin.math.roundToInt
 

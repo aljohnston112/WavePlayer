@@ -2,7 +2,9 @@ package com.fourthFinger.pinkyPlayer.media_controller
 
 import android.content.Context
 import androidx.room.Room
+import com.fourthFinger.pinkyPlayer.fragments.PlaylistsRepo
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
+import com.fourthFinger.pinkyPlayer.random_playlist.Settings
 import com.fourthFinger.pinkyPlayer.random_playlist.SettingsRepo
 import com.fourthFinger.pinkyPlayer.random_playlist.SongDatabase
 import java.io.*
@@ -33,15 +35,16 @@ object SaveFile {
     private fun attemptLoadFile(context: Context, mediaData: MediaData, fileSave: String): Long {
         var longEOF = 0L
         val file = File(context.filesDir, fileSave)
+        val playlistsRepo = PlaylistsRepo.getInstance(context)
         if (file.exists()) {
             try {
                 context.openFileInput(fileSave).use { fileInputStream ->
                     ObjectInputStream(fileInputStream).use { objectInputStream ->
                         settingsRepo.setSettings(objectInputStream.readObject() as Settings)
-                        mediaData.setMasterPlaylist(objectInputStream.readObject() as RandomPlaylist)
+                        playlistsRepo.setMasterPlaylist(objectInputStream.readObject() as RandomPlaylist)
                         val playlistSize = objectInputStream.readInt()
                         for (i in 0 until playlistSize) {
-                            mediaData.addPlaylist(objectInputStream.readObject() as RandomPlaylist)
+                            playlistsRepo.addPlaylist(objectInputStream.readObject() as RandomPlaylist)
                         }
                         longEOF = objectInputStream.readLong()
                     }
@@ -59,6 +62,7 @@ object SaveFile {
 
     fun saveFile(context: Context) {
         ServiceMain.executorServicePool.submit {
+            val playlistsRepo = PlaylistsRepo.getInstance(context)
             val mediaData: MediaData = MediaData.getInstance(context)
             val file = File(context.filesDir, FILE_SAVE)
             val file2 = File(context.filesDir, FILE_SAVE2)
@@ -74,9 +78,9 @@ object SaveFile {
                 context.openFileOutput(FILE_SAVE, Context.MODE_PRIVATE).use { fos ->
                     ObjectOutputStream(fos).use { objectOutputStream ->
                         objectOutputStream.writeObject(settingsRepo.getSettings())
-                        objectOutputStream.writeObject(mediaData.getMasterPlaylist())
-                        objectOutputStream.writeInt(mediaData.getPlaylists().size)
-                        for (randomPlaylist in mediaData.getPlaylists()) {
+                        objectOutputStream.writeObject(playlistsRepo.getMasterPlaylist())
+                        objectOutputStream.writeInt(playlistsRepo.getPlaylists().size)
+                        for (randomPlaylist in playlistsRepo.getPlaylists()) {
                             objectOutputStream.writeObject(randomPlaylist)
                         }
                         objectOutputStream.writeLong(SAVE_FILE_VERIFICATION_NUMBER)

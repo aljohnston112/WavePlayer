@@ -1,7 +1,5 @@
 package com.fourthFinger.pinkyPlayer.random_playlist
 
-import com.fourthFinger.pinkyPlayer.media_controller.Settings
-
 class SettingsRepo private constructor() {
 
     private var settings = Settings(0.1, 0.1, 0.5, 0.1)

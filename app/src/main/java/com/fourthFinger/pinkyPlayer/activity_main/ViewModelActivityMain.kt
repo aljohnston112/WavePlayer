@@ -1,15 +1,21 @@
 package com.fourthFinger.pinkyPlayer.activity_main
 
+import android.app.Application
 import android.view.View
 import androidx.annotation.DrawableRes
 import androidx.annotation.IdRes
 import androidx.annotation.StringRes
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.fourthFinger.pinkyPlayer.fragments.PlaylistsRepo
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
+import com.fourthFinger.pinkyPlayer.random_playlist.Song
 
-class ViewModelActivityMain : ViewModel() {
+class ViewModelActivityMain(application: Application) : AndroidViewModel(application) {
+
+    private val playlistsRepo = PlaylistsRepo.getInstance(application)
 
     private val _actionBarTitle: MutableLiveData<String> = MutableLiveData()
     val actionBarTitle = _actionBarTitle as LiveData<String>
@@ -52,5 +58,9 @@ class ViewModelActivityMain : ViewModel() {
     fun setSongToAddToQueue(songToAddToQueue: Long?) {
         _songToAddToQueue.value = songToAddToQueue
     }
-    
+
+    fun getSongToAddToQueue(): Song? {
+        return songToAddToQueue.value?.let { playlistsRepo.getSong(it) }
+    }
+
 }

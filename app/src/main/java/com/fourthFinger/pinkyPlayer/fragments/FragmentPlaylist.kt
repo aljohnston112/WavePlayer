@@ -18,15 +18,15 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.fourthFinger.pinkyPlayer.KeyboardUtil
 import com.fourthFinger.pinkyPlayer.R
-import com.fourthFinger.pinkyPlayer.ViewModelUserPickedPlaylist
-import com.fourthFinger.pinkyPlayer.ViewModelUserPickedSongs
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.DialogFragmentAddToPlaylist
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.RecyclerViewSongListBinding
 import com.fourthFinger.pinkyPlayer.media_controller.MediaController
 import com.fourthFinger.pinkyPlayer.media_controller.MediaData
+import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerModel
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
@@ -41,8 +41,8 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
     private val binding get() = _binding!!
 
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
-    private val viewModelUserPickedPlaylist by activityViewModels<ViewModelUserPickedPlaylist>()
-    private val viewModelUserPickedSongs by activityViewModels<ViewModelUserPickedSongs>()
+    private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>()
+    private val mediaPlayerModel = MediaPlayerModel.getInstance()
 
     private val songQueue = SongQueue.getInstance()
 
@@ -72,9 +72,8 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val activityMain: ActivityMain = requireActivity() as ActivityMain
-        activityMain.hideKeyboard(view)
-        val randomPlaylist: RandomPlaylist? = viewModelUserPickedPlaylist.getUserPickedPlaylist()
+        KeyboardUtil.hideKeyboard(view)
+        val randomPlaylist: RandomPlaylist? = viewModelPlaylists.getUserPickedPlaylist()
         if (randomPlaylist != null) {
             viewModelActivityMain.setPlaylistToAddToQueue(randomPlaylist)
             viewModelActivityMain.setActionBarTitle(randomPlaylist.getName())
@@ -138,7 +137,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
 
     private fun filterSongs(newText: String?) {
         // TODO fix bug where you can reorder songs when sifted
-        val songs: List<Song>? = viewModelUserPickedPlaylist.getUserPickedPlaylist()?.getSongs()
+        val songs: List<Song>? = viewModelPlaylists.getUserPickedPlaylist()?.getSongs()
         val sifted: MutableList<Song> = ArrayList<Song>()
         if (songs != null) {
             dragFlags = if (newText != null && newText != "") {
@@ -195,8 +194,8 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
                 val song: Song = userPickedPlaylist.getSongs()[position]
                 val probability: Double = userPickedPlaylist.getProbability(song)
                 if (userPickedPlaylist.size() == 1) {
-                    mediaData.removePlaylist(userPickedPlaylist)
-                    viewModelUserPickedPlaylist.setUserPickedPlaylist(null)
+                    viewModelPlaylists.removePlaylist(userPickedPlaylist)
+                    viewModelPlaylists.setUserPickedPlaylist(null)
                 } else {
                     userPickedPlaylist.remove(song)
                 }
@@ -243,7 +242,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
         viewModelActivityMain.showFab(true)
         viewModelActivityMain.setFabOnClickListener {
             // userPickedSongs.isEmpty() when the user is editing a playlist
-            viewModelUserPickedSongs.clearUserPickedSongs()
+            viewModelPlaylists.clearUserPickedSongs()
             NavHostFragment.findNavController(this).navigate(
                     FragmentPlaylistDirections.actionFragmentPlaylistToFragmentEditPlaylist())
         }
@@ -272,18 +271,18 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
 
     override fun onClickViewHolder(song: Song) {
         synchronized(ActivityMain.MUSIC_CONTROL_LOCK) {
-            if (song == mediaData.currentAudioUri.value?.id?.let {
-                        mediaData.getSong(it)
+            if (song == mediaPlayerModel.currentAudioUri.value?.id?.let {
+                        viewModelPlaylists.getSong(it)
                     }
             ) {
                 mediaController.seekTo(0)
             }
-            viewModelUserPickedPlaylist.getUserPickedPlaylist()?.let { mediaController.setCurrentPlaylist(it) }
+            viewModelPlaylists.getUserPickedPlaylist()?.let { mediaController.setCurrentPlaylist(it) }
             songQueue.clearSongQueue()
             songQueue.addToQueue(song.id)
             val audioUri = AudioUri.getAudioUri(requireContext(), song.id)
             if(audioUri != null) {
-                mediaData.setCurrentAudioUri(audioUri)
+                mediaPlayerModel.setCurrentAudioUri(audioUri)
             }
             mediaController.playNext()
         }
@@ -293,7 +292,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
 
     override fun onStart() {
         super.onStart()
-        val randomPlaylist: RandomPlaylist? = viewModelUserPickedPlaylist.getUserPickedPlaylist()
+        val randomPlaylist: RandomPlaylist? = viewModelPlaylists.getUserPickedPlaylist()
         if (randomPlaylist != null) {
             setUpBroadcastReceiver(randomPlaylist)
         }

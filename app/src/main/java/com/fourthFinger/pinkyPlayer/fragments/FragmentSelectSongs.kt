@@ -16,8 +16,8 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.fourthFinger.pinkyPlayer.KeyboardUtil
 import com.fourthFinger.pinkyPlayer.R
-import com.fourthFinger.pinkyPlayer.ViewModelUserPickedSongs
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.RecyclerViewSongListBinding
@@ -31,7 +31,8 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
     private val binding get() = _binding!!
 
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
-    private val viewModelUserPickedSongs by activityViewModels<ViewModelUserPickedSongs>()
+    private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>()
+
     private lateinit var mediaData: MediaData
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,7 +71,7 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val activityMain: ActivityMain = requireActivity() as ActivityMain
-        activityMain.hideKeyboard(view)
+        KeyboardUtil.hideKeyboard(view)
         viewModelActivityMain.setActionBarTitle(resources.getString(R.string.select_songs))
         setUpRecyclerView()
     }
@@ -100,7 +101,7 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
                     }
 
                     override fun onQueryTextChange(newText: String?): Boolean {
-                        val songs = mediaData.getAllSongs()
+                        val songs = viewModelPlaylists.getAllSongs()
                         if (songs != null) {
                             val sifted = mutableListOf<Song>()
                             if (newText != null && newText != "") {
@@ -126,10 +127,10 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
     private fun setUpRecyclerView() {
         recyclerViewSongList = binding.recyclerViewSongList
         recyclerViewSongList?.layoutManager = LinearLayoutManager(requireContext())
-        for (song in viewModelUserPickedSongs.getUserPickedSongs()) {
+        for (song in viewModelPlaylists.getUserPickedSongs()) {
             song.setSelected(true)
         }
-        recyclerViewAdapter = mediaData.getAllSongs()?.let {
+        recyclerViewAdapter = viewModelPlaylists.getAllSongs()?.let {
             RecyclerViewAdapterSelectSongs(this, it)
         }
         recyclerViewSongList?.adapter = recyclerViewAdapter
@@ -154,15 +155,15 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
     }
 
     override fun getUserPickedSongs(): List<Song> {
-        return viewModelUserPickedSongs.getUserPickedSongs()
+        return viewModelPlaylists.getUserPickedSongs()
     }
 
     override fun removeUserPickedSong(song: Song) {
-        viewModelUserPickedSongs.removeUserPickedSong(song)
+        viewModelPlaylists.removeUserPickedSong(song)
     }
 
     override fun addUserPickedSong(song: Song) {
-        viewModelUserPickedSongs.addUserPickedSong(song)
+        viewModelPlaylists.addUserPickedSong(song)
     }
 
     override fun onStart() {

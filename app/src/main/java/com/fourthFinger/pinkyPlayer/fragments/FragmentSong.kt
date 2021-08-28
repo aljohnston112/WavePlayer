@@ -24,16 +24,12 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.os.LocaleListCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import com.fourthFinger.pinkyPlayer.KeyboardUtil
 import com.fourthFinger.pinkyPlayer.R
-import com.fourthFinger.pinkyPlayer.ViewModelUserPickedPlaylist
-import com.fourthFinger.pinkyPlayer.ViewModelUserPickedSongs
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.FragmentSongBinding
-import com.fourthFinger.pinkyPlayer.media_controller.BitmapLoader
-import com.fourthFinger.pinkyPlayer.media_controller.MediaController
-import com.fourthFinger.pinkyPlayer.media_controller.MediaData
-import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerWUri
+import com.fourthFinger.pinkyPlayer.media_controller.*
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
 import java.util.concurrent.Executors
@@ -45,8 +41,9 @@ class FragmentSong : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
-    private val viewModelUserPickedPlaylist by activityViewModels<ViewModelUserPickedPlaylist>()
-    private val viewModelUserPickedSongs by activityViewModels<ViewModelUserPickedSongs>()
+    private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>()
+
+    private val mediaPlayerModel = MediaPlayerModel.getInstance()
 
     private lateinit var mediaData: MediaData
     private lateinit var mediaController: MediaController
@@ -148,8 +145,8 @@ class FragmentSong : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val activityMain: ActivityMain = requireActivity() as ActivityMain
-        activityMain.hideKeyboard(view)
-        mediaData.currentAudioUri.observe(viewLifecycleOwner) {
+        KeyboardUtil.hideKeyboard(view)
+        mediaPlayerModel.currentAudioUri.observe(viewLifecycleOwner) {
             if (it != null) {
                 currentAudioUri = it
                 viewModelActivityMain.setSongToAddToQueue(it.id)
@@ -158,14 +155,14 @@ class FragmentSong : Fragment() {
                 textViewSongName.text = it.title
                 val maxMillis: Int = it.getDuration(activityMain.applicationContext)
                 val stringEndTime = formatMillis(maxMillis)
-                val stringCurrentTime = formatMillis(mediaController.getCurrentTime())
+                val stringCurrentTime = formatMillis(mediaPlayerModel.getCurrentTime())
                 val textViewCurrent: TextView = binding.editTextCurrentTime
                 textViewCurrent.text = stringCurrentTime
                 val textViewEnd: TextView = binding.editTextEndTime
                 textViewEnd.text = stringEndTime
                 val seekBar: SeekBar = binding.seekBar
                 seekBar.max = maxMillis
-                seekBar.progress = mediaController.getCurrentTime()
+                seekBar.progress = mediaPlayerModel.getCurrentTime()
                 seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                     override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
                     override fun onStartTrackingTouch(seekBar: SeekBar) {}
@@ -179,7 +176,7 @@ class FragmentSong : Fragment() {
         }
         viewModelActivityMain.setActionBarTitle(resources.getString(R.string.now_playing))
         viewModelActivityMain.showFab(false)
-        mediaData.isPlaying.observe(viewLifecycleOwner) { b: Boolean? ->
+        mediaPlayerModel.isPlaying.observe(viewLifecycleOwner) { b: Boolean? ->
             if (b != null) {
                 updateSongPlayButton(b)
             }
@@ -218,7 +215,7 @@ class FragmentSong : Fragment() {
         val textViewCurrent: TextView = binding.editTextCurrentTime
         shutDownSeekBarUpdater()
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
-        val mediaPlayerWUri: MediaPlayerWUri? = mediaController.getCurrentMediaPlayerWUri()
+        val mediaPlayerWUri: MediaPlayerWUri? = mediaPlayerModel.getCurrentMediaPlayerWUri()
         if (mediaPlayerWUri != null) {
             val runnableSeekBarUpdater = Runnable {
                 seekBar.post {
@@ -264,7 +261,7 @@ class FragmentSong : Fragment() {
                 when (clickedView.id) {
                     R.id.button_thumb_down -> {
                         val song: Song? = currentAudioUri?.id?.let {
-                            mediaData.getSong(it)
+                            viewModelPlaylists.getSong(it)
                         }
                         if (song != null) {
                             mediaController.getCurrentPlaylist()?.globalBad(song)
@@ -273,7 +270,7 @@ class FragmentSong : Fragment() {
                     }
                     R.id.button_thumb_up -> {
                         val song: Song? = currentAudioUri?.id?.let {
-                            mediaData.getSong(it)
+                            viewModelPlaylists.getSong(it)
                         }
                         if (song != null) {
                             mediaController.getCurrentPlaylist()?.globalGood(song)
@@ -330,7 +327,7 @@ class FragmentSong : Fragment() {
         buttonNext.setOnLongClickListener {
             // TODO change color of button
             currentAudioUri?.id?.let { id ->
-                mediaData.getSong(id)?.let {
+                viewModelPlaylists.getSong(id)?.let {
                     mediaController.getCurrentPlaylist()?.globalBad(it)
                 }
             }
@@ -462,8 +459,8 @@ class FragmentSong : Fragment() {
         super.onDestroy()
         view?.removeOnLayoutChangeListener(onLayoutChangeListenerFragmentSong)
         shutDownSeekBarUpdater()
-        mediaData.isPlaying.removeObservers(this)
-        mediaData.currentAudioUri.removeObservers(this)
+        mediaPlayerModel.isPlaying.removeObservers(this)
+        mediaPlayerModel.currentAudioUri.removeObservers(this)
     }
 
 }

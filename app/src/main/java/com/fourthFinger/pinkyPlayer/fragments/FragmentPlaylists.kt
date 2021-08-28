@@ -16,9 +16,8 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.fourthFinger.pinkyPlayer.KeyboardUtil
 import com.fourthFinger.pinkyPlayer.R
-import com.fourthFinger.pinkyPlayer.ViewModelUserPickedPlaylist
-import com.fourthFinger.pinkyPlayer.ViewModelUserPickedSongs
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.DialogFragmentAddToPlaylist
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
@@ -37,8 +36,8 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
     private val binding get() = _binding!!
 
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
-    private val viewModelUserPickedPlaylist by activityViewModels<ViewModelUserPickedPlaylist>()
-    private val viewModelUserPickedSongs by activityViewModels<ViewModelUserPickedSongs>()
+    private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>()
+
     private val songQueue = SongQueue.getInstance()
 
     private lateinit var mediaData: MediaData
@@ -85,7 +84,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val activityMain: ActivityMain = requireActivity() as ActivityMain
-        activityMain.hideKeyboard(requireView())
+        KeyboardUtil.hideKeyboard(requireView())
         viewModelActivityMain.setActionBarTitle(resources.getString(R.string.playlists))
         setUpRecyclerView()
     }
@@ -135,7 +134,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
         recyclerViewPlaylists = binding.recyclerViewPlaylistList
         recyclerViewAdapterPlaylists =
             recyclerViewPlaylists?.adapter as RecyclerViewAdapterPlaylists
-        val playlists: List<RandomPlaylist> = mediaData.getPlaylists()
+        val playlists: List<RandomPlaylist> = viewModelPlaylists.getPlaylists()
         val sifted: MutableList<RandomPlaylist> = ArrayList<RandomPlaylist>()
         if (newText != null && newText != "") {
             for (randomPlaylist in playlists) {
@@ -155,7 +154,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
         val activityMain: ActivityMain = requireActivity() as ActivityMain
         val recyclerView: RecyclerView = binding.recyclerViewPlaylistList
         recyclerView.layoutManager = LinearLayoutManager(recyclerView.context)
-        val recyclerViewAdapter = RecyclerViewAdapterPlaylists(this, mediaData.getPlaylists())
+        val recyclerViewAdapter = RecyclerViewAdapterPlaylists(this, viewModelPlaylists.getPlaylists())
         recyclerView.adapter = recyclerViewAdapter
         ItemTouchHelper(object : ItemTouchHelper.Callback() {
             override fun getMovementFlags(
@@ -173,7 +172,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
                 target: RecyclerView.ViewHolder
             ): Boolean {
                 Collections.swap(
-                    mediaData.getPlaylists(),
+                    viewModelPlaylists.getPlaylists(),
                     viewHolder.adapterPosition,
                     target.adapterPosition
                 )
@@ -187,9 +186,9 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val position: Int = viewHolder.adapterPosition
-                val randomPlaylists: List<RandomPlaylist> = mediaData.getPlaylists()
+                val randomPlaylists: List<RandomPlaylist> = viewModelPlaylists.getPlaylists()
                 val randomPlaylist: RandomPlaylist = randomPlaylists[position]
-                mediaData.removePlaylist(randomPlaylist)
+                viewModelPlaylists.removePlaylist(randomPlaylist)
                 recyclerViewAdapter.notifyItemRemoved(position)
                 activityMain.saveFile()
                 val snackbar: Snackbar = Snackbar.make(
@@ -197,7 +196,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
                     R.string.playlist_deleted, BaseTransientBottomBar.LENGTH_LONG
                 )
                 snackbar.setAction(R.string.undo) {
-                    mediaData.addPlaylist(position, randomPlaylist)
+                    viewModelPlaylists.addNewPlaylist(position, randomPlaylist)
                     recyclerViewAdapter.notifyItemInserted(position)
                     activityMain.saveFile()
                 }
@@ -224,8 +223,8 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
         viewModelActivityMain.showFab(true)
         viewModelActivityMain.setFabOnClickListener {
             // userPickedPlaylist is null when user is making a new playlist
-            viewModelUserPickedPlaylist.setUserPickedPlaylist(null)
-            viewModelUserPickedSongs.clearUserPickedSongs()
+            viewModelPlaylists.setUserPickedPlaylist(null)
+            viewModelPlaylists.clearUserPickedSongs()
             NavHostFragment.findNavController(this).navigate(
                 FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentEditPlaylist()
             )
@@ -263,7 +262,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
     }
 
     override fun onClickViewHolder(randomPlaylist: RandomPlaylist) {
-        viewModelUserPickedPlaylist.setUserPickedPlaylist(randomPlaylist)
+        viewModelPlaylists.setUserPickedPlaylist(randomPlaylist)
         NavHostFragment.findNavController(this).navigate(
             FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentPlaylist()
         )

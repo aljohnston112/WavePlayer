@@ -14,7 +14,6 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.fourthFinger.pinkyPlayer.R
-import com.fourthFinger.pinkyPlayer.ViewModelUserPickedPlaylist
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.FragmentTitleBinding
@@ -29,7 +28,7 @@ class FragmentTitle : Fragment() {
     private var _binding: FragmentTitleBinding? = null
     private val binding get() = _binding!!
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
-    private val viewModelUserPickedPlaylist by activityViewModels<ViewModelUserPickedPlaylist>()
+    private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>()
 
     private lateinit var mediaData: MediaData
 
@@ -106,7 +105,9 @@ class FragmentTitle : Fragment() {
                     getFilesFromDirRecursive(uri)
                     if (uriUserPickedFolder != null) {
                         if (songs.isNotEmpty()) {
-                            var randomPlaylist: RandomPlaylist? = uriUserPickedFolder?.path?.let { mediaData.getPlaylist(it) }
+                            var randomPlaylist: RandomPlaylist? = uriUserPickedFolder?.path?.let {
+                                viewModelPlaylists.getPlaylist(it)
+                            }
                             if (randomPlaylist == null) {
                                 randomPlaylist = uriUserPickedFolder?.path?.let {
                                     RandomPlaylist(
@@ -116,13 +117,13 @@ class FragmentTitle : Fragment() {
                                     )
                                 }
                                 if (randomPlaylist != null) {
-                                    mediaData.addPlaylist(randomPlaylist)
+                                    viewModelPlaylists.addNewPlaylist(randomPlaylist)
                                 }
                             } else {
                                 addNewSongs(randomPlaylist)
                                 removeMissingSongs(randomPlaylist)
                             }
-                            viewModelUserPickedPlaylist.setUserPickedPlaylist(randomPlaylist)
+                            viewModelPlaylists.setUserPickedPlaylist(randomPlaylist)
                         }
                         SaveFile.saveFile(requireActivity().applicationContext)
                         NavHostFragment.findNavController(this@FragmentTitle)

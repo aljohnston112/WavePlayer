@@ -18,6 +18,8 @@ import kotlin.system.exitProcess
 
 class ServiceMain : LifecycleService() {
 
+    private val mediaPlayerModel = MediaPlayerModel.getInstance()
+
     private var notificationHasArt = false
     private var remoteViewsNotificationLayout: RemoteViews? = null
     private var remoteViewsNotificationLayoutWithoutArt: RemoteViews? = null
@@ -120,7 +122,7 @@ class ServiceMain : LifecycleService() {
             updateNotification()
             notification = notificationCompatBuilder?.build()
             startForeground(NOTIFICATION_CHANNEL_ID.hashCode(), notification)
-            mediaData.isPlaying.observe(this){
+            mediaPlayerModel.isPlaying.observe(this){
                 updateNotification()
             }
         }
@@ -223,8 +225,8 @@ class ServiceMain : LifecycleService() {
 
     private fun updateSongArt() {
         // TODO update song art background
-        if (mediaData.currentAudioUri.value != null) {
-            val bitmap = mediaController.getCurrentUri()?.let {
+        if (mediaPlayerModel.currentAudioUri.value != null) {
+            val bitmap = mediaPlayerModel.getCurrentUri()?.let {
                 BitmapLoader.getThumbnail(
                         it, 92, 92, applicationContext)
             }
@@ -247,14 +249,14 @@ class ServiceMain : LifecycleService() {
     }
 
     private fun updateNotificationSongName() {
-        if (mediaData.currentAudioUri.value != null) {
+        if (mediaPlayerModel.currentAudioUri.value != null) {
             if (notificationHasArt) {
-                mediaData.currentAudioUri.value?.title?.let{
+                mediaPlayerModel.currentAudioUri.value?.title?.let{
                     remoteViewsNotificationLayoutWithArt?.setTextViewText(
                             R.id.textViewNotificationSongPaneSongNameWArt, it)
                 }
             } else {
-                mediaData.currentAudioUri.value?.title?.let{
+                mediaPlayerModel.currentAudioUri.value?.title?.let{
                     remoteViewsNotificationLayoutWithoutArt?.setTextViewText(
                             R.id.textViewNotificationSongPaneSongName, it)
                 }
@@ -271,7 +273,7 @@ class ServiceMain : LifecycleService() {
     }
 
     private fun updateNotificationPlayButton() {
-        if (mediaData.isPlaying.value == true) {
+        if (mediaPlayerModel.isPlaying.value == true) {
             if (notificationHasArt) {
                 remoteViewsNotificationLayoutWithArt?.setImageViewResource(
                         R.id.imageButtonNotificationSongPanePlayPauseWArt, R.drawable.pause_black_24dp)
@@ -310,7 +312,7 @@ class ServiceMain : LifecycleService() {
     }
 
     private fun taskRemoved() {
-        if (mediaData.isPlaying.value == true) {
+        if (mediaPlayerModel.isPlaying.value == true) {
             mediaController.pauseOrPlay()
         }
         mediaController.releaseMediaPlayers()
@@ -320,7 +322,7 @@ class ServiceMain : LifecycleService() {
 
     override fun onDestroy() {
         super.onDestroy()
-        if (mediaData.isPlaying.value == true) {
+        if (mediaPlayerModel.isPlaying.value == true) {
             mediaController.pauseOrPlay()
         }
         mediaController.releaseMediaPlayers()

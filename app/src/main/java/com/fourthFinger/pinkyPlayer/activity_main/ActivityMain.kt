@@ -11,7 +11,6 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -23,19 +22,13 @@ import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
 import com.fourthFinger.pinkyPlayer.R
-import com.fourthFinger.pinkyPlayer.ViewModelUserPickedPlaylist
-import com.fourthFinger.pinkyPlayer.ViewModelUserPickedSongs
 import com.fourthFinger.pinkyPlayer.databinding.ActivityMainBinding
-import com.fourthFinger.pinkyPlayer.media_controller.MediaController
-import com.fourthFinger.pinkyPlayer.media_controller.MediaData
-import com.fourthFinger.pinkyPlayer.media_controller.SaveFile
-import com.fourthFinger.pinkyPlayer.media_controller.ServiceMain
+import com.fourthFinger.pinkyPlayer.media_controller.*
 import com.fourthFinger.pinkyPlayer.random_playlist.SongQueue
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import java.util.*
@@ -44,8 +37,8 @@ class ActivityMain : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     private val viewModelActivityMain by viewModels<ViewModelActivityMain>()
-    private val viewModelUserPickedPlaylist by viewModels<ViewModelUserPickedPlaylist>()
-    private val viewModelUserPickedSongs by viewModels<ViewModelUserPickedSongs>()
+
+    private val mediaPlayerModel = MediaPlayerModel.getInstance()
 
     private lateinit var mediaController: MediaController
     private lateinit var mediaData: MediaData
@@ -235,7 +228,7 @@ class ActivityMain : AppCompatActivity() {
 
     private fun goToDestinationFragment() {
         if (serviceMain?.loaded() == true) {
-            if (mediaData.isPlaying.value == true && !fragmentSongVisible()) {
+            if (mediaPlayerModel.isPlaying.value == true && !fragmentSongVisible()) {
                 hideSongPane()
                 navigateTo(R.id.fragmentSong)
             } else {
@@ -353,6 +346,7 @@ class ActivityMain : AppCompatActivity() {
             R.id.action_add_to_queue -> {
                 // TODO a song not in progress will not be added to the queue
                 // Pretty sure that never happens though
+                // TODO Playlist wil not get added if there is a song in progress
                 if (mediaController.isSongInProgress()) {
                     viewModelActivityMain.songToAddToQueue.value?.let { songQueue.addToQueue(it) }
                 } else {
@@ -362,6 +356,7 @@ class ActivityMain : AppCompatActivity() {
                         }
                         // TODO why set the playlist only when the queue is empty?
                         // No current playlist for when the queue runs out, so what?
+                        // Will this ever happen?
                         if (songQueue.isEmpty()) {
                             viewModelActivityMain.playlistToAddToQueue.value?.let { rp ->
                                 mediaController.setCurrentPlaylist(rp)
@@ -378,11 +373,11 @@ class ActivityMain : AppCompatActivity() {
                 return true
             }
             R.id.action_add_to_playlist ->{
-                // TODO can add a playlist to a playlist
+                // TODO add a playlist to a playlist
                 val bundle = Bundle()
                 bundle.putSerializable(
                         DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG,
-                        viewModelActivityMain.songToAddToQueue.value?.let { mediaData.getSong(it) }
+                        viewModelActivityMain.getSongToAddToQueue()
                 )
                 val dialogFragment: DialogFragment = DialogFragmentAddToPlaylist()
                 dialogFragment.arguments = bundle
@@ -397,31 +392,6 @@ class ActivityMain : AppCompatActivity() {
         SaveFile.saveFile(applicationContext)
     }
 
-    fun showToast(idMessage: Int) {
-        val toast: Toast = Toast.makeText(applicationContext, idMessage, Toast.LENGTH_LONG)
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                toast.view?.background?.colorFilter = BlendModeColorFilter(
-                    ContextCompat.getColor(applicationContext, R.color.colorPrimary),
-                        BlendMode.SRC_IN
-                )
-            } else{
-                toast.view?.background?.setColorFilter(
-                        ContextCompat.getColor(applicationContext, R.color.colorPrimary),
-                        PorterDuff.Mode.SRC_IN
-                )
-
-            }
-            toast.view?.findViewById<TextView?>(R.id.message)?.textSize = 16f
-        }
-        toast.show()
-    }
-
-    fun hideKeyboard(view: View) {
-        (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager)
-                .hideSoftInputFromWindow(view.windowToken, 0)
-    }
-
     fun fragmentSongVisible(fragmentSongVisible: Boolean) {
         this.fragmentSongVisible = fragmentSongVisible
     }
@@ -434,11 +404,6 @@ class ActivityMain : AppCompatActivity() {
 
     fun loaded(loaded: Boolean) {
         serviceMain?.loaded(loaded)
-    }
-
-    fun popBackStack(fragment: Fragment) {
-        val navController: NavController = NavHostFragment.findNavController(fragment)
-        navController.popBackStack()
     }
 
     // endregion serviceMain

@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.room.Room
 import com.fourthFinger.pinkyPlayer.R
+import com.fourthFinger.pinkyPlayer.fragments.PlaylistsRepo
 import com.fourthFinger.pinkyPlayer.random_playlist.*
 import java.io.File
 import java.io.FileNotFoundException
@@ -17,20 +18,10 @@ import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.ExecutorService
 
-// I need to change something to push this project
 class MediaData private constructor(val context: Context) {
 
-    private var _currentAudioUri = MutableLiveData<AudioUri>()
-    val currentAudioUri = _currentAudioUri as LiveData<AudioUri>
-    fun setCurrentAudioUri(audioUri: AudioUri){
-        _currentAudioUri.value = audioUri
-    }
-
-    private val _isPlaying: MutableLiveData<Boolean> = MutableLiveData(false)
-    val isPlaying = _isPlaying as LiveData<Boolean>
-    fun setIsPlaying(isPlaying: Boolean) {
-        this._isPlaying.setValue(isPlaying)
-    }
+    private val playlistsRepo = PlaylistsRepo.getInstance(context)
+    private val mediaPlayerModel = MediaPlayerModel.getInstance()
 
     private val _loadingText: MutableLiveData<String> = MutableLiveData()
     val loadingText = _loadingText as LiveData<String>
@@ -38,64 +29,11 @@ class MediaData private constructor(val context: Context) {
     private val _loadingProgress: MutableLiveData<Double> = MutableLiveData(0.0)
     val loadingProgress = _loadingProgress as LiveData<Double>
 
-    private val playlists: MutableList<RandomPlaylist> = mutableListOf()
-    fun getPlaylists(): List<RandomPlaylist> {
-        return playlists
-    }
-    fun addPlaylist(randomPlaylist: RandomPlaylist) {
-        playlists.add(randomPlaylist)
-    }
-    fun addPlaylist(position: Int, randomPlaylist: RandomPlaylist) {
-        playlists.add(position, randomPlaylist)
-    }
-    fun removePlaylist(randomPlaylist: RandomPlaylist) {
-        playlists.remove(randomPlaylist)
-    }
-    fun getPlaylist(playlistName: String): RandomPlaylist? {
-        var out: RandomPlaylist? = null
-        for (randomPlaylist in playlists) {
-            if (randomPlaylist.getName() == playlistName) {
-                out = randomPlaylist
-            }
-            break
-        }
-        return out
-    }
-
-    private var masterPlaylist: RandomPlaylist? = null
-    fun setMasterPlaylist(masterPlaylist: RandomPlaylist) {
-        this.masterPlaylist = masterPlaylist
-    }
-    fun getMasterPlaylist(): RandomPlaylist? {
-        return masterPlaylist
-    }
-    fun getAllSongs(): List<Song>? {
-        return masterPlaylist?.getSongs()
-    }
-
-    private var songDAO: SongDAO
-    fun getSong(songID: Long): Song? {
-        var song: Song? = null
-        try {
-            song = ServiceMain.executorServicePool.submit(Callable { songDAO.getSong(songID) }).get()
-        } catch (e: ExecutionException) {
-            e.printStackTrace()
-        } catch (e: InterruptedException) {
-            e.printStackTrace()
-        }
-        return song
-    }
-
-    init {
-        val songDatabase = Room.databaseBuilder(context, SongDatabase::class.java, SONG_DATABASE_NAME).build()
-        songDAO = songDatabase.songDAO()
-    }
-
     fun loadData(context: Context) {
         // Loading the save file is needed to ensure the master playlist is valid
         // before getting songs from the MediaStore.
-         SaveFile.loadSaveFile(context, this)
-         getSongsFromMediaStore(context)
+        SaveFile.loadSaveFile(context, this)
+        getSongsFromMediaStore(context)
     }
 
     private fun getSongsFromMediaStore(context: Context) {
@@ -105,14 +43,17 @@ class MediaData private constructor(val context: Context) {
         val executorServiceFIFO: ExecutorService = ServiceMain.executorServiceFIFO
         executorServiceFIFO.execute {
             val projection = arrayOf(
-                    MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DISPLAY_NAME,
-                    MediaStore.Audio.Media.IS_MUSIC, MediaStore.Audio.Media.ARTIST_ID,
-                    MediaStore.Audio.Media.TITLE)
+                MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DISPLAY_NAME,
+                MediaStore.Audio.Media.IS_MUSIC, MediaStore.Audio.Media.ARTIST_ID,
+                MediaStore.Audio.Media.TITLE
+            )
             val selection = MediaStore.Audio.Media.IS_MUSIC + " != ?"
             val selectionArgs = arrayOf("0")
             val sortOrder = MediaStore.Audio.Media.TITLE + " ASC"
-            context.contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                    projection, selection, selectionArgs, sortOrder).use { cursor ->
+            context.contentResolver.query(
+                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                projection, selection, selectionArgs, sortOrder
+            ).use { cursor ->
                 if (cursor != null) {
                     val idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
                     val nameCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
@@ -129,7 +70,9 @@ class MediaData private constructor(val context: Context) {
                         val file = File(context.filesDir, id.toString())
                         // TODO put in user triggered scan
                         // !file.exists() || (songDAO.getSong(id) == null)
-                        if ((masterPlaylist?.contains(Song(id, title)) != true)) {
+                        if ((playlistsRepo.getMasterPlaylist()
+                                ?.contains(Song(id, title)) != true)
+                        ) {
                             AudioUri.saveAudioUri(context, AudioUri(displayName, artist, title, id))
                             newSongs.add(Song(id, title))
                         }
@@ -145,21 +88,23 @@ class MediaData private constructor(val context: Context) {
             val i = newSongs.size
             _loadingText.postValue(context.getResources().getString(R.string.loading2))
             for ((k, song) in newSongs.withIndex()) {
-                songDAO.insertAll(song)
+                playlistsRepo.addSongToDB(song)
                 _loadingProgress.postValue(k.toDouble() / i.toDouble())
             }
         }
         executorServiceFIFO.execute {
-            if (masterPlaylist != null) {
+            if (playlistsRepo.getMasterPlaylist() != null) {
                 _loadingText.postValue(resources.getString(R.string.loading3))
                 addNewSongs(filesThatExist)
                 _loadingText.postValue(resources.getString(R.string.loading4))
                 removeMissingSongs(filesThatExist)
             } else {
-                masterPlaylist = RandomPlaylist(
+                playlistsRepo.setMasterPlaylist(
+                    RandomPlaylist(
                         MASTER_PLAYLIST_NAME,
                         ArrayList(newSongs),
                         true
+                    )
                 )
             }
         }
@@ -180,14 +125,15 @@ class MediaData private constructor(val context: Context) {
 
     private fun removeMissingSongs(filesThatExist: List<Long>) {
         val i = filesThatExist.size
-        val ids = masterPlaylist?.getSongIDs()
-        if(ids != null) {
-            for((j, songID) in ids.withIndex()) {
+        val ids = playlistsRepo.getMasterPlaylist()?.getSongIDs()
+        if (ids != null) {
+            for ((j, songID) in ids.withIndex()) {
                 if (!filesThatExist.contains(songID)) {
-                    songDAO.getSong(songID)?.let {
-                        masterPlaylist?.remove(it)
-                        songDAO.delete(it) }
-                    MediaController.getInstance(context).removeMediaPlayerWUri(songID)
+                    playlistsRepo.getSong(songID)?.let {
+                        playlistsRepo.getMasterPlaylist()?.remove(it)
+                        playlistsRepo.removeSongFromDB(it)
+                    }
+                    mediaPlayerModel.removeMediaPlayerWUri(songID)
                 }
                 _loadingProgress.postValue(j.toDouble() / i.toDouble())
             }
@@ -197,8 +143,8 @@ class MediaData private constructor(val context: Context) {
     private fun addNewSongs(filesThatExist: List<Long>) {
         val i = filesThatExist.size
         for ((j, songID) in filesThatExist.withIndex()) {
-            if (masterPlaylist?.contains(songID) == false) {
-                songDAO.getSong(songID)?.let { masterPlaylist?.add(it) }
+            if (playlistsRepo.getMasterPlaylist()?.contains(songID) == false) {
+                playlistsRepo.getSong(songID)?.let { playlistsRepo.getMasterPlaylist()?.add(it) }
             }
             _loadingProgress.postValue(j.toDouble() / i.toDouble())
         }
