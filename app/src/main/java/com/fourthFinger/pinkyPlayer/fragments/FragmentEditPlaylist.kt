@@ -12,7 +12,6 @@ import androidx.navigation.fragment.NavHostFragment
 import com.fourthFinger.pinkyPlayer.KeyboardUtil
 import com.fourthFinger.pinkyPlayer.NavUtil
 import com.fourthFinger.pinkyPlayer.R
-import com.fourthFinger.pinkyPlayer.ToastUtil
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.FragmentEditPlaylistBinding
 import com.fourthFinger.pinkyPlayer.media_controller.MediaData
@@ -46,7 +45,7 @@ class FragmentEditPlaylist : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModelPlaylists.fragmentEditPlaylistviewCreated()
+        viewModelPlaylists.fragmentEditPlaylistViewCreated()
         binding.buttonEditSongs.setOnClickListener {
             viewModelFragmentEditPlaylist.editSongsClicked(
                 NavHostFragment.findNavController(this)
@@ -57,6 +56,7 @@ class FragmentEditPlaylist : Fragment() {
     override fun onResume() {
         super.onResume()
         updateFAB()
+        viewModelPlaylists.fragmentEditPlaylistOnResume()
     }
 
     private fun updateFAB() {
@@ -64,22 +64,20 @@ class FragmentEditPlaylist : Fragment() {
         viewModelActivityMain.setFABText(R.string.fab_save)
         viewModelActivityMain.showFab(true)
 
-        populateListOfUserPickedSongs()
-
         val editTextPlaylistName: EditText = binding.editTextPlaylistName
-        val userPickedSongs = viewModelPlaylists.getUserPickedSongs().toMutableList()
         val userPickedPlaylist = viewModelPlaylists.getUserPickedPlaylist()
         val makingNewPlaylist = (userPickedPlaylist == null)
+        editTextPlaylistName.setText(userPickedPlaylist!!.getName())
+
+        val userPickedSongs = viewModelPlaylists.getUserPickedSongs().toMutableList()
         viewModelActivityMain.setFabOnClickListener { view: View ->
             if (validateInput()) {
                 if (makingNewPlaylist) {
-                    viewModelPlaylists.addNewPlaylist(
+                    viewModelPlaylists.addNewPlaylistWithUserPickedSongs(
                         editTextPlaylistName.text.toString(),
-                        userPickedSongs
                     )
                     cleanUp(view)
-                } else if (!makingNewPlaylist && userPickedPlaylist != null) {
-                    // userPickedPlaylist is not null when the user is editing a playlist
+                } else if (!makingNewPlaylist) {
                     val playlistNames = ArrayList<String?>()
                     for (randomPlaylist in viewModelPlaylists.getPlaylists()) {
                         playlistNames.add(randomPlaylist.getName())
@@ -107,7 +105,7 @@ class FragmentEditPlaylist : Fragment() {
 
     private fun validateInput(): Boolean {
         val editTextPlaylistName: EditText = binding.editTextPlaylistName
-        return viewModelPlaylists.validatePlaylistFields(
+        return viewModelPlaylists.validateInput(
             requireActivity().applicationContext,
             editTextPlaylistName.text.toString()
         )
@@ -117,16 +115,6 @@ class FragmentEditPlaylist : Fragment() {
         SaveFile.saveFile(requireActivity().applicationContext)
         KeyboardUtil.hideKeyboard(view)
         NavUtil.popBackStack(this)
-    }
-
-    private fun populateListOfUserPickedSongs() {
-        val editTextPlaylistName: EditText = binding.editTextPlaylistName
-        val userPickedPlaylist = viewModelPlaylists.getUserPickedPlaylist()
-        val makingNewPlaylist = (userPickedPlaylist == null)
-        if (!makingNewPlaylist) {
-            viewModelPlaylists.populateUserPickedSongs()
-            editTextPlaylistName.setText(userPickedPlaylist!!.getName())
-        }
     }
 
     override fun onDestroyView() {

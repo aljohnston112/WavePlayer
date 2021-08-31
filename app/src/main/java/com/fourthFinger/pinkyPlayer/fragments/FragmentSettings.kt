@@ -11,6 +11,7 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.fourthFinger.pinkyPlayer.R
+import com.fourthFinger.pinkyPlayer.ToastUtil
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.FragmentSettingsBinding
@@ -85,7 +86,10 @@ class FragmentSettings : Fragment() {
             e.printStackTrace()
         }
         if (nSongs < 1) {
-            (requireActivity() as ActivityMain).showToast(R.string.max_percent_error)
+            ToastUtil.showToast(
+                requireActivity().applicationContext,
+                R.string.max_percent_error
+            )
             nSongs = -1
         }
         return nSongs
@@ -100,7 +104,10 @@ class FragmentSettings : Fragment() {
             e.printStackTrace()
         }
         if (percentChangeUp < 1 || percentChangeUp > 100) {
-            (requireActivity() as ActivityMain).showToast(R.string.percent_change_error)
+            ToastUtil.showToast(
+                requireActivity().applicationContext,
+                R.string.percent_change_error
+            )
             percentChangeUp = -1
         }
         return percentChangeUp
@@ -115,7 +122,10 @@ class FragmentSettings : Fragment() {
             e.printStackTrace()
         }
         if (percentChangeDown < 1 || percentChangeDown > 100) {
-            (requireActivity() as ActivityMain).showToast(R.string.percent_change_error)
+            ToastUtil.showToast(
+                requireActivity().applicationContext,
+                R.string.percent_change_error
+            )
             percentChangeDown = -1
         }
         return percentChangeDown

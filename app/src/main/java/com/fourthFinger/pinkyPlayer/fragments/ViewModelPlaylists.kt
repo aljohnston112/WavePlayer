@@ -65,21 +65,11 @@ class ViewModelPlaylists(application: Application): AndroidViewModel(application
         return titlesArray
     }
 
-    fun doesPlaylistExist(playlistName: String): Boolean {
-        var playlistIndex = -1
-        for ((i, randomPlaylist) in getPlaylists().withIndex()) {
-            if (randomPlaylist.getName() == playlistName) {
-                playlistIndex = i
-            }
-        }
-        return playlistIndex == -1
-    }
-
     fun getPlaylists(): List<RandomPlaylist> {
         return playlistsRepo.getPlaylists()
     }
 
-    fun addNewPlaylist(randomPlaylist: RandomPlaylist) {
+    fun addNewPlaylistWithUserPickedSongs(randomPlaylist: RandomPlaylist) {
         playlistsRepo.addPlaylist(randomPlaylist)
     }
 
@@ -91,7 +81,7 @@ class ViewModelPlaylists(application: Application): AndroidViewModel(application
         return playlistsRepo.getSong(songID)
     }
 
-    fun addNewPlaylist(position: Int, randomPlaylist: RandomPlaylist) {
+    fun addNewPlaylistWithUserPickedSongs(position: Int, randomPlaylist: RandomPlaylist) {
         playlistsRepo.addPlaylist(position, randomPlaylist)
     }
 
@@ -107,12 +97,14 @@ class ViewModelPlaylists(application: Application): AndroidViewModel(application
         return playlistsRepo.getPlaylist(it)
     }
 
-    fun addNewPlaylist(name: String, songs: MutableList<Song>) {
-        playlistsRepo.addPlaylist(RandomPlaylist(name, songs, false))
+    fun addNewPlaylistWithUserPickedSongs(name: String) {
+        playlistsRepo.addPlaylist(
+            RandomPlaylist(name, userPickedSongs, false)
+        )
         clearUserPickedSongs()
     }
 
-    fun fragmentEditPlaylistviewCreated() {
+    fun fragmentEditPlaylistViewCreated() {
         setPickedSongsToCurrentPlaylist()
     }
 
@@ -125,17 +117,7 @@ class ViewModelPlaylists(application: Application): AndroidViewModel(application
         }
     }
 
-    fun populateUserPickedSongs() {
-        // userPickedSongs.isEmpty() when the user is editing a playlist
-        // TODO if user is editing a playlist, unselects all the songs and returns here, ERROR
-        if (userPickedSongs.isEmpty()) {
-            getUserPickedPlaylist()?.getSongs()?.let {
-                userPickedSongs.addAll(it)
-            }
-        }
-    }
-
-    fun validatePlaylistFields(context: Context, playlistName: String): Boolean {
+    fun validateInput(context: Context, playlistName: String): Boolean {
         val userPickedSongs = getUserPickedSongs().toMutableList()
         val userPickedPlaylist = getUserPickedPlaylist()
         val makingNewPlaylist = (userPickedPlaylist == null)
@@ -153,6 +135,39 @@ class ViewModelPlaylists(application: Application): AndroidViewModel(application
             false
         } else {
             true
+        }
+    }
+
+    private fun doesPlaylistExist(playlistName: String): Boolean {
+        var playlistIndex = -1
+        for ((i, randomPlaylist) in getPlaylists().withIndex()) {
+            if (randomPlaylist.getName() == playlistName) {
+                playlistIndex = i
+            }
+        }
+        return playlistIndex == -1
+    }
+
+    fun fragmentEditPlaylistOnResume() {
+        val makingNewPlaylist = (userPickedPlaylist == null)
+        if (!makingNewPlaylist) {
+            editingCurrentPlaylist()
+        }
+    }
+
+    private fun editingCurrentPlaylist() {
+        // userPickedSongs.isEmpty() when the user is editing a playlist
+        // TODO
+        //  if (user is editing a playlist,
+        //      unselects all the songs, and
+        //      returns here){
+        //          ERROR
+        //  }
+        // TODO how come only when it is empty?
+        if (userPickedSongs.isEmpty()) {
+            getUserPickedPlaylist()?.getSongs()?.let {
+                userPickedSongs.addAll(it)
+            }
         }
     }
 

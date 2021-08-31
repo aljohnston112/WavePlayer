@@ -196,7 +196,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
                     R.string.playlist_deleted, BaseTransientBottomBar.LENGTH_LONG
                 )
                 snackbar.setAction(R.string.undo) {
-                    viewModelPlaylists.addNewPlaylist(position, randomPlaylist)
+                    viewModelPlaylists.addNewPlaylistWithUserPickedSongs(position, randomPlaylist)
                     recyclerViewAdapter.notifyItemInserted(position)
                     activityMain.saveFile()
                 }
