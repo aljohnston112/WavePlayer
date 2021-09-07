@@ -35,14 +35,14 @@ class ServiceMain : LifecycleService() {
                 if (action != null) {
                     if ((action == resources.getString(
                                     R.string.broadcast_receiver_action_next))) {
-                        mediaController.playNext()
+                        mediaModel.playNext(applicationContext)
                         SaveFile.saveFile(applicationContext)
                     } else if ((action == resources.getString(
                                     R.string.broadcast_receiver_action_play_pause))) {
-                        mediaController.pauseOrPlay()
+                        mediaModel.pauseOrPlay(applicationContext)
                     } else if ((action == resources.getString(
                                     R.string.broadcast_receiver_action_previous))) {
-                        mediaController.playPrevious()
+                        mediaModel.playPrevious(applicationContext)
                     } else if ((action == resources.getString(
                                     R.string.broadcast_receiver_action_new_song))) {
                         updateNotification()
@@ -52,7 +52,7 @@ class ServiceMain : LifecycleService() {
         }
     }
     private var loaded = false
-    private lateinit var mediaController: MediaController
+    private lateinit var mediaModel: MediaModel
     private lateinit var mediaData: MediaData
     private val songQueue = SongQueue.getInstance()
 
@@ -60,7 +60,7 @@ class ServiceMain : LifecycleService() {
     // region onCreate
     override fun onCreate() {
         super.onCreate()
-        mediaController = MediaController.getInstance(applicationContext)
+        mediaModel = MediaModel.getInstance(applicationContext)
         mediaData = MediaData.getInstance()
         setUpExceptionSaver()
         logLastThrownException()
@@ -313,9 +313,9 @@ class ServiceMain : LifecycleService() {
 
     private fun taskRemoved() {
         if (mediaPlayerModel.isPlaying.value == true) {
-            mediaController.pauseOrPlay()
+            mediaModel.pauseOrPlay(applicationContext)
         }
-        mediaController.releaseMediaPlayers()
+        mediaModel.releaseMediaPlayers()
         unregisterReceiver(broadcastReceiver)
         stopSelf()
     }
@@ -323,9 +323,9 @@ class ServiceMain : LifecycleService() {
     override fun onDestroy() {
         super.onDestroy()
         if (mediaPlayerModel.isPlaying.value == true) {
-            mediaController.pauseOrPlay()
+            mediaModel.pauseOrPlay(applicationContext)
         }
-        mediaController.releaseMediaPlayers()
+        mediaModel.releaseMediaPlayers()
         unregisterReceiver(broadcastReceiver)
         stopSelf()
         // TODO remove on release?

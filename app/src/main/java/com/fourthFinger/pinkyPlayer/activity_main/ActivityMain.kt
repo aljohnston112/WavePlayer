@@ -11,8 +11,6 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatTextView
@@ -26,6 +24,7 @@ import androidx.fragment.app.FragmentManager
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
+import com.fourthFinger.pinkyPlayer.NavUtil.Companion.navigateTo
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.databinding.ActivityMainBinding
 import com.fourthFinger.pinkyPlayer.media_controller.*
@@ -40,7 +39,7 @@ class ActivityMain : AppCompatActivity() {
 
     private val mediaPlayerModel = MediaPlayerModel.getInstance()
 
-    private lateinit var mediaController: MediaController
+    private lateinit var mediaModel: MediaModel
     private lateinit var mediaData: MediaData
     private val songQueue = SongQueue.getInstance()
 
@@ -69,7 +68,9 @@ class ActivityMain : AppCompatActivity() {
                 }
                 (resources.getString(R.string.broadcast_receiver_action_loaded)) -> {
                     loaded(true)
-                    navigateTo(R.id.FragmentTitle)
+                    val fragmentManager: FragmentManager = supportFragmentManager
+                    val fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment)
+                    fragment?.let { navigateTo(it, R.id.FragmentTitle) }
                 }
                 (resources.getString(R.string.broadcast_receiver_action_new_song)) -> {
 
@@ -86,10 +87,20 @@ class ActivityMain : AppCompatActivity() {
         binding.setLifecycleOwner { lifecycle }
         binding.viewModelActivityMain = viewModelActivityMain
         setContentView(binding.root)
-        mediaController = MediaController.getInstance(applicationContext)
+        mediaModel = MediaModel.getInstance(applicationContext)
         mediaData = MediaData.getInstance()
+        setUpOnDestinationChangedListener()
         setUpViewModelActivityMainObservers()
     }
+
+    private fun setUpOnDestinationChangedListener() {
+        val fragmentManager: FragmentManager = supportFragmentManager
+        val fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment)
+        if (fragment != null) {
+            NavHostFragment.findNavController(fragment).addOnDestinationChangedListener(onDestinationChangedListenerSongPane)
+        }
+    }
+
 
     private fun setUpViewModelActivityMainObservers() {
         val fab: ExtendedFloatingActionButton = binding.fab
@@ -228,28 +239,19 @@ class ActivityMain : AppCompatActivity() {
 
     private fun goToDestinationFragment() {
         if (serviceMain?.loaded() == true) {
+            val fragmentManager: FragmentManager = supportFragmentManager
+            val fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment)
             if (mediaPlayerModel.isPlaying.value == true && !fragmentSongVisible()) {
                 hideSongPane()
-                navigateTo(R.id.fragmentSong)
+                fragment?.let { navigateTo(it, R.id.fragmentSong) }
             } else {
-                navigateTo(R.id.FragmentTitle)
+                fragment?.let { navigateTo(it, R.id.FragmentTitle) }
             }
         } else {
             val fragmentManager: FragmentManager = supportFragmentManager
             val fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment)
             if (fragment != null) {
                 NavHostFragment.findNavController(fragment).popBackStack(R.id.fragmentLoading, true)
-            }
-        }
-    }
-
-    fun navigateTo(id: Int) {
-        runOnUiThread {
-            val fragmentManager: FragmentManager = supportFragmentManager
-            val fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment)
-            if (fragment != null) {
-                val navController: NavController = NavHostFragment.findNavController(fragment)
-                navController.navigate(id)
             }
         }
     }
@@ -315,6 +317,16 @@ class ActivityMain : AppCompatActivity() {
         super.onDestroy()
         applicationContext.unbindService(connectionServiceMain)
         serviceDisconnected()
+        removeListeners()
+    }
+
+    private fun removeListeners() {
+        val fragmentManager: FragmentManager = supportFragmentManager
+        val fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment)
+        if (fragment != null) {
+            NavHostFragment.findNavController(fragment).removeOnDestinationChangedListener(
+                onDestinationChangedListenerSongPane)
+        }
     }
 
     // endregion lifecycle
@@ -336,18 +348,18 @@ class ActivityMain : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_reset_probs -> {
-                mediaController.clearProbabilities(applicationContext)
+                mediaModel.clearProbabilities(applicationContext)
                 return true
             }
             R.id.action_lower_probs -> {
-                mediaController.lowerProbabilities(applicationContext)
+                mediaModel.lowerProbabilities(applicationContext)
                 return true
             }
             R.id.action_add_to_queue -> {
                 // TODO a song not in progress will not be added to the queue
                 // Pretty sure that never happens though
                 // TODO Playlist wil not get added if there is a song in progress
-                if (mediaController.isSongInProgress()) {
+                if (mediaModel.isSongInProgress()) {
                     viewModelActivityMain.songToAddToQueue.value?.let { songQueue.addToQueue(it) }
                 } else {
                     viewModelActivityMain.playlistToAddToQueue.value?.getSongs()?.let {
@@ -359,14 +371,14 @@ class ActivityMain : AppCompatActivity() {
                         // Will this ever happen?
                         if (songQueue.isEmpty()) {
                             viewModelActivityMain.playlistToAddToQueue.value?.let { rp ->
-                                mediaController.setCurrentPlaylist(rp)
+                                mediaModel.setCurrentPlaylist(rp)
                             }
                         }
                     }
                 }
-                if (!mediaController.isSongInProgress()) {
-                    mediaController.playNext()
-                    if (!fragmentSongVisible && mediaController.isSongInProgress()) {
+                if (!mediaModel.isSongInProgress()) {
+                    mediaModel.playNext(applicationContext)
+                    if (!fragmentSongVisible && mediaModel.isSongInProgress()) {
                         showSongPane()
                     }
                 }
@@ -390,6 +402,18 @@ class ActivityMain : AppCompatActivity() {
 
     fun saveFile() {
         SaveFile.saveFile(applicationContext)
+    }
+
+    private val onDestinationChangedListenerSongPane = { _: NavController?, destination: NavDestination?, _: Bundle? ->
+        if (destination?.id != R.id.fragmentSong) {
+            if (mediaModel.isSongInProgress()) {
+                fragmentSongVisible(false)
+                showSongPane()
+            }
+        } else {
+            fragmentSongVisible(true)
+            hideSongPane()
+        }
     }
 
     fun fragmentSongVisible(fragmentSongVisible: Boolean) {

@@ -22,7 +22,7 @@ import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.DialogFragmentAddToPlaylist
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.RecyclerViewPlaylistListBinding
-import com.fourthFinger.pinkyPlayer.media_controller.MediaController
+import com.fourthFinger.pinkyPlayer.media_controller.MediaModel
 import com.fourthFinger.pinkyPlayer.media_controller.MediaData
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
 import com.fourthFinger.pinkyPlayer.random_playlist.SongQueue
@@ -41,7 +41,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
     private val songQueue = SongQueue.getInstance()
 
     private lateinit var mediaData: MediaData
-    private lateinit var mediaController: MediaController
+    private lateinit var mediaModel: MediaModel
 
     private var broadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -67,7 +67,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        mediaController = MediaController.getInstance(requireActivity().applicationContext)
+        mediaModel = MediaModel.getInstance(requireActivity().applicationContext)
         mediaData = MediaData.getInstance()
 
     }
@@ -251,12 +251,12 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
         }
         // TODO stop MasterPlaylist from continuing after queue is done
         // shuffle is off and looping is on or something like that?
-        mediaController.setCurrentPlaylistToMaster()
-        if (!mediaController.isSongInProgress()) {
+        mediaModel.setCurrentPlaylistToMaster(requireActivity().applicationContext)
+        if (!mediaModel.isSongInProgress()) {
             activityMain.showSongPane()
             // TODO goToFrontOfQueue() is dumb
             songQueue.goToFront()
-            mediaController.playNext()
+            mediaModel.playNext(requireActivity().applicationContext)
         }
         return true
     }

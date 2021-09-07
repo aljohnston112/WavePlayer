@@ -23,7 +23,7 @@ import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.DialogFragmentAddToPlaylist
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.RecyclerViewSongListBinding
-import com.fourthFinger.pinkyPlayer.media_controller.MediaController
+import com.fourthFinger.pinkyPlayer.media_controller.MediaModel
 import com.fourthFinger.pinkyPlayer.media_controller.MediaData
 import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerModel
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
@@ -44,11 +44,11 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
     private val songQueue = SongQueue.getInstance()
 
     private lateinit var mediaData: MediaData
-    private lateinit var mediaController: MediaController
+    private lateinit var mediaModel: MediaModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        mediaController = MediaController.getInstance(requireActivity().applicationContext)
+        mediaModel = MediaModel.getInstance(requireActivity().applicationContext)
         mediaData = MediaData.getInstance()
 
     }
@@ -179,13 +179,13 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
 
     override fun onMenuItemClickAddToQueue(song: Song): Boolean {
         val activityMain: ActivityMain = requireActivity() as ActivityMain
-        if (mediaController.isSongInProgress()) {
+        if (mediaModel.isSongInProgress()) {
             songQueue.addToQueue(song.id)
         } else {
             activityMain.showSongPane()
             songQueue.addToQueue(song.id)
-            if (!mediaController.isSongInProgress()) {
-                mediaController.playNext()
+            if (!mediaModel.isSongInProgress()) {
+                mediaModel.playNext(requireActivity().applicationContext)
             }
         }
         return true
@@ -197,16 +197,16 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
             a != null &&
             song == viewModelPlaylists.getSong(a.id)
         ) {
-            mediaController.seekTo(0)
+            mediaModel.seekTo(requireActivity().applicationContext, 0)
         }
-        mediaController.setCurrentPlaylistToMaster()
+        mediaModel.setCurrentPlaylistToMaster(requireActivity().applicationContext)
         songQueue.clearSongQueue()
         songQueue.addToQueue(song.id)
         val audioUri = AudioUri.getAudioUri(requireContext(), song.id)
         if(audioUri != null) {
             mediaPlayerModel.setCurrentAudioUri(audioUri)
         }
-        mediaController.playNext()
+        mediaModel.playNext(requireActivity().applicationContext)
         val action: NavDirections = FragmentSongsDirections.actionFragmentSongsToFragmentSong()
         val navController: NavController = NavHostFragment.findNavController(this)
         if (navController.currentDestination?.id == R.id.fragmentSongs) {

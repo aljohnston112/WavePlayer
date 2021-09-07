@@ -24,7 +24,7 @@ import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.DialogFragmentAddToPlaylist
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.RecyclerViewSongListBinding
-import com.fourthFinger.pinkyPlayer.media_controller.MediaController
+import com.fourthFinger.pinkyPlayer.media_controller.MediaModel
 import com.fourthFinger.pinkyPlayer.media_controller.MediaData
 import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerModel
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
@@ -52,14 +52,14 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
     private var recyclerViewAdapterSongs: RecyclerViewAdapterSongs? = null
 
     private lateinit var mediaData: MediaData
-    private lateinit var mediaController: MediaController
+    private lateinit var mediaModel: MediaModel
 
     var dragFlags: Int = ItemTouchHelper.UP or ItemTouchHelper.DOWN
     val swipeFlags: Int = ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        mediaController = MediaController.getInstance(requireActivity().applicationContext)
+        mediaModel = MediaModel.getInstance(requireActivity().applicationContext)
         mediaData = MediaData.getInstance()
 
     }
@@ -262,9 +262,9 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
         // shuffle is off and looping is on or something like that?
         val activityMain: ActivityMain = requireActivity() as ActivityMain
         songQueue.addToQueue(song.id)
-        if (!mediaController.isSongInProgress()) {
+        if (!mediaModel.isSongInProgress()) {
             activityMain.showSongPane()
-            mediaController.playNext()
+            mediaModel.playNext(requireActivity().applicationContext)
         }
         return true
     }
@@ -275,16 +275,16 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
                         viewModelPlaylists.getSong(it)
                     }
             ) {
-                mediaController.seekTo(0)
+                mediaModel.seekTo(requireActivity().applicationContext, 0)
             }
-            viewModelPlaylists.getUserPickedPlaylist()?.let { mediaController.setCurrentPlaylist(it) }
+            viewModelPlaylists.getUserPickedPlaylist()?.let { mediaModel.setCurrentPlaylist(it) }
             songQueue.clearSongQueue()
             songQueue.addToQueue(song.id)
             val audioUri = AudioUri.getAudioUri(requireContext(), song.id)
             if(audioUri != null) {
                 mediaPlayerModel.setCurrentAudioUri(audioUri)
             }
-            mediaController.playNext()
+            mediaModel.playNext(requireActivity().applicationContext)
         }
         val action: NavDirections = FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong()
         NavHostFragment.findNavController(this).navigate(action)

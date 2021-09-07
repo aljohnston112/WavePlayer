@@ -15,19 +15,15 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.activityViewModels
-import androidx.navigation.NavController
-import androidx.navigation.NavDestination
-import androidx.navigation.fragment.NavHostFragment
+import com.fourthFinger.pinkyPlayer.NavUtil
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.FragmentPaneSongBinding
 import com.fourthFinger.pinkyPlayer.media_controller.BitmapLoader
-import com.fourthFinger.pinkyPlayer.media_controller.MediaController
-import com.fourthFinger.pinkyPlayer.media_controller.MediaController.Companion.getInstance
-import com.fourthFinger.pinkyPlayer.media_controller.MediaData
+import com.fourthFinger.pinkyPlayer.media_controller.MediaModel
+import com.fourthFinger.pinkyPlayer.media_controller.MediaModel.Companion.getInstance
 import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerModel
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 
@@ -36,58 +32,58 @@ class FragmentPaneSong : Fragment() {
     private var _binding: FragmentPaneSongBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
+    private var mediaModel: MediaModel = getInstance(requireActivity().applicationContext)
 
+    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
     private val mediaPlayerModel = MediaPlayerModel.getInstance()
 
-    private lateinit var mediaController: MediaController
-    private lateinit var mediaData: MediaData
+    private var visible = false
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        mediaController = getInstance(requireActivity().applicationContext)
-        mediaData = MediaData.getInstance()
-    }
-
-    private val onDestinationChangedListenerSongPane = { _: NavController?, destination: NavDestination?, _: Bundle? ->
-        val activityMain = requireActivity() as ActivityMain
-        if (destination?.id != R.id.fragmentSong) {
-            if (mediaController.isSongInProgress()) {
-                activityMain.fragmentSongVisible(false)
-                activityMain.showSongPane()
+    private val onLayoutChangeListenerSongPane =
+        { _: View?, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int ->
+            if (visible) {
+                if (songArtWidth == 0) {
+                    songArtWidth = binding.imageViewSongPaneSongArt.width
+                }
+                // TODO is this needed?
                 updateSongUI(mediaPlayerModel.currentAudioUri.value)
+                setUpPrev()
+                setUpNext()
             }
-        } else {
-            activityMain.fragmentSongVisible(true)
-            activityMain.hideSongPane()
         }
-    }
-
-    private val onLayoutChangeListenerSongPane = { _: View?, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int ->
-        if (requireActivity().findViewById<View>(R.id.fragmentSongPane).visibility == View.VISIBLE) {
-            if (songArtWidth == 0) {
-                val imageViewSongPaneSongArt: ImageView = binding.imageViewSongPaneSongArt
-                songArtWidth = imageViewSongPaneSongArt.width
-            }
-            updateSongUI(mediaPlayerModel.currentAudioUri.value)
-            setUpPrev()
-            setUpNext()
-        }
-    }
 
     private var broadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            // TODO
+            // TODO see if updateSongUi is really needed
             val action: String? = intent.action
             if (action != null) {
                 if (action == resources.getString(
-                                R.string.broadcast_receiver_action_service_connected)) {
+                        R.string.broadcast_receiver_action_service_connected
+                    )
+                ) {
                     updateSongUI(mediaPlayerModel.currentAudioUri.value)
                 } else if (action == resources.getString(
-                                R.string.broadcast_receiver_action_loaded)) {
+                        R.string.broadcast_receiver_action_loaded
+                    )
+                ) {
                     setUpObservers()
                 }
             }
+        }
+    }
+
+    private fun setUpObservers() {
+        mediaPlayerModel.currentAudioUri.observe(viewLifecycleOwner) { currentAudioUri: AudioUri? ->
+            // TODO make sure this works as intended
+            updateSongUI(currentAudioUri)
+        }
+        mediaPlayerModel.isPlaying.observe(viewLifecycleOwner) { isPlaying: Boolean? ->
+            if (isPlaying != null) {
+                setUpPlayButton(isPlaying)
+            }
+        }
+        viewModelActivityMain.songPaneVisible.observe(viewLifecycleOwner) {
+            visible = it
         }
     }
 
@@ -96,41 +92,19 @@ class FragmentPaneSong : Fragment() {
     private var songArtWidth = 0
 
     override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View {
         _binding = FragmentPaneSongBinding.inflate(inflater, container, false)
         return binding.root
-    }
-
-    private fun setUpObservers() {
-        mediaPlayerModel.currentAudioUri.observe(viewLifecycleOwner) { currentAudioUri: AudioUri? ->
-            updateSongUI(currentAudioUri)
-        }
-        mediaPlayerModel.isPlaying.observe(viewLifecycleOwner) { isPlaying: Boolean? ->
-            if (isPlaying != null) {
-                setUpPlayButton(isPlaying)
-            }
-        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setUpRunnableSongArtUpdater()
         setUpOnLayoutChangeListener(view)
-        setUpOnDestinationChangedListener()
         linkSongPaneButtons()
-    }
-
-    private fun setUpBroadcastReceiver() {
-        val filterComplete = IntentFilter()
-        filterComplete.addCategory(Intent.CATEGORY_DEFAULT)
-        filterComplete.addAction(requireActivity().resources.getString(
-                R.string.broadcast_receiver_action_service_connected))
-        filterComplete.addAction(requireActivity().resources.getString(
-            R.string.broadcast_receiver_action_loaded))
-        requireActivity().registerReceiver(broadcastReceiver, filterComplete)
     }
 
     private fun setUpRunnableSongArtUpdater() {
@@ -139,9 +113,9 @@ class FragmentPaneSong : Fragment() {
             val bitmapSongArt: Bitmap? = mediaPlayerModel.currentAudioUri.value?.id?.let { id ->
                 AudioUri.getUri(id).let {
                     BitmapLoader.getThumbnail(
-                            it, songArtWidth,
-                            songArtWidth,
-                            requireActivity().applicationContext
+                        it, songArtWidth,
+                        songArtWidth,
+                        requireActivity().applicationContext
                     )
                 }
             }
@@ -158,7 +132,7 @@ class FragmentPaneSong : Fragment() {
 
     private fun getDefaultBitmap(songArtWidth: Int, songArtHeight: Int): Bitmap? {
         // TODO cache bitmap
-        if(songArtHeight > 0 && songArtWidth > 0) {
+        if (songArtHeight > 0 && songArtWidth > 0) {
             val imageViewSongPaneSongArt: ImageView = binding.imageViewSongPaneSongArt
             val drawableSongArt: Drawable? = ResourcesCompat.getDrawable(
                 imageViewSongPaneSongArt.resources, R.drawable.music_note_black_48dp, null
@@ -180,15 +154,35 @@ class FragmentPaneSong : Fragment() {
         view.addOnLayoutChangeListener(onLayoutChangeListenerSongPane)
     }
 
+    private fun linkSongPaneButtons() {
+        val context = requireActivity().applicationContext
+        val onClickListenerSongPane = View.OnClickListener { v: View ->
+            synchronized(ActivityMain.MUSIC_CONTROL_LOCK) {
+                if (v.id == R.id.imageButtonSongPaneNext) {
+                    mediaModel.playNext(context)
+                } else if (v.id == R.id.imageButtonSongPanePlayPause) {
+                    mediaModel.pauseOrPlay(context)
+                } else if (v.id == R.id.imageButtonSongPanePrev) {
+                    mediaModel.playPrevious(context)
+                } else if (v.id == R.id.textViewSongPaneSongName ||
+                    v.id == R.id.imageViewSongPaneSongArt
+                ) {
+                    // TODO make sure this works. Might need the Activity Fragment Container
+                    NavUtil.navigateTo(this, R.id.fragmentSong)
+                }
+            }
+        }
+        binding.imageButtonSongPaneNext.setOnClickListener(onClickListenerSongPane)
+        binding.imageButtonSongPanePlayPause.setOnClickListener(onClickListenerSongPane)
+        binding.imageButtonSongPanePrev.setOnClickListener(onClickListenerSongPane)
+        binding.textViewSongPaneSongName.setOnClickListener(onClickListenerSongPane)
+        binding.imageViewSongPaneSongArt.setOnClickListener(onClickListenerSongPane)
+    }
+
     fun updateSongUI(currentAudioUri: AudioUri?) {
-        if (
-                currentAudioUri != null &&
-                requireActivity().findViewById<View>(R.id.fragmentSongPane).visibility == View.VISIBLE &&
-                mediaController.isSongInProgress()
-        ) {
+        if (currentAudioUri != null && visible && mediaModel.isSongInProgress()) {
             updateSongPaneName(currentAudioUri.title)
             updateSongPaneArt()
-        } else {
         }
     }
 
@@ -206,10 +200,12 @@ class FragmentPaneSong : Fragment() {
         val activityMain: ActivityMain = requireActivity() as ActivityMain
         val imageView: ImageView = binding.imageButtonSongPanePrev
         val drawable: Drawable? = ResourcesCompat.getDrawable(
-                activityMain.resources, R.drawable.skip_previous_black_24dp, null)
+            activityMain.resources, R.drawable.skip_previous_black_24dp, null
+        )
         if (drawable != null && songArtWidth > 0) {
             drawable.setBounds(0, 0, songArtWidth, songArtWidth)
-            val bitmap: Bitmap = Bitmap.createBitmap(songArtWidth, songArtWidth, Bitmap.Config.ARGB_8888)
+            val bitmap: Bitmap =
+                Bitmap.createBitmap(songArtWidth, songArtWidth, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(bitmap)
             drawable.draw(canvas)
             imageView.setImageBitmap(bitmap)
@@ -220,14 +216,17 @@ class FragmentPaneSong : Fragment() {
         val imageView: ImageView = binding.imageButtonSongPanePlayPause
         val drawable: Drawable? = if (isPlaying) {
             ResourcesCompat.getDrawable(
-                    resources, R.drawable.pause_black_24dp, null)
+                resources, R.drawable.pause_black_24dp, null
+            )
         } else {
             ResourcesCompat.getDrawable(
-                    resources, R.drawable.play_arrow_black_24dp, null)
+                resources, R.drawable.play_arrow_black_24dp, null
+            )
         }
         if (drawable != null && songArtWidth > 0) {
             drawable.setBounds(0, 0, songArtWidth, songArtWidth)
-            val bitmap: Bitmap = Bitmap.createBitmap(songArtWidth, songArtWidth, Bitmap.Config.ARGB_8888)
+            val bitmap: Bitmap =
+                Bitmap.createBitmap(songArtWidth, songArtWidth, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(bitmap)
             drawable.draw(canvas)
             imageView.setImageBitmap(bitmap)
@@ -238,62 +237,37 @@ class FragmentPaneSong : Fragment() {
         val activityMain: ActivityMain = requireActivity() as ActivityMain
         val imageView: ImageView = binding.imageButtonSongPaneNext
         val drawable: Drawable? = ResourcesCompat.getDrawable(
-                activityMain.resources, R.drawable.skip_next_black_24dp, null)
+            activityMain.resources, R.drawable.skip_next_black_24dp, null
+        )
         if (drawable != null && songArtWidth > 0) {
             drawable.setBounds(0, 0, songArtWidth, songArtWidth)
-            val bitmap: Bitmap = Bitmap.createBitmap(songArtWidth, songArtWidth, Bitmap.Config.ARGB_8888)
+            val bitmap: Bitmap =
+                Bitmap.createBitmap(songArtWidth, songArtWidth, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(bitmap)
             drawable.draw(canvas)
             imageView.setImageBitmap(bitmap)
         }
     }
 
-    private fun setUpOnDestinationChangedListener() {
-        val activityMain: ActivityMain = requireActivity() as ActivityMain
-        val fragmentManager: FragmentManager = activityMain.supportFragmentManager
-        val fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment)
-        if (fragment != null) {
-            NavHostFragment.findNavController(fragment).addOnDestinationChangedListener(onDestinationChangedListenerSongPane)
-        }
-    }
-
-    private fun linkSongPaneButtons() {
-        val onClickListenerSongPane = View.OnClickListener { v: View ->
-            synchronized(ActivityMain.MUSIC_CONTROL_LOCK) {
-                if (v.id == R.id.imageButtonSongPaneNext) {
-                    mediaController.playNext()
-                } else if (v.id == R.id.imageButtonSongPanePlayPause) {
-                    mediaController.pauseOrPlay()
-                } else if (v.id == R.id.imageButtonSongPanePrev) {
-                    mediaController.playPrevious()
-                } else if (v.id == R.id.textViewSongPaneSongName ||
-                        v.id == R.id.imageViewSongPaneSongArt) {
-                    (requireActivity() as ActivityMain).navigateTo(R.id.fragmentSong)
-                }
-            }
-        }
-        binding.imageButtonSongPaneNext.setOnClickListener(onClickListenerSongPane)
-        binding.imageButtonSongPanePlayPause.setOnClickListener(onClickListenerSongPane)
-        binding.imageButtonSongPanePrev.setOnClickListener(onClickListenerSongPane)
-        binding.textViewSongPaneSongName.setOnClickListener(onClickListenerSongPane)
-        binding.imageViewSongPaneSongArt.setOnClickListener(onClickListenerSongPane)
-    }
-
-    private fun removeListeners() {
-        val view = requireView()
-        view.removeOnLayoutChangeListener(onLayoutChangeListenerSongPane)
-        val fragmentManager: FragmentManager = requireActivity().supportFragmentManager
-        val fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment)
-        if (fragment != null) {
-            NavHostFragment.findNavController(fragment).removeOnDestinationChangedListener(
-                    onDestinationChangedListenerSongPane)
-        }
-
-    }
-
     override fun onStart() {
         super.onStart()
         setUpBroadcastReceiver()
+    }
+
+    private fun setUpBroadcastReceiver() {
+        val filterComplete = IntentFilter()
+        filterComplete.addCategory(Intent.CATEGORY_DEFAULT)
+        filterComplete.addAction(
+            requireActivity().resources.getString(
+                R.string.broadcast_receiver_action_service_connected
+            )
+        )
+        filterComplete.addAction(
+            requireActivity().resources.getString(
+                R.string.broadcast_receiver_action_loaded
+            )
+        )
+        requireActivity().registerReceiver(broadcastReceiver, filterComplete)
     }
 
     override fun onStop() {
@@ -310,4 +284,10 @@ class FragmentPaneSong : Fragment() {
         super.onDestroy()
         removeListeners()
     }
+
+    private fun removeListeners() {
+        val view = requireView()
+        view.removeOnLayoutChangeListener(onLayoutChangeListenerSongPane)
+    }
+
 }

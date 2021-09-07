@@ -46,13 +46,13 @@ class FragmentSong : Fragment() {
     private val mediaPlayerModel = MediaPlayerModel.getInstance()
 
     private lateinit var mediaData: MediaData
-    private lateinit var mediaController: MediaController
+    private lateinit var mediaModel: MediaModel
 
     private var currentAudioUri: AudioUri? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        mediaController = MediaController.getInstance(requireActivity().applicationContext)
+        mediaModel = MediaModel.getInstance(requireActivity().applicationContext)
         mediaData = MediaData.getInstance()
 
     }
@@ -167,7 +167,7 @@ class FragmentSong : Fragment() {
                     override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
                     override fun onStartTrackingTouch(seekBar: SeekBar) {}
                     override fun onStopTrackingTouch(seekBar: SeekBar) {
-                        mediaController.seekTo(seekBar.progress)
+                        mediaModel.seekTo(requireActivity().applicationContext, seekBar.progress)
                     }
                 })
                 setUpSeekBarUpdater()
@@ -264,7 +264,7 @@ class FragmentSong : Fragment() {
                             viewModelPlaylists.getSong(it)
                         }
                         if (song != null) {
-                            mediaController.getCurrentPlaylist()?.globalBad(song)
+                            mediaModel.getCurrentPlaylist()?.globalBad(song)
                             activityMain.saveFile()
                         }
                     }
@@ -273,41 +273,41 @@ class FragmentSong : Fragment() {
                             viewModelPlaylists.getSong(it)
                         }
                         if (song != null) {
-                            mediaController.getCurrentPlaylist()?.globalGood(song)
+                            mediaModel.getCurrentPlaylist()?.globalGood(song)
                             activityMain.saveFile()
                         }
                     }
                     R.id.imageButtonShuffle -> {
                         val imageButton: ImageButton = clickedView as ImageButton
-                        if (mediaController.isShuffling()) {
-                            mediaController.setShuffling(false)
+                        if (mediaModel.isShuffling()) {
+                            mediaModel.setShuffling(false)
                             imageButton.setImageResource(R.drawable.ic_shuffle_white_24dp)
                         } else {
-                            mediaController.setShuffling(true)
+                            mediaModel.setShuffling(true)
                             imageButton.setImageResource(R.drawable.ic_shuffle_black_24dp)
                         }
                     }
                     R.id.imageButtonPrev -> {
-                        mediaController.playPrevious()
+                        mediaModel.playPrevious(requireActivity().applicationContext)
                     }
                     R.id.imageButtonPlayPause -> {
-                        mediaController.pauseOrPlay()
+                        mediaModel.pauseOrPlay(requireActivity().applicationContext)
                     }
                     R.id.imageButtonNext -> {
-                        mediaController.playNext()
+                        mediaModel.playNext(requireActivity().applicationContext)
                     }
                     R.id.imageButtonRepeat -> {
                         val imageButton: ImageButton = clickedView as ImageButton
-                        if (mediaController.isLoopingOne()) {
-                            mediaController.setLoopingOne(false)
+                        if (mediaModel.isLoopingOne()) {
+                            mediaModel.setLoopingOne(false)
                             imageButton.setImageResource(R.drawable.repeat_white_24dp)
-                        } else if (mediaController.isLooping()) {
-                            mediaController.setLooping(false)
-                            mediaController.setLoopingOne(true)
+                        } else if (mediaModel.isLooping()) {
+                            mediaModel.setLooping(false)
+                            mediaModel.setLoopingOne(true)
                             imageButton.setImageResource(R.drawable.repeat_one_black_24dp)
                         } else {
-                            mediaController.setLooping(true)
-                            mediaController.setLoopingOne(false)
+                            mediaModel.setLooping(true)
+                            mediaModel.setLoopingOne(false)
                             imageButton.setImageResource(R.drawable.repeat_black_24dp)
                         }
                     }
@@ -328,7 +328,7 @@ class FragmentSong : Fragment() {
             // TODO change color of button
             currentAudioUri?.id?.let { id ->
                 viewModelPlaylists.getSong(id)?.let {
-                    mediaController.getCurrentPlaylist()?.globalBad(it)
+                    mediaModel.getCurrentPlaylist()?.globalBad(it)
                 }
             }
             true
@@ -354,14 +354,14 @@ class FragmentSong : Fragment() {
         buttonPause.setOnTouchListener(onTouchListenerFragmentSongButtons)
         buttonNext.setOnTouchListener(onTouchListenerFragmentSongButtons)
         buttonLoop.setOnTouchListener(onTouchListenerFragmentSongButtons)
-        if (mediaController.isShuffling()) {
+        if (mediaModel.isShuffling()) {
             buttonShuffle.setImageResource(R.drawable.ic_shuffle_black_24dp)
         } else {
             buttonShuffle.setImageResource(R.drawable.ic_shuffle_white_24dp)
         }
-        if (mediaController.isLoopingOne()) {
+        if (mediaModel.isLoopingOne()) {
             buttonLoop.setImageResource(R.drawable.repeat_one_black_24dp)
-        } else if (mediaController.isLooping()) {
+        } else if (mediaModel.isLooping()) {
             buttonLoop.setImageResource(R.drawable.repeat_black_24dp)
         } else {
             buttonLoop.setImageResource(R.drawable.repeat_white_24dp)
@@ -387,7 +387,7 @@ class FragmentSong : Fragment() {
 
     private fun setUpShuffle() {
         val imageView: ImageView = binding.imageButtonShuffle
-        if (mediaController.isShuffling()) {
+        if (mediaModel.isShuffling()) {
             setUpButton(imageView, R.drawable.ic_shuffle_black_24dp)
         } else {
             setUpButton(imageView, R.drawable.ic_shuffle_white_24dp)
@@ -405,9 +405,9 @@ class FragmentSong : Fragment() {
 
     private fun setUpLoop() {
         val imageView: ImageView = binding.imageButtonRepeat
-        if (mediaController.isLoopingOne()) {
+        if (mediaModel.isLoopingOne()) {
             setUpButton(imageView, R.drawable.repeat_one_black_24dp)
-        } else if (mediaController.isLooping()) {
+        } else if (mediaModel.isLooping()) {
             setUpButton(imageView, R.drawable.repeat_black_24dp)
         } else {
             setUpButton(imageView, R.drawable.repeat_white_24dp)
