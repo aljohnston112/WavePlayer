@@ -31,7 +31,7 @@ class MediaController private constructor(val context: Context) {
     }
 
     // TODO remove
-    private val mediaData: MediaData = MediaData.getInstance(context)
+    private val mediaData: MediaData = MediaData.getInstance()
 
     private val songQueue: SongQueue = SongQueue.getInstance()
 

@@ -60,7 +60,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mediaController = MediaController.getInstance(requireActivity().applicationContext)
-        mediaData = MediaData.getInstance(requireActivity().applicationContext)
+        mediaData = MediaData.getInstance()
 
     }
 

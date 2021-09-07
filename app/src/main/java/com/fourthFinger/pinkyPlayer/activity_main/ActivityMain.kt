@@ -87,7 +87,7 @@ class ActivityMain : AppCompatActivity() {
         binding.viewModelActivityMain = viewModelActivityMain
         setContentView(binding.root)
         mediaController = MediaController.getInstance(applicationContext)
-        mediaData = MediaData.getInstance(applicationContext)
+        mediaData = MediaData.getInstance()
         setUpViewModelActivityMainObservers()
     }
 

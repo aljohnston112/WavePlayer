@@ -68,7 +68,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mediaController = MediaController.getInstance(requireActivity().applicationContext)
-        mediaData = MediaData.getInstance(requireActivity().applicationContext)
+        mediaData = MediaData.getInstance()
 
     }
 
@@ -196,7 +196,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
                     R.string.playlist_deleted, BaseTransientBottomBar.LENGTH_LONG
                 )
                 snackbar.setAction(R.string.undo) {
-                    viewModelPlaylists.addNewPlaylistWithUserPickedSongs(position, randomPlaylist)
+                    viewModelPlaylists.addNewPlaylist(position, randomPlaylist)
                     recyclerViewAdapter.notifyItemInserted(position)
                     activityMain.saveFile()
                 }

@@ -63,7 +63,7 @@ object SaveFile {
     fun saveFile(context: Context) {
         ServiceMain.executorServicePool.submit {
             val playlistsRepo = PlaylistsRepo.getInstance(context)
-            val mediaData: MediaData = MediaData.getInstance(context)
+            val mediaData: MediaData = MediaData.getInstance()
             val file = File(context.filesDir, FILE_SAVE)
             val file2 = File(context.filesDir, FILE_SAVE2)
             val file3 = File(context.filesDir, FILE_SAVE3)

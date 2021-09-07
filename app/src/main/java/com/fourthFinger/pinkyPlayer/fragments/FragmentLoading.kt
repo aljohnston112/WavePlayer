@@ -13,6 +13,7 @@ import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.os.HandlerCompat
 import androidx.fragment.app.Fragment
@@ -24,8 +25,6 @@ import com.fourthFinger.pinkyPlayer.media_controller.MediaData
 import com.fourthFinger.pinkyPlayer.media_controller.ViewModelFragmentLoading
 import kotlin.math.roundToInt
 
-private const val REQUEST_CODE_PERMISSION: Short = 245
-
 class FragmentLoading : Fragment() {
 
     private var _binding: FragmentLoadingBinding? = null
@@ -33,60 +32,6 @@ class FragmentLoading : Fragment() {
 
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
     private val viewModelFragmentLoading by activityViewModels<ViewModelFragmentLoading>()
-
-    private var handler: Handler = HandlerCompat.createAsync(Looper.getMainLooper())
-    private var runnableAskForPermission = Runnable { askForPermissionAndCreateMediaController() }
-
-    private fun askForPermissionAndCreateMediaController() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val context = requireActivity().applicationContext
-            if (ActivityCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                requestPermissions(
-                    arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
-                    REQUEST_CODE_PERMISSION.toInt()
-                )
-            } else {
-                permissionGranted()
-            }
-        } else {
-            permissionGranted()
-        }
-    }
-
-    private fun permissionGranted() {
-        MediaData.getInstance(requireContext().applicationContext)
-            .loadData(requireContext().applicationContext)
-    }
-
-    @SuppressLint("ShowToast")
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        val appContext = requireActivity().applicationContext
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (
-                (requestCode == REQUEST_CODE_PERMISSION.toInt()) &&
-                grantResults.isNotEmpty() &&
-                (grantResults[0] == PackageManager.PERMISSION_GRANTED)
-            ) {
-                permissionGranted()
-            } else {
-                Toast.makeText(
-                    appContext,
-                    R.string.permission_read_needed,
-                    Toast.LENGTH_LONG
-                ).show()
-                handler.postDelayed(runnableAskForPermission, 1000)
-            }
-        }
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -98,30 +43,69 @@ class FragmentLoading : Fragment() {
         return binding.root
     }
 
+    private fun setUpObservers() {
+        viewModelFragmentLoading.loadingProgress
+            .observe(viewLifecycleOwner) { loadingProgress: Int ->
+                val progressBar: ProgressBar = binding.progressBarLoading
+                progressBar.post {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        progressBar.setProgress(loadingProgress, true)
+                    } else {
+                        progressBar.progress = loadingProgress
+                    }
+                }
+            }
+        viewModelFragmentLoading.loadingText
+            .observe(viewLifecycleOwner) { loadingText: String? ->
+                val textView: TextView = binding.textViewLoading
+                textView.post { textView.text = loadingText }
+            }
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         askForPermissionAndCreateMediaController()
     }
 
-    private fun setUpObservers() {
-        viewModelFragmentLoading.getLoadingProgress()
-            .observe(viewLifecycleOwner) { loadingProgress: Double? ->
-                val progressBar: ProgressBar = binding.progressBarLoading
-                if (loadingProgress != null) {
-                    progressBar.post {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                            progressBar.setProgress((loadingProgress * 100.0).roundToInt(), true)
-                        } else {
-                            progressBar.progress = (loadingProgress * 100.0).roundToInt()
-                        }
-                    }
+    private fun askForPermissionAndCreateMediaController() {
+        val appContext = requireActivity().applicationContext
+        val requestPermissionLauncher =
+            registerForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { isGranted: Boolean ->
+                if (isGranted) {
+                    permissionGranted()
+                } else {
+                    Toast.makeText(
+                        appContext,
+                        R.string.permission_read_needed,
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
-        viewModelFragmentLoading.getLoadingText()
-            .observe(viewLifecycleOwner) { loadingText: String? ->
-                val textView: TextView = binding.textViewLoading
-                textView.post { textView.text = loadingText }
+
+        when {
+            (ActivityCompat.checkSelfPermission(
+                appContext,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED) -> {
+                permissionGranted()
             }
+            shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE) -> {
+                Toast.makeText(
+                    appContext,
+                    R.string.permission_read_needed,
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+            else -> {
+                requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+            }
+        }
+    }
+
+    private fun permissionGranted() {
+        viewModelFragmentLoading.permissionGranted()
     }
 
     override fun onResume() {

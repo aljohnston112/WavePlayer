@@ -34,7 +34,7 @@ class FragmentTitle : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        mediaData = MediaData.getInstance(requireActivity().applicationContext)
+        mediaData = MediaData.getInstance()
 
     }
 
@@ -117,7 +117,7 @@ class FragmentTitle : Fragment() {
                                     )
                                 }
                                 if (randomPlaylist != null) {
-                                    viewModelPlaylists.addNewPlaylistWithUserPickedSongs(randomPlaylist)
+                                    viewModelPlaylists.addNewPlaylist(randomPlaylist)
                                 }
                             } else {
                                 addNewSongs(randomPlaylist)

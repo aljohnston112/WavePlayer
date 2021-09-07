@@ -69,9 +69,21 @@ class ViewModelPlaylists(application: Application): AndroidViewModel(application
         return playlistsRepo.getPlaylists()
     }
 
-    fun addNewPlaylistWithUserPickedSongs(randomPlaylist: RandomPlaylist) {
+    fun addNewPlaylist(randomPlaylist: RandomPlaylist) {
         playlistsRepo.addPlaylist(randomPlaylist)
     }
+
+    fun addNewPlaylist(position: Int, randomPlaylist: RandomPlaylist) {
+        playlistsRepo.addPlaylist(position, randomPlaylist)
+    }
+
+    fun addNewPlaylistWithUserPickedSongs(name: String) {
+        playlistsRepo.addPlaylist(
+            RandomPlaylist(name, userPickedSongs, false)
+        )
+        clearUserPickedSongs()
+    }
+
 
     fun removePlaylist(userPickedPlaylist: RandomPlaylist) {
         playlistsRepo.removePlaylist(userPickedPlaylist)
@@ -80,11 +92,7 @@ class ViewModelPlaylists(application: Application): AndroidViewModel(application
     fun getSong(songID: Long): Song? {
         return playlistsRepo.getSong(songID)
     }
-
-    fun addNewPlaylistWithUserPickedSongs(position: Int, randomPlaylist: RandomPlaylist) {
-        playlistsRepo.addPlaylist(position, randomPlaylist)
-    }
-
+    
     fun getAllSongs(): List<Song>? {
         return playlistsRepo.getAllSongs()
     }
@@ -96,14 +104,7 @@ class ViewModelPlaylists(application: Application): AndroidViewModel(application
     fun getPlaylist(it: String): RandomPlaylist? {
         return playlistsRepo.getPlaylist(it)
     }
-
-    fun addNewPlaylistWithUserPickedSongs(name: String) {
-        playlistsRepo.addPlaylist(
-            RandomPlaylist(name, userPickedSongs, false)
-        )
-        clearUserPickedSongs()
-    }
-
+    
     fun fragmentEditPlaylistViewCreated() {
         setPickedSongsToCurrentPlaylist()
     }
@@ -116,28 +117,7 @@ class ViewModelPlaylists(application: Application): AndroidViewModel(application
             }
         }
     }
-
-    fun validateInput(context: Context, playlistName: String): Boolean {
-        val userPickedSongs = getUserPickedSongs().toMutableList()
-        val userPickedPlaylist = getUserPickedPlaylist()
-        val makingNewPlaylist = (userPickedPlaylist == null)
-        return if (userPickedSongs.size == 0) {
-            ToastUtil.showToast(context, R.string.not_enough_songs_for_playlist)
-            false
-        } else if (playlistName.isEmpty()) {
-            ToastUtil.showToast(context, R.string.no_name_playlist)
-            false
-        } else if (
-            doesPlaylistExist(playlistName) &&
-            makingNewPlaylist
-        ) {
-            ToastUtil.showToast(context, R.string.duplicate_name_playlist)
-            false
-        } else {
-            true
-        }
-    }
-
+    
     private fun doesPlaylistExist(playlistName: String): Boolean {
         var playlistIndex = -1
         for ((i, randomPlaylist) in getPlaylists().withIndex()) {
@@ -171,4 +151,56 @@ class ViewModelPlaylists(application: Application): AndroidViewModel(application
         }
     }
 
+    fun editPlaylistFabClicked(context: Context, playlistName: String){
+        if (validateInput(context, playlistName)) {
+            val makingNewPlaylist = (userPickedPlaylist == null)
+            if (makingNewPlaylist) {
+                addNewPlaylistWithUserPickedSongs(playlistName)
+            } else if (!makingNewPlaylist) {
+                makeNewPlaylist(playlistName)
+            }
+        }
+    }
+
+    private fun makeNewPlaylist(playlistName: String) {
+        val playlistNames = getPlaylistTitles()
+        // TODO Is this a deep copy
+        val finalPlaylist: RandomPlaylist = userPickedPlaylist!!
+        if (finalPlaylist.getName() == playlistName ||
+            !playlistNames.contains(playlistName)
+        ) {
+            finalPlaylist.setName(playlistName)
+            for (song in finalPlaylist.getSongs()) {
+                if (!userPickedSongs.contains(song)) {
+                    finalPlaylist.remove(song)
+                }
+            }
+            for (song in userPickedSongs) {
+                finalPlaylist.add(song)
+                song.setSelected(false)
+            }
+        }
+    }
+
+    private fun validateInput(context: Context, playlistName: String): Boolean {
+        val userPickedSongs = getUserPickedSongs().toMutableList()
+        val userPickedPlaylist = getUserPickedPlaylist()
+        val makingNewPlaylist = (userPickedPlaylist == null)
+        return if (userPickedSongs.size == 0) {
+            ToastUtil.showToast(context, R.string.not_enough_songs_for_playlist)
+            false
+        } else if (playlistName.isEmpty()) {
+            ToastUtil.showToast(context, R.string.no_name_playlist)
+            false
+        } else if (
+            doesPlaylistExist(playlistName) &&
+            makingNewPlaylist
+        ) {
+            ToastUtil.showToast(context, R.string.duplicate_name_playlist)
+            false
+        } else {
+            true
+        }
+    }
+    
 }

@@ -30,7 +30,7 @@ class FragmentSettings : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        mediaData = MediaData.getInstance(requireActivity().applicationContext)
+        mediaData = MediaData.getInstance()
 
     }
 

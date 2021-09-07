@@ -32,7 +32,7 @@ class DialogFragmentAddToPlaylist : DialogFragment() {
     }
 
     private fun setUpChoices(builder: AlertDialog.Builder, selectedPlaylistIndices: MutableList<Int>) {
-        val mediaData = MediaData.getInstance(requireActivity().applicationContext)
+        val mediaData = MediaData.getInstance()
         builder.setMultiChoiceItems(viewModelPlaylists.getPlaylistTitles(),
                 null){ _: DialogInterface?, which: Int, isChecked: Boolean ->
             if (isChecked) {
@@ -46,7 +46,7 @@ class DialogFragmentAddToPlaylist : DialogFragment() {
     private fun setUpButtons(builder: AlertDialog.Builder, bundle: Bundle,
                              selectedPlaylistIndices: MutableList<Int>) {
         val activityMain = requireActivity() as ActivityMain
-        val mediaData = MediaData.getInstance(requireActivity().applicationContext)
+        val mediaData = MediaData.getInstance()
         // These are here to prevent code duplication
         val song = bundle.getSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG) as Song?
         val randomPlaylist = bundle.getSerializable(

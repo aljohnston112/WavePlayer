@@ -18,9 +18,8 @@ import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.ExecutorService
 
-class MediaData private constructor(val context: Context) {
+class MediaData private constructor() {
 
-    private val playlistsRepo = PlaylistsRepo.getInstance(context)
     private val mediaPlayerModel = MediaPlayerModel.getInstance()
 
     private val _loadingText: MutableLiveData<String> = MutableLiveData()
@@ -37,6 +36,7 @@ class MediaData private constructor(val context: Context) {
     }
 
     private fun getSongsFromMediaStore(context: Context) {
+        val playlistsRepo = PlaylistsRepo.getInstance(context)
         val resources = context.resources
         val newSongs = mutableListOf<Song>()
         val filesThatExist = mutableListOf<Long>()
@@ -95,9 +95,9 @@ class MediaData private constructor(val context: Context) {
         executorServiceFIFO.execute {
             if (playlistsRepo.getMasterPlaylist() != null) {
                 _loadingText.postValue(resources.getString(R.string.loading3))
-                addNewSongs(filesThatExist)
+                addNewSongs(context, filesThatExist)
                 _loadingText.postValue(resources.getString(R.string.loading4))
-                removeMissingSongs(filesThatExist)
+                removeMissingSongs(context, filesThatExist)
             } else {
                 playlistsRepo.setMasterPlaylist(
                     RandomPlaylist(
@@ -123,7 +123,8 @@ class MediaData private constructor(val context: Context) {
         }
     }
 
-    private fun removeMissingSongs(filesThatExist: List<Long>) {
+    private fun removeMissingSongs(context:  Context, filesThatExist: List<Long>) {
+        val playlistsRepo = PlaylistsRepo.getInstance(context)
         val i = filesThatExist.size
         val ids = playlistsRepo.getMasterPlaylist()?.getSongIDs()
         if (ids != null) {
@@ -140,7 +141,8 @@ class MediaData private constructor(val context: Context) {
         }
     }
 
-    private fun addNewSongs(filesThatExist: List<Long>) {
+    private fun addNewSongs(context:  Context, filesThatExist: List<Long>) {
+        val playlistsRepo = PlaylistsRepo.getInstance(context)
         val i = filesThatExist.size
         for ((j, songID) in filesThatExist.withIndex()) {
             if (playlistsRepo.getMasterPlaylist()?.contains(songID) == false) {
@@ -160,10 +162,10 @@ class MediaData private constructor(val context: Context) {
          * loadData(Context context) must be called for methods on the singleton to function properly.
          * @return A singleton instance of this class that may or may not be loaded with data.
          */
-        fun getInstance(context: Context): MediaData {
+        fun getInstance(): MediaData {
             synchronized(MEDIA_DATA_LOCK) {
                 if (INSTANCE == null) {
-                    INSTANCE = MediaData(context)
+                    INSTANCE = MediaData()
                 }
                 return INSTANCE!!
             }

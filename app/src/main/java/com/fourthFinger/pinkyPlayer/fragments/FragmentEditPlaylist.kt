@@ -31,7 +31,7 @@ class FragmentEditPlaylist : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        mediaData = MediaData.getInstance(requireActivity().applicationContext)
+        mediaData = MediaData.getInstance()
     }
 
     override fun onCreateView(
@@ -63,52 +63,12 @@ class FragmentEditPlaylist : Fragment() {
         viewModelActivityMain.setFabImage(R.drawable.ic_check_black_24dp)
         viewModelActivityMain.setFABText(R.string.fab_save)
         viewModelActivityMain.showFab(true)
-
         val editTextPlaylistName: EditText = binding.editTextPlaylistName
-        val userPickedPlaylist = viewModelPlaylists.getUserPickedPlaylist()
-        val makingNewPlaylist = (userPickedPlaylist == null)
-        editTextPlaylistName.setText(userPickedPlaylist!!.getName())
-
-        val userPickedSongs = viewModelPlaylists.getUserPickedSongs().toMutableList()
+        editTextPlaylistName.setText(viewModelPlaylists.getUserPickedPlaylist()?.getName())
         viewModelActivityMain.setFabOnClickListener { view: View ->
-            if (validateInput()) {
-                if (makingNewPlaylist) {
-                    viewModelPlaylists.addNewPlaylistWithUserPickedSongs(
-                        editTextPlaylistName.text.toString(),
-                    )
-                    cleanUp(view)
-                } else if (!makingNewPlaylist) {
-                    val playlistNames = ArrayList<String?>()
-                    for (randomPlaylist in viewModelPlaylists.getPlaylists()) {
-                        playlistNames.add(randomPlaylist.getName())
-                    }
-                    if (userPickedPlaylist.getName() ==
-                        editTextPlaylistName.text.toString() ||
-                        !playlistNames.contains(editTextPlaylistName.text.toString())
-                    ) {
-                        userPickedPlaylist.setName(editTextPlaylistName.text.toString())
-                        for (song in userPickedPlaylist.getSongs()) {
-                            if (!userPickedSongs.contains(song)) {
-                                userPickedPlaylist.remove(song)
-                            }
-                        }
-                        for (song in userPickedSongs) {
-                            userPickedPlaylist.add(song)
-                            song.setSelected(false)
-                        }
-                        cleanUp(view)
-                    }
-                }
-            }
+            viewModelPlaylists.editPlaylistFabClicked(requireActivity().applicationContext, editTextPlaylistName.text.toString())
+            cleanUp(view)
         }
-    }
-
-    private fun validateInput(): Boolean {
-        val editTextPlaylistName: EditText = binding.editTextPlaylistName
-        return viewModelPlaylists.validateInput(
-            requireActivity().applicationContext,
-            editTextPlaylistName.text.toString()
-        )
     }
 
     private fun cleanUp(view: View) {
@@ -124,6 +84,7 @@ class FragmentEditPlaylist : Fragment() {
 
     override fun onDestroy() {
         super.onDestroy()
+        // TODO Tie this with the view being created and destroyed
         viewModelActivityMain.setFabOnClickListener(null)
     }
 

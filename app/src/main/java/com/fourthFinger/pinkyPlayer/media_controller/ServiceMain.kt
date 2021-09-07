@@ -61,7 +61,7 @@ class ServiceMain : LifecycleService() {
     override fun onCreate() {
         super.onCreate()
         mediaController = MediaController.getInstance(applicationContext)
-        mediaData = MediaData.getInstance(applicationContext)
+        mediaData = MediaData.getInstance()
         setUpExceptionSaver()
         logLastThrownException()
         setUpBroadCastReceivers()
