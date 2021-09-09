@@ -83,8 +83,6 @@ class DialogFragmentAddToPlaylist : DialogFragment() {
         }
     }
 
-
-
     companion object {
         // TODO get rid of bundles... probably not
         val BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST: String = "ADD_TO_PLAYLIST_PLAYLIST"
