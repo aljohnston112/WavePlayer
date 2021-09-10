@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import android.widget.EditText
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.fourthFinger.pinkyPlayer.R
@@ -16,7 +15,7 @@ import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.FragmentSettingsBinding
 import com.fourthFinger.pinkyPlayer.media_controller.MediaData
-import kotlin.math.roundToInt
+import com.fourthFinger.pinkyPlayer.media_controller.SaveFile
 
 class FragmentSettings : Fragment() {
 
@@ -134,7 +133,7 @@ class FragmentSettings : Fragment() {
     private fun updateSettings(nSongs: Int, percentChangeUp: Int, percentChangeDown: Int) {
         val activityMain: ActivityMain = requireActivity() as ActivityMain
         viewModelSettings.setSettings(nSongs, percentChangeDown, percentChangeUp)
-        activityMain.saveFile()
+        SaveFile.saveFile(requireActivity().applicationContext)
     }
 
     private fun loadSettings() {

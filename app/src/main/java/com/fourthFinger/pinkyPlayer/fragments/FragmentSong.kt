@@ -149,8 +149,8 @@ class FragmentSong : Fragment() {
         mediaPlayerModel.currentAudioUri.observe(viewLifecycleOwner) {
             if (it != null) {
                 currentAudioUri = it
-                viewModelActivityMain.setSongToAddToQueue(it.id)
-                viewModelActivityMain.setPlaylistToAddToQueue(null)
+                viewModelPlaylists.setSongToAddToQueue(it.id)
+                viewModelPlaylists.setPlaylistToAddToQueue(null)
                 val textViewSongName: TextView = binding.textViewSongName
                 textViewSongName.text = it.title
                 val maxMillis: Int = it.getDuration(activityMain.applicationContext)
@@ -265,7 +265,7 @@ class FragmentSong : Fragment() {
                         }
                         if (song != null) {
                             mediaModel.getCurrentPlaylist()?.globalBad(song)
-                            activityMain.saveFile()
+                            SaveFile.saveFile(requireActivity().applicationContext)
                         }
                     }
                     R.id.button_thumb_up -> {
@@ -274,7 +274,7 @@ class FragmentSong : Fragment() {
                         }
                         if (song != null) {
                             mediaModel.getCurrentPlaylist()?.globalGood(song)
-                            activityMain.saveFile()
+                            SaveFile.saveFile(requireActivity().applicationContext)
                         }
                     }
                     R.id.imageButtonShuffle -> {

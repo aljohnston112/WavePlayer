@@ -4,30 +4,59 @@ import android.app.Application
 import android.content.Context
 import androidx.annotation.GuardedBy
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.navigation.NavController
+import com.fourthFinger.pinkyPlayer.NavUtil
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.ToastUtil
+import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
+import com.fourthFinger.pinkyPlayer.media_controller.MediaModel
+import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerModel
+import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
-import java.util.ArrayList
+import com.fourthFinger.pinkyPlayer.random_playlist.SongQueue
+import java.util.*
 
-class ViewModelPlaylists(application: Application): AndroidViewModel(application) {
+class ViewModelPlaylists(application: Application) : AndroidViewModel(application) {
 
     private val playlistsRepo = PlaylistsRepo.getInstance(application)
 
+    private val _playlistToAddToQueue = MutableLiveData<RandomPlaylist?>()
+    val playlistToAddToQueue = _playlistToAddToQueue as LiveData<RandomPlaylist?>
+    fun setPlaylistToAddToQueue(playlistToAddToQueue: RandomPlaylist?) {
+        _playlistToAddToQueue.value = playlistToAddToQueue
+    }
+
+    private val _songToAddToQueue = MutableLiveData<Long?>()
+    val songToAddToQueue = _songToAddToQueue as LiveData<Long?>
+    fun setSongToAddToQueue(songToAddToQueue: Long?) {
+        _songToAddToQueue.value = songToAddToQueue
+    }
+
+    fun getSongToAddToQueue(): Song? {
+        return songToAddToQueue.value?.let { playlistsRepo.getSong(it) }
+    }
+
     @GuardedBy("this")
     private val userPickedSongs: MutableList<Song> = ArrayList()
+
     @Synchronized
     fun getUserPickedSongs(): List<Song> {
         return userPickedSongs
     }
+
     @Synchronized
     fun addUserPickedSong(songs: Song) {
         userPickedSongs.add(songs)
     }
+
     @Synchronized
     fun removeUserPickedSong(song: Song) {
         userPickedSongs.remove(song)
     }
+
     @Synchronized
     fun clearUserPickedSongs() {
         for (song in userPickedSongs) {
@@ -39,10 +68,12 @@ class ViewModelPlaylists(application: Application): AndroidViewModel(application
     @GuardedBy("this")
     @Volatile
     private var userPickedPlaylist: RandomPlaylist? = null
+
     @Synchronized
     fun getUserPickedPlaylist(): RandomPlaylist? {
         return userPickedPlaylist
     }
+
     @Synchronized
     fun setUserPickedPlaylist(userPickedPlaylist: RandomPlaylist?) {
         this.userPickedPlaylist = userPickedPlaylist
@@ -92,7 +123,7 @@ class ViewModelPlaylists(application: Application): AndroidViewModel(application
     fun getSong(songID: Long): Song? {
         return playlistsRepo.getSong(songID)
     }
-    
+
     fun getAllSongs(): List<Song>? {
         return playlistsRepo.getAllSongs()
     }
@@ -104,7 +135,7 @@ class ViewModelPlaylists(application: Application): AndroidViewModel(application
     fun getPlaylist(it: String): RandomPlaylist? {
         return playlistsRepo.getPlaylist(it)
     }
-    
+
     fun fragmentEditPlaylistViewCreated() {
         setPickedSongsToCurrentPlaylist()
     }
@@ -117,7 +148,7 @@ class ViewModelPlaylists(application: Application): AndroidViewModel(application
             }
         }
     }
-    
+
     private fun doesPlaylistExist(playlistName: String): Boolean {
         var playlistIndex = -1
         for ((i, randomPlaylist) in getPlaylists().withIndex()) {
@@ -151,7 +182,7 @@ class ViewModelPlaylists(application: Application): AndroidViewModel(application
         }
     }
 
-    fun editPlaylistFabClicked(context: Context, playlistName: String){
+    fun editPlaylistFabClicked(context: Context, playlistName: String) {
         if (validateInput(context, playlistName)) {
             val makingNewPlaylist = (userPickedPlaylist == null)
             if (makingNewPlaylist) {
@@ -202,5 +233,100 @@ class ViewModelPlaylists(application: Application): AndroidViewModel(application
             true
         }
     }
-    
+
+    fun notifySongMoved(fromPosition: Int, toPosition: Int) {
+        userPickedPlaylist?.swapSongPositions(
+            fromPosition,
+            toPosition
+        )
+    }
+
+    private var song: Song? = null
+    private var probability: Double? = null
+
+    fun notifySongRemoved(position: Int) {
+        song = userPickedPlaylist?.getSongs()?.get(position)
+        probability = song?.let { userPickedPlaylist?.getProbability(it) }
+        if (userPickedPlaylist?.size() == 1) {
+            userPickedPlaylist?.let {
+                removePlaylist(it)
+            }
+            // TODO test what happens when user is listening to a playlist and then removes it
+            setUserPickedPlaylist(null)
+        } else {
+            song?.let { userPickedPlaylist?.remove(it) }
+        }
+    }
+
+    fun notifyItemInserted(position: Int) {
+        song?.let { probability?.let { it1 -> userPickedPlaylist?.add(it, it1) } }
+        userPickedPlaylist?.let {
+            it.switchSongPositions(it.size() - 1, position)
+            if (it.size() == 1) {
+                addNewPlaylist(it)
+            }
+        }
+        song = null
+        probability = null
+    }
+
+    fun filterPlaylistSongs(string: String): MutableList<Song> {
+        // TODO fix bug where you can reorder songs when sifted
+        // I think this is fixed
+        val songs: List<Song>? = userPickedPlaylist?.getSongs()
+        val sifted: MutableList<Song> = ArrayList<Song>()
+        if (songs != null) {
+            for (song in songs) {
+                if (song.title.lowercase(Locale.ROOT)
+                        .contains(string.lowercase(Locale.ROOT))
+                ) {
+                    sifted.add(song)
+                }
+            }
+        }
+        return sifted
+    }
+
+    fun songClicked(context: Context, navController: NavController, song: Song) {
+        val mediaPlayerModel = MediaPlayerModel.getInstance()
+        val mediaModel: MediaModel = MediaModel.getInstance(context)
+        val songQueue = SongQueue.getInstance()
+        synchronized(ActivityMain.MUSIC_CONTROL_LOCK) {
+            if (song == mediaPlayerModel.currentAudioUri.value?.id?.let {
+                    getSong(it)
+                }
+            ) {
+                mediaModel.seekTo(context, 0)
+            }
+            getUserPickedPlaylist()?.let { mediaModel.setCurrentPlaylist(it) }
+            songQueue.newSessionStarted(song)
+            val audioUri = AudioUri.getAudioUri(context, song.id)
+            if (audioUri != null) {
+                mediaPlayerModel.setCurrentAudioUri(audioUri)
+            }
+            mediaModel.playNext(context)
+        }
+        NavUtil.navigate(
+            navController,
+            FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong()
+        )
+    }
+
+    fun fragmentPlaylistFABClicked(navController: NavController) {
+        clearUserPickedSongs()
+        NavUtil.navigate(
+            navController,
+            FragmentPlaylistDirections.actionFragmentPlaylistToFragmentEditPlaylist()
+        )
+    }
+
+    fun addToQueueClicked(context: Context, song: Song) {
+        val mediaModel: MediaModel = MediaModel.getInstance(context)
+        val songQueue = SongQueue.getInstance()
+        songQueue.addToQueue(song.id)
+        if (!mediaModel.isSongInProgress()) {
+            mediaModel.playNext(context)
+        }
+    }
+
 }

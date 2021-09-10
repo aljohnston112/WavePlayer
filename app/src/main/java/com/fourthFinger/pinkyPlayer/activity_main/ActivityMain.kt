@@ -27,7 +27,11 @@ import androidx.navigation.fragment.NavHostFragment
 import com.fourthFinger.pinkyPlayer.NavUtil.Companion.navigateTo
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.databinding.ActivityMainBinding
-import com.fourthFinger.pinkyPlayer.media_controller.*
+import com.fourthFinger.pinkyPlayer.fragments.ViewModelPlaylists
+import com.fourthFinger.pinkyPlayer.media_controller.MediaData
+import com.fourthFinger.pinkyPlayer.media_controller.MediaModel
+import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerModel
+import com.fourthFinger.pinkyPlayer.media_controller.ServiceMain
 import com.fourthFinger.pinkyPlayer.random_playlist.SongQueue
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import java.util.*
@@ -36,6 +40,7 @@ class ActivityMain : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     private val viewModelActivityMain by viewModels<ViewModelActivityMain>()
+    private val viewModelPlaylists by viewModels<ViewModelPlaylists>()
 
     private val mediaPlayerModel = MediaPlayerModel.getInstance()
 
@@ -358,11 +363,11 @@ class ActivityMain : AppCompatActivity() {
             R.id.action_add_to_queue -> {
                 // TODO a song not in progress will not be added to the queue
                 // Pretty sure that never happens though
-                // TODO Playlist wil not get added if there is a song in progress
+                // TODO Playlist will not get added if there is a song in progress
                 if (mediaModel.isSongInProgress()) {
-                    viewModelActivityMain.songToAddToQueue.value?.let { songQueue.addToQueue(it) }
+                    viewModelPlaylists.songToAddToQueue.value?.let { songQueue.addToQueue(it) }
                 } else {
-                    viewModelActivityMain.playlistToAddToQueue.value?.getSongs()?.let {
+                    viewModelPlaylists.playlistToAddToQueue.value?.getSongs()?.let {
                         for (songs in it) {
                             songQueue.addToQueue(songs.id)
                         }
@@ -370,7 +375,7 @@ class ActivityMain : AppCompatActivity() {
                         // No current playlist for when the queue runs out, so what?
                         // Will this ever happen?
                         if (songQueue.isEmpty()) {
-                            viewModelActivityMain.playlistToAddToQueue.value?.let { rp ->
+                            viewModelPlaylists.playlistToAddToQueue.value?.let { rp ->
                                 mediaModel.setCurrentPlaylist(rp)
                             }
                         }
@@ -389,7 +394,7 @@ class ActivityMain : AppCompatActivity() {
                 val bundle = Bundle()
                 bundle.putSerializable(
                         DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG,
-                        viewModelActivityMain.getSongToAddToQueue()
+                    viewModelPlaylists.getSongToAddToQueue()
                 )
                 val dialogFragment: DialogFragment = DialogFragmentAddToPlaylist()
                 dialogFragment.arguments = bundle
@@ -398,10 +403,6 @@ class ActivityMain : AppCompatActivity() {
             }
         }
         return super.onOptionsItemSelected(item)
-    }
-
-    fun saveFile() {
-        SaveFile.saveFile(applicationContext)
     }
 
     private val onDestinationChangedListenerSongPane = { _: NavController?, destination: NavDestination?, _: Bundle? ->

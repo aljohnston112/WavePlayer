@@ -16,4 +16,5 @@
         tools:context=".fragments.FragmentSongs"
         tools:listitem="@layout/item_song"
         android:background="@color/colorOnPrimary" />
+
 </layout>

@@ -22,8 +22,9 @@ import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.DialogFragmentAddToPlaylist
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.RecyclerViewPlaylistListBinding
-import com.fourthFinger.pinkyPlayer.media_controller.MediaModel
 import com.fourthFinger.pinkyPlayer.media_controller.MediaData
+import com.fourthFinger.pinkyPlayer.media_controller.MediaModel
+import com.fourthFinger.pinkyPlayer.media_controller.SaveFile
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
 import com.fourthFinger.pinkyPlayer.random_playlist.SongQueue
 import com.google.android.material.snackbar.BaseTransientBottomBar
@@ -180,7 +181,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
                     viewHolder.adapterPosition,
                     target.adapterPosition
                 )
-                activityMain.saveFile()
+                SaveFile.saveFile(requireActivity().applicationContext)
                 return true
             }
 
@@ -190,7 +191,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
                 val randomPlaylist: RandomPlaylist = randomPlaylists[position]
                 viewModelPlaylists.removePlaylist(randomPlaylist)
                 recyclerViewAdapter.notifyItemRemoved(position)
-                activityMain.saveFile()
+                SaveFile.saveFile(requireActivity().applicationContext)
                 val snackbar: Snackbar = Snackbar.make(
                     binding.recyclerViewPlaylistList,
                     R.string.playlist_deleted, BaseTransientBottomBar.LENGTH_LONG
@@ -198,7 +199,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
                 snackbar.setAction(R.string.undo) {
                     viewModelPlaylists.addNewPlaylist(position, randomPlaylist)
                     recyclerViewAdapter.notifyItemInserted(position)
-                    activityMain.saveFile()
+                    SaveFile.saveFile(requireActivity().applicationContext)
                 }
                 snackbar.show()
             }

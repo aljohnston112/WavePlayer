@@ -1,20 +1,14 @@
 package com.fourthFinger.pinkyPlayer.activity_main
 
 import android.app.Application
-import android.opengl.Visibility
-import android.view.View
-import android.view.View.*
+import android.view.View.OnClickListener
+import android.view.View.VISIBLE
 import androidx.annotation.DrawableRes
-import androidx.annotation.IdRes
 import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.fragments.PlaylistsRepo
-import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
-import com.fourthFinger.pinkyPlayer.random_playlist.Song
 
 class ViewModelActivityMain(application: Application) : AndroidViewModel(application) {
 
@@ -50,27 +44,10 @@ class ViewModelActivityMain(application: Application) : AndroidViewModel(applica
         this._fabOnClickListener.value = (fabOnClickListener)
     }
 
-    private val _playlistToAddToQueue = MutableLiveData<RandomPlaylist?>()
-    val playlistToAddToQueue = _playlistToAddToQueue as LiveData<RandomPlaylist?>
-    fun setPlaylistToAddToQueue(playlistToAddToQueue: RandomPlaylist?) {
-        _playlistToAddToQueue.value = playlistToAddToQueue
-    }
-
-    private val _songToAddToQueue = MutableLiveData<Long?>()
-    val songToAddToQueue = _songToAddToQueue as LiveData<Long?>
-    fun setSongToAddToQueue(songToAddToQueue: Long?) {
-        _songToAddToQueue.value = songToAddToQueue
-    }
-
     private val _songPaneVisible: MutableLiveData<Boolean> = MutableLiveData(false)
     val songPaneVisible = _songPaneVisible as LiveData<Boolean>
     fun songPaneVisible(visibility: Int) {
         this._songPaneVisible.value = visibility == VISIBLE
-    }
-
-
-    fun getSongToAddToQueue(): Song? {
-        return songToAddToQueue.value?.let { playlistsRepo.getSong(it) }
     }
 
 }

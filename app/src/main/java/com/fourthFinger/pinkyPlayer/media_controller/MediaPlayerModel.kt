@@ -1,12 +1,10 @@
 package com.fourthFinger.pinkyPlayer.media_controller
 
-import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.fourthFinger.pinkyPlayer.fragments.PlaylistsRepo
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
-import java.util.HashMap
+import java.util.*
 
 class MediaPlayerModel private constructor() {
 

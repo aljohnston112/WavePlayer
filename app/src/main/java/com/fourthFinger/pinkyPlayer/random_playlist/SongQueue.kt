@@ -43,6 +43,11 @@ class SongQueue private constructor() {
         songQueueIterator = songQueue.listIterator(songQueue.lastIndexOf(songID))
     }
 
+    fun newSessionStarted(song: Song) {
+        clearSongQueue()
+        addToQueue(song.id)
+    }
+
     init {
         songQueueIterator = songQueue.listIterator()
     }
