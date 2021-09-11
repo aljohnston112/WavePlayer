@@ -14,9 +14,10 @@ import android.widget.ImageView
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import com.fourthFinger.pinkyPlayer.BitmapUtil
-import com.fourthFinger.pinkyPlayer.NavUtil
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
@@ -32,6 +33,7 @@ class FragmentPaneSong : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
+    private val viewModelFragmentPaneSong by viewModels<ViewModelFragmentPaneSong>()
 
     private var mediaModel: MediaModel = getInstance(requireActivity().applicationContext)
     private val mediaPlayerModel = MediaPlayerModel.getInstance()
@@ -68,6 +70,7 @@ class FragmentPaneSong : Fragment() {
         }
 
     fun updateSongUI(currentAudioUri: AudioUri?) {
+        // TODO Get rid of mediaModel check via LiveData
         if (currentAudioUri != null && visible && mediaModel.isSongInProgress()) {
             binding.textViewSongPaneSongName.text = currentAudioUri.title
             binding.imageViewSongPaneSongArt.post(runnableSongPaneArtUpdater)
@@ -174,17 +177,14 @@ class FragmentPaneSong : Fragment() {
 
     private val onClickListenerSongPane = View.OnClickListener { v: View ->
         synchronized(ActivityMain.MUSIC_CONTROL_LOCK) {
-            if (v.id == R.id.imageButtonSongPaneNext) {
-                mediaModel.playNext(v.context)
-            } else if (v.id == R.id.imageButtonSongPanePlayPause) {
-                mediaModel.pauseOrPlay(v.context)
-            } else if (v.id == R.id.imageButtonSongPanePrev) {
-                mediaModel.playPrevious(v.context)
-            } else if (v.id == R.id.textViewSongPaneSongName ||
-                v.id == R.id.imageViewSongPaneSongArt
-            ) {
-                // TODO make sure this works. Might need the Activity Fragment Container
-                NavUtil.navigateTo(this, R.id.fragmentSong)
+            val fragmentManager: FragmentManager = requireActivity().supportFragmentManager
+            val fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment)
+            if (fragment != null) {
+                viewModelFragmentPaneSong.clicked(
+                    requireActivity().applicationContext,
+                    fragment,
+                    v.id
+                )
             }
         }
     }

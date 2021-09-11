@@ -14,9 +14,7 @@ import com.fourthFinger.pinkyPlayer.NavUtil
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.FragmentEditPlaylistBinding
-import com.fourthFinger.pinkyPlayer.media_controller.MediaData
 import com.fourthFinger.pinkyPlayer.media_controller.SaveFile
-import java.util.*
 
 class FragmentEditPlaylist : Fragment() {
 
@@ -26,13 +24,6 @@ class FragmentEditPlaylist : Fragment() {
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
     private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>()
     private val viewModelFragmentEditPlaylist: ViewModelFragmentEditPlaylist by viewModels()
-
-    private lateinit var mediaData: MediaData
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        mediaData = MediaData.getInstance()
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,

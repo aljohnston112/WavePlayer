@@ -13,6 +13,7 @@ import com.fourthFinger.pinkyPlayer.ToastUtil
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.media_controller.MediaModel
 import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerModel
+import com.fourthFinger.pinkyPlayer.media_controller.SaveFile
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
@@ -100,24 +101,28 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
         return playlistsRepo.getPlaylists()
     }
 
-    fun addNewPlaylist(randomPlaylist: RandomPlaylist) {
+    fun addNewPlaylist(context: Context, randomPlaylist: RandomPlaylist) {
         playlistsRepo.addPlaylist(randomPlaylist)
+        SaveFile.saveFile(context)
     }
 
-    fun addNewPlaylist(position: Int, randomPlaylist: RandomPlaylist) {
+    fun addNewPlaylist(context: Context, position: Int, randomPlaylist: RandomPlaylist) {
         playlistsRepo.addPlaylist(position, randomPlaylist)
+        SaveFile.saveFile(context)
     }
 
-    fun addNewPlaylistWithUserPickedSongs(name: String) {
+    fun addNewPlaylistWithUserPickedSongs(context: Context, name: String) {
         playlistsRepo.addPlaylist(
             RandomPlaylist(name, userPickedSongs, false)
         )
         clearUserPickedSongs()
+        SaveFile.saveFile(context)
     }
 
 
-    fun removePlaylist(userPickedPlaylist: RandomPlaylist) {
+    fun removePlaylist(context: Context, userPickedPlaylist: RandomPlaylist) {
         playlistsRepo.removePlaylist(userPickedPlaylist)
+        SaveFile.saveFile(context)
     }
 
     fun getSong(songID: Long): Song? {
@@ -186,14 +191,14 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
         if (validateInput(context, playlistName)) {
             val makingNewPlaylist = (userPickedPlaylist == null)
             if (makingNewPlaylist) {
-                addNewPlaylistWithUserPickedSongs(playlistName)
+                addNewPlaylistWithUserPickedSongs(context, playlistName)
             } else if (!makingNewPlaylist) {
-                makeNewPlaylist(playlistName)
+                makeNewPlaylist(context, playlistName)
             }
         }
     }
 
-    private fun makeNewPlaylist(playlistName: String) {
+    private fun makeNewPlaylist(context: Context, playlistName: String) {
         val playlistNames = getPlaylistTitles()
         // TODO Is this a deep copy
         val finalPlaylist: RandomPlaylist = userPickedPlaylist!!
@@ -211,6 +216,7 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
                 song.setSelected(false)
             }
         }
+        SaveFile.saveFile(context)
     }
 
     private fun validateInput(context: Context, playlistName: String): Boolean {
@@ -234,22 +240,24 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    fun notifySongMoved(fromPosition: Int, toPosition: Int) {
+    fun notifySongMoved(context: Context, fromPosition: Int, toPosition: Int) {
+        // TODO make sure changes are persistent across app restarts
         userPickedPlaylist?.swapSongPositions(
             fromPosition,
             toPosition
         )
+        SaveFile.saveFile(context)
     }
 
     private var song: Song? = null
     private var probability: Double? = null
 
-    fun notifySongRemoved(position: Int) {
+    fun notifySongRemoved(context: Context, position: Int) {
         song = userPickedPlaylist?.getSongs()?.get(position)
         probability = song?.let { userPickedPlaylist?.getProbability(it) }
         if (userPickedPlaylist?.size() == 1) {
             userPickedPlaylist?.let {
-                removePlaylist(it)
+                removePlaylist(context, it)
             }
             // TODO test what happens when user is listening to a playlist and then removes it
             setUserPickedPlaylist(null)
@@ -258,19 +266,43 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    fun notifyItemInserted(position: Int) {
+    fun notifyItemInserted(context: Context, position: Int) {
         song?.let { probability?.let { it1 -> userPickedPlaylist?.add(it, it1) } }
         userPickedPlaylist?.let {
             it.switchSongPositions(it.size() - 1, position)
             if (it.size() == 1) {
-                addNewPlaylist(it)
+                addNewPlaylist(context, it)
             }
         }
         song = null
         probability = null
     }
 
-    fun filterPlaylistSongs(string: String): MutableList<Song> {
+
+    fun notifyPlaylistMoved(context: Context, fromPosition: Int, toPosition: Int) {
+        // TODO make sure changes are persistent across app restarts
+        Collections.swap(
+            getPlaylists(),
+            fromPosition,
+            toPosition
+        )
+        SaveFile.saveFile(context)
+    }
+
+    private var playlist: RandomPlaylist? = null
+
+    fun notifyPlaylistRemoved(context: Context, position: Int) {
+        playlist = getPlaylists()[position]
+        playlist?.let { removePlaylist(context, it) }
+    }
+
+    fun notifyPlaylistInserted(context: Context, position: Int) {
+        playlist?.let { addNewPlaylist(context, position, it) }
+        playlist = null
+    }
+
+
+    fun filterPlaylistSongs(string: String): List<Song> {
         // TODO fix bug where you can reorder songs when sifted
         // I think this is fixed
         val songs: List<Song>? = userPickedPlaylist?.getSongs()
@@ -282,6 +314,18 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
                 ) {
                     sifted.add(song)
                 }
+            }
+        }
+        return sifted
+    }
+
+    fun filterPlaylists(newText: String): List<RandomPlaylist> {
+        val sifted: MutableList<RandomPlaylist> = ArrayList<RandomPlaylist>()
+        for (randomPlaylist in getPlaylists()) {
+            if (randomPlaylist.getName().lowercase(Locale.ROOT)
+                    .contains(newText.lowercase(Locale.ROOT))
+            ) {
+                sifted.add(randomPlaylist)
             }
         }
         return sifted
@@ -312,6 +356,15 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
         )
     }
 
+
+    fun playlistClicked(navController: NavController, playlist: RandomPlaylist) {
+        setUserPickedPlaylist(playlist)
+        NavUtil.navigate(
+            navController,
+            FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentPlaylist()
+        )
+    }
+
     fun fragmentPlaylistFABClicked(navController: NavController) {
         clearUserPickedSongs()
         NavUtil.navigate(
@@ -320,10 +373,35 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
         )
     }
 
+    fun fragmentPlaylistsFABClicked(navController: NavController) {
+        setUserPickedPlaylist(null)
+        clearUserPickedSongs()
+        NavUtil.navigate(
+            navController,
+            FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentEditPlaylist()
+        )
+    }
+
     fun addToQueueClicked(context: Context, song: Song) {
         val mediaModel: MediaModel = MediaModel.getInstance(context)
         val songQueue = SongQueue.getInstance()
         songQueue.addToQueue(song.id)
+        if (!mediaModel.isSongInProgress()) {
+            mediaModel.playNext(context)
+        }
+    }
+
+
+    fun addToQueueClicked(context: Context, randomPlaylist: RandomPlaylist) {
+        // TODO stop MasterPlaylist from continuing after queue is done
+        // shuffle is off and looping is on or something like that?
+        val mediaModel: MediaModel = MediaModel.getInstance(context)
+        mediaModel.setCurrentPlaylistToMaster(context)
+        val songQueue = SongQueue.getInstance()
+        val songs = randomPlaylist.getSongs()
+        for (song in songs) {
+            songQueue.addToQueue(song.id)
+        }
         if (!mediaModel.isSongInProgress()) {
             mediaModel.playNext(context)
         }

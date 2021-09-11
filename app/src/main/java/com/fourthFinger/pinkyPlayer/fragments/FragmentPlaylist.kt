@@ -24,9 +24,6 @@ import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.DialogFragmentAddToPlaylist
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.RecyclerViewSongListBinding
-import com.fourthFinger.pinkyPlayer.media_controller.MediaData
-import com.fourthFinger.pinkyPlayer.media_controller.MediaModel
-import com.fourthFinger.pinkyPlayer.media_controller.SaveFile
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
 import com.google.android.material.snackbar.BaseTransientBottomBar
@@ -40,9 +37,6 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
     private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>()
 
-    private lateinit var mediaModel: MediaModel
-    private lateinit var mediaData: MediaData
-
     private var broadcastReceiver: BroadcastReceiver? = null
 
     private var recyclerViewSongList: RecyclerView? = null
@@ -50,12 +44,6 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
 
     var dragFlags: Int = ItemTouchHelper.UP or ItemTouchHelper.DOWN
     val swipeFlags: Int = ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        mediaModel = MediaModel.getInstance(requireActivity().applicationContext)
-        mediaData = MediaData.getInstance()
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -73,7 +61,10 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
         if (randomPlaylist != null) {
             viewModelPlaylists.setPlaylistToAddToQueue(randomPlaylist)
             viewModelActivityMain.setActionBarTitle(randomPlaylist.getName())
+            // TODO why is this set up twice in all the fragments?!
+            // I think due to incomplete state
             setUpRecyclerView(randomPlaylist)
+            setUpSearchView()
         }
     }
 
@@ -105,6 +96,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
 
                  */
                 viewModelPlaylists.notifySongMoved(
+                    requireActivity().applicationContext,
                     viewHolder.absoluteAdapterPosition,
                     target.absoluteAdapterPosition
                 )
@@ -112,26 +104,24 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
                     viewHolder.absoluteAdapterPosition,
                     target.absoluteAdapterPosition
                 )
-                SaveFile.saveFile(requireActivity().applicationContext)
                 return true
             }
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val position = viewHolder.absoluteAdapterPosition
-                viewModelPlaylists.notifySongRemoved(position)
+                viewModelPlaylists.notifySongRemoved(requireActivity().applicationContext, position)
                 // TODO needed?
                 /*
                 recyclerViewAdapterSongs.getSongs().remove(position);
                  */
                 recyclerViewAdapterSongs.notifyItemRemoved(position)
-                SaveFile.saveFile(requireActivity().applicationContext)
                 val snackBar: Snackbar = Snackbar.make(
                     binding.recyclerViewSongList,
                     R.string.song_removed,
                     BaseTransientBottomBar.LENGTH_LONG
                 )
                 snackBar.setAction(R.string.undo) {
-                    viewModelPlaylists.notifyItemInserted(position)
+                    viewModelPlaylists.notifyItemInserted(requireActivity().applicationContext, position)
                     // TODO needed?
                     /*
                     recyclerViewAdapterSongs.updateList(userPickedPlaylist.getSongs());
@@ -143,6 +133,9 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
             }
         }
         ItemTouchHelper(itemTouchHelperCallback).attachToRecyclerView(recyclerViewSongList)
+    }
+
+    private fun setUpSearchView() {
         val searchView: SearchView = requireActivity().findViewById<Toolbar>(
             R.id.toolbar
         ).menu?.findItem(R.id.action_search)?.actionView as SearchView
@@ -176,11 +169,6 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
     private fun setUpBroadcastReceiver(randomPlaylist: RandomPlaylist) {
         val filterComplete = IntentFilter()
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT)
-        filterComplete.addAction(
-            requireActivity().resources.getString(
-                R.string.broadcast_receiver_action_on_create_options_menu
-            )
-        )
         filterComplete.addAction(
             requireActivity().resources.getString(
                 R.string.broadcast_receiver_action_service_connected
