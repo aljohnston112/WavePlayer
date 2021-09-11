@@ -17,8 +17,8 @@ class RecyclerViewAdapterSelectSongs(
 
     interface ListenerCallbackSelectSongs {
         fun getUserPickedSongs(): List<Song>
-        fun removeUserPickedSong(song: Song)
-        fun addUserPickedSong(song: Song)
+        fun songUnselected(song: Song)
+        fun songSelected(song: Song)
     }
 
     fun updateList(songs: List<Song>) {
@@ -33,6 +33,10 @@ class RecyclerViewAdapterSelectSongs(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val linearLayout: ConstraintLayout = holder.itemView.findViewById(R.id.constraint_layout_song_name)
+        // TODO find a better place for this
+        // Might already be in ViewModelPlaylist's editSongsClicked()
+        // Should be able to remove
+        /*
         val userPickedSongs = listenerCallbackSelectSongs.getUserPickedSongs()
         if (userPickedSongs.contains(allSongs[position])) {
             allSongs[position].setSelected(true)
@@ -41,6 +45,14 @@ class RecyclerViewAdapterSelectSongs(
             linearLayout.setBackgroundColor(Color.parseColor("#575757"))
         } else {
             allSongs[position].setSelected(false)
+            holder.textViewSongName.setBackgroundColor(Color.parseColor("#000000"))
+            linearLayout.setBackgroundColor(Color.parseColor("#000000"))
+        }
+         */
+        if(allSongs[position].isSelected()){
+            holder.textViewSongName.setBackgroundColor(Color.parseColor("#575757"))
+            linearLayout.setBackgroundColor(Color.parseColor("#575757"))
+        } else {
             holder.textViewSongName.setBackgroundColor(Color.parseColor("#000000"))
             linearLayout.setBackgroundColor(Color.parseColor("#000000"))
         }
@@ -67,12 +79,12 @@ class RecyclerViewAdapterSelectSongs(
                     // TODO color resources
                     textViewSongName.setBackgroundColor(Color.parseColor("#000000"))
                     constraintLayout.setBackgroundColor(Color.parseColor("#000000"))
-                    listenerCallbackSelectSongs.removeUserPickedSong(song)
+                    listenerCallbackSelectSongs.songUnselected(song)
                 } else {
                     song.setSelected(true)
                     textViewSongName.setBackgroundColor(Color.parseColor("#575757"))
                     constraintLayout.setBackgroundColor(Color.parseColor("#575757"))
-                    listenerCallbackSelectSongs.addUserPickedSong(song)
+                    listenerCallbackSelectSongs.songSelected(song)
                 }
             }
             view.setOnClickListener(onClickListener)

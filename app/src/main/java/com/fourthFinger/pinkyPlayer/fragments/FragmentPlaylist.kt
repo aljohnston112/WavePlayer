@@ -146,8 +146,8 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
     }
 
     private fun filterSongs(newText: String) {
-        val sifted = viewModelPlaylists.filterPlaylistSongs(newText)
         dragFlags = if (newText.isNotEmpty()) {
+            val sifted = viewModelPlaylists.filterPlaylistSongs(newText)
             recyclerViewAdapterSongs.updateList(sifted)
             0
         } else {

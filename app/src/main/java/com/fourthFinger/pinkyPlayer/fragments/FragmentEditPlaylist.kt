@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import android.widget.EditText
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.NavHostFragment
 import com.fourthFinger.pinkyPlayer.KeyboardUtil
 import com.fourthFinger.pinkyPlayer.NavUtil
@@ -23,7 +22,6 @@ class FragmentEditPlaylist : Fragment() {
 
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
     private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>()
-    private val viewModelFragmentEditPlaylist: ViewModelFragmentEditPlaylist by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -38,7 +36,7 @@ class FragmentEditPlaylist : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         viewModelPlaylists.fragmentEditPlaylistViewCreated()
         binding.buttonEditSongs.setOnClickListener {
-            viewModelFragmentEditPlaylist.editSongsClicked(
+            viewModelPlaylists.editSongsClicked(
                 NavHostFragment.findNavController(this)
             )
         }

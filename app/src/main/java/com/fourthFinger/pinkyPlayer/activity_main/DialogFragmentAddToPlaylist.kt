@@ -71,11 +71,11 @@ class DialogFragmentAddToPlaylist : DialogFragment() {
             viewModelPlaylists.setUserPickedPlaylist(null)
             viewModelPlaylists.clearUserPickedSongs()
             if (song != null) {
-                viewModelPlaylists.addUserPickedSong(song)
+                viewModelPlaylists.songSelected(song)
             }
             if (randomPlaylist != null) {
                 for (songInPlaylist in randomPlaylist.getSongs()) {
-                    viewModelPlaylists.addUserPickedSong(songInPlaylist)
+                    viewModelPlaylists.songSelected(songInPlaylist)
                 }
             }
             // TODO this most definitely probably does not work

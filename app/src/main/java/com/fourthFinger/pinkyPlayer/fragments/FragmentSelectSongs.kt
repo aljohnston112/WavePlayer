@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.SearchView
@@ -21,9 +22,7 @@ import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.RecyclerViewSongListBinding
-import com.fourthFinger.pinkyPlayer.media_controller.MediaData
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
-import java.util.*
 
 class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerCallbackSelectSongs {
 
@@ -33,31 +32,8 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
     private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>()
 
-    private lateinit var mediaData: MediaData
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        mediaData = MediaData.getInstance()
-
-    }
-
-    private val broadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            val action: String? = intent.action
-            if (action != null) {
-                if (action == resources.getString(
-                                R.string.broadcast_receiver_action_on_create_options_menu)) {
-                    setUpToolbar()
-                } else if (action == resources.getString(
-                                R.string.broadcast_receiver_action_service_connected)) {
-                    setUpRecyclerView()
-                }
-            }
-        }
-    }
-
     private var recyclerViewSongList: RecyclerView? = null
-    private var recyclerViewAdapter: RecyclerViewAdapterSelectSongs? = null
+    private lateinit var recyclerViewAdapter: RecyclerViewAdapterSelectSongs
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -70,75 +46,47 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val activityMain: ActivityMain = requireActivity() as ActivityMain
         KeyboardUtil.hideKeyboard(view)
         viewModelActivityMain.setActionBarTitle(resources.getString(R.string.select_songs))
         setUpRecyclerView()
     }
 
-    private fun setUpBroadcastReceiver() {
-        val activityMain: ActivityMain = requireActivity() as ActivityMain
-        val intentFilter = IntentFilter()
-        intentFilter.addCategory(Intent.CATEGORY_DEFAULT)
-        intentFilter.addAction(activityMain.resources.getString(
-                R.string.broadcast_receiver_action_service_connected))
-        intentFilter.addAction(activityMain.resources.getString(
-                R.string.broadcast_receiver_action_on_create_options_menu))
-        activityMain.registerReceiver(broadcastReceiver, intentFilter)
+    private fun setUpRecyclerView() {
+        recyclerViewSongList = binding.recyclerViewSongList
+        recyclerViewSongList?.layoutManager = LinearLayoutManager(requireContext())
+        recyclerViewAdapter = viewModelPlaylists.getAllSongs()?.let {
+            RecyclerViewAdapterSelectSongs(this, it)
+        }?: RecyclerViewAdapterSelectSongs(this, listOf())
+        recyclerViewSongList?.adapter = recyclerViewAdapter
     }
 
-    private fun setUpToolbar() {
-        val activityMain: ActivityMain = requireActivity() as ActivityMain
-        val toolbar: Toolbar = activityMain.findViewById(R.id.toolbar)
-        val menu = toolbar.menu
-        if (menu != null) {
-            menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).isVisible = true
-            val itemSearch = menu.findItem(R.id.action_search)
-            if (itemSearch != null) {
-                val onQueryTextListenerSearch = object : SearchView.OnQueryTextListener {
-                    override fun onQueryTextSubmit(query: String?): Boolean {
-                        return false
-                    }
+    override fun onStart() {
+        super.onStart()
+        setUpBroadcastReceiver()
+    }
 
-                    override fun onQueryTextChange(newText: String?): Boolean {
-                        val songs = viewModelPlaylists.getAllSongs()
-                        if (songs != null) {
-                            val sifted = mutableListOf<Song>()
-                            if (newText != null && newText != "") {
-                                for (song in songs) {
-                                    if (song.title.toLowerCase(Locale.ROOT).contains(newText.toLowerCase(Locale.ROOT))) {
-                                        sifted.add(song)
-                                    }
-                                }
-                                recyclerViewAdapter?.updateList(sifted)
-                            } else {
-                                recyclerViewAdapter?.updateList(songs)
-                            }
-                        }
-                        return true
-                    }
+    private fun setUpBroadcastReceiver() {
+        val intentFilter = IntentFilter()
+        intentFilter.addCategory(Intent.CATEGORY_DEFAULT)
+        intentFilter.addAction(requireActivity().resources.getString(
+                R.string.broadcast_receiver_action_service_connected))
+        requireActivity().registerReceiver(broadcastReceiver, intentFilter)
+    }
+
+    private val broadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val action: String? = intent.action
+            if (action != null) {
+                if (action == resources.getString(
+                        R.string.broadcast_receiver_action_service_connected)) {
+                    setUpRecyclerView()
                 }
-                val searchView = itemSearch.actionView as SearchView
-                searchView.setOnQueryTextListener(onQueryTextListenerSearch)
             }
         }
     }
 
-    private fun setUpRecyclerView() {
-        recyclerViewSongList = binding.recyclerViewSongList
-        recyclerViewSongList?.layoutManager = LinearLayoutManager(requireContext())
-        for (song in viewModelPlaylists.getUserPickedSongs()) {
-            song.setSelected(true)
-        }
-        recyclerViewAdapter = viewModelPlaylists.getAllSongs()?.let {
-            RecyclerViewAdapterSelectSongs(this, it)
-        }
-        recyclerViewSongList?.adapter = recyclerViewAdapter
-    }
-
     override fun onResume() {
         super.onResume()
-        setUpToolbar()
         updateFAB()
     }
 
@@ -154,21 +102,48 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
         }
     }
 
+    override fun onPrepareOptionsMenu(menu: Menu) {
+        super.onPrepareOptionsMenu(menu)
+        menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).isVisible = true
+        val itemSearch = menu.findItem(R.id.action_search)
+        if (itemSearch != null) {
+            val onQueryTextListenerSearch = object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(query: String?): Boolean {
+                    return false
+                }
+
+                override fun onQueryTextChange(newText: String): Boolean {
+                    filterSongs(newText)
+                    return true
+                }
+            }
+            val searchView = itemSearch.actionView as SearchView
+            searchView.setOnQueryTextListener(onQueryTextListenerSearch)
+        }
+    }
+
+    private fun filterSongs(newText: String) {
+        if (newText.isNotEmpty()) {
+            val sifted = viewModelPlaylists.filterAllSongs(newText)
+            recyclerViewAdapter.updateList(sifted)
+        } else {
+            viewModelPlaylists.getUserPickedPlaylist()?.getSongs()?.let {
+                recyclerViewAdapter.updateList(it)
+            }
+        }
+    }
+
+    // TODO should be able to remove
     override fun getUserPickedSongs(): List<Song> {
         return viewModelPlaylists.getUserPickedSongs()
     }
 
-    override fun removeUserPickedSong(song: Song) {
-        viewModelPlaylists.removeUserPickedSong(song)
+    override fun songUnselected(song: Song) {
+        viewModelPlaylists.songUnselected(song)
     }
 
-    override fun addUserPickedSong(song: Song) {
-        viewModelPlaylists.addUserPickedSong(song)
-    }
-
-    override fun onStart() {
-        super.onStart()
-        setUpBroadcastReceiver()
+    override fun songSelected(song: Song) {
+        viewModelPlaylists.songSelected(song)
     }
 
     override fun onStop() {
@@ -183,9 +158,8 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
 
     override fun onDestroy() {
         super.onDestroy()
-        val activityMain: ActivityMain = requireActivity() as ActivityMain
         viewModelActivityMain.setFabOnClickListener(null)
-        val toolbar: Toolbar = activityMain.findViewById(R.id.toolbar)
+        val toolbar: Toolbar = requireActivity().findViewById(R.id.toolbar)
         val menu = toolbar.menu
         if (menu != null) {
             val itemSearch = menu.findItem(R.id.action_search)

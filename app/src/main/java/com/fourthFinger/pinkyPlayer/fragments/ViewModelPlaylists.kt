@@ -49,12 +49,12 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
     }
 
     @Synchronized
-    fun addUserPickedSong(songs: Song) {
+    fun songSelected(songs: Song) {
         userPickedSongs.add(songs)
     }
 
     @Synchronized
-    fun removeUserPickedSong(song: Song) {
+    fun songUnselected(song: Song) {
         userPickedSongs.remove(song)
     }
 
@@ -111,7 +111,7 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
         SaveFile.saveFile(context)
     }
 
-    fun addNewPlaylistWithUserPickedSongs(context: Context, name: String) {
+    private fun addNewPlaylistWithUserPickedSongs(context: Context, name: String) {
         playlistsRepo.addPlaylist(
             RandomPlaylist(name, userPickedSongs, false)
         )
@@ -119,8 +119,7 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
         SaveFile.saveFile(context)
     }
 
-
-    fun removePlaylist(context: Context, userPickedPlaylist: RandomPlaylist) {
+    private fun removePlaylist(context: Context, userPickedPlaylist: RandomPlaylist) {
         playlistsRepo.removePlaylist(userPickedPlaylist)
         SaveFile.saveFile(context)
     }
@@ -149,7 +148,7 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
     private fun setPickedSongsToCurrentPlaylist() {
         userPickedPlaylist?.let {
             for (song in it.getSongs()) {
-                addUserPickedSong(song)
+                songSelected(song)
             }
         }
     }
@@ -331,6 +330,19 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
         return sifted
     }
 
+
+    fun filterAllSongs(newText: String): List<Song> {
+        val sifted: MutableList<Song> = ArrayList<Song>()
+        for (song in getAllSongs()?: listOf<Song>()) {
+            if (song.title.lowercase(Locale.ROOT)
+                    .contains(newText.lowercase(Locale.ROOT))
+            ) {
+                sifted.add(song)
+            }
+        }
+        return sifted
+    }
+
     fun songClicked(context: Context, navController: NavController, song: Song) {
         val mediaPlayerModel = MediaPlayerModel.getInstance()
         val mediaModel: MediaModel = MediaModel.getInstance(context)
@@ -405,6 +417,13 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
         if (!mediaModel.isSongInProgress()) {
             mediaModel.playNext(context)
         }
+    }
+
+    fun editSongsClicked(navController: NavController){
+        for (song in getUserPickedSongs()) {
+            song.setSelected(true)
+        }
+        NavUtil.navigate(navController, FragmentEditPlaylistDirections.actionFragmentEditPlaylistToFragmentSelectSongs())
     }
 
 }
