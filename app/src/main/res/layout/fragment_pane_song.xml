@@ -1,58 +1,64 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/linearLayoutSongPane"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:paddingBottom="8dp"
-    android:paddingTop="8dp"
-    android:orientation="horizontal"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintTop_toBottomOf="@+id/nav_host_fragment">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <ImageView
-        android:id="@+id/imageViewSongPaneSongArt"
-        android:layout_width="0dp"
-        android:layout_weight="1"
+    <data>
+
+    </data>
+
+    <LinearLayout
+        android:id="@+id/linearLayoutSongPane"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="4dp"
-        android:background="@color/colorPrimary"
-        android:src="@drawable/music_note_black_48dp" />
+        android:paddingBottom="8dp"
+        android:paddingTop="8dp"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/nav_host_fragment">
 
-    <TextView
-        android:id="@+id/textViewSongPaneSongName"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:paddingStart="4dp"
-        android:paddingEnd="4dp"
-        android:layout_weight="2"
-        android:text="Easter Egg!" />
+        <ImageView
+            android:id="@+id/imageViewSongPaneSongArt"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="4dp"
+            android:background="@color/colorPrimary"
+            android:src="@drawable/music_note_black_48dp" />
 
-    <ImageButton
-        android:id="@+id/imageButtonSongPanePrev"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_marginStart="4dp"
-        android:layout_marginEnd="4dp"
-        android:background="@color/colorPrimary"
-        app:srcCompat="@drawable/skip_previous_black_24dp" />
+        <TextView
+            android:id="@+id/textViewSongPaneSongName"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:layout_weight="2"
+            android:text="Easter Egg!" />
 
-    <ImageButton
-        android:id="@+id/imageButtonSongPanePlayPause"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_marginStart="4dp"
-        android:layout_marginEnd="4dp"
-        android:background="@color/colorPrimary"
-        app:srcCompat="@drawable/pause_black_24dp" />
+        <ImageButton
+            android:id="@+id/imageButtonSongPanePrev"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:background="@color/colorPrimary"
+            app:srcCompat="@drawable/skip_previous_black_24dp" />
 
-    <ImageButton
-        android:id="@+id/imageButtonSongPaneNext"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_marginStart="4dp"
-        android:layout_marginEnd="8dp"
-        android:background="@color/colorPrimary"
-        app:srcCompat="@drawable/skip_next_black_24dp" />
+        <ImageButton
+            android:id="@+id/imageButtonSongPanePlayPause"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:background="@color/colorPrimary"
+            app:srcCompat="@drawable/pause_black_24dp" />
 
-</LinearLayout>
+        <ImageButton
+            android:id="@+id/imageButtonSongPaneNext"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="8dp"
+            android:background="@color/colorPrimary"
+            app:srcCompat="@drawable/skip_next_black_24dp" />
+
+    </LinearLayout>
+</layout>
