@@ -1,18 +1,14 @@
 package com.fourthFinger.pinkyPlayer.activity_main
 
-import android.app.Application
 import android.view.View.OnClickListener
 import android.view.View.VISIBLE
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.fourthFinger.pinkyPlayer.fragments.PlaylistsRepo
+import androidx.lifecycle.ViewModel
 
-class ViewModelActivityMain(application: Application) : AndroidViewModel(application) {
-
-    private val playlistsRepo = PlaylistsRepo.getInstance(application)
+class ViewModelActivityMain() : ViewModel() {
 
     private val _actionBarTitle: MutableLiveData<String> = MutableLiveData()
     val actionBarTitle = _actionBarTitle as LiveData<String>
@@ -48,6 +44,12 @@ class ViewModelActivityMain(application: Application) : AndroidViewModel(applica
     val songPaneVisible = _songPaneVisible as LiveData<Boolean>
     fun songPaneVisible(visibility: Int) {
         this._songPaneVisible.value = visibility == VISIBLE
+    }
+
+    private val _fragmentSongVisible: MutableLiveData<Boolean> = MutableLiveData(false)
+    val fragmentSongVisible = _fragmentSongVisible as LiveData<Boolean>
+    fun fragmentSongVisible(visibility: Int) {
+        this._fragmentSongVisible.value = visibility == VISIBLE
     }
 
 }

@@ -79,7 +79,7 @@ class FragmentPaneSong : Fragment() {
 
     private var runnableSongPaneArtUpdater = Runnable {
         val imageViewSongPaneSongArt: ImageView = binding.imageViewSongPaneSongArt
-        val bitmapSongArt: Bitmap? = BitmapUtil.getBitmap(
+        val bitmapSongArt: Bitmap? = BitmapUtil.getThumbnailBitmap(
             mediaPlayerModel.currentAudioUri.value,
             songArtWidth,
             requireActivity().applicationContext

@@ -75,4 +75,6 @@
     <string name="percent_change_error">Mod must be between 1 and 100</string>
     <string name="action_settings">Settings</string>
 
+    <string name="RR">Ruh roh</string>
+
 </resources>

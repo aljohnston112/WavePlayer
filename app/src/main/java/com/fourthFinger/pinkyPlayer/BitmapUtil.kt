@@ -11,9 +11,9 @@ import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 class BitmapUtil {
     companion object {
 
-        fun getBitmap(audioUri: AudioUri?,
-                      songArtWidth : Int,
-                      context: Context
+        fun getThumbnailBitmap(audioUri: AudioUri?,
+                               songArtWidth : Int,
+                               context: Context
         ): Bitmap? {
             return audioUri?.id?.let { id ->
                 AudioUri.getUri(id).let {

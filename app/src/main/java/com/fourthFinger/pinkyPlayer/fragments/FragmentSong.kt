@@ -6,14 +6,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.MotionEvent
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.SeekBar
@@ -21,17 +16,20 @@ import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
-import androidx.core.os.LocaleListCompat
+import androidx.core.graphics.drawable.toBitmap
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
+import com.fourthFinger.pinkyPlayer.BitmapUtil
 import com.fourthFinger.pinkyPlayer.KeyboardUtil
 import com.fourthFinger.pinkyPlayer.R
+import com.fourthFinger.pinkyPlayer.TextUtil.Companion.formatMillis
+import com.fourthFinger.pinkyPlayer.ToastUtil
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.FragmentSongBinding
 import com.fourthFinger.pinkyPlayer.media_controller.*
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
-import com.fourthFinger.pinkyPlayer.random_playlist.Song
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -42,101 +40,21 @@ class FragmentSong : Fragment() {
 
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
     private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>()
+    private val viewModelFragmentSong by viewModels<ViewModelFragmentSong>()
 
     private val mediaPlayerModel = MediaPlayerModel.getInstance()
-
-    private lateinit var mediaData: MediaData
-    private lateinit var mediaModel: MediaModel
+    private val mediaModel: MediaModel =
+        MediaModel.getInstance(requireActivity().applicationContext)
 
     private var currentAudioUri: AudioUri? = null
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        mediaModel = MediaModel.getInstance(requireActivity().applicationContext)
-        mediaData = MediaData.getInstance()
-
-    }
-
-    private val broadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            val action: String? = intent.action
-            if (action != null) {
-                if (action == resources.getString(
-                                R.string.broadcast_receiver_action_service_connected)) {
-                    setUpButtons()
-                }
-                if (action == resources.getString(
-                                R.string.broadcast_receiver_action_on_create_options_menu)) {
-                    setUpToolbar()
-                }
-            }
-        }
-    }
-
-    private val onLayoutChangeListenerFragmentSong = View.OnLayoutChangeListener { _: View?, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int ->
-        val activityMain = requireActivity() as ActivityMain
-        if (activityMain.fragmentSongVisible()) {
-            setUpButton(binding.buttonThumbUp, R.drawable.thumb_up_alt_black_24dp)
-            setUpButton(binding.buttonThumbDown, R.drawable.thumb_down_alt_black_24dp)
-            setUpButton(binding.imageButtonPrev, R.drawable.skip_previous_black_24dp)
-            setUpButton(binding.imageButtonNext, R.drawable.skip_next_black_24dp)
-            setUpShuffle()
-            //setUpPlay();
-            setUpLoop()
-        }
-    }
-
-    private val runnableSongArtUpdater = Runnable {
-        val imageViewSongArt: ImageView = binding.imageViewSongArt
-        var songArtHeight = imageViewSongArt.height
-        var songArtWidth = imageViewSongArt.width
-        if (songArtWidth > songArtHeight) {
-            songArtWidth = songArtHeight
-        } else {
-            songArtHeight = songArtWidth
-        }
-        if (songArtHeight > 0 && songArtWidth > 0) {
-            currentAudioUri?.let {
-                val bitmap: Bitmap? = BitmapLoader.getThumbnail(
-                        it.getUri(),
-                        songArtWidth,
-                        songArtHeight,
-                        requireActivity().applicationContext
-                )
-                if (bitmap == null) {
-                    val drawable: Drawable? = ResourcesCompat.getDrawable(
-                            imageViewSongArt.resources,
-                            R.drawable.music_note_black_48dp,
-                            null
-                    )
-                    if (drawable != null) {
-                        drawable.setBounds(0, 0, songArtWidth, songArtHeight)
-                        val bitmapDrawable: Bitmap = Bitmap.createBitmap(
-                                songArtWidth,
-                                songArtHeight,
-                                Bitmap.Config.ARGB_8888
-                        )
-                        val canvas = Canvas(bitmapDrawable)
-                        val paint = Paint()
-                        paint.color = ContextCompat.getColor(requireContext(), R.color.colorPrimary)
-                        canvas.drawRect(0f, 0f, songArtWidth.toFloat(), songArtHeight.toFloat(), paint)
-                        drawable.draw(canvas)
-                        imageViewSongArt.setImageBitmap(bitmapDrawable)
-                    }
-                } else {
-                    imageViewSongArt.setImageBitmap(bitmap)
-                }
-            }
-        }
-    }
 
     // For updating the SeekBar
     private var scheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
 
     override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View {
         _binding = FragmentSongBinding.inflate(inflater, container, false)
         return binding.root
@@ -144,32 +62,14 @@ class FragmentSong : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val activityMain: ActivityMain = requireActivity() as ActivityMain
         KeyboardUtil.hideKeyboard(view)
         mediaPlayerModel.currentAudioUri.observe(viewLifecycleOwner) {
             if (it != null) {
+                // TODO why does this need to be cached?
                 currentAudioUri = it
-                viewModelPlaylists.setSongToAddToQueue(it.id)
-                viewModelPlaylists.setPlaylistToAddToQueue(null)
-                val textViewSongName: TextView = binding.textViewSongName
-                textViewSongName.text = it.title
-                val maxMillis: Int = it.getDuration(activityMain.applicationContext)
-                val stringEndTime = formatMillis(maxMillis)
-                val stringCurrentTime = formatMillis(mediaPlayerModel.getCurrentTime())
-                val textViewCurrent: TextView = binding.editTextCurrentTime
-                textViewCurrent.text = stringCurrentTime
-                val textViewEnd: TextView = binding.editTextEndTime
-                textViewEnd.text = stringEndTime
-                val seekBar: SeekBar = binding.seekBar
-                seekBar.max = maxMillis
-                seekBar.progress = mediaPlayerModel.getCurrentTime()
-                seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                    override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
-                    override fun onStartTrackingTouch(seekBar: SeekBar) {}
-                    override fun onStopTrackingTouch(seekBar: SeekBar) {
-                        mediaModel.seekTo(requireActivity().applicationContext, seekBar.progress)
-                    }
-                })
+                viewModelPlaylists.newSong(it.id)
+                binding.textViewSongName.text = it.title
+                setUpSeekBar(it.getDuration(requireActivity().applicationContext))
                 setUpSeekBarUpdater()
                 updateSongArt()
             }
@@ -184,43 +84,33 @@ class FragmentSong : Fragment() {
         setUpButtons()
     }
 
-    private fun updateSongArt() {
-        val imageViewSongArt: ImageView = binding.imageViewSongArt
-        imageViewSongArt.post(runnableSongArtUpdater)
+    private fun setUpSeekBar(maxMillis: Int) {
+        val stringEndTime = formatMillis(maxMillis)
+        val stringCurrentTime = formatMillis(mediaPlayerModel.getCurrentTime())
+        binding.editTextCurrentTime.text = stringCurrentTime
+        binding.editTextEndTime.text = stringEndTime
+        val seekBar: SeekBar = binding.seekBar
+        seekBar.max = maxMillis
+        seekBar.progress = mediaPlayerModel.getCurrentTime()
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
+            override fun onStartTrackingTouch(seekBar: SeekBar) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar) {
+                mediaModel.seekTo(requireActivity().applicationContext, seekBar.progress)
+            }
+        })
     }
-
-    private fun formatMillis(millis: Int): String {
-        return String.format(LocaleListCompat.getDefault()[0],
-                "%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(millis.toLong()),
-                TimeUnit.MILLISECONDS.toMinutes(millis.toLong()) -
-                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis.toLong())),
-                TimeUnit.MILLISECONDS.toSeconds(millis.toLong()) -
-                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis.toLong())))
-    }
-
-    private fun updateSongPlayButton(isPlaying: Boolean) {
-        val imageButtonPlayPause: ImageButton = binding.imageButtonPlayPause
-        if (isPlaying) {
-            imageButtonPlayPause.setImageDrawable(ResourcesCompat.getDrawable(
-                    resources, R.drawable.pause_black_24dp, null))
-        } else {
-            imageButtonPlayPause.setImageDrawable(ResourcesCompat.getDrawable(
-                    resources, R.drawable.play_arrow_black_24dp, null))
-        }
-    }
-
 
     private fun setUpSeekBarUpdater() {
         val seekBar: SeekBar = binding.seekBar
         val textViewCurrent: TextView = binding.editTextCurrentTime
         shutDownSeekBarUpdater()
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
-        val mediaPlayerWUri: MediaPlayerWUri? = mediaPlayerModel.getCurrentMediaPlayerWUri()
-        if (mediaPlayerWUri != null) {
+        mediaPlayerModel.getCurrentMediaPlayerWUri()?.let {
             val runnableSeekBarUpdater = Runnable {
                 seekBar.post {
-                    if (mediaPlayerWUri.isPrepared()) {
-                        val currentMilliseconds: Int = mediaPlayerWUri.getCurrentPosition()
+                    if (it.isPrepared()) {
+                        val currentMilliseconds: Int = it.getCurrentPosition()
                         if (seekBar.progress != currentMilliseconds) {
                             seekBar.progress = currentMilliseconds
                             val currentTime = formatMillis(currentMilliseconds)
@@ -230,10 +120,10 @@ class FragmentSong : Fragment() {
                 }
             }
             scheduledExecutorService.scheduleAtFixedRate(
-                    runnableSeekBarUpdater,
-                    0L,
-                    1L,
-                    TimeUnit.SECONDS
+                runnableSeekBarUpdater,
+                0L,
+                1L,
+                TimeUnit.SECONDS
             )
         }
     }
@@ -245,10 +135,79 @@ class FragmentSong : Fragment() {
         }
     }
 
+    private fun updateSongArt() {
+        val imageViewSongArt: ImageView = binding.imageViewSongArt
+        imageViewSongArt.post(runnableSongArtUpdater)
+    }
+
+    private val runnableSongArtUpdater = Runnable {
+        val imageViewSongArt: ImageView = binding.imageViewSongArt
+        var songArtHeight = imageViewSongArt.height
+        var songArtWidth = imageViewSongArt.width
+        if (songArtWidth > songArtHeight) {
+            songArtWidth = songArtHeight
+        } else {
+            songArtHeight = songArtWidth
+        }
+        if (songArtHeight > 0 && songArtWidth > 0) {
+            currentAudioUri?.let { it ->
+                val bitmap: Bitmap? = BitmapUtil.getThumbnailBitmap(
+                    it,
+                    songArtWidth,
+                    requireActivity().applicationContext
+                )
+                if (bitmap == null) {
+                    val drawable: Drawable? = ResourcesCompat.getDrawable(
+                        imageViewSongArt.resources,
+                        R.drawable.music_note_black_48dp,
+                        null
+                    )
+                    // TODO Make sure this works
+                    drawable?.let { d ->
+                        imageViewSongArt.setImageBitmap(d.toBitmap(songArtWidth, songArtWidth))
+                    }
+                    /*
+                    if (drawable != null) {
+                        drawable.setBounds(0, 0, songArtWidth, songArtHeight)
+                        val bitmapDrawable: Bitmap = Bitmap.createBitmap(
+                                songArtWidth,
+                                songArtHeight,
+                                Bitmap.Config.ARGB_8888
+                        )
+                        val canvas = Canvas(bitmapDrawable)
+                        val paint = Paint()
+                        paint.color = ContextCompat.getColor(requireContext(), R.color.colorPrimary)
+                        canvas.drawRect(0f, 0f, songArtWidth.toFloat(), songArtHeight.toFloat(), paint)
+                        drawable.draw(canvas)
+                        imageViewSongArt.setImageBitmap(bitmapDrawable)
+                    }
+                     */
+                } else {
+                    imageViewSongArt.setImageBitmap(bitmap)
+                }
+            }
+        }
+    }
+
+    private fun updateSongPlayButton(isPlaying: Boolean) {
+        val imageButtonPlayPause: ImageButton = binding.imageButtonPlayPause
+        if (isPlaying) {
+            imageButtonPlayPause.setImageDrawable(
+                ResourcesCompat.getDrawable(
+                    resources, R.drawable.pause_black_24dp, null
+                )
+            )
+        } else {
+            imageButtonPlayPause.setImageDrawable(
+                ResourcesCompat.getDrawable(
+                    resources, R.drawable.play_arrow_black_24dp, null
+                )
+            )
+        }
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     private fun setUpButtons() {
-        val activityMain: ActivityMain = requireActivity() as ActivityMain
-        val view = requireView()
         val buttonBad: ImageButton = binding.buttonThumbDown
         val buttonGood: ImageButton = binding.buttonThumbUp
         val buttonShuffle: ImageButton = binding.imageButtonShuffle
@@ -260,58 +219,46 @@ class FragmentSong : Fragment() {
             synchronized(ActivityMain.MUSIC_CONTROL_LOCK) {
                 when (clickedView.id) {
                     R.id.button_thumb_down -> {
-                        val song: Song? = currentAudioUri?.id?.let {
-                            viewModelPlaylists.getSong(it)
-                        }
-                        if (song != null) {
-                            mediaModel.getCurrentPlaylist()?.globalBad(song)
-                            SaveFile.saveFile(requireActivity().applicationContext)
-                        }
+                        viewModelFragmentSong.thumbDownClicked(currentAudioUri)
                     }
                     R.id.button_thumb_up -> {
-                        val song: Song? = currentAudioUri?.id?.let {
-                            viewModelPlaylists.getSong(it)
-                        }
-                        if (song != null) {
-                            mediaModel.getCurrentPlaylist()?.globalGood(song)
-                            SaveFile.saveFile(requireActivity().applicationContext)
-                        }
+                        viewModelFragmentSong.thumbUpClicked(currentAudioUri)
                     }
                     R.id.imageButtonShuffle -> {
+                        viewModelFragmentSong.shuffleClicked()
                         val imageButton: ImageButton = clickedView as ImageButton
                         if (mediaModel.isShuffling()) {
-                            mediaModel.setShuffling(false)
                             imageButton.setImageResource(R.drawable.ic_shuffle_white_24dp)
                         } else {
-                            mediaModel.setShuffling(true)
                             imageButton.setImageResource(R.drawable.ic_shuffle_black_24dp)
                         }
                     }
                     R.id.imageButtonPrev -> {
-                        mediaModel.playPrevious(requireActivity().applicationContext)
+                        viewModelFragmentSong.prevClicked()
                     }
                     R.id.imageButtonPlayPause -> {
-                        mediaModel.pauseOrPlay(requireActivity().applicationContext)
+                        viewModelFragmentSong.playPauseClicked()
                     }
                     R.id.imageButtonNext -> {
-                        mediaModel.playNext(requireActivity().applicationContext)
+                        viewModelFragmentSong.nextClicked()
                     }
                     R.id.imageButtonRepeat -> {
+                        viewModelFragmentSong.repeatClicked()
                         val imageButton: ImageButton = clickedView as ImageButton
-                        if (mediaModel.isLoopingOne()) {
-                            mediaModel.setLoopingOne(false)
-                            imageButton.setImageResource(R.drawable.repeat_white_24dp)
-                        } else if (mediaModel.isLooping()) {
-                            mediaModel.setLooping(false)
-                            mediaModel.setLoopingOne(true)
-                            imageButton.setImageResource(R.drawable.repeat_one_black_24dp)
-                        } else {
-                            mediaModel.setLooping(true)
-                            mediaModel.setLoopingOne(false)
-                            imageButton.setImageResource(R.drawable.repeat_black_24dp)
+                        when {
+                            mediaModel.isLoopingOne() -> {
+                                imageButton.setImageResource(R.drawable.repeat_white_24dp)
+                            }
+                            mediaModel.isLooping() -> {
+                                imageButton.setImageResource(R.drawable.repeat_one_black_24dp)
+                            }
+                            else -> {
+                                imageButton.setImageResource(R.drawable.repeat_black_24dp)
+                            }
                         }
                     }
                     else -> {
+                        ToastUtil.showToast(requireActivity().applicationContext, R.string.RR)
                     }
                 }
             }
@@ -326,27 +273,41 @@ class FragmentSong : Fragment() {
         buttonNext.isLongClickable = true
         buttonNext.setOnLongClickListener {
             // TODO change color of button
-            currentAudioUri?.id?.let { id ->
-                viewModelPlaylists.getSong(id)?.let {
-                    mediaModel.getCurrentPlaylist()?.globalBad(it)
-                }
-            }
+            // Change color, start a runnable to change it back
+            viewModelFragmentSong.nextLongClicked(currentAudioUri)
+            it.setBackgroundColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.colorPrimaryVariant
+                )
+            )
             true
         }
-        val onTouchListenerFragmentSongButtons = View.OnTouchListener { view1: View, motionEvent: MotionEvent ->
-            when (motionEvent.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    view1.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.colorOnSecondary))
-                    return@OnTouchListener false
+        val onTouchListenerFragmentSongButtons =
+            View.OnTouchListener { view1: View, motionEvent: MotionEvent ->
+                when (motionEvent.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        view1.setBackgroundColor(
+                            ContextCompat.getColor(
+                                requireContext(),
+                                R.color.colorOnSecondary
+                            )
+                        )
+                        return@OnTouchListener false
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        view1.setBackgroundColor(
+                            ContextCompat.getColor(
+                                requireContext(),
+                                R.color.colorPrimary
+                            )
+                        )
+                        view1.performClick()
+                        return@OnTouchListener true
+                    }
                 }
-                MotionEvent.ACTION_UP -> {
-                    view1.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary))
-                    view1.performClick()
-                    return@OnTouchListener true
-                }
+                false
             }
-            false
-        }
         buttonBad.setOnTouchListener(onTouchListenerFragmentSongButtons)
         buttonGood.setOnTouchListener(onTouchListenerFragmentSongButtons)
         buttonShuffle.setOnTouchListener(onTouchListenerFragmentSongButtons)
@@ -359,29 +320,51 @@ class FragmentSong : Fragment() {
         } else {
             buttonShuffle.setImageResource(R.drawable.ic_shuffle_white_24dp)
         }
-        if (mediaModel.isLoopingOne()) {
-            buttonLoop.setImageResource(R.drawable.repeat_one_black_24dp)
-        } else if (mediaModel.isLooping()) {
-            buttonLoop.setImageResource(R.drawable.repeat_black_24dp)
-        } else {
-            buttonLoop.setImageResource(R.drawable.repeat_white_24dp)
+        when {
+            mediaModel.isLoopingOne() -> {
+                buttonLoop.setImageResource(R.drawable.repeat_one_black_24dp)
+            }
+            mediaModel.isLooping() -> {
+                buttonLoop.setImageResource(R.drawable.repeat_black_24dp)
+            }
+            else -> {
+                buttonLoop.setImageResource(R.drawable.repeat_white_24dp)
+            }
         }
-        view.addOnLayoutChangeListener(onLayoutChangeListenerFragmentSong)
+        requireView().addOnLayoutChangeListener(onLayoutChangeListenerFragmentSong)
     }
+
+    private val onLayoutChangeListenerFragmentSong =
+        View.OnLayoutChangeListener { _: View?, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int ->
+            viewModelActivityMain.fragmentSongVisible.observe(viewLifecycleOwner) {
+                if (it == true) {
+                    setUpButton(binding.buttonThumbUp, R.drawable.thumb_up_alt_black_24dp)
+                    setUpButton(binding.buttonThumbDown, R.drawable.thumb_down_alt_black_24dp)
+                    setUpButton(binding.imageButtonPrev, R.drawable.skip_previous_black_24dp)
+                    setUpButton(binding.imageButtonNext, R.drawable.skip_next_black_24dp)
+                    // TODO make these happen in response to LiveData
+                    setUpShuffle()
+                    setUpLoop()
+                }
+            }
+        }
 
     private fun setUpButton(imageView: ImageView, drawableID: Int) {
         val width = imageView.measuredWidth
-        val drawable: Drawable? = ResourcesCompat.getDrawable(
-                imageView.resources,
-                drawableID,
-                null
-        )
-        if (drawable != null) {
-            drawable.setBounds(0, 0, width, width)
+        ResourcesCompat.getDrawable(
+            imageView.resources,
+            drawableID,
+            null
+        )?.let {
+            // TODO Make sure this works
+            imageView.setImageBitmap(it.toBitmap(width, width))
+            /*
+            it.setBounds(0, 0, width, width)
             val bitmap: Bitmap = Bitmap.createBitmap(width, width, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(bitmap)
-            drawable.draw(canvas)
+            it.draw(canvas)
             imageView.setImageBitmap(bitmap)
+             */
         }
     }
 
@@ -394,55 +377,19 @@ class FragmentSong : Fragment() {
         }
     }
 
-    private fun setUpPlay(isPlaying: Boolean) {
-        val imageView: ImageView = binding.imageButtonPlayPause
-        if (isPlaying) {
-            setUpButton(imageView, R.drawable.pause_black_24dp)
-        } else {
-            setUpButton(imageView, R.drawable.play_arrow_black_24dp)
-        }
-    }
-
     private fun setUpLoop() {
         val imageView: ImageView = binding.imageButtonRepeat
-        if (mediaModel.isLoopingOne()) {
-            setUpButton(imageView, R.drawable.repeat_one_black_24dp)
-        } else if (mediaModel.isLooping()) {
-            setUpButton(imageView, R.drawable.repeat_black_24dp)
-        } else {
-            setUpButton(imageView, R.drawable.repeat_white_24dp)
+        when {
+            mediaModel.isLoopingOne() -> {
+                setUpButton(imageView, R.drawable.repeat_one_black_24dp)
+            }
+            mediaModel.isLooping() -> {
+                setUpButton(imageView, R.drawable.repeat_black_24dp)
+            }
+            else -> {
+                setUpButton(imageView, R.drawable.repeat_white_24dp)
+            }
         }
-    }
-
-    private fun setUpBroadcastReceiver() {
-        val activityMain: ActivityMain = requireActivity() as ActivityMain
-        val filterComplete = IntentFilter()
-        filterComplete.addCategory(Intent.CATEGORY_DEFAULT)
-        filterComplete.addAction(requireActivity().resources.getString(
-                R.string.broadcast_receiver_action_service_connected))
-        filterComplete.addAction(requireActivity().resources.getString(
-                R.string.broadcast_receiver_action_on_create_options_menu))
-        activityMain.registerReceiver(broadcastReceiver, filterComplete)
-    }
-
-    private fun setUpToolbar() {
-        val activityMain: ActivityMain = requireActivity() as ActivityMain
-        val toolbar: Toolbar = activityMain.findViewById(R.id.toolbar)
-        val menu = toolbar.menu
-        if (menu != null) {
-            menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).isVisible = true
-            menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).isVisible = true
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        setUpToolbar()
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 
     override fun onStart() {
@@ -450,17 +397,68 @@ class FragmentSong : Fragment() {
         setUpBroadcastReceiver()
     }
 
+    private fun setUpBroadcastReceiver() {
+        val filterComplete = IntentFilter()
+        filterComplete.addCategory(Intent.CATEGORY_DEFAULT)
+        filterComplete.addAction(
+            requireActivity().resources.getString(
+                R.string.broadcast_receiver_action_service_connected
+            )
+        )
+        filterComplete.addAction(
+            requireActivity().resources.getString(
+                R.string.broadcast_receiver_action_on_create_options_menu
+            )
+        )
+        requireActivity().registerReceiver(broadcastReceiver, filterComplete)
+    }
+
+    private val broadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val action: String? = intent.action
+            if (action != null) {
+                if (action == resources.getString(
+                        R.string.broadcast_receiver_action_service_connected
+                    )
+                ) {
+                    // TODO make sure this isn't needed
+                    // setUpButtons()
+                }
+            }
+        }
+    }
+
+    private fun setUpToolbar() {
+        requireActivity().findViewById<Toolbar>(R.id.toolbar).menu?.let {
+            it.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).isVisible = true
+            it.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).isVisible = true
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // TODO delete?
+        setUpToolbar()
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu) {
+        setUpToolbar()
+    }
+
     override fun onStop() {
         super.onStop()
         requireActivity().unregisterReceiver(broadcastReceiver)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     override fun onDestroy() {
         super.onDestroy()
         view?.removeOnLayoutChangeListener(onLayoutChangeListenerFragmentSong)
         shutDownSeekBarUpdater()
-        mediaPlayerModel.isPlaying.removeObservers(this)
-        mediaPlayerModel.currentAudioUri.removeObservers(this)
     }
 
 }
