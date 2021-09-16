@@ -334,7 +334,7 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
 
     fun filterAllSongs(newText: String): List<Song> {
         val sifted: MutableList<Song> = ArrayList<Song>()
-        for (song in getAllSongs()?: listOf<Song>()) {
+        for (song in getAllSongs()?: listOf()) {
             if (song.title.lowercase(Locale.ROOT)
                     .contains(newText.lowercase(Locale.ROOT))
             ) {
@@ -363,10 +363,18 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
             }
             mediaModel.playNext(context)
         }
-        NavUtil.navigate(
-            navController,
-            FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong()
-        )
+        // TODO make sure this works
+        if(navController.currentDestination?.id != R.id.fragmentPlaylist) {
+            NavUtil.navigate(
+                navController,
+                FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong()
+            )
+        } else if(navController.currentDestination?.id != R.id.fragmentSongs) {
+            NavUtil.navigate(
+                navController,
+                FragmentSongsDirections.actionFragmentSongsToFragmentSong()
+            )
+        }
     }
 
 
@@ -425,6 +433,10 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
             song.setSelected(true)
         }
         NavUtil.navigate(navController, FragmentEditPlaylistDirections.actionFragmentEditPlaylistToFragmentSelectSongs())
+    }
+
+    fun fragmentSongsViewCreated() {
+        setUserPickedPlaylist(getMasterPlaylist())
     }
 
 }

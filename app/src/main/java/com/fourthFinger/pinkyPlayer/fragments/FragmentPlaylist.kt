@@ -108,6 +108,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
             }
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                // TODO there might be a bug where the last song shows up once for every time a song is swiped.
                 val position = viewHolder.absoluteAdapterPosition
                 viewModelPlaylists.notifySongRemoved(requireActivity().applicationContext, position)
                 // TODO needed?
@@ -245,12 +246,13 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
     override fun onMenuItemClickAddToQueue(song: Song): Boolean {
         // TODO fix how music continues after queue is depleted
         // turn shuffle and looping off
+        // TODO showSongPane?
         viewModelPlaylists.addToQueueClicked(requireActivity().applicationContext, song)
         return true
     }
 
     override fun onClickViewHolder(song: Song) {
-        // TODO make sure user picked playlist amd queue is updated
+        // TODO make sure user picked playlist and queue is updated
         // Should queue be cleared?
         viewModelPlaylists.songClicked(
             requireActivity().applicationContext,

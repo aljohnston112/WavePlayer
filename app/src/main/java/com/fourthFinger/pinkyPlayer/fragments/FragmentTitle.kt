@@ -117,7 +117,10 @@ class FragmentTitle : Fragment() {
                                     )
                                 }
                                 if (randomPlaylist != null) {
-                                    viewModelPlaylists.addNewPlaylist(randomPlaylist)
+                                    viewModelPlaylists.addNewPlaylist(
+                                        requireActivity().applicationContext,
+                                        randomPlaylist
+                                    )
                                 }
                             } else {
                                 addNewSongs(randomPlaylist)
