@@ -213,7 +213,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
         super.onPrepareOptionsMenu(menu)
         menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).isVisible = true
         menu.getItem(ActivityMain.MENU_ACTION_LOWER_PROBS_INDEX).isVisible = true
-        menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).isVisible = true
+        menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE_INDEX).isVisible = true
         menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).isVisible = true
         menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).isVisible = true
         val itemSearch = menu.findItem(R.id.action_search)

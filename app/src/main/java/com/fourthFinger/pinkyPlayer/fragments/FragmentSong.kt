@@ -426,7 +426,7 @@ class FragmentSong : Fragment() {
     private fun setUpToolbar() {
         requireActivity().findViewById<Toolbar>(R.id.toolbar).menu?.let {
             it.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).isVisible = true
-            it.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE).isVisible = true
+            it.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE_INDEX).isVisible = true
         }
     }
 

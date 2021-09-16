@@ -47,15 +47,14 @@
                 android:layout_gravity="bottom|end"
                 android:layout_margin="@dimen/fab_margin"
                 android:backgroundTint="@color/colorPrimary"
+                android:onClick="@{viewModelActivityMain.fabOnClickListener}"
+                android:text="@{viewModelActivityMain.fabText"
                 android:textColor="@color/colorOnPrimary"
                 android:textSize="16sp"
                 app:iconTint="@color/colorOnPrimary"
                 app:layout_constraintBottom_toTopOf="@+id/fragmentSongPane"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:rippleColor="@color/colorPrimaryVariant"
-                android:text="@{viewModelActivityMain.fabText"
-                android:onClick="@{viewModelActivityMain.fabOnClickListener}"
-                />
+                app:rippleColor="@color/colorPrimaryVariant" />
 
 
         </androidx.constraintlayout.widget.ConstraintLayout>
@@ -64,17 +63,27 @@
             android:id="@+id/app_bar_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:theme="@style/ThemeOverlay.MaterialComponents.ActionBar"
-            >
+            android:theme="@style/ThemeOverlay.MaterialComponents.ActionBar">
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:background="@color/colorPrimary"
-                app:titleTextColor="@color/colorOnPrimary"
                 android:theme="@style/ThemeOverlay.MaterialComponents.ActionBar"
-                app:popupTheme="@style/ThemeOverlay.MaterialComponents.Light" />
+                app:popupTheme="@style/ThemeOverlay.MaterialComponents.Light"
+                app:titleTextColor="@color/colorOnPrimary">
+
+                <TextView
+                    android:id="@+id/toolbar_title"
+                    style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/colorOnPrimary"
+                    android:textAlignment="center"
+                    android:textSize="28sp" />
+
+            </androidx.appcompat.widget.Toolbar>
 
         </com.google.android.material.appbar.AppBarLayout>
 

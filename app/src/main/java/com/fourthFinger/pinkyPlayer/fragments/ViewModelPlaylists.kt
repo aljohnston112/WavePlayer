@@ -29,6 +29,9 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
     fun setPlaylistToAddToQueue(playlistToAddToQueue: RandomPlaylist?) {
         _playlistToAddToQueue.value = playlistToAddToQueue
     }
+    fun getPlaylistToAddToQueue(): RandomPlaylist? {
+        return playlistToAddToQueue.value?.let { playlistsRepo.getPlaylist(it.getName()) }
+    }
 
     private val _songToAddToQueue = MutableLiveData<Long?>()
     val songToAddToQueue = _songToAddToQueue as LiveData<Long?>
