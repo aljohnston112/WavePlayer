@@ -6,11 +6,11 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModel
 import com.fourthFinger.pinkyPlayer.NavUtil
 import com.fourthFinger.pinkyPlayer.R
-import com.fourthFinger.pinkyPlayer.media_controller.MediaModel
+import com.fourthFinger.pinkyPlayer.media_controller.MediaSession
 
 class ViewModelFragmentPaneSong: ViewModel() {
     fun clicked(context: Context, fragment: Fragment, @IdRes id: Int) {
-        val mediaModel = MediaModel.getInstance(context)
+        val mediaModel = MediaSession.getInstance(context)
         if (id == R.id.imageButtonSongPaneNext) {
             mediaModel.playNext(context)
         } else if (id == R.id.imageButtonSongPanePlayPause) {

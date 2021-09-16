@@ -114,7 +114,7 @@ class MediaPlayerWUri constructor(
         val s: Array<String> = audioUri.displayName.split("\\.").toTypedArray()
         if (s.isNotEmpty()) {
             if ((s[s.size - 1].toLowerCase(Locale.ROOT) == "mkv")) {
-                val mediaModel: MediaModel = MediaModel.getInstance(context)
+                val mediaSession: MediaSession = MediaSession.getInstance(context)
                 val queue = SongQueue.getInstance()
                 mediaPlayer.reset()
                 mediaPlayer.release()
@@ -124,16 +124,16 @@ class MediaPlayerWUri constructor(
                 mediaPlayer.setOnPreparedListener(mOnPreparedListener)
                 onErrorListener = MediaPlayer.OnErrorListener { _: MediaPlayer, _: Int, _: Int ->
                     synchronized(lock) {
-                        mediaModel.releaseMediaPlayers()
+                        mediaSession.releaseMediaPlayers()
                         queue.addToQueue(audioUri.id)
-                        if (!mediaModel.isSongInProgress()) {
-                            mediaModel.playNext(context)
+                        if (!mediaSession.isSongInProgress()) {
+                            mediaSession.playNext(context)
                         }
                         return@OnErrorListener false
                     }
                 }
                 mediaPlayer.setOnErrorListener(onErrorListener)
-                mediaPlayer.setOnCompletionListener(mediaModel.getOnCompletionListener())
+                mediaPlayer.setOnCompletionListener(mediaSession.getOnCompletionListener())
                 return true
             }
         }
@@ -160,12 +160,12 @@ class MediaPlayerWUri constructor(
         mediaPlayer.setOnPreparedListener(mOnPreparedListener)
         onErrorListener = MediaPlayer.OnErrorListener { _: MediaPlayer?, _: Int, _: Int ->
             synchronized(lock) {
-                val mediaModel: MediaModel = MediaModel.getInstance(context)
+                val mediaSession: MediaSession = MediaSession.getInstance(context)
                 val queue = SongQueue.getInstance()
-                mediaModel.releaseMediaPlayers()
+                mediaSession.releaseMediaPlayers()
                 queue.addToQueue(id)
-                if (!mediaModel.isSongInProgress()) {
-                    mediaModel.playNext(context)
+                if (!mediaSession.isSongInProgress()) {
+                    mediaSession.playNext(context)
                 }
                 return@OnErrorListener false
             }

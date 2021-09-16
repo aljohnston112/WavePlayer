@@ -11,8 +11,8 @@ import com.fourthFinger.pinkyPlayer.NavUtil
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.ToastUtil
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
-import com.fourthFinger.pinkyPlayer.media_controller.MediaModel
-import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerModel
+import com.fourthFinger.pinkyPlayer.media_controller.MediaSession
+import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerSession
 import com.fourthFinger.pinkyPlayer.media_controller.SaveFile
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
@@ -345,23 +345,23 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
     }
 
     fun songClicked(context: Context, navController: NavController, song: Song) {
-        val mediaPlayerModel = MediaPlayerModel.getInstance()
-        val mediaModel: MediaModel = MediaModel.getInstance(context)
+        val mediaPlayerModel = MediaPlayerSession.getInstance()
+        val mediaSession: MediaSession = MediaSession.getInstance(context)
         val songQueue = SongQueue.getInstance()
         synchronized(ActivityMain.MUSIC_CONTROL_LOCK) {
             if (song == mediaPlayerModel.currentAudioUri.value?.id?.let {
                     getSong(it)
                 }
             ) {
-                mediaModel.seekTo(context, 0)
+                mediaSession.seekTo(context, 0)
             }
-            getUserPickedPlaylist()?.let { mediaModel.setCurrentPlaylist(it) }
+            getUserPickedPlaylist()?.let { mediaSession.setCurrentPlaylist(it) }
             songQueue.newSessionStarted(song)
             val audioUri = AudioUri.getAudioUri(context, song.id)
             if (audioUri != null) {
                 mediaPlayerModel.setCurrentAudioUri(audioUri)
             }
-            mediaModel.playNext(context)
+            mediaSession.playNext(context)
         }
         // TODO make sure this works
         if (navController.currentDestination?.id != R.id.fragmentPlaylist) {
@@ -404,11 +404,11 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
     }
 
     fun addToQueueClicked(context: Context, song: Song) {
-        val mediaModel: MediaModel = MediaModel.getInstance(context)
+        val mediaSession: MediaSession = MediaSession.getInstance(context)
         val songQueue = SongQueue.getInstance()
         songQueue.addToQueue(song.id)
-        if (!mediaModel.isSongInProgress()) {
-            mediaModel.playNext(context)
+        if (!mediaSession.isSongInProgress()) {
+            mediaSession.playNext(context)
         }
     }
 
@@ -416,15 +416,15 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
     fun addToQueueClicked(context: Context, randomPlaylist: RandomPlaylist) {
         // TODO stop MasterPlaylist from continuing after queue is done
         // shuffle is off and looping is on or something like that?
-        val mediaModel: MediaModel = MediaModel.getInstance(context)
-        mediaModel.setCurrentPlaylistToMaster(context)
+        val mediaSession: MediaSession = MediaSession.getInstance(context)
+        mediaSession.setCurrentPlaylistToMaster(context)
         val songQueue = SongQueue.getInstance()
         val songs = randomPlaylist.getSongs()
         for (song in songs) {
             songQueue.addToQueue(song.id)
         }
-        if (!mediaModel.isSongInProgress()) {
-            mediaModel.playNext(context)
+        if (!mediaSession.isSongInProgress()) {
+            mediaSession.playNext(context)
         }
     }
 

@@ -1,12 +1,13 @@
 package com.fourthFinger.pinkyPlayer.media_controller
 
+import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 import java.util.*
 
-class MediaPlayerModel private constructor() {
+class MediaPlayerSession private constructor() {
 
     private var _currentAudioUri = MutableLiveData<AudioUri>()
     val currentAudioUri = _currentAudioUri as LiveData<AudioUri>
@@ -59,13 +60,21 @@ class MediaPlayerModel private constructor() {
         _isPlaying.value = false
     }
 
+    fun taskRemoved(context: Context) {
+        if (isPlaying.value == true) {
+            val mediaSession = MediaSession.getInstance(context)
+            mediaSession.pauseOrPlay(context)
+        }
+        releaseMediaPlayers()
+    }
+
     companion object{
 
-        private var INSTANCE: MediaPlayerModel? = null
+        private var INSTANCE: MediaPlayerSession? = null
 
-        fun getInstance(): MediaPlayerModel {
+        fun getInstance(): MediaPlayerSession {
             if(INSTANCE == null){
-                INSTANCE = MediaPlayerModel()
+                INSTANCE = MediaPlayerSession()
             }
             return INSTANCE!!
         }

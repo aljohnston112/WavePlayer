@@ -24,8 +24,8 @@ import com.fourthFinger.pinkyPlayer.NavUtil.Companion.navigateTo
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.databinding.ActivityMainBinding
 import com.fourthFinger.pinkyPlayer.fragments.ViewModelPlaylists
-import com.fourthFinger.pinkyPlayer.media_controller.MediaModel
-import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerModel
+import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerSession
+import com.fourthFinger.pinkyPlayer.media_controller.MediaSession
 import com.fourthFinger.pinkyPlayer.media_controller.ServiceMain
 import com.fourthFinger.pinkyPlayer.random_playlist.SongQueue
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
@@ -39,8 +39,9 @@ class ActivityMain : AppCompatActivity() {
     private val viewModelActivityMain by viewModels<ViewModelActivityMain>()
     private val viewModelPlaylists by viewModels<ViewModelPlaylists>()
 
-    private val mediaPlayerModel = MediaPlayerModel.getInstance()
-    private val mediaModel: MediaModel = MediaModel.getInstance(applicationContext)
+    private val mediaPlayerSession = MediaPlayerSession.getInstance()
+    private val mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
+    private var loaded = false
 
     private val songQueue = SongQueue.getInstance()
 
@@ -69,7 +70,7 @@ class ActivityMain : AppCompatActivity() {
     private val onDestinationChangedListenerSongPane =
         { _: NavController, destination: NavDestination, _: Bundle? ->
             if (destination.id != R.id.fragmentSong) {
-                if (mediaModel.isSongInProgress()) {
+                if (mediaSession.isSongInProgress()) {
                     fragmentSongVisible(false)
                     showSongPane()
                 }
@@ -216,9 +217,9 @@ class ActivityMain : AppCompatActivity() {
         val fragment: Fragment? = supportFragmentManager.findFragmentById(
             binding.navHostFragment.id
         )
-        if (serviceMain.loaded()) {
+        if (loaded) {
             if (fragment != null) {
-                if (mediaPlayerModel.isPlaying.value == true) {
+                if (mediaPlayerSession.isPlaying.value == true) {
                     hideSongPane()
                     navigateTo(fragment, R.id.fragmentSong)
                 } else {
@@ -247,7 +248,7 @@ class ActivityMain : AppCompatActivity() {
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
                 (resources.getString(R.string.broadcast_receiver_action_loaded)) -> {
-                    loaded(true)
+                    loaded = true
                     val fragment: Fragment? = supportFragmentManager.findFragmentById(
                         binding.navHostFragment.id
                     )
@@ -255,10 +256,6 @@ class ActivityMain : AppCompatActivity() {
                 }
             }
         }
-    }
-
-    fun loaded(loaded: Boolean) {
-        serviceMain.loaded(loaded)
     }
 
     fun serviceDisconnected() {
@@ -295,11 +292,11 @@ class ActivityMain : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_reset_probs -> {
-                mediaModel.clearProbabilities(applicationContext)
+                mediaSession.clearProbabilities(applicationContext)
                 return true
             }
             R.id.action_lower_probs -> {
-                mediaModel.lowerProbabilities(applicationContext)
+                mediaSession.lowerProbabilities(applicationContext)
                 return true
             }
             R.id.action_add_to_queue -> {
@@ -312,9 +309,9 @@ class ActivityMain : AppCompatActivity() {
                 }
                 // TODO Song will play even though user might not want it.
                 // Should be able to show the song pane with the first song.
-                if (!mediaModel.isSongInProgress()) {
-                    mediaModel.playNext(applicationContext)
-                    if (!fragmentSongVisible && mediaModel.isSongInProgress()) {
+                if (!mediaSession.isSongInProgress()) {
+                    mediaSession.playNext(applicationContext)
+                    if (!fragmentSongVisible && mediaSession.isSongInProgress()) {
                         showSongPane()
                     }
                 }
@@ -348,6 +345,8 @@ class ActivityMain : AppCompatActivity() {
         // TODO check for leaks
         // TODO warn user about resetting probabilities
         // TODO add a way to display folder file is in
+        // TODO make media controls work with bluetooth
+        // TODO actually handle Uri passed in via an external Intent
         // TODO add a way to exclude a folder.
         // TODO Paid version setting to discover songs not in the playlist while listening to the playlist
         // TODO allow user to create backup
@@ -356,6 +355,7 @@ class ActivityMain : AppCompatActivity() {
         // TODO User time boundaries on the algorithm
         // TODO Paid version with time boundaries
         // TODO Paid version with ability to make new playlist out of favorite songs
+        // TODO consider exo player
         val MUSIC_CONTROL_LOCK: Any = Any()
         const val MENU_ACTION_RESET_PROBS_INDEX = 0
         const val MENU_ACTION_LOWER_PROBS_INDEX = 1

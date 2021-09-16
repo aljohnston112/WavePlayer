@@ -42,9 +42,9 @@ class FragmentSong : Fragment() {
     private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>()
     private val viewModelFragmentSong by viewModels<ViewModelFragmentSong>()
 
-    private val mediaPlayerModel = MediaPlayerModel.getInstance()
-    private val mediaModel: MediaModel =
-        MediaModel.getInstance(requireActivity().applicationContext)
+    private val mediaPlayerModel = MediaPlayerSession.getInstance()
+    private val mediaSession: MediaSession =
+        MediaSession.getInstance(requireActivity().applicationContext)
 
     private var currentAudioUri: AudioUri? = null
 
@@ -96,7 +96,7 @@ class FragmentSong : Fragment() {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
             override fun onStartTrackingTouch(seekBar: SeekBar) {}
             override fun onStopTrackingTouch(seekBar: SeekBar) {
-                mediaModel.seekTo(requireActivity().applicationContext, seekBar.progress)
+                mediaSession.seekTo(requireActivity().applicationContext, seekBar.progress)
             }
         })
     }
@@ -227,7 +227,7 @@ class FragmentSong : Fragment() {
                     R.id.imageButtonShuffle -> {
                         viewModelFragmentSong.shuffleClicked()
                         val imageButton: ImageButton = clickedView as ImageButton
-                        if (mediaModel.isShuffling()) {
+                        if (mediaSession.isShuffling()) {
                             imageButton.setImageResource(R.drawable.ic_shuffle_white_24dp)
                         } else {
                             imageButton.setImageResource(R.drawable.ic_shuffle_black_24dp)
@@ -246,10 +246,10 @@ class FragmentSong : Fragment() {
                         viewModelFragmentSong.repeatClicked()
                         val imageButton: ImageButton = clickedView as ImageButton
                         when {
-                            mediaModel.isLoopingOne() -> {
+                            mediaSession.isLoopingOne() -> {
                                 imageButton.setImageResource(R.drawable.repeat_white_24dp)
                             }
-                            mediaModel.isLooping() -> {
+                            mediaSession.isLooping() -> {
                                 imageButton.setImageResource(R.drawable.repeat_one_black_24dp)
                             }
                             else -> {
@@ -315,16 +315,16 @@ class FragmentSong : Fragment() {
         buttonPause.setOnTouchListener(onTouchListenerFragmentSongButtons)
         buttonNext.setOnTouchListener(onTouchListenerFragmentSongButtons)
         buttonLoop.setOnTouchListener(onTouchListenerFragmentSongButtons)
-        if (mediaModel.isShuffling()) {
+        if (mediaSession.isShuffling()) {
             buttonShuffle.setImageResource(R.drawable.ic_shuffle_black_24dp)
         } else {
             buttonShuffle.setImageResource(R.drawable.ic_shuffle_white_24dp)
         }
         when {
-            mediaModel.isLoopingOne() -> {
+            mediaSession.isLoopingOne() -> {
                 buttonLoop.setImageResource(R.drawable.repeat_one_black_24dp)
             }
-            mediaModel.isLooping() -> {
+            mediaSession.isLooping() -> {
                 buttonLoop.setImageResource(R.drawable.repeat_black_24dp)
             }
             else -> {
@@ -370,7 +370,7 @@ class FragmentSong : Fragment() {
 
     private fun setUpShuffle() {
         val imageView: ImageView = binding.imageButtonShuffle
-        if (mediaModel.isShuffling()) {
+        if (mediaSession.isShuffling()) {
             setUpButton(imageView, R.drawable.ic_shuffle_black_24dp)
         } else {
             setUpButton(imageView, R.drawable.ic_shuffle_white_24dp)
@@ -380,10 +380,10 @@ class FragmentSong : Fragment() {
     private fun setUpLoop() {
         val imageView: ImageView = binding.imageButtonRepeat
         when {
-            mediaModel.isLoopingOne() -> {
+            mediaSession.isLoopingOne() -> {
                 setUpButton(imageView, R.drawable.repeat_one_black_24dp)
             }
-            mediaModel.isLooping() -> {
+            mediaSession.isLooping() -> {
                 setUpButton(imageView, R.drawable.repeat_black_24dp)
             }
             else -> {

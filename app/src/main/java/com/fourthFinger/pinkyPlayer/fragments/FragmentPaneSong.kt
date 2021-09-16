@@ -22,9 +22,9 @@ import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.FragmentPaneSongBinding
-import com.fourthFinger.pinkyPlayer.media_controller.MediaModel
-import com.fourthFinger.pinkyPlayer.media_controller.MediaModel.Companion.getInstance
-import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerModel
+import com.fourthFinger.pinkyPlayer.media_controller.MediaSession
+import com.fourthFinger.pinkyPlayer.media_controller.MediaSession.Companion.getInstance
+import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerSession
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 
 class FragmentPaneSong : Fragment() {
@@ -35,8 +35,8 @@ class FragmentPaneSong : Fragment() {
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
     private val viewModelFragmentPaneSong by viewModels<ViewModelFragmentPaneSong>()
 
-    private var mediaModel: MediaModel = getInstance(requireActivity().applicationContext)
-    private val mediaPlayerModel = MediaPlayerModel.getInstance()
+    private var mediaSession: MediaSession = getInstance(requireActivity().applicationContext)
+    private val mediaPlayerModel = MediaPlayerSession.getInstance()
 
     private var songArtWidth = 0
     private var visible = false
@@ -71,7 +71,7 @@ class FragmentPaneSong : Fragment() {
 
     fun updateSongUI(currentAudioUri: AudioUri?) {
         // TODO Get rid of mediaModel check via LiveData
-        if (currentAudioUri != null && visible && mediaModel.isSongInProgress()) {
+        if (currentAudioUri != null && visible && mediaSession.isSongInProgress()) {
             binding.textViewSongPaneSongName.text = currentAudioUri.title
             binding.imageViewSongPaneSongArt.post(runnableSongPaneArtUpdater)
         }

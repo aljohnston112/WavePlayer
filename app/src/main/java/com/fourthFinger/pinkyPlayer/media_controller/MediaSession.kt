@@ -18,9 +18,9 @@ import com.fourthFinger.pinkyPlayer.random_playlist.SongQueue
 import java.util.*
 import java.util.concurrent.Callable
 
-class MediaModel private constructor(context: Context) {
+class MediaSession private constructor(context: Context) {
 
-    private val mediaPlayerModel = MediaPlayerModel.getInstance()
+    private val mediaPlayerModel = MediaPlayerSession.getInstance()
 
     private val onCompletionListener: OnCompletionListener
     fun getOnCompletionListener(): OnCompletionListener {
@@ -412,12 +412,12 @@ class MediaModel private constructor(context: Context) {
 
     companion object {
         private val random: Random = Random()
-        private var INSTANCE: MediaModel? = null
+        private var INSTANCE: MediaSession? = null
 
         @Synchronized
-        fun getInstance(context: Context): MediaModel {
+        fun getInstance(context: Context): MediaSession {
             if (INSTANCE == null) {
-                INSTANCE = MediaModel(context)
+                INSTANCE = MediaSession(context)
             }
             return INSTANCE!!
         }

@@ -2,7 +2,7 @@ package com.fourthFinger.pinkyPlayer.fragments
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import com.fourthFinger.pinkyPlayer.media_controller.MediaModel
+import com.fourthFinger.pinkyPlayer.media_controller.MediaSession
 import com.fourthFinger.pinkyPlayer.media_controller.SaveFile
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 
@@ -10,14 +10,14 @@ class ViewModelFragmentSong(application: Application): AndroidViewModel(applicat
 
     private val playlistsRepo = PlaylistsRepo.getInstance(application)
 
-    private val mediaModel: MediaModel = MediaModel.getInstance(
+    private val mediaSession: MediaSession = MediaSession.getInstance(
         application.applicationContext
     )
 
     fun thumbDownClicked(currentAudioUri: AudioUri?) {
         currentAudioUri?.id?.let {
             playlistsRepo.getSong(it)?.let { song ->
-                mediaModel.getCurrentPlaylist()?.globalBad(song)
+                mediaSession.getCurrentPlaylist()?.globalBad(song)
                 SaveFile.saveFile(getApplication<Application>().applicationContext)
             }
         }
@@ -26,44 +26,44 @@ class ViewModelFragmentSong(application: Application): AndroidViewModel(applicat
     fun thumbUpClicked(currentAudioUri: AudioUri?) {
         currentAudioUri?.id?.let {
             playlistsRepo.getSong(it)?.let { song ->
-                mediaModel.getCurrentPlaylist()?.globalGood(song)
+                mediaSession.getCurrentPlaylist()?.globalGood(song)
                 SaveFile.saveFile(getApplication<Application>().applicationContext)
             }
         }
     }
 
     fun shuffleClicked() {
-        if (mediaModel.isShuffling()) {
-            mediaModel.setShuffling(false)
+        if (mediaSession.isShuffling()) {
+            mediaSession.setShuffling(false)
         } else {
-            mediaModel.setShuffling(true)
+            mediaSession.setShuffling(true)
         }
     }
 
     fun prevClicked() {
-        mediaModel.playPrevious(getApplication<Application>().applicationContext)
+        mediaSession.playPrevious(getApplication<Application>().applicationContext)
     }
 
     fun playPauseClicked() {
-        mediaModel.pauseOrPlay(getApplication<Application>().applicationContext)
+        mediaSession.pauseOrPlay(getApplication<Application>().applicationContext)
     }
 
     fun nextClicked() {
-        mediaModel.playNext(getApplication<Application>().applicationContext)
+        mediaSession.playNext(getApplication<Application>().applicationContext)
     }
 
     fun repeatClicked() {
         when {
-            mediaModel.isLoopingOne() -> {
-                mediaModel.setLoopingOne(false)
+            mediaSession.isLoopingOne() -> {
+                mediaSession.setLoopingOne(false)
             }
-            mediaModel.isLooping() -> {
-                mediaModel.setLooping(false)
-                mediaModel.setLoopingOne(true)
+            mediaSession.isLooping() -> {
+                mediaSession.setLooping(false)
+                mediaSession.setLoopingOne(true)
             }
             else -> {
-                mediaModel.setLooping(true)
-                mediaModel.setLoopingOne(false)
+                mediaSession.setLooping(true)
+                mediaSession.setLoopingOne(false)
             }
         }
     }
@@ -71,7 +71,7 @@ class ViewModelFragmentSong(application: Application): AndroidViewModel(applicat
     fun nextLongClicked(currentAudioUri: AudioUri?) {
         currentAudioUri?.id?.let { id ->
             playlistsRepo.getSong(id)?.let {
-                mediaModel.getCurrentPlaylist()?.globalBad(it)
+                mediaSession.getCurrentPlaylist()?.globalBad(it)
             }
         }
     }

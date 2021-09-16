@@ -16,7 +16,7 @@ import java.util.concurrent.ExecutorService
 
 class MediaData private constructor() {
 
-    private val mediaPlayerModel = MediaPlayerModel.getInstance()
+    private val mediaPlayerModel = MediaPlayerSession.getInstance()
 
     private val _loadingText: MutableLiveData<String> = MutableLiveData()
     val loadingText = _loadingText as LiveData<String>
