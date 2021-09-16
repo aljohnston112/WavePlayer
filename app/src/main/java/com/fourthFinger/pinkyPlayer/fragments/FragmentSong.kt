@@ -405,11 +405,6 @@ class FragmentSong : Fragment() {
                 R.string.broadcast_receiver_action_service_connected
             )
         )
-        filterComplete.addAction(
-            requireActivity().resources.getString(
-                R.string.broadcast_receiver_action_on_create_options_menu
-            )
-        )
         requireActivity().registerReceiver(broadcastReceiver, filterComplete)
     }
 
@@ -442,7 +437,8 @@ class FragmentSong : Fragment() {
     }
 
     override fun onPrepareOptionsMenu(menu: Menu) {
-        setUpToolbar()
+            super.onPrepareOptionsMenu(menu)
+            setUpToolbar()
     }
 
     override fun onStop() {
