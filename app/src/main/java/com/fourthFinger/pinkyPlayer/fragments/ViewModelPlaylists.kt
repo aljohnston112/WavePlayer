@@ -102,27 +102,24 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
         return playlistsRepo.getPlaylists()
     }
 
-    fun addNewPlaylist(context: Context, randomPlaylist: RandomPlaylist) {
-        playlistsRepo.addPlaylist(randomPlaylist)
-        SaveFile.saveFile(context)
+    private fun addNewPlaylist(context: Context, randomPlaylist: RandomPlaylist) {
+        playlistsRepo.addPlaylist(context, randomPlaylist)
     }
 
-    fun addNewPlaylist(context: Context, position: Int, randomPlaylist: RandomPlaylist) {
-        playlistsRepo.addPlaylist(position, randomPlaylist)
-        SaveFile.saveFile(context)
+    private fun addNewPlaylist(context: Context, position: Int, randomPlaylist: RandomPlaylist) {
+        playlistsRepo.addPlaylist(context, position, randomPlaylist)
     }
 
     private fun addNewPlaylistWithUserPickedSongs(context: Context, name: String) {
         playlistsRepo.addPlaylist(
+            context,
             RandomPlaylist(name, userPickedSongs, false)
         )
         clearUserPickedSongs()
-        SaveFile.saveFile(context)
     }
 
     private fun removePlaylist(context: Context, userPickedPlaylist: RandomPlaylist) {
-        playlistsRepo.removePlaylist(userPickedPlaylist)
-        SaveFile.saveFile(context)
+        playlistsRepo.removePlaylist(context, userPickedPlaylist)
     }
 
     fun getSong(songID: Long): Song? {
@@ -334,7 +331,7 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
 
     fun filterAllSongs(newText: String): List<Song> {
         val sifted: MutableList<Song> = ArrayList<Song>()
-        for (song in getAllSongs()?: listOf()) {
+        for (song in getAllSongs() ?: listOf()) {
             if (song.title.lowercase(Locale.ROOT)
                     .contains(newText.lowercase(Locale.ROOT))
             ) {
@@ -364,12 +361,12 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
             mediaModel.playNext(context)
         }
         // TODO make sure this works
-        if(navController.currentDestination?.id != R.id.fragmentPlaylist) {
+        if (navController.currentDestination?.id != R.id.fragmentPlaylist) {
             NavUtil.navigate(
                 navController,
                 FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong()
             )
-        } else if(navController.currentDestination?.id != R.id.fragmentSongs) {
+        } else if (navController.currentDestination?.id != R.id.fragmentSongs) {
             NavUtil.navigate(
                 navController,
                 FragmentSongsDirections.actionFragmentSongsToFragmentSong()
@@ -428,15 +425,26 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    fun editSongsClicked(navController: NavController){
+    fun editSongsClicked(navController: NavController) {
         for (song in getUserPickedSongs()) {
             song.setSelected(true)
         }
-        NavUtil.navigate(navController, FragmentEditPlaylistDirections.actionFragmentEditPlaylistToFragmentSelectSongs())
+        NavUtil.navigate(
+            navController,
+            FragmentEditPlaylistDirections.actionFragmentEditPlaylistToFragmentSelectSongs()
+        )
     }
 
     fun fragmentSongsViewCreated() {
         setUserPickedPlaylist(getMasterPlaylist())
+    }
+
+    fun playlistCreatedFromFolder(navController: NavController, playlist: RandomPlaylist?) {
+        setUserPickedPlaylist(playlist)
+        NavUtil.navigate(
+            navController,
+            FragmentTitleDirections.actionFragmentTitleToFragmentPlaylists()
+        )
     }
 
 }

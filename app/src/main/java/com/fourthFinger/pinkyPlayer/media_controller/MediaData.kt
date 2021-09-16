@@ -5,17 +5,13 @@ import android.content.Intent
 import android.provider.MediaStore
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.room.Room
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.fragments.PlaylistsRepo
-import com.fourthFinger.pinkyPlayer.random_playlist.*
+import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
+import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
+import com.fourthFinger.pinkyPlayer.random_playlist.Song
 import java.io.File
-import java.io.FileNotFoundException
-import java.io.IOException
-import java.io.ObjectOutputStream
 import java.util.*
-import java.util.concurrent.Callable
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.ExecutorService
 
 class MediaData private constructor() {
@@ -31,7 +27,7 @@ class MediaData private constructor() {
     fun loadData(context: Context) {
         // Loading the save file is needed to ensure the master playlist is valid
         // before getting songs from the MediaStore.
-        SaveFile.loadSaveFile(context, this)
+        SaveFile.loadSaveFile(context)
         getSongsFromMediaStore(context)
     }
 

@@ -18,11 +18,11 @@ object SaveFile {
 
     private val settingsRepo = SettingsRepo.getInstance()
 
-    fun loadSaveFile(context: Context, mediaData: MediaData) {
+    fun loadSaveFile(context: Context) {
         ServiceMain.executorServiceFIFO.submit {
-            if (attemptLoadFile(context, mediaData, FILE_SAVE) != SAVE_FILE_VERIFICATION_NUMBER) {
-                if (attemptLoadFile(context, mediaData, FILE_SAVE2) != SAVE_FILE_VERIFICATION_NUMBER) {
-                    if (attemptLoadFile(context, mediaData, FILE_SAVE3) != SAVE_FILE_VERIFICATION_NUMBER) {
+            if (attemptLoadFile(context, FILE_SAVE) != SAVE_FILE_VERIFICATION_NUMBER) {
+                if (attemptLoadFile(context, FILE_SAVE2) != SAVE_FILE_VERIFICATION_NUMBER) {
+                    if (attemptLoadFile(context, FILE_SAVE3) != SAVE_FILE_VERIFICATION_NUMBER) {
                         val songDatabase = Room.databaseBuilder(
                                 context, SongDatabase::class.java, MediaData.SONG_DATABASE_NAME).build()
                         songDatabase.songDAO().deleteAll()
@@ -32,7 +32,7 @@ object SaveFile {
         }
     }
 
-    private fun attemptLoadFile(context: Context, mediaData: MediaData, fileSave: String): Long {
+    private fun attemptLoadFile(context: Context, fileSave: String): Long {
         var longEOF = 0L
         val file = File(context.filesDir, fileSave)
         val playlistsRepo = PlaylistsRepo.getInstance(context)
@@ -44,7 +44,10 @@ object SaveFile {
                         playlistsRepo.setMasterPlaylist(objectInputStream.readObject() as RandomPlaylist)
                         val playlistSize = objectInputStream.readInt()
                         for (i in 0 until playlistSize) {
-                            playlistsRepo.addPlaylist(objectInputStream.readObject() as RandomPlaylist)
+                            // TODO this saves the file when it is not needed
+                            playlistsRepo.addPlaylistFromSaveFile(
+                                objectInputStream.readObject() as RandomPlaylist
+                            )
                         }
                         longEOF = objectInputStream.readLong()
                     }
@@ -63,7 +66,6 @@ object SaveFile {
     fun saveFile(context: Context) {
         ServiceMain.executorServicePool.submit {
             val playlistsRepo = PlaylistsRepo.getInstance(context)
-            val mediaData: MediaData = MediaData.getInstance()
             val file = File(context.filesDir, FILE_SAVE)
             val file2 = File(context.filesDir, FILE_SAVE2)
             val file3 = File(context.filesDir, FILE_SAVE3)

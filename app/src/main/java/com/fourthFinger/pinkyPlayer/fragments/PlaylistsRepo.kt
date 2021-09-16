@@ -3,8 +3,12 @@ package com.fourthFinger.pinkyPlayer.fragments
 import android.content.Context
 import androidx.room.Room
 import com.fourthFinger.pinkyPlayer.media_controller.MediaData
+import com.fourthFinger.pinkyPlayer.media_controller.SaveFile
 import com.fourthFinger.pinkyPlayer.media_controller.ServiceMain
-import com.fourthFinger.pinkyPlayer.random_playlist.*
+import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
+import com.fourthFinger.pinkyPlayer.random_playlist.Song
+import com.fourthFinger.pinkyPlayer.random_playlist.SongDAO
+import com.fourthFinger.pinkyPlayer.random_playlist.SongDatabase
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 
@@ -14,14 +18,17 @@ class PlaylistsRepo private constructor(context: Context) {
     fun getPlaylists(): List<RandomPlaylist> {
         return playlists
     }
-    fun addPlaylist(randomPlaylist: RandomPlaylist) {
+    fun addPlaylist(context: Context, randomPlaylist: RandomPlaylist) {
         playlists.add(randomPlaylist)
+        SaveFile.saveFile(context)
     }
-    fun addPlaylist(position: Int, randomPlaylist: RandomPlaylist) {
+    fun addPlaylist(context: Context, position: Int, randomPlaylist: RandomPlaylist) {
         playlists.add(position, randomPlaylist)
+        SaveFile.saveFile(context)
     }
-    fun removePlaylist(randomPlaylist: RandomPlaylist) {
+    fun removePlaylist(context: Context, randomPlaylist: RandomPlaylist) {
         playlists.remove(randomPlaylist)
+        SaveFile.saveFile(context)
     }
     fun getPlaylist(playlistName: String): RandomPlaylist? {
         var out: RandomPlaylist? = null
@@ -64,6 +71,10 @@ class PlaylistsRepo private constructor(context: Context) {
 
     fun removeSongFromDB(it: Song) {
         songDAO.delete(it)
+    }
+
+    fun addPlaylistFromSaveFile(randomPlaylist: RandomPlaylist) {
+        playlists.add(randomPlaylist)
     }
 
     init {
