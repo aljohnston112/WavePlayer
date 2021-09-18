@@ -15,7 +15,6 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
-import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
@@ -27,10 +26,11 @@ import com.fourthFinger.pinkyPlayer.fragments.ViewModelPlaylists
 import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerSession
 import com.fourthFinger.pinkyPlayer.media_controller.MediaSession
 import com.fourthFinger.pinkyPlayer.media_controller.ServiceMain
-import com.fourthFinger.pinkyPlayer.random_playlist.SongQueue
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 
 class ActivityMain : AppCompatActivity() {
+
+    // TODO Navigate by responding to LiveData of Actions and Destinations
 
     private lateinit var binding: ActivityMainBinding
 
@@ -42,8 +42,6 @@ class ActivityMain : AppCompatActivity() {
     private val mediaPlayerSession = MediaPlayerSession.getInstance()
     private val mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
     private var loaded = false
-
-    private val songQueue = SongQueue.getInstance()
 
     private var fragmentSongVisible = false
 
@@ -300,40 +298,14 @@ class ActivityMain : AppCompatActivity() {
                 return true
             }
             R.id.action_add_to_queue -> {
-                // TODO pretty sure song and playlist could be non-null at the same time
-                viewModelPlaylists.songToAddToQueue.value?.let { songQueue.addToQueue(it) }
-                viewModelPlaylists.playlistToAddToQueue.value?.getSongs()?.let {
-                    for (songs in it) {
-                        songQueue.addToQueue(songs.id)
-                    }
-                }
-                // TODO Song will play even though user might not want it.
-                // Should be able to show the song pane with the first song.
-                if (!mediaSession.isSongInProgress()) {
-                    mediaSession.playNext(applicationContext)
-                    if (!fragmentSongVisible && mediaSession.isSongInProgress()) {
-                        showSongPane()
-                    }
+                viewModelPlaylists.actionAddToQueue(applicationContext)
+                if (!fragmentSongVisible && mediaSession.isSongInProgress()) {
+                    showSongPane()
                 }
                 return true
             }
             R.id.action_add_to_playlist -> {
-                val bundle = Bundle()
-                viewModelPlaylists.getSongToAddToQueue()?.let {
-                    bundle.putSerializable(
-                        DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG,
-                        it
-                    )
-                }
-                viewModelPlaylists.getPlaylistToAddToQueue()?.let {
-                    bundle.putSerializable(
-                        DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST,
-                        it
-                    )
-                }
-                val dialogFragment: DialogFragment = DialogFragmentAddToPlaylist()
-                dialogFragment.arguments = bundle
-                dialogFragment.show(supportFragmentManager, "TAG")
+                viewModelPlaylists.actionAddToPlaylist(supportFragmentManager)
                 return true
             }
         }

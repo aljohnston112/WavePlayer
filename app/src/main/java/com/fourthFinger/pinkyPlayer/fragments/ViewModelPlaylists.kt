@@ -2,7 +2,10 @@ package com.fourthFinger.pinkyPlayer.fragments
 
 import android.app.Application
 import android.content.Context
+import android.os.Bundle
 import androidx.annotation.GuardedBy
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -11,8 +14,9 @@ import com.fourthFinger.pinkyPlayer.NavUtil
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.ToastUtil
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
-import com.fourthFinger.pinkyPlayer.media_controller.MediaSession
+import com.fourthFinger.pinkyPlayer.activity_main.DialogFragmentAddToPlaylist
 import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerSession
+import com.fourthFinger.pinkyPlayer.media_controller.MediaSession
 import com.fourthFinger.pinkyPlayer.media_controller.SaveFile
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
@@ -23,6 +27,7 @@ import java.util.*
 class ViewModelPlaylists(application: Application) : AndroidViewModel(application) {
 
     private val playlistsRepo = PlaylistsRepo.getInstance(application)
+    val songQueue = SongQueue.getInstance()
 
     private val _playlistToAddToQueue = MutableLiveData<RandomPlaylist?>()
     val playlistToAddToQueue = _playlistToAddToQueue as LiveData<RandomPlaylist?>
@@ -347,7 +352,6 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
     fun songClicked(context: Context, navController: NavController, song: Song) {
         val mediaPlayerModel = MediaPlayerSession.getInstance()
         val mediaSession: MediaSession = MediaSession.getInstance(context)
-        val songQueue = SongQueue.getInstance()
         synchronized(ActivityMain.MUSIC_CONTROL_LOCK) {
             if (song == mediaPlayerModel.currentAudioUri.value?.id?.let {
                     getSong(it)
@@ -448,6 +452,49 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
             navController,
             FragmentTitleDirections.actionFragmentTitleToFragmentPlaylists()
         )
+    }
+
+    fun actionAddToQueue(context: Context) {
+        // TODO pretty sure song and playlist could be non-null at the same time
+        songToAddToQueue.value?.let { songQueue.addToQueue(it) }
+        playlistToAddToQueue.value?.getSongs()?.let {
+            for (songs in it) {
+                songQueue.addToQueue(songs.id)
+            }
+        }
+        // TODO Song will play even though user might not want it.
+        // Should be able to show the song pane with the first song.
+        val mediaSession: MediaSession = MediaSession.getInstance(context)
+        if (!mediaSession.isSongInProgress()) {
+            mediaSession.playNext(context)
+        }
+    }
+
+    fun actionAddToPlaylist(supportFragmentManager: FragmentManager) {
+        val bundle = Bundle()
+        getSongToAddToQueue()?.let {
+            bundle.putSerializable(
+                DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG,
+                it
+            )
+        }
+        getPlaylistToAddToQueue()?.let {
+            bundle.putSerializable(
+                DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST,
+                it
+            )
+        }
+        val dialogFragment: DialogFragment = DialogFragmentAddToPlaylist()
+        dialogFragment.arguments = bundle
+        dialogFragment.show(supportFragmentManager, DialogFragmentAddToPlaylist.TAG)
+    }
+
+    fun makeNewPlaylistWithSongs(songs: MutableList<Song>) {
+        setUserPickedPlaylist(null)
+        clearUserPickedSongs()
+        for(song in songs){
+            songSelected(song)
+        }
     }
 
 }
