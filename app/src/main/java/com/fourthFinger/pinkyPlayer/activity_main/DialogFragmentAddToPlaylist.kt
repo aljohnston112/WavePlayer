@@ -8,7 +8,9 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import com.fourthFinger.pinkyPlayer.NavUtil
 import com.fourthFinger.pinkyPlayer.R
+import com.fourthFinger.pinkyPlayer.fragments.PlaylistsRepo
 import com.fourthFinger.pinkyPlayer.fragments.ViewModelPlaylists
+import com.fourthFinger.pinkyPlayer.fragments.ViewModelUserPicks
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
 import java.util.*
@@ -17,6 +19,7 @@ class DialogFragmentAddToPlaylist : DialogFragment() {
 
     // TODO add a cancel button
     private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>()
+    private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>()
 
     private val selectedPlaylistIndices: MutableList<Int> = ArrayList()
 
@@ -36,8 +39,9 @@ class DialogFragmentAddToPlaylist : DialogFragment() {
         builder: AlertDialog.Builder,
         selectedPlaylistIndices: MutableList<Int>
     ) {
+        val playlistsRepo = PlaylistsRepo.getInstance(requireActivity().applicationContext)
         builder.setMultiChoiceItems(
-            viewModelPlaylists.getPlaylistTitles(),
+            playlistsRepo.getPlaylistTitles(),
             null
         ) { _: DialogInterface?, which: Int, isChecked: Boolean ->
             if (isChecked) {
@@ -83,7 +87,7 @@ class DialogFragmentAddToPlaylist : DialogFragment() {
                     songs.add(songInPlaylist)
                 }
             }
-           viewModelPlaylists.makeNewPlaylistWithSongs(songs)
+            viewModelUserPicks.startNewPlaylistWithSongs(songs)
             // TODO this most definitely probably does not work
             NavUtil.navigateTo(this, R.id.fragmentEditPlaylist)
         }

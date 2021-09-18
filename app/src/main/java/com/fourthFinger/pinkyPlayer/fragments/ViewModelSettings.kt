@@ -26,44 +26,6 @@ class ViewModelSettings : ViewModel() {
         return (100.0 / settingsRepo.getPercentChangeDown()).roundToInt().toString()
     }
 
-    private fun setSettings(
-        context: Context,
-        nSongs: Int,
-        percentChangeUp: Int,
-        percentChangeDown: Int
-    ) {
-        settingsRepo.setSettings(
-            // TODO add lower prob
-            Settings(
-                1.0 / nSongs.toDouble(),
-                percentChangeUp.toDouble() / 100.0,
-                percentChangeDown.toDouble() / 100.0,
-                0.5
-            )
-        )
-        SaveFile.saveFile(context)
-    }
-
-    fun validateInput(
-        context: Context,
-        nSongs: Int,
-        percentChangeUp: Int,
-        percentChangeDown: Int
-    ): Boolean {
-        return if (nSongs < 1) {
-            ToastUtil.showToast(context, R.string.max_percent_error)
-            false
-        } else if (percentChangeUp < 1 || percentChangeUp > 100) {
-            ToastUtil.showToast(context, R.string.percent_change_error)
-            false
-        } else if (percentChangeDown < 1 || percentChangeDown > 100) {
-            ToastUtil.showToast(context, R.string.percent_change_error)
-            false
-        } else {
-            true
-        }
-    }
-
     fun fabClicked(
         context: Context,
         navController: NavController,
@@ -83,13 +45,42 @@ class ViewModelSettings : ViewModel() {
         }
     }
 
+    private fun validateInput(
+        context: Context,
+        nSongs: Int,
+        percentChangeUp: Int,
+        percentChangeDown: Int
+    ): Boolean {
+        return if (nSongs < 1) {
+            ToastUtil.showToast(context, R.string.max_percent_error)
+            false
+        } else if (percentChangeUp < 1 || percentChangeUp > 100) {
+            ToastUtil.showToast(context, R.string.percent_change_error)
+            false
+        } else if (percentChangeDown < 1 || percentChangeDown > 100) {
+            ToastUtil.showToast(context, R.string.percent_change_error)
+            false
+        } else {
+            true
+        }
+    }
+
     private fun updateSettings(
         context: Context,
         nSongs: Int,
         percentChangeUp: Int,
         percentChangeDown: Int
     ) {
-        setSettings(context, nSongs, percentChangeDown, percentChangeUp)
+        settingsRepo.setSettings(
+            // TODO add lower prob
+            Settings(
+                1.0 / nSongs.toDouble(),
+                percentChangeUp.toDouble() / 100.0,
+                percentChangeDown.toDouble() / 100.0,
+                0.5
+            )
+        )
+        SaveFile.saveFile(context)
     }
 
 }

@@ -39,7 +39,7 @@ class FragmentSong : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
-    private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>()
+    private val viewModelAddToQueue by activityViewModels<ViewModelAddToQueue>()
     private val viewModelFragmentSong by viewModels<ViewModelFragmentSong>()
 
     private val mediaPlayerModel = MediaPlayerSession.getInstance()
@@ -67,7 +67,7 @@ class FragmentSong : Fragment() {
             if (it != null) {
                 // TODO why does this need to be cached?
                 currentAudioUri = it
-                viewModelPlaylists.newSong(it.id)
+                viewModelAddToQueue.newSong(it.id)
                 binding.textViewSongName.text = it.title
                 setUpSeekBar(it.getDuration(requireActivity().applicationContext))
                 setUpSeekBarUpdater()
@@ -79,6 +79,17 @@ class FragmentSong : Fragment() {
         mediaPlayerModel.isPlaying.observe(viewLifecycleOwner) { b: Boolean? ->
             if (b != null) {
                 updateSongPlayButton(b)
+            }
+        }
+        viewModelActivityMain.fragmentSongVisible.observe(viewLifecycleOwner) {
+            if (it == true) {
+                setUpButton(binding.buttonThumbUp, R.drawable.thumb_up_alt_black_24dp)
+                setUpButton(binding.buttonThumbDown, R.drawable.thumb_down_alt_black_24dp)
+                setUpButton(binding.imageButtonPrev, R.drawable.skip_previous_black_24dp)
+                setUpButton(binding.imageButtonNext, R.drawable.skip_next_black_24dp)
+                // TODO make what happens inside these happen in response to LiveData
+                setUpShuffle()
+                setUpLoop()
             }
         }
         setUpButtons()
@@ -331,23 +342,7 @@ class FragmentSong : Fragment() {
                 buttonLoop.setImageResource(R.drawable.repeat_white_24dp)
             }
         }
-        requireView().addOnLayoutChangeListener(onLayoutChangeListenerFragmentSong)
     }
-
-    private val onLayoutChangeListenerFragmentSong =
-        View.OnLayoutChangeListener { _: View?, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int ->
-            viewModelActivityMain.fragmentSongVisible.observe(viewLifecycleOwner) {
-                if (it == true) {
-                    setUpButton(binding.buttonThumbUp, R.drawable.thumb_up_alt_black_24dp)
-                    setUpButton(binding.buttonThumbDown, R.drawable.thumb_down_alt_black_24dp)
-                    setUpButton(binding.imageButtonPrev, R.drawable.skip_previous_black_24dp)
-                    setUpButton(binding.imageButtonNext, R.drawable.skip_next_black_24dp)
-                    // TODO make these happen in response to LiveData
-                    setUpShuffle()
-                    setUpLoop()
-                }
-            }
-        }
 
     private fun setUpButton(imageView: ImageView, drawableID: Int) {
         val width = imageView.measuredWidth
@@ -453,7 +448,6 @@ class FragmentSong : Fragment() {
 
     override fun onDestroy() {
         super.onDestroy()
-        view?.removeOnLayoutChangeListener(onLayoutChangeListenerFragmentSong)
         shutDownSeekBarUpdater()
     }
 

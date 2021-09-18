@@ -31,6 +31,8 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
 
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
     private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>()
+    private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>()
+    private val viewModelAddToQueue by activityViewModels<ViewModelAddToQueue>()
 
     private lateinit var recyclerViewSongs: RecyclerView
     private lateinit var recyclerViewAdapterSongs: RecyclerViewAdapterSongs
@@ -49,7 +51,7 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         KeyboardUtil.hideKeyboard(view)
         viewModelActivityMain.setActionBarTitle(resources.getString(R.string.songs))
         viewModelActivityMain.showFab(false)
-        viewModelPlaylists.fragmentSongsViewCreated()
+        viewModelUserPicks.fragmentSongsViewCreated()
         setUpRecyclerView()
         setUpSearchView()
     }
@@ -159,12 +161,12 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         // TODO fix how music continues after queue is depleted
         // turn shuffle and looping off
         // TODO showSongPane?
-        viewModelPlaylists.addToQueueClicked(requireActivity().applicationContext, song)
+        viewModelAddToQueue.addToQueueClicked(requireActivity().applicationContext, song)
         return true
     }
 
     override fun onClickViewHolder(song: Song) {
-        viewModelPlaylists.songClicked(
+        viewModelUserPicks.songClicked(
             requireActivity().applicationContext,
             NavHostFragment.findNavController(this),
             song

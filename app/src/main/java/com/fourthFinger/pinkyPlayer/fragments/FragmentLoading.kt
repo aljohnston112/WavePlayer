@@ -1,12 +1,9 @@
 package com.fourthFinger.pinkyPlayer.fragments
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,15 +12,12 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
-import androidx.core.os.HandlerCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.FragmentLoadingBinding
-import com.fourthFinger.pinkyPlayer.media_controller.MediaData
 import com.fourthFinger.pinkyPlayer.media_controller.ViewModelFragmentLoading
-import kotlin.math.roundToInt
 
 class FragmentLoading : Fragment() {
 

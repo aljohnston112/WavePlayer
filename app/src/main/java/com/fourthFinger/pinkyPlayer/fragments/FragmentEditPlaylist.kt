@@ -21,7 +21,7 @@ class FragmentEditPlaylist : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
-    private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>()
+    private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -34,9 +34,9 @@ class FragmentEditPlaylist : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModelPlaylists.fragmentEditPlaylistViewCreated()
+        viewModelUserPicks.fragmentEditPlaylistViewCreated()
         binding.buttonEditSongs.setOnClickListener {
-            viewModelPlaylists.editSongsClicked(
+            viewModelUserPicks.editSongsClicked(
                 NavHostFragment.findNavController(this)
             )
         }
@@ -45,7 +45,7 @@ class FragmentEditPlaylist : Fragment() {
     override fun onResume() {
         super.onResume()
         updateFAB()
-        viewModelPlaylists.fragmentEditPlaylistOnResume()
+        viewModelUserPicks.fragmentEditPlaylistOnResume()
     }
 
     private fun updateFAB() {
@@ -53,9 +53,9 @@ class FragmentEditPlaylist : Fragment() {
         viewModelActivityMain.setFABText(R.string.fab_save)
         viewModelActivityMain.showFab(true)
         val editTextPlaylistName: EditText = binding.editTextPlaylistName
-        editTextPlaylistName.setText(viewModelPlaylists.getUserPickedPlaylist()?.getName())
+        editTextPlaylistName.setText(viewModelUserPicks.getUserPickedPlaylist()?.getName())
         viewModelActivityMain.setFabOnClickListener { view: View ->
-            viewModelPlaylists.editPlaylistFabClicked(requireActivity().applicationContext, editTextPlaylistName.text.toString())
+            viewModelUserPicks.editPlaylistFabClicked(requireActivity().applicationContext, editTextPlaylistName.text.toString())
             cleanUp(view)
         }
     }

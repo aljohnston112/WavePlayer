@@ -8,7 +8,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
-class ViewModelActivityMain() : ViewModel() {
+class ViewModelActivityMain : ViewModel() {
 
     private val _actionBarTitle: MutableLiveData<String> = MutableLiveData()
     val actionBarTitle = _actionBarTitle as LiveData<String>
@@ -48,8 +48,8 @@ class ViewModelActivityMain() : ViewModel() {
 
     private val _fragmentSongVisible: MutableLiveData<Boolean> = MutableLiveData(false)
     val fragmentSongVisible = _fragmentSongVisible as LiveData<Boolean>
-    fun fragmentSongVisible(visibility: Int) {
-        this._fragmentSongVisible.value = visibility == VISIBLE
+    fun fragmentSongVisible(visible: Boolean) {
+        this._fragmentSongVisible.value = visible
     }
 
 }

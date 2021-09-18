@@ -9,6 +9,7 @@ import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
 import com.fourthFinger.pinkyPlayer.random_playlist.SongDAO
 import com.fourthFinger.pinkyPlayer.random_playlist.SongDatabase
+import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 
@@ -18,18 +19,22 @@ class PlaylistsRepo private constructor(context: Context) {
     fun getPlaylists(): List<RandomPlaylist> {
         return playlists
     }
+
     fun addPlaylist(context: Context, randomPlaylist: RandomPlaylist) {
         playlists.add(randomPlaylist)
         SaveFile.saveFile(context)
     }
+
     fun addPlaylist(context: Context, position: Int, randomPlaylist: RandomPlaylist) {
         playlists.add(position, randomPlaylist)
         SaveFile.saveFile(context)
     }
+
     fun removePlaylist(context: Context, randomPlaylist: RandomPlaylist) {
         playlists.remove(randomPlaylist)
         SaveFile.saveFile(context)
     }
+
     fun getPlaylist(playlistName: String): RandomPlaylist? {
         var out: RandomPlaylist? = null
         for (randomPlaylist in playlists) {
@@ -45,9 +50,11 @@ class PlaylistsRepo private constructor(context: Context) {
     fun setMasterPlaylist(masterPlaylist: RandomPlaylist) {
         this.masterPlaylist = masterPlaylist
     }
+
     fun getMasterPlaylist(): RandomPlaylist? {
         return masterPlaylist
     }
+
     fun getAllSongs(): List<Song>? {
         return masterPlaylist?.getSongs()
     }
@@ -56,7 +63,8 @@ class PlaylistsRepo private constructor(context: Context) {
     fun getSong(songID: Long): Song? {
         var song: Song? = null
         try {
-            song = ServiceMain.executorServicePool.submit(Callable { songDAO.getSong(songID) }).get()
+            song =
+                ServiceMain.executorServicePool.submit(Callable { songDAO.getSong(songID) }).get()
         } catch (e: ExecutionException) {
             e.printStackTrace()
         } catch (e: InterruptedException) {
@@ -77,19 +85,44 @@ class PlaylistsRepo private constructor(context: Context) {
         playlists.add(randomPlaylist)
     }
 
+    fun doesPlaylistExist(playlistName: String): Boolean {
+        var playlistIndex = -1
+        for ((i, randomPlaylist) in getPlaylists().withIndex()) {
+            if (randomPlaylist.getName() == playlistName) {
+                playlistIndex = i
+            }
+        }
+        return playlistIndex == -1
+    }
+
+    fun getPlaylistTitles(): Array<String?> {
+        val randomPlaylists = getPlaylists()
+        val titles: MutableList<String> = ArrayList(randomPlaylists.size)
+        for (randomPlaylist in randomPlaylists) {
+            titles.add(randomPlaylist.getName())
+        }
+        val titlesArray = arrayOfNulls<String>(titles.size)
+        var i = 0
+        for (title in titles) {
+            titlesArray[i++] = title
+        }
+        return titlesArray
+    }
+
     init {
-        val songDatabase = Room.databaseBuilder(context, SongDatabase::class.java,
+        val songDatabase = Room.databaseBuilder(
+            context, SongDatabase::class.java,
             MediaData.SONG_DATABASE_NAME
         ).build()
         songDAO = songDatabase.songDAO()
     }
 
-    companion object{
+    companion object {
 
         private var INSTANCE: PlaylistsRepo? = null
 
         fun getInstance(context: Context): PlaylistsRepo {
-            if(INSTANCE == null){
+            if (INSTANCE == null) {
                 INSTANCE = PlaylistsRepo(context)
             }
             return INSTANCE!!

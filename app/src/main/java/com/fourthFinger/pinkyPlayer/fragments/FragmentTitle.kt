@@ -23,6 +23,7 @@ class FragmentTitle : Fragment() {
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
     private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>()
     private val viewModelFragmentTitle by viewModels<ViewModelFragmentTitle>()
+    private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -89,7 +90,7 @@ class FragmentTitle : Fragment() {
             requireActivity().contentResolver,
             uri
         )
-        viewModelPlaylists.playlistCreatedFromFolder(
+        viewModelUserPicks.playlistCreatedFromFolder(
             NavHostFragment.findNavController(this@FragmentTitle),
             playlist
         )

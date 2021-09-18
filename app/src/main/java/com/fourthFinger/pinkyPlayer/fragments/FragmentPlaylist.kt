@@ -35,7 +35,8 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
     private val binding get() = _binding!!
 
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
-    private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>()
+    private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>()
+    private val viewModelAddToQueue by activityViewModels<ViewModelAddToQueue>()
 
     private var broadcastReceiver: BroadcastReceiver? = null
 
@@ -57,9 +58,9 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         KeyboardUtil.hideKeyboard(view)
-        val randomPlaylist: RandomPlaylist? = viewModelPlaylists.getUserPickedPlaylist()
+        val randomPlaylist: RandomPlaylist? = viewModelUserPicks.getUserPickedPlaylist()
         if (randomPlaylist != null) {
-            viewModelPlaylists.setPlaylistToAddToQueue(randomPlaylist)
+            viewModelAddToQueue.setPlaylistToAddToQueue(randomPlaylist)
             viewModelActivityMain.setActionBarTitle(randomPlaylist.getName())
             // TODO why is this set up twice in all the fragments?!
             // I think due to incomplete state
@@ -95,7 +96,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
                             viewHolder.getAdapterPosition(), target.getAdapterPosition());
 
                  */
-                viewModelPlaylists.notifySongMoved(
+                viewModelUserPicks.notifySongMoved(
                     requireActivity().applicationContext,
                     viewHolder.absoluteAdapterPosition,
                     target.absoluteAdapterPosition
@@ -110,7 +111,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 // TODO there might be a bug where the last song shows up once for every time a song is swiped.
                 val position = viewHolder.absoluteAdapterPosition
-                viewModelPlaylists.notifySongRemoved(requireActivity().applicationContext, position)
+                viewModelUserPicks.notifySongRemoved(requireActivity().applicationContext, position)
                 // TODO needed?
                 /*
                 recyclerViewAdapterSongs.getSongs().remove(position);
@@ -122,7 +123,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
                     BaseTransientBottomBar.LENGTH_LONG
                 )
                 snackBar.setAction(R.string.undo) {
-                    viewModelPlaylists.notifyItemInserted(requireActivity().applicationContext, position)
+                    viewModelUserPicks.notifyItemInserted(requireActivity().applicationContext, position)
                     // TODO needed?
                     /*
                     recyclerViewAdapterSongs.updateList(userPickedPlaylist.getSongs());
@@ -148,11 +149,11 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
 
     private fun filterSongs(newText: String) {
         dragFlags = if (newText.isNotEmpty()) {
-            val sifted = viewModelPlaylists.filterPlaylistSongs(newText)
+            val sifted = viewModelUserPicks.filterPlaylistSongs(newText)
             recyclerViewAdapterSongs.updateList(sifted)
             0
         } else {
-            viewModelPlaylists.getUserPickedPlaylist()?.getSongs()?.let {
+            viewModelUserPicks.getUserPickedPlaylist()?.getSongs()?.let {
                 recyclerViewAdapterSongs.updateList(it)
             }
             ItemTouchHelper.UP or ItemTouchHelper.DOWN
@@ -161,7 +162,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
 
     override fun onStart() {
         super.onStart()
-        val randomPlaylist: RandomPlaylist? = viewModelPlaylists.getUserPickedPlaylist()
+        val randomPlaylist: RandomPlaylist? = viewModelUserPicks.getUserPickedPlaylist()
         if (randomPlaylist != null) {
             setUpBroadcastReceiver(randomPlaylist)
         }
@@ -203,7 +204,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
         viewModelActivityMain.setFabOnClickListener {
             // userPickedSongs.isEmpty() when the user is editing a playlist
             // TODO got interrupted by food being done
-            viewModelPlaylists.fragmentPlaylistFABClicked(
+            viewModelUserPicks.fragmentPlaylistFABClicked(
                 NavHostFragment.findNavController(this)
             )
         }
@@ -247,14 +248,14 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
         // TODO fix how music continues after queue is depleted
         // turn shuffle and looping off
         // TODO showSongPane?
-        viewModelPlaylists.addToQueueClicked(requireActivity().applicationContext, song)
+        viewModelAddToQueue.addToQueueClicked(requireActivity().applicationContext, song)
         return true
     }
 
     override fun onClickViewHolder(song: Song) {
         // TODO make sure user picked playlist and queue is updated
         // Should queue be cleared?
-        viewModelPlaylists.songClicked(
+        viewModelUserPicks.songClicked(
             requireActivity().applicationContext,
             NavHostFragment.findNavController(this),
             song
@@ -278,7 +279,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
             searchView.onActionViewCollapsed()
         }
         viewModelActivityMain.setFabOnClickListener(null)
-        viewModelPlaylists.setPlaylistToAddToQueue(null)
+        viewModelAddToQueue.setPlaylistToAddToQueue(null)
     }
 
 }

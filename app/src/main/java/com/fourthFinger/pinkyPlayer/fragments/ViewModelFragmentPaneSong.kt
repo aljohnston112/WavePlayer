@@ -9,14 +9,15 @@ import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.media_controller.MediaSession
 
 class ViewModelFragmentPaneSong: ViewModel() {
+
     fun clicked(context: Context, fragment: Fragment, @IdRes id: Int) {
-        val mediaModel = MediaSession.getInstance(context)
+        val mediaSession = MediaSession.getInstance(context)
         if (id == R.id.imageButtonSongPaneNext) {
-            mediaModel.playNext(context)
+            mediaSession.playNext(context)
         } else if (id == R.id.imageButtonSongPanePlayPause) {
-            mediaModel.pauseOrPlay(context)
+            mediaSession.pauseOrPlay(context)
         } else if (id == R.id.imageButtonSongPanePrev) {
-            mediaModel.playPrevious(context)
+            mediaSession.playPrevious(context)
         } else if (id == R.id.textViewSongPaneSongName ||
             id == R.id.imageViewSongPaneSongArt
         ) {

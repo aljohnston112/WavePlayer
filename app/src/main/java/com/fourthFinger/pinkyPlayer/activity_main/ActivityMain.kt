@@ -9,6 +9,8 @@ import android.os.IBinder
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.View.INVISIBLE
+import android.view.View.VISIBLE
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -22,6 +24,7 @@ import androidx.navigation.fragment.NavHostFragment
 import com.fourthFinger.pinkyPlayer.NavUtil.Companion.navigateTo
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.databinding.ActivityMainBinding
+import com.fourthFinger.pinkyPlayer.fragments.ViewModelAddToQueue
 import com.fourthFinger.pinkyPlayer.fragments.ViewModelPlaylists
 import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerSession
 import com.fourthFinger.pinkyPlayer.media_controller.MediaSession
@@ -38,12 +41,11 @@ class ActivityMain : AppCompatActivity() {
 
     private val viewModelActivityMain by viewModels<ViewModelActivityMain>()
     private val viewModelPlaylists by viewModels<ViewModelPlaylists>()
+    private val viewModelAddToQueue by viewModels<ViewModelAddToQueue>()
 
     private val mediaPlayerSession = MediaPlayerSession.getInstance()
     private val mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
     private var loaded = false
-
-    private var fragmentSongVisible = false
 
     // region lifecycle
     // region onCreate
@@ -79,12 +81,12 @@ class ActivityMain : AppCompatActivity() {
         }
 
     private fun fragmentSongVisible(fragmentSongVisible: Boolean) {
-        this.fragmentSongVisible = fragmentSongVisible
+        viewModelActivityMain.fragmentSongVisible(fragmentSongVisible)
     }
 
     private fun showSongPane() {
         val fragmentPaneSong: View = binding.fragmentSongPane
-        if (fragmentPaneSong.visibility != View.VISIBLE) {
+        if (fragmentPaneSong.visibility != VISIBLE) {
             runOnUiThread {
                 val constraintLayout: ConstraintLayout = binding.constraintMain
                 val constraintSet = ConstraintSet()
@@ -96,14 +98,15 @@ class ActivityMain : AppCompatActivity() {
                     ConstraintSet.TOP
                 )
                 constraintSet.applyTo(constraintLayout)
-                binding.fragmentSongPane.visibility = View.VISIBLE
+                binding.fragmentSongPane.visibility = VISIBLE
+                viewModelActivityMain.songPaneVisible(VISIBLE)
             }
         }
     }
 
     private fun hideSongPane() {
         val fragmentPaneSong: View = binding.fragmentSongPane
-        if (fragmentPaneSong.visibility != View.INVISIBLE) {
+        if (fragmentPaneSong.visibility != INVISIBLE) {
             runOnUiThread {
                 val constraintLayout: ConstraintLayout = binding.constraintMain
                 val constraintSet = ConstraintSet()
@@ -115,7 +118,8 @@ class ActivityMain : AppCompatActivity() {
                     ConstraintSet.BOTTOM
                 )
                 constraintSet.applyTo(constraintLayout)
-                fragmentPaneSong.visibility = View.INVISIBLE
+                fragmentPaneSong.visibility = INVISIBLE
+                viewModelActivityMain.songPaneVisible(INVISIBLE)
             }
         }
     }
@@ -298,14 +302,16 @@ class ActivityMain : AppCompatActivity() {
                 return true
             }
             R.id.action_add_to_queue -> {
-                viewModelPlaylists.actionAddToQueue(applicationContext)
-                if (!fragmentSongVisible && mediaSession.isSongInProgress()) {
+                viewModelAddToQueue.actionAddToQueue(applicationContext)
+                if (viewModelActivityMain.fragmentSongVisible.value == false &&
+                    mediaSession.isSongInProgress()
+                ) {
                     showSongPane()
                 }
                 return true
             }
             R.id.action_add_to_playlist -> {
-                viewModelPlaylists.actionAddToPlaylist(supportFragmentManager)
+                viewModelAddToQueue.actionAddToPlaylist(supportFragmentManager)
                 return true
             }
         }

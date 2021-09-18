@@ -34,8 +34,10 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
 
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
     private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>()
+    private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>()
+    private val viewModelAddToQueue by activityViewModels<ViewModelAddToQueue>()
 
-    private var recyclerViewPlaylists: RecyclerView? = null
+    private lateinit var recyclerView: RecyclerView
     private lateinit var recyclerViewAdapterPlaylists: RecyclerViewAdapterPlaylists
 
     var dragFlags: Int = ItemTouchHelper.UP or ItemTouchHelper.DOWN
@@ -59,7 +61,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
     }
 
     private fun setUpRecyclerView() {
-        val recyclerView: RecyclerView = binding.recyclerViewPlaylistList
+        recyclerView = binding.recyclerViewPlaylistList
         recyclerView.layoutManager = LinearLayoutManager(recyclerView.context)
         recyclerViewAdapterPlaylists = RecyclerViewAdapterPlaylists(
             this,
@@ -176,7 +178,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
         viewModelActivityMain.showFab(true)
         viewModelActivityMain.setFabOnClickListener {
             // userPickedPlaylist is null when user is making a new playlist
-            viewModelPlaylists.fragmentPlaylistsFABClicked(
+            viewModelUserPicks.fragmentPlaylistsFABClicked(
                 NavHostFragment.findNavController(this)
             )
         }
@@ -214,12 +216,12 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
     }
 
     override fun onMenuItemClickAddToQueue(randomPlaylist: RandomPlaylist): Boolean {
-        viewModelPlaylists.addToQueueClicked(requireActivity().applicationContext, randomPlaylist)
+        viewModelAddToQueue.addToQueueClicked(requireActivity().applicationContext, randomPlaylist)
         return true
     }
 
     override fun onClickViewHolder(randomPlaylist: RandomPlaylist) {
-        viewModelPlaylists.playlistClicked(
+        viewModelUserPicks.playlistClicked(
             NavHostFragment.findNavController(this),
             randomPlaylist
         )

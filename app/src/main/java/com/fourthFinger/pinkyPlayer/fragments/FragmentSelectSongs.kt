@@ -31,6 +31,7 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
 
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
     private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>()
+    private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>()
 
     private var recyclerViewSongList: RecyclerView? = null
     private lateinit var recyclerViewAdapter: RecyclerViewAdapterSelectSongs
@@ -128,7 +129,7 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
             val sifted = viewModelPlaylists.filterAllSongs(newText)
             recyclerViewAdapter.updateList(sifted)
         } else {
-            viewModelPlaylists.getUserPickedPlaylist()?.getSongs()?.let {
+            viewModelUserPicks.getUserPickedPlaylist()?.getSongs()?.let {
                 recyclerViewAdapter.updateList(it)
             }
         }
@@ -136,15 +137,15 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
 
     // TODO should be able to remove
     override fun getUserPickedSongs(): List<Song> {
-        return viewModelPlaylists.getUserPickedSongs()
+        return viewModelUserPicks.getUserPickedSongs()
     }
 
     override fun songUnselected(song: Song) {
-        viewModelPlaylists.songUnselected(song)
+        viewModelUserPicks.songUnselected(song)
     }
 
     override fun songSelected(song: Song) {
-        viewModelPlaylists.songSelected(song)
+        viewModelUserPicks.songSelected(song)
     }
 
     override fun onStop() {
