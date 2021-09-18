@@ -27,14 +27,14 @@ import java.util.*
 class ViewModelPlaylists(application: Application) : AndroidViewModel(application) {
 
     private val playlistsRepo = PlaylistsRepo.getInstance(application)
-    val songQueue = SongQueue.getInstance()
+    private val songQueue = SongQueue.getInstance()
 
     private val _playlistToAddToQueue = MutableLiveData<RandomPlaylist?>()
-    val playlistToAddToQueue = _playlistToAddToQueue as LiveData<RandomPlaylist?>
+    private val playlistToAddToQueue = _playlistToAddToQueue as LiveData<RandomPlaylist?>
     fun setPlaylistToAddToQueue(playlistToAddToQueue: RandomPlaylist?) {
         _playlistToAddToQueue.value = playlistToAddToQueue
     }
-    fun getPlaylistToAddToQueue(): RandomPlaylist? {
+    private fun getPlaylistToAddToQueue(): RandomPlaylist? {
         return playlistToAddToQueue.value?.let { playlistsRepo.getPlaylist(it.getName()) }
     }
 
@@ -45,7 +45,7 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
         setPlaylistToAddToQueue(null)
     }
 
-    fun getSongToAddToQueue(): Song? {
+    private fun getSongToAddToQueue(): Song? {
         return songToAddToQueue.value?.let { playlistsRepo.getSong(it) }
     }
 
@@ -130,7 +130,7 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
         playlistsRepo.removePlaylist(context, userPickedPlaylist)
     }
 
-    fun getSong(songID: Long): Song? {
+    private fun getSong(songID: Long): Song? {
         return playlistsRepo.getSong(songID)
     }
 
@@ -138,7 +138,7 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
         return playlistsRepo.getAllSongs()
     }
 
-    fun getMasterPlaylist(): RandomPlaylist? {
+    private fun getMasterPlaylist(): RandomPlaylist? {
         return playlistsRepo.getMasterPlaylist()
     }
 
@@ -221,7 +221,7 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
                 song.setSelected(false)
             }
         }
-        SaveFile.saveFile(context)
+        playlistsRepo.addPlaylist(context, finalPlaylist)
     }
 
     private fun validateInput(context: Context, playlistName: String): Boolean {

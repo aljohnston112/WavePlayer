@@ -8,14 +8,17 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
 
 class RecyclerViewAdapterSongs(
         private val listenerCallbackSongs: ListenerCallbackSongs,
-        private var songs: List<Song>
-) : RecyclerView.Adapter<RecyclerViewAdapterSongs.ViewHolder>() {
+        songs: List<Song>
+) : ListAdapter<Song, RecyclerViewAdapterSongs.ViewHolder>(
+    Song.DiffUtilItemCallbackSongs()
+) {
 
     interface ListenerCallbackSongs {
         fun onClickViewHolder(song: Song)
@@ -25,8 +28,7 @@ class RecyclerViewAdapterSongs(
 
     @SuppressLint("NotifyDataSetChanged")
     fun updateList(songs: List<Song>) {
-        this.songs = songs
-        notifyDataSetChanged()
+        submitList(songs)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -35,14 +37,14 @@ class RecyclerViewAdapterSongs(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.song = songs[position]
+        holder.song = getItem(position)
         holder.handle.setOnClickListener { holder.handle.performLongClick() }
         holder.songView.setOnClickListener {
             if (position != RecyclerView.NO_POSITION) {
                 listenerCallbackSongs.onClickViewHolder(holder.song)
             }
         }
-        holder.textViewSongName.text = songs[position].title
+        holder.textViewSongName.text = getItem(position).title
         holder.handle.setOnCreateContextMenuListener{ menu: ContextMenu?, _: View?, _: ContextMenuInfo? ->
             val menuItemAddToPlaylist = menu?.add(R.string.add_to_playlist)
             menuItemAddToPlaylist?.setOnMenuItemClickListener {
@@ -55,8 +57,8 @@ class RecyclerViewAdapterSongs(
         }
     }
 
-    override fun getItemCount(): Int {
-        return songs.size
+    init {
+        submitList(songs)
     }
 
     class ViewHolder(val songView: View) : RecyclerView.ViewHolder(songView) {

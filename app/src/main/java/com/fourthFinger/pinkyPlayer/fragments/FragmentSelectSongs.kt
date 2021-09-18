@@ -54,6 +54,7 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
     private fun setUpRecyclerView() {
         recyclerViewSongList = binding.recyclerViewSongList
         recyclerViewSongList?.layoutManager = LinearLayoutManager(requireContext())
+        // TODO respond to LiveData of all songs
         recyclerViewAdapter = viewModelPlaylists.getAllSongs()?.let {
             RecyclerViewAdapterSelectSongs(this, it)
         }?: RecyclerViewAdapterSelectSongs(this, listOf())

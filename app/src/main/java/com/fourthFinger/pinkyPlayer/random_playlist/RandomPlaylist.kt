@@ -1,6 +1,7 @@
 package com.fourthFinger.pinkyPlayer.random_playlist
 
 import android.content.*
+import androidx.recyclerview.widget.DiffUtil
 import java.io.Serializable
 import java.util.*
 
@@ -192,5 +193,16 @@ class RandomPlaylist constructor(
             playlistArray.add(song.id)
         }
         playlistIterator = playlistArray.listIterator()
+    }
+
+    class DiffUtilItemCallbackPlaylists : DiffUtil.ItemCallback<RandomPlaylist>(){
+        override fun areItemsTheSame(oldItem: RandomPlaylist, newItem: RandomPlaylist): Boolean {
+            return oldItem.getName() == newItem.getName()
+        }
+
+        override fun areContentsTheSame(oldItem: RandomPlaylist, newItem: RandomPlaylist): Boolean {
+            return true
+        }
+
     }
 }

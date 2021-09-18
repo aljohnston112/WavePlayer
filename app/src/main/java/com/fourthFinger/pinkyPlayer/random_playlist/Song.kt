@@ -1,5 +1,6 @@
 package com.fourthFinger.pinkyPlayer.random_playlist
 
+import androidx.recyclerview.widget.DiffUtil
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Ignore
@@ -29,4 +30,16 @@ class Song(@field:PrimaryKey val id: Long, @field:ColumnInfo(name = "title") val
     override fun hashCode(): Int {
         return System.identityHashCode(this)
     }
+
+    class DiffUtilItemCallbackSongs : DiffUtil.ItemCallback<Song>(){
+        override fun areItemsTheSame(oldItem: Song, newItem: Song): Boolean {
+            return oldItem.id == newItem.id
+        }
+
+        override fun areContentsTheSame(oldItem: Song, newItem: Song): Boolean {
+            return true
+        }
+
+    }
+
 }

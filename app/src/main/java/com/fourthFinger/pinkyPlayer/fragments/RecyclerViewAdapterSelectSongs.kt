@@ -6,14 +6,17 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
 
 class RecyclerViewAdapterSelectSongs(
         private val listenerCallbackSelectSongs: ListenerCallbackSelectSongs,
-        private var allSongs: List<Song>
-) : RecyclerView.Adapter<RecyclerViewAdapterSelectSongs.ViewHolder>() {
+        allSongs: List<Song>
+) : ListAdapter<Song, RecyclerViewAdapterSelectSongs.ViewHolder>(
+    Song.DiffUtilItemCallbackSongs()
+) {
 
     interface ListenerCallbackSelectSongs {
         fun getUserPickedSongs(): List<Song>
@@ -22,46 +25,49 @@ class RecyclerViewAdapterSelectSongs(
     }
 
     fun updateList(songs: List<Song>) {
-        allSongs = songs
-        notifyDataSetChanged()
+        submitList(songs)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_song, parent, false))
+        return ViewHolder(LayoutInflater.from(parent.context).inflate(
+            R.layout.item_song, parent, false)
+        )
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val linearLayout: ConstraintLayout = holder.itemView.findViewById(R.id.constraint_layout_song_name)
+        val linearLayout: ConstraintLayout = holder.itemView.findViewById(
+            R.id.constraint_layout_song_name
+        )
         // TODO find a better place for this
         // Might already be in ViewModelPlaylist's editSongsClicked()
         // Should be able to remove
+        // TODO Might also be needed if selection is never removed
         /*
         val userPickedSongs = listenerCallbackSelectSongs.getUserPickedSongs()
-        if (userPickedSongs.contains(allSongs[position])) {
-            allSongs[position].setSelected(true)
+        if (userPickedSongs.contains(getItem(position))) {
+            getItem(position).setSelected(true)
             // TODO use color resources
             holder.textViewSongName.setBackgroundColor(Color.parseColor("#575757"))
             linearLayout.setBackgroundColor(Color.parseColor("#575757"))
         } else {
-            allSongs[position].setSelected(false)
+            getItem(position).setSelected(false)
             holder.textViewSongName.setBackgroundColor(Color.parseColor("#000000"))
             linearLayout.setBackgroundColor(Color.parseColor("#000000"))
         }
          */
-        if(allSongs[position].isSelected()){
+        if(getItem(position).isSelected()){
             holder.textViewSongName.setBackgroundColor(Color.parseColor("#575757"))
             linearLayout.setBackgroundColor(Color.parseColor("#575757"))
         } else {
             holder.textViewSongName.setBackgroundColor(Color.parseColor("#000000"))
             linearLayout.setBackgroundColor(Color.parseColor("#000000"))
         }
-        holder.song = allSongs[position]
-        holder.textViewSongName.text = allSongs[position].title
+        holder.song = getItem(position)
+        holder.textViewSongName.text = getItem(position).title
     }
-
-    override fun getItemCount(): Int {
-        return allSongs.size
+    
+    init{
+        submitList(allSongs)
     }
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
