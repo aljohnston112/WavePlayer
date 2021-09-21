@@ -43,7 +43,7 @@ class ActivityMain : AppCompatActivity() {
     private val viewModelPlaylists by viewModels<ViewModelPlaylists>()
     private val viewModelAddToQueue by viewModels<ViewModelAddToQueue>()
 
-    private val mediaPlayerSession = MediaPlayerSession.getInstance()
+    private val mediaPlayerSession = MediaPlayerSession.getInstance(applicationContext)
     private val mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
     private var loaded = false
 
@@ -70,7 +70,7 @@ class ActivityMain : AppCompatActivity() {
     private val onDestinationChangedListenerSongPane =
         { _: NavController, destination: NavDestination, _: Bundle? ->
             if (destination.id != R.id.fragmentSong) {
-                if (mediaSession.isSongInProgress()) {
+                if (mediaPlayerSession.isSongInProgress()) {
                     fragmentSongVisible(false)
                     showSongPane()
                 }
@@ -294,17 +294,17 @@ class ActivityMain : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_reset_probs -> {
-                mediaSession.clearProbabilities(applicationContext)
+                mediaSession.clearProbabilities()
                 return true
             }
             R.id.action_lower_probs -> {
-                mediaSession.lowerProbabilities(applicationContext)
+                mediaSession.lowerProbabilities()
                 return true
             }
             R.id.action_add_to_queue -> {
                 viewModelAddToQueue.actionAddToQueue(applicationContext)
                 if (viewModelActivityMain.fragmentSongVisible.value == false &&
-                    mediaSession.isSongInProgress()
+                    mediaPlayerSession.isSongInProgress()
                 ) {
                     showSongPane()
                 }

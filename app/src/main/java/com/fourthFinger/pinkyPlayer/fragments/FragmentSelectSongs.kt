@@ -58,7 +58,7 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
         // TODO respond to LiveData of all songs
         recyclerViewAdapter = viewModelPlaylists.getAllSongs()?.let {
             RecyclerViewAdapterSelectSongs(this, it)
-        }?: RecyclerViewAdapterSelectSongs(this, listOf())
+        }?: RecyclerViewAdapterSelectSongs(this, setOf())
         recyclerViewSongList?.adapter = recyclerViewAdapter
     }
 
@@ -130,7 +130,7 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
             recyclerViewAdapter.updateList(sifted)
         } else {
             viewModelUserPicks.getUserPickedPlaylist()?.getSongs()?.let {
-                recyclerViewAdapter.updateList(it)
+                recyclerViewAdapter.updateList(it.toList())
             }
         }
     }

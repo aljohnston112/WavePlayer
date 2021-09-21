@@ -5,9 +5,7 @@ import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
-import com.fourthFinger.pinkyPlayer.R
 import java.io.*
-import java.util.*
 
 class AudioUri(
     val displayName: String,
@@ -16,38 +14,20 @@ class AudioUri(
     val id: Long
 ) : Comparable<AudioUri>, Serializable {
 
-    private val nestProbMap: NestedProbMap = NestedProbMap()
-
-    private var duration: Int = -1
-    fun getDuration(context: Context): Int {
-        if (duration == -1) {
+    private var duration: Long = -1
+    fun getDuration(context: Context): Long {
+        if (duration == -1L) {
             val mediaMetadataRetriever = MediaMetadataRetriever()
             mediaMetadataRetriever.setDataSource(context, getUri(id))
             var time =
                 mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
             if (time == null) {
-                time = "00:00:00"
+                time = "0"
             }
-            duration = time.toInt()
+            duration = time.toLong()
             mediaMetadataRetriever.release()
         }
         return duration
-    }
-
-    fun shouldPlay(random: Random): Boolean {
-        return nestProbMap.outcome(random)
-    }
-
-    fun bad(percent: Double): Boolean {
-        return nestProbMap.bad(percent)
-    }
-
-    fun good(percent: Double): Boolean {
-        return nestProbMap.good(percent)
-    }
-
-    fun clearProbabilities() {
-        nestProbMap.clearProbabilities()
     }
 
     override fun compareTo(other: AudioUri): Int {
@@ -63,7 +43,7 @@ class AudioUri(
     }
 
     fun getUri(): Uri {
-        return AudioUri.getUri(id)
+        return getUri(id)
     }
 
     companion object {

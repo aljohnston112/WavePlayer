@@ -60,7 +60,7 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         recyclerViewSongs = binding.recyclerViewSongList
         recyclerViewAdapterSongs = RecyclerViewAdapterSongs(
             this,
-            viewModelPlaylists.getAllSongs() ?: listOf()
+            viewModelPlaylists.getAllSongs()?.toSet() ?: setOf()
         )
         recyclerViewSongs.adapter = recyclerViewAdapterSongs
         recyclerViewSongs.layoutManager = LinearLayoutManager(recyclerViewSongs.context)
@@ -80,7 +80,7 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
             val sifted = viewModelPlaylists.filterAllSongs(newText)
             recyclerViewAdapterSongs.updateList(sifted)
         } else {
-            viewModelPlaylists.getAllSongs()?.let { recyclerViewAdapterSongs.updateList(it) }
+            viewModelPlaylists.getAllSongs()?.let { recyclerViewAdapterSongs.updateList(it.toList()) }
         }
     }
 

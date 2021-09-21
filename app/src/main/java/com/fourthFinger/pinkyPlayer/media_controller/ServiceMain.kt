@@ -10,6 +10,7 @@ import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
+import com.fourthFinger.pinkyPlayer.BitmapUtil
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
@@ -30,7 +31,7 @@ class ServiceMain : LifecycleService() {
     private var serviceStarted = false
     private val serviceMainBinder: IBinder = ServiceMainBinder()
 
-    private val mediaPlayerSession = MediaPlayerSession.getInstance()
+    private val mediaPlayerSession = MediaPlayerSession.getInstance(applicationContext)
     private var mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
 
     // region lifecycle
@@ -308,7 +309,7 @@ class ServiceMain : LifecycleService() {
     private fun updateSongArt(audioUri: AudioUri) {
         // TODO update song art background
         // TODO 92?!
-        val bitmap = BitmapLoader.getThumbnail(
+        val bitmap = BitmapUtil.getThumbnail(
             audioUri.getUri(),
             92,
             92,
@@ -390,14 +391,14 @@ class ServiceMain : LifecycleService() {
     }
 
     private fun taskRemoved() {
-        mediaPlayerSession.taskRemoved(applicationContext)
+        mediaPlayerSession.cleanUp(applicationContext)
         unregisterReceiver(broadcastReceiver)
         stopSelf()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        mediaPlayerSession.taskRemoved(applicationContext)
+        mediaPlayerSession.cleanUp(applicationContext)
         unregisterReceiver(broadcastReceiver)
         stopSelf()
         // TODO remove on release?

@@ -1,12 +1,10 @@
 package com.fourthFinger.pinkyPlayer.media_controller
 
-import android.content.*
+import android.content.Context
 import android.media.MediaPlayer
-import android.media.MediaPlayer.OnCompletionListener
 import android.media.MediaPlayer.OnPreparedListener
 import android.os.Build
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
-import com.fourthFinger.pinkyPlayer.random_playlist.SongQueue
 import java.util.*
 
 class MediaPlayerWUri constructor(
@@ -23,7 +21,6 @@ class MediaPlayerWUri constructor(
 
     @Volatile
     private var shouldPlay: Boolean = false
-    private var onErrorListener: MediaPlayer.OnErrorListener?
 
     fun shouldPlay(shouldPlay: Boolean) {
         synchronized(lock) {
@@ -37,7 +34,7 @@ class MediaPlayerWUri constructor(
 
     fun release() {
         synchronized(lock) {
-            setOnCompletionListener(null)
+            mediaPlayer.setOnCompletionListener(null)
             isPrepared = false
             shouldPlay = false
             mediaPlayer.reset()
@@ -106,34 +103,19 @@ class MediaPlayerWUri constructor(
         }
     }
 
-    fun setOnCompletionListener(onCompletionListener: OnCompletionListener?) {
-        mediaPlayer.setOnCompletionListener(onCompletionListener)
-    }
-
-    fun resetIfMKV(audioUri: AudioUri, context: Context): Boolean {
+    private fun resetIfMKV(audioUri: AudioUri, context: Context): Boolean {
         val s: Array<String> = audioUri.displayName.split("\\.").toTypedArray()
         if (s.isNotEmpty()) {
-            if ((s[s.size - 1].toLowerCase(Locale.ROOT) == "mkv")) {
-                val mediaSession: MediaSession = MediaSession.getInstance(context)
-                val queue = SongQueue.getInstance()
+            if ((s[s.size - 1].lowercase(Locale.ROOT) == "mkv")) {
+                val mediaPlayerSession = MediaPlayerSession.getInstance(context)
                 mediaPlayer.reset()
                 mediaPlayer.release()
                 mediaPlayer = MediaPlayer.create(context, audioUri.getUri())
                 mediaPlayer.setOnPreparedListener(null)
                 mediaPlayer.setOnErrorListener(null)
                 mediaPlayer.setOnPreparedListener(mOnPreparedListener)
-                onErrorListener = MediaPlayer.OnErrorListener { _: MediaPlayer, _: Int, _: Int ->
-                    synchronized(lock) {
-                        mediaSession.releaseMediaPlayers()
-                        queue.addToQueue(audioUri.id)
-                        if (!mediaSession.isSongInProgress()) {
-                            mediaSession.playNext(context)
-                        }
-                        return@OnErrorListener false
-                    }
-                }
-                mediaPlayer.setOnErrorListener(onErrorListener)
-                mediaPlayer.setOnCompletionListener(mediaSession.getOnCompletionListener())
+                mediaPlayer.setOnErrorListener(mediaPlayerSession.onErrorListener)
+                mediaPlayer.setOnCompletionListener(mediaPlayerSession.onCompletionListener)
                 return true
             }
         }
@@ -144,6 +126,8 @@ class MediaPlayerWUri constructor(
         synchronized(this) {
             isPrepared = true
             if (shouldPlay) {
+                val mediaPlayerSession = MediaPlayerSession.getInstance(context)
+                mediaPlayer.setOnCompletionListener(mediaPlayerSession.onCompletionListener)
                 mediaPlayer.start()
                 shouldPlay = false
             }
@@ -155,21 +139,10 @@ class MediaPlayerWUri constructor(
     }
 
     init {
+        val mediaPlayerSession = MediaPlayerSession.getInstance(context)
         mediaPlayer.setOnPreparedListener(null)
         mediaPlayer.setOnErrorListener(null)
         mediaPlayer.setOnPreparedListener(mOnPreparedListener)
-        onErrorListener = MediaPlayer.OnErrorListener { _: MediaPlayer?, _: Int, _: Int ->
-            synchronized(lock) {
-                val mediaSession: MediaSession = MediaSession.getInstance(context)
-                val queue = SongQueue.getInstance()
-                mediaSession.releaseMediaPlayers()
-                queue.addToQueue(id)
-                if (!mediaSession.isSongInProgress()) {
-                    mediaSession.playNext(context)
-                }
-                return@OnErrorListener false
-            }
-        }
-        mediaPlayer.setOnErrorListener(onErrorListener)
+        mediaPlayer.setOnErrorListener(mediaPlayerSession.onErrorListener)
     }
 }

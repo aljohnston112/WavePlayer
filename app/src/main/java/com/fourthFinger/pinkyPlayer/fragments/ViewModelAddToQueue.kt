@@ -9,6 +9,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.fourthFinger.pinkyPlayer.activity_main.DialogFragmentAddToPlaylist
+import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerSession
 import com.fourthFinger.pinkyPlayer.media_controller.MediaSession
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
@@ -50,7 +51,8 @@ class ViewModelAddToQueue(application: Application): AndroidViewModel(applicatio
         // TODO Song will play even though user might not want it.
         // Should be able to show the song pane with the first song.
         val mediaSession: MediaSession = MediaSession.getInstance(context)
-        if (!mediaSession.isSongInProgress()) {
+        val mediaPlayerSession = MediaPlayerSession.getInstance(context)
+        if (!mediaPlayerSession.isSongInProgress()) {
             mediaSession.playNext(context)
         }
     }
@@ -78,7 +80,8 @@ class ViewModelAddToQueue(application: Application): AndroidViewModel(applicatio
         val mediaSession: MediaSession = MediaSession.getInstance(context)
         val songQueue = SongQueue.getInstance()
         songQueue.addToQueue(song.id)
-        if (!mediaSession.isSongInProgress()) {
+        val mediaPlayerSession = MediaPlayerSession.getInstance(context)
+        if (!mediaPlayerSession.isSongInProgress()) {
             mediaSession.playNext(context)
         }
     }
@@ -88,13 +91,14 @@ class ViewModelAddToQueue(application: Application): AndroidViewModel(applicatio
         // TODO stop MasterPlaylist from continuing after queue is done
         // shuffle is off and looping is on or something like that?
         val mediaSession: MediaSession = MediaSession.getInstance(context)
+        val mediaPlayerSession = MediaPlayerSession.getInstance(context)
         mediaSession.setCurrentPlaylistToMaster(context)
         val songQueue = SongQueue.getInstance()
         val songs = randomPlaylist.getSongs()
         for (song in songs) {
             songQueue.addToQueue(song.id)
         }
-        if (!mediaSession.isSongInProgress()) {
+        if (!mediaPlayerSession.isSongInProgress()) {
             mediaSession.playNext(context)
         }
     }

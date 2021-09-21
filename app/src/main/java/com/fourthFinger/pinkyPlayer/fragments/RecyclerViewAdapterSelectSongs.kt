@@ -13,7 +13,7 @@ import com.fourthFinger.pinkyPlayer.random_playlist.Song
 
 class RecyclerViewAdapterSelectSongs(
         private val listenerCallbackSelectSongs: ListenerCallbackSelectSongs,
-        allSongs: List<Song>
+        allSongs: Set<Song>
 ) : ListAdapter<Song, RecyclerViewAdapterSelectSongs.ViewHolder>(
     Song.DiffUtilItemCallbackSongs()
 ) {
@@ -67,7 +67,7 @@ class RecyclerViewAdapterSelectSongs(
     }
     
     init{
-        submitList(allSongs)
+        submitList(allSongs.toList())
     }
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {

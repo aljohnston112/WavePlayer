@@ -22,8 +22,6 @@ import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.FragmentPaneSongBinding
-import com.fourthFinger.pinkyPlayer.media_controller.MediaSession
-import com.fourthFinger.pinkyPlayer.media_controller.MediaSession.Companion.getInstance
 import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerSession
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 
@@ -35,8 +33,7 @@ class FragmentPaneSong : Fragment() {
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
     private val viewModelFragmentPaneSong by viewModels<ViewModelFragmentPaneSong>()
 
-    private var mediaSession: MediaSession = getInstance(requireActivity().applicationContext)
-    private val mediaPlayerModel = MediaPlayerSession.getInstance()
+    private val mediaPlayerSession = MediaPlayerSession.getInstance(requireActivity().applicationContext)
 
     private var songArtWidth = 0
     private var visible = false
@@ -63,7 +60,7 @@ class FragmentPaneSong : Fragment() {
                     songArtWidth = binding.imageViewSongPaneSongArt.width
                 }
                 // TODO is this needed?
-                updateSongUI(mediaPlayerModel.currentAudioUri.value)
+                updateSongUI(mediaPlayerSession.currentAudioUri.value)
                 setUpPrev()
                 setUpNext()
             }
@@ -71,7 +68,7 @@ class FragmentPaneSong : Fragment() {
 
     fun updateSongUI(currentAudioUri: AudioUri?) {
         // TODO Get rid of mediaModel check via LiveData
-        if (currentAudioUri != null && visible && mediaSession.isSongInProgress()) {
+        if (currentAudioUri != null && visible && mediaPlayerSession.isSongInProgress()) {
             binding.textViewSongPaneSongName.text = currentAudioUri.title
             binding.imageViewSongPaneSongArt.post(runnableSongPaneArtUpdater)
         }
@@ -80,7 +77,7 @@ class FragmentPaneSong : Fragment() {
     private var runnableSongPaneArtUpdater = Runnable {
         val imageViewSongPaneSongArt: ImageView = binding.imageViewSongPaneSongArt
         val bitmapSongArt: Bitmap? = BitmapUtil.getThumbnailBitmap(
-            mediaPlayerModel.currentAudioUri.value,
+            mediaPlayerSession.currentAudioUri.value,
             songArtWidth,
             requireActivity().applicationContext
         )
@@ -219,7 +216,7 @@ class FragmentPaneSong : Fragment() {
                         R.string.broadcast_receiver_action_service_connected
                     )
                 ) {
-                    updateSongUI(mediaPlayerModel.currentAudioUri.value)
+                    updateSongUI(mediaPlayerSession.currentAudioUri.value)
                 } else if (action == resources.getString(
                         R.string.broadcast_receiver_action_loaded
                     )
@@ -232,11 +229,11 @@ class FragmentPaneSong : Fragment() {
     }
 
     private fun setUpObservers() {
-        mediaPlayerModel.currentAudioUri.observe(viewLifecycleOwner) { currentAudioUri: AudioUri? ->
+        mediaPlayerSession.currentAudioUri.observe(viewLifecycleOwner) { currentAudioUri: AudioUri? ->
             // TODO make sure this works as intended
             updateSongUI(currentAudioUri)
         }
-        mediaPlayerModel.isPlaying.observe(viewLifecycleOwner) { isPlaying: Boolean? ->
+        mediaPlayerSession.isPlaying.observe(viewLifecycleOwner) { isPlaying: Boolean? ->
             if (isPlaying != null) {
                 setUpPlayButton(isPlaying)
             }

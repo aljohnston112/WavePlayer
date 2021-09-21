@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
 import com.fourthFinger.pinkyPlayer.NavUtil
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
+import com.fourthFinger.pinkyPlayer.random_playlist.SettingsRepo
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
 
 class ViewModelFragmentTitle : ViewModel() {
@@ -57,6 +58,7 @@ class ViewModelFragmentTitle : ViewModel() {
                     RandomPlaylist(
                         it,
                         songs,
+                        SettingsRepo.getInstance().getMaxPercent(),
                         false
                     )
                 }

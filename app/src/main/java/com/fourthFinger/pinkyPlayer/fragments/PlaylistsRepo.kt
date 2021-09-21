@@ -2,7 +2,7 @@ package com.fourthFinger.pinkyPlayer.fragments
 
 import android.content.Context
 import androidx.room.Room
-import com.fourthFinger.pinkyPlayer.media_controller.MediaData
+import com.fourthFinger.pinkyPlayer.media_controller.MediaLoader
 import com.fourthFinger.pinkyPlayer.media_controller.SaveFile
 import com.fourthFinger.pinkyPlayer.media_controller.ServiceMain
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
@@ -55,7 +55,7 @@ class PlaylistsRepo private constructor(context: Context) {
         return masterPlaylist
     }
 
-    fun getAllSongs(): List<Song>? {
+    fun getAllSongs(): Set<Song>? {
         return masterPlaylist?.getSongs()
     }
 
@@ -81,8 +81,10 @@ class PlaylistsRepo private constructor(context: Context) {
         songDAO.delete(it)
     }
 
-    fun addPlaylistFromSaveFile(randomPlaylist: RandomPlaylist) {
-        playlists.add(randomPlaylist)
+    fun addPlaylistsFromSaveFile(randomPlaylist: List<RandomPlaylist>) {
+        for(p in randomPlaylist) {
+            playlists.add(p)
+        }
     }
 
     fun doesPlaylistExist(playlistName: String): Boolean {
@@ -112,7 +114,7 @@ class PlaylistsRepo private constructor(context: Context) {
     init {
         val songDatabase = Room.databaseBuilder(
             context, SongDatabase::class.java,
-            MediaData.SONG_DATABASE_NAME
+            MediaLoader.SONG_DATABASE_NAME
         ).build()
         songDAO = songDatabase.songDAO()
     }

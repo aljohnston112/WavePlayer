@@ -3,6 +3,8 @@ package com.fourthFinger.pinkyPlayer.random_playlist
 import java.io.Serializable
 import java.util.*
 
+const val MIN_VALUE = 0.0000000000000005
+
 /**
  * A tree node where a set of elements are picked from a probability function to decide which child node
  * will produce the next element when fun() is called.
@@ -11,107 +13,84 @@ import java.util.*
  * @author Alexander Johnston
  * @since Copyright 2020
 </T> */
-open class ProbFun<T : Comparable<T>> : Serializable {
+// TODO fix max percent like the constructor
+sealed class ProbFun<T>(
+    choices: Set<T>,
+    maxPercent: Double,
+    comparable: Boolean
+) : Serializable, Cloneable {
 
-     @Transient val settingsRepo = SettingsRepo.getInstance()
+    class ProbFunLinkedMap<T>(
+        choices: Set<T>, maxPercent: Double
+    ) : ProbFun<T>(choices, maxPercent, false){
+        fun swapTwoPositions(oldPosition: Int, newPosition: Int) {
+            val oldMap = probabilityMap
+            val keys = ArrayList(oldMap.keys)
+            Collections.swap(keys, oldPosition, newPosition)
+            val swappedMap = LinkedHashMap<T, Double>()
+            for (key in keys) {
+                swappedMap[key] = oldMap[key] ?: error("Problem swapping elements")
+            }
+            probabilityMap = swappedMap
+        }
 
-    // The set of elements to be picked from, mapped to the probabilities of getting picked
-    private lateinit var probabilityMap: MutableMap<T, Double>
-    fun getKeys(): MutableList<T> {
-        return ArrayList(probabilityMap.keys)
+        fun switchOnesPosition(oldPosition: Int, newPosition: Int) {
+            val oldMap = probabilityMap
+            val keys = ArrayList(oldMap.keys)
+            val d = keys[oldPosition]
+            keys.removeAt(oldPosition)
+            keys.add(newPosition, d)
+            val switchedMap = LinkedHashMap<T, Double>()
+            for (key in keys) {
+                switchedMap[key] = oldMap[key]!!
+            }
+            probabilityMap = switchedMap
+        }
     }
 
-    // The unique id of this ProbFunTree
-    private var id = 0
+    class ProbFunTreeMap<T : Comparable<T>>(
+        choices: Set<T>, maxPercent: Double
+    ) : ProbFun<T>(choices, maxPercent, true)
+
+    private val settingsRepo = SettingsRepo.getInstance()
+
+    // The set of elements to be picked from, mapped to the probabilities of getting picked
+    protected var probabilityMap: MutableMap<T, Double>
+
     private var roundingError = 0.0
 
-    protected constructor(choices: MutableSet<T>, comparable: Boolean) {
-        Objects.requireNonNull(choices)
-        require(choices.size >= 1) { "Must have at least 1 element in the choices passed to the ProbFunTree constructor\n" }
-        // Invariants secured
-        if (comparable) {
-            probabilityMap = TreeMap()
-        } else {
-            probabilityMap = LinkedHashMap()
+    private var _maxPercent = -1.0
+    fun maxPercent() = _maxPercent
+    fun setMaxPercent(maxPercent: Double) {
+        require((maxPercent > (0.0) && maxPercent <= 1.0)) {
+            "maxPercent passed into the ProbFunTree constructor must be above 0 and under 1.0" +
+                    "value was $maxPercent"
         }
+        _maxPercent = if (maxPercent == 1.0) {
+            (1.0 - (size().toDouble() * MIN_VALUE))
+        } else if (maxPercent < 1.0 / size().toDouble()) {
+            1.0 / size().toDouble()
+        } else {
+            maxPercent
+        }
+    }
+
+    private val id by lazy { hashCode() }
+
+    init {
+        Objects.requireNonNull(choices)
+        require(choices.isNotEmpty()) {
+            "Must have at least 1 element in the choices passed to the ProbFunTree constructor\n"
+        }
+        require(choices.size < 2000000000000000) {
+            "ProbFun will not work with a size greater than 2,000,000,000,000,000"
+        }
+        probabilityMap = if (comparable) TreeMap() else LinkedHashMap()
         for (choice in choices) {
             probabilityMap[choice] = 1.0 / choices.size
         }
         fixProbSum()
-    }
-
-    /**
-     * Scales the probabilities so they add up to 1.0.
-     */
-    private fun scaleProbs() {
-        val scale = 1.0 / probSum()
-        val probabilities: MutableSet<MutableMap.MutableEntry<T, Double>> = probabilityMap.entries
-        for (e in probabilities) {
-            e.setValue(e.value * scale)
-        }
-        fixProbSum()
-    }
-
-    /**
-     * @return the sum of all the probabilities in order to fix rounding error.
-     */
-    private fun probSum(): Double {
-        val probabilities = probabilityMap.values
-        var sum = 0.0
-        for (d in probabilities) {
-            sum += d
-        }
-        return sum
-    }
-
-    /**
-     * Fixes rounding error in the probabilities by adding up the probabilities
-     * and changing the first probability so all probabilities add up to 1.0.
-     */
-    private fun fixProbSum() {
-        var firstProb = probabilityMap.entries.iterator().next()
-        roundingError = 1.0 - probSum()
-        while (firstProb.value * 2.0 < roundingError) {
-            var p: Double
-            for (e in probabilityMap.entries) {
-                p = e.value
-                p += roundingError / probabilityMap.size
-                e.setValue(p)
-            }
-            firstProb = probabilityMap.entries.iterator().next()
-            roundingError = 1.0 - probSum()
-        }
-        firstProb.setValue(firstProb.value + roundingError)
-    }
-
-    /**
-     * Sets the probabilities to there being an equal chance of getting any element from this ProbFunTree.
-     */
-    fun clearProbabilities() {
-        for (e in probabilityMap.entries) {
-            e.setValue(1.0)
-        }
-        scaleProbs()
-    }
-
-    /**
-     * Lowers the probabilities so there is about at most a low chance of getting any element from this ProbFunTree.
-     *
-     * @param low as the lowest chance of an object being returned when fun() is called.
-     */
-    fun lowerProbs(low: Double) {
-        // TODO address higher probs and if prob is unreasonably low (1.0/n).
-        val probs: MutableCollection<T> = probabilityMap.keys
-        for (t in probs) {
-            while (probabilityMap[t]!! > low) {
-                probabilityMap[t] = low
-            }
-            scaleProbs()
-        }
-    }
-
-    fun getProbability(t: T): Double {
-        return probabilityMap[t] ?: 0.0
+        setMaxPercent(maxPercent)
     }
 
     /**
@@ -124,14 +103,11 @@ open class ProbFun<T : Comparable<T>> : Serializable {
      */
     fun add(element: T) {
         Objects.requireNonNull(element)
-        // Invariants secured
-        val probability = 1.0 / probabilityMap.size
         if (!probabilityMap.containsKey(element)) {
+            val probability = 1.0 / probabilityMap.size
             probabilityMap[element] = probability
-        } else {
-            return
+            scaleProbs()
         }
-        scaleProbs()
     }
 
     /**
@@ -145,14 +121,22 @@ open class ProbFun<T : Comparable<T>> : Serializable {
      */
     fun add(element: T, percent: Double) {
         Objects.requireNonNull(element)
-        require(!(percent >= 1.0 || percent <= 0.0)) { "percent passed to add() is not between 0.0 and 1.0 (exclusive)" }
-        // Invariants secured
-        val scale = 1.0 - percent
-        val probabilities: MutableSet<MutableMap.MutableEntry<T, Double>> = probabilityMap.entries
+        require(percent in 0.0..1.0) {
+            "percent passed to add() is not between 0.0 and 1.0 (exclusive)"
+        }
+        val realPercent: Double = if (percent < MIN_VALUE) {
+            (1.0 / size().toDouble())
+        } else if (percent > (1.0 - ((size().toDouble() + 1.0) * MIN_VALUE))) {
+            1.0 - ((size().toDouble() + 1.0) * MIN_VALUE)
+        } else {
+            percent
+        }
+        val scale = 1.0 - realPercent
+        val probabilities = probabilityMap.entries.toList()
         for (e in probabilities) {
             e.setValue(e.value * scale)
         }
-        probabilityMap[element] = percent
+        probabilityMap[element] = realPercent
         scaleProbs()
     }
 
@@ -164,19 +148,107 @@ open class ProbFun<T : Comparable<T>> : Serializable {
      * @throws NullPointerException if element is null.
      */
     fun remove(element: T): Boolean {
+        Objects.requireNonNull(element)
         if (size() == 1) {
             return false
         }
-        // Invariants secured
         if (probabilityMap.remove(element) == null) {
             return false
         }
         scaleProbs()
+        fixMaxPercent()
+        fixProbSum()
         return true
+    }
+
+    /**
+     * Removes elements with the lowest probability of occurring when [next] is called.
+     * If elements have the same maximum probability of occurring, no elements will be removed.
+     * If after a removal,
+     * elements have the same maximum probability of occurring,
+     * no more elements will be removed.
+     * If [size] == 1, no elements will be removed.
+     * If [size] == 1 after a removal, no more elements will be removed.
+     */
+    fun prune() {
+        // TODO fix MaxPercent for prune
+        if (size() == 1) {
+            return
+        }
+        val min = probabilityMap.values.minOrNull()
+        val max = probabilityMap.values.maxOrNull()
+        if (max == min || max == null || min == null) {
+            return
+        }
+        val probabilities = probabilityMap.entries
+        val it = probabilities.iterator()
+        while (it.hasNext()) {
+            val e = it.next()
+            if (e.value <= min && e.value < (max - roundingError)) {
+                it.remove()
+                if (size() == 1) {
+                    scaleProbs()
+                    return
+                }
+            }
+        }
+        scaleProbs()
+    }
+
+    /**
+     * Removes elements with lower than [percent] probability of occurring when [next] is called.
+     * If elements have the same maximum probability of occurring, no elements will be removed.
+     * If after a removal,
+     * elements have the same maximum probability of occurring,
+     * no more elements will be removed.
+     * If parentSize() == 1, no elements will be removed.
+     * If parentSize() == 1 after a removal, no more elements will be removed.
+     * @param  percent as the upper limit, inclusive, of the probability of elements being returned to be removed from this ProbFunTree.
+     * @throws IllegalArgumentException if percent is not between 0.0 and 1.0 (exclusive)
+     */
+    fun prune(percent: Double) {
+        // TODO fix MaxPercent for prune
+        if (percent >= 1.0 || percent <= 0.0) {
+            throw IllegalArgumentException("percent passed to prune() is not between 0.0 and 1.0 (exclusive)")
+        }
+        val max = probabilityMap.values.maxOrNull()
+        val min = probabilityMap.values.minOrNull()
+        if (size() == 1 || max == null || min == null || (max <= percent && min == max)) {
+            return
+        }
+        val probabilities = probabilityMap.entries
+        val it: MutableIterator<Map.Entry<T, Double>> = probabilities.iterator()
+        var e: Map.Entry<T, Double>
+        while (it.hasNext()) {
+            e = it.next()
+            if (e.value <= percent && e.value < max - roundingError) {
+                it.remove()
+                if (size() == 1) {
+                    scaleProbs()
+                    fixMaxPercent()
+                    fixProbSum()
+                    return
+                }
+            }
+        }
+        scaleProbs()
+        fixMaxPercent()
+        fixProbSum()
     }
 
     operator fun contains(t: T): Boolean {
         return probabilityMap.containsKey(t)
+    }
+
+    fun getKeys() = probabilityMap.keys
+
+    /**
+     * Returns the number of elements in this ProbFunTree.
+     *
+     * @return the number of elements in this ProbFunTree.
+     */
+    fun size(): Int {
+        return probabilityMap.size
     }
 
     /**
@@ -185,37 +257,36 @@ open class ProbFun<T : Comparable<T>> : Serializable {
      * @param element as the element to make appear more often
      * @param percent as the percentage between 0 and 1 (exclusive),
      * of the probability of getting element to add to the probability.
-     * @param scale   as whether or not to scale the percent down
-     * to avoid hitting a ceiling for the probability.
      * @return the adjusted probability.
      * @throws NullPointerException     if element is null.
      * @throws IllegalArgumentException if the percent isn't between 0 and 1 exclusive.
      */
-    fun good(element: T, scale: Boolean): Double {
-        var percent = settingsRepo.getPercentChangeUp()
-        require(!(percent >= 1.0 || percent <= 0.0)) { "percent passed to good() is not between 0.0 and 1.0 (exclusive)" }
-        // Invariants secured
+    fun good(element: T): Double {
+        Objects.requireNonNull(element)
+        val percent = settingsRepo.getPercentChangeUp()
+        require((percent < 1.0 && percent > 0.0)) {
+            "percent passed to good() is not between 0.0 and 1.0 (exclusive)"
+        }
+        if ((!contains(element)) || (probabilityMap[element]!! >= maxPercent())) return -1.0
         val oldProb = probabilityMap[element] ?: return -1.0
         var add = probToAddForGood(oldProb, percent)
-        if (scale) {
-            while (oldProb + add >= settingsRepo.getMaxPercent() - roundingError) {
-                percent *= percent
-                add = probToAddForGood(oldProb, percent)
-            }
-        } else if (oldProb + add >= settingsRepo.getMaxPercent() - roundingError) {
-            return oldProb
+        var newPercent = percent
+        while (oldProb + add > maxPercent() - roundingError) {
+            newPercent *= percent
+            add = probToAddForGood(oldProb, newPercent)
         }
         val goodProbability = oldProb + add
+        if (goodProbability >= (1.0 - (size() * MIN_VALUE))) return -1.0
         probabilityMap[element] = goodProbability
         val leftover = 1.0 - goodProbability
         val sumOfLeftovers = probSum() - goodProbability
         val leftoverScale = leftover / sumOfLeftovers
-        for (e in probabilityMap.entries) {
-            e.setValue(e.value * leftoverScale)
+        for (e in probabilityMap.entries.toList()) {
+            probabilityMap[e.key] = (e.value * leftoverScale)
         }
         probabilityMap[element] = goodProbability
         fixProbSum()
-        return probabilityMap.get(element)?: -1.0
+        return probabilityMap[element]!!
     }
 
     private fun probToAddForGood(oldProb: Double, percent: Double): Double {
@@ -237,24 +308,165 @@ open class ProbFun<T : Comparable<T>> : Serializable {
      * @throws IllegalArgumentException if the percent isn't between 0 and 1 exclusive.
      */
     fun bad(element: T): Double {
+        // TODO Fix how maxPercent can be lower than the max prob here
         Objects.requireNonNull(element)
         val percent = settingsRepo.getPercentChangeDown()
-        require(!(percent >= 1.0 || percent <= 0.0)) { "percent passed to good() is not between 0.0 and 1.0 (exclusive)" }
-        // Invariants secured
+        require((percent < 1.0 && percent > 0.0)) {
+            "percent passed to good() is not between 0.0 and 1.0 (exclusive)"
+        }
         val oldProb = probabilityMap[element] ?: return -1.0
         val sub = oldProb * percent
         if (oldProb - sub <= roundingError) return oldProb
         val badProbability = oldProb - sub
+        if (badProbability <= (size() * MIN_VALUE)) return -1.0
         probabilityMap[element] = badProbability
         val leftover = 1.0 - badProbability
         val sumOfLeftovers = probSum() - badProbability
         val leftoverScale = leftover / sumOfLeftovers
-        for (e in probabilityMap.entries) {
-            e.setValue(e.value * leftoverScale)
+        for (e in probabilityMap.entries.toList()) {
+            probabilityMap[e.key] = (e.value * leftoverScale)
         }
         probabilityMap[element] = badProbability
+        fixMaxPercent()
         fixProbSum()
-        return probabilityMap[element] ?: -1.0
+        return probabilityMap[element]!!
+    }
+
+    private fun fixMaxPercent() {
+        var maxCount = 0
+        var notMaxCount = 0
+        for (prob in probabilityMap.entries) {
+            if (prob.value >= maxPercent()) {
+                probabilityMap[prob.key] = maxPercent()
+                maxCount++
+            } else {
+                notMaxCount++
+            }
+        }
+        val maxes = maxCount.toDouble() * maxPercent()
+        val leftover = 1.0 - maxes
+        var leftoverSum = 0.0
+        for (prob in probabilityMap.values) {
+            if (prob < maxPercent()) {
+                leftoverSum += prob
+            }
+        }
+        val addToNonMax = (leftover - leftoverSum) / notMaxCount.toDouble()
+        var tooMuch = false
+        for (prob in probabilityMap.entries) {
+            if (prob.value < maxPercent()) {
+                val p = prob.value + addToNonMax
+                probabilityMap[prob.key] = p
+                if (p > maxPercent()) {
+                    tooMuch = true
+                }
+            }
+        }
+        if (tooMuch) {
+            var same = true
+            val p = probabilityMap.values.iterator().next()
+            for (prob in probabilityMap.values) {
+                if (prob !in (p - roundingError)..(p + roundingError)) {
+                    same = false
+                }
+            }
+            if(!same) {
+                fixMaxPercent()
+            } else{
+                setMaxPercent(p)
+            }
+        }
+    }
+
+    /**
+     * Lowers the probabilities so there is about at most
+     * [low] chance of getting any element from this ProbFunTree.
+     * @param low as the low chance between 0.0 and 1.0.
+     */
+    fun lowerProbs(low: Double) {
+        require((low >= (size() * MIN_VALUE)) && low <= (1.0 - (size() * MIN_VALUE)))
+        val probs: Collection<T> = probabilityMap.keys.toList()
+        for (t in probs) {
+            if (probabilityMap[t]!! > low) {
+                probabilityMap[t] = low
+            }
+        }
+        var maxSum = 0.0
+        var otherSum = 0.0
+        for (t in probs) {
+            if (probabilityMap[t] == low) {
+                maxSum += probabilityMap[t]!!
+            } else {
+                otherSum += probabilityMap[t]!!
+            }
+        }
+        val leftovers = 1.0 - maxSum
+        val scale = leftovers / otherSum
+        for (t in probs) {
+            if (probabilityMap[t] != low) {
+                probabilityMap[t] = probabilityMap[t]!! * scale
+            }
+        }
+        scaleProbs()
+        fixMaxPercent()
+        fixProbSum()
+    }
+
+    /**
+     * Sets the probabilities to there being an equal chance of getting any element from this ProbFunTree.
+     */
+    fun resetProbabilities() {
+        for (e in probabilityMap.entries.toList()) {
+            probabilityMap[e.key] = 1.0
+        }
+        scaleProbs()
+    }
+
+    /**
+     * Fixes rounding error in the probabilities by adding up the probabilities
+     * and changing the first probability so all probabilities add up to 1.0.
+     * TODO This is a terrible solution to the rounding error
+     */
+    private fun fixProbSum() {
+        roundingError = 1.0 - probSum()
+        var firstProb = probabilityMap.entries.iterator().next()
+        while (firstProb.value * 2.0 < roundingError) {
+            var p: Double
+            for (e in probabilityMap.entries) {
+                p = e.value + (roundingError / probabilityMap.size.toDouble())
+                e.setValue(p)
+            }
+            firstProb = probabilityMap.entries.iterator().next()
+        }
+        firstProb.setValue(firstProb.value + roundingError)
+    }
+
+    /**
+     * @return the sum of all the probabilities in order to fix rounding error.
+     */
+    private fun probSum(): Double {
+        val probabilities = probabilityMap.values.toList()
+        var sum = 0.0
+        for (p in probabilities) {
+            sum += p
+        }
+        return sum
+    }
+
+    /**
+     * Scales the probabilities so they add up to 1.0.
+     */
+    private fun scaleProbs() {
+        val scale = 1.0 / probSum()
+        val probabilities = probabilityMap.entries.toList()
+        for (e in probabilities) {
+            e.setValue(e.value * scale)
+        }
+        fixProbSum()
+    }
+
+    fun getProbability(t: T): Double {
+        return probabilityMap[t]!!
     }
 
     /**
@@ -263,105 +475,50 @@ open class ProbFun<T : Comparable<T>> : Serializable {
      * @return a randomly picked element from this ProbFunTree.
      * Any changes in the element will be reflected in this ProbFunTree.
      */
-    fun `fun`(random: Random): T {
-        return nextValue(random)
-    }
-
-    /**
-     * For generating the next value.
-     *
-     * @return the next generated value.
-     */
-    private fun nextValue(random: Random): T {
+    fun next(random: Random): T {
         val randomChoice = random.nextDouble()
+        val entries = probabilityMap.entries.iterator()
+        var element: T? = null
         var sumOfProbabilities = 0.0
-        val entries: MutableIterator<MutableMap.MutableEntry<T, Double>> = probabilityMap.entries.iterator()
-        lateinit var element: T
-        var e: MutableMap.MutableEntry<T, Double>
+        var e: Map.Entry<T, Double>
         while (randomChoice > sumOfProbabilities) {
             e = entries.next()
             element = e.key
             sumOfProbabilities += e.value
         }
-        return element
-    }
-
-    /**
-     * Returns the number of elements in this ProbFunTree.
-     *
-     * @return the number of elements in this ProbFunTree.
-     */
-    fun size(): Int {
-        return probabilityMap.size
-    }
-
-    /**
-     * Private copy constructor for clone
-     *
-     * @param probFun as the ProbFunTree to copy
-     */
-    private constructor(probFun: ProbFun<T>) {
-        for ((key, value) in probFun.probabilityMap) {
-            probabilityMap[key] = value
-        }
-        roundingError = probFun.roundingError
-        id = 0
-    }
-
-    fun clone(): ProbFun<T> {
-        return ProbFun(this)
+        return element!!
     }
 
     override fun toString(): String {
-        if (id == 0) {
-            id = System.identityHashCode(this)
-        }
+        val id = hashCode()
         val sb = StringBuilder()
         sb.append("PF ")
         sb.append(id)
         sb.append(": [")
-        for ((key, value) in probabilityMap) {
+        for ((key, value) in probabilityMap.toList()) {
             sb.append("[")
             sb.append(key)
             sb.append(" = ")
             sb.append(value * 100.0)
             sb.append("%],")
         }
-        sb.append("\n")
+        sb.deleteCharAt(sb.length - 1)
         return sb.toString()
     }
 
-    override fun hashCode(): Int {
-        if (id == 0) {
-            id = System.identityHashCode(this)
-        }
-        return id
-    }
+    override fun hashCode() = System.identityHashCode(this)
 
-    fun swapPositions(oldPosition: Int, newPosition: Int) {
-        val oldMap = probabilityMap
-        val keySetList = ArrayList(oldMap.keys)
-        Collections.swap(keySetList, oldPosition, newPosition)
-        val swappedMap = LinkedHashMap<T, Double>()
-        for (oldSwappedKey in keySetList) {
-            swappedMap[oldSwappedKey] = oldMap[oldSwappedKey]!!
+    override fun equals(other: Any?): Boolean {
+        if (other is ProbFun<*>) {
+            return hashCode() == other.hashCode()
         }
-        probabilityMap = swappedMap
-    }
-
-    fun switchPositions(oldPosition: Int, newPosition: Int) {
-        val oldMap = probabilityMap
-        val keySetList = ArrayList(oldMap.keys)
-        keySetList.add(newPosition, keySetList[oldPosition])
-        keySetList.removeAt(oldPosition + 1)
-        val swappedMap = LinkedHashMap<T, Double>()
-        for (oldSwappedKey in keySetList) {
-            swappedMap[oldSwappedKey] = oldMap[oldSwappedKey]!!
-        }
-        probabilityMap = swappedMap
+        return false
     }
 
     companion object {
+
         private const val serialVersionUID = -6556634307811294014L
+
     }
+
 }

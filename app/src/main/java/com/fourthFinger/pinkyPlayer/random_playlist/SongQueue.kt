@@ -7,12 +7,11 @@ class SongQueue private constructor() {
     // TODO Add methods to add and delete songs from the queue
     private val songQueue: LinkedList<Long> = LinkedList()
     private var songQueueIterator: MutableListIterator<Long>
-    fun isEmpty(): Boolean {
-        return songQueue.size == 0
-    }
+
     operator fun hasNext(): Boolean {
         return songQueueIterator.hasNext()
     }
+
     operator fun next(): Long {
         if (!hasNext()) {
             throw NoSuchElementException()
@@ -28,19 +27,24 @@ class SongQueue private constructor() {
         }
         return songQueueIterator.previous()
     }
-    fun clearSongQueue() {
+
+    private fun clearSongQueue() {
         songQueue.clear()
         songQueueIterator = songQueue.listIterator()
     }
+
     fun goToFront() {
         songQueueIterator = songQueue.listIterator()
     }
+
     fun goToBack() {
         songQueueIterator = songQueue.listIterator(songQueue.size)
     }
+
     fun addToQueue(songID: Long) {
         songQueue.add(songID)
-        songQueueIterator = songQueue.listIterator(songQueue.lastIndexOf(songID))
+        // TODO seems to be unneeded due to method name, but may have a purpose
+        // songQueueIterator = songQueue.listIterator(songQueue.lastIndexOf(songID))
     }
 
     fun newSessionStarted(song: Song) {
@@ -54,6 +58,7 @@ class SongQueue private constructor() {
 
     companion object {
         private var INSTANCE: SongQueue? = null
+
         @Synchronized
         fun getInstance(): SongQueue {
             if (INSTANCE == null) {
@@ -61,6 +66,7 @@ class SongQueue private constructor() {
             }
             return INSTANCE!!
         }
+
     }
 
 }

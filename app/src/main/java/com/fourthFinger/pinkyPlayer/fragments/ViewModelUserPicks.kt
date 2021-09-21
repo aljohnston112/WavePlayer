@@ -12,10 +12,7 @@ import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerSession
 import com.fourthFinger.pinkyPlayer.media_controller.MediaSession
 import com.fourthFinger.pinkyPlayer.media_controller.SaveFile
-import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
-import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
-import com.fourthFinger.pinkyPlayer.random_playlist.Song
-import com.fourthFinger.pinkyPlayer.random_playlist.SongQueue
+import com.fourthFinger.pinkyPlayer.random_playlist.*
 import java.util.*
 
 class ViewModelUserPicks(application: Application) : AndroidViewModel(application)  {
@@ -66,7 +63,7 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
     }
 
     fun songClicked(context: Context, navController: NavController, song: Song) {
-        val mediaPlayerSession = MediaPlayerSession.getInstance()
+        val mediaPlayerSession = MediaPlayerSession.getInstance(context)
         val mediaSession: MediaSession = MediaSession.getInstance(context)
         synchronized(ActivityMain.MUSIC_CONTROL_LOCK) {
             // TODO pass this in?
@@ -212,7 +209,12 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
                 song.setSelected(false)
             }
         } else {
-            finalPlaylist = RandomPlaylist(playlistName, userPickedSongs, false)
+            finalPlaylist = RandomPlaylist(
+                playlistName,
+                userPickedSongs,
+                SettingsRepo.getInstance().getMaxPercent(),
+                false
+            )
         }
         finalPlaylist?.let { playlistsRepo.addPlaylist(context, it) }
     }
@@ -260,7 +262,7 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
     private var probability: Double? = null
 
     fun notifySongRemoved(context: Context, position: Int) {
-        song = userPickedPlaylist?.getSongs()?.get(position)
+        song = userPickedPlaylist?.getSongs()?.toList()?.get(position)
         probability = song?.let { userPickedPlaylist?.getProbability(it) }
         if (userPickedPlaylist?.size() == 1) {
             userPickedPlaylist?.let {
@@ -288,7 +290,7 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
     fun filterPlaylistSongs(string: String): List<Song> {
         // TODO fix bug where you can reorder songs when sifted
         // I think this is fixed
-        val songs: List<Song>? = userPickedPlaylist?.getSongs()
+        val songs: Set<Song>? = userPickedPlaylist?.getSongs()
         val sifted: MutableList<Song> = ArrayList<Song>()
         if (songs != null) {
             for (song in songs) {

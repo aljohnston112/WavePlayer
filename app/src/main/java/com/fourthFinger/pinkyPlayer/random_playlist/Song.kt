@@ -8,13 +8,16 @@ import androidx.room.PrimaryKey
 import java.io.Serializable
 
 @Entity(tableName = "songs")
-class Song(@field:PrimaryKey val id: Long, @field:ColumnInfo(name = "title") val title: String) : Comparable<Song>, Serializable {
+class Song(
+    @field:PrimaryKey val id: Long,
+    @field:ColumnInfo(name = "title") val title: String
+) : Comparable<Song>, Serializable {
+
     @Ignore
     private var selected = false
     fun isSelected(): Boolean {
         return selected
     }
-
     fun setSelected(selected: Boolean) {
         this.selected = selected
     }
@@ -31,7 +34,7 @@ class Song(@field:PrimaryKey val id: Long, @field:ColumnInfo(name = "title") val
         return System.identityHashCode(this)
     }
 
-    class DiffUtilItemCallbackSongs : DiffUtil.ItemCallback<Song>(){
+    class DiffUtilItemCallbackSongs : DiffUtil.ItemCallback<Song>() {
         override fun areItemsTheSame(oldItem: Song, newItem: Song): Boolean {
             return oldItem.id == newItem.id
         }

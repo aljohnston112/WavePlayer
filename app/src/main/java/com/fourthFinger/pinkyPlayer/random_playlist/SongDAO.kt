@@ -4,6 +4,7 @@ import androidx.room.*
 
 @Dao
 interface SongDAO {
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertAll(vararg songs: Song)
     @Delete

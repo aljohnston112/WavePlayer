@@ -16,7 +16,7 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
         return playlistsRepo.getPlaylists()
     }
 
-    fun getAllSongs(): List<Song>? {
+    fun getAllSongs(): Set<Song>? {
         return playlistsRepo.getAllSongs()
     }
 

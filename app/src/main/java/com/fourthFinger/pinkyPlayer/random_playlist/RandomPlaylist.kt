@@ -13,6 +13,7 @@ import java.util.*
 class RandomPlaylist constructor(
     name: String,
     music: MutableList<Song>,
+    maxPercent: Double,
     comparable: Boolean
 ) : Serializable {
 
@@ -20,18 +21,18 @@ class RandomPlaylist constructor(
 
     @Transient
     private var playlistIterator: MutableListIterator<Long>
+
     private var name: String
     fun getName(): String {
         return name
     }
-
     fun setName(name: String) {
         this.name = name
     }
 
     // The ProbFun that randomly picks the media to play
-    private val probabilityFunction: ProbFun<Song>
-    fun getSongs(): List<Song> {
+    private var probabilityFunction: ProbFun<Song>
+    fun getSongs(): Set<Song> {
         return probabilityFunction.getKeys()
     }
 
@@ -54,6 +55,14 @@ class RandomPlaylist constructor(
         playlistArray.remove(song.id)
     }
 
+    @Deprecated(
+        "Use contains(Long) instead",
+        ReplaceWith(
+            expression = "contains(song.id)",
+            imports = emptyArray()
+        ),
+        DeprecationLevel.WARNING
+    )
     operator fun contains(song: Song): Boolean {
         return probabilityFunction.contains(song)
     }
@@ -62,43 +71,21 @@ class RandomPlaylist constructor(
         return playlistArray.contains(songID)
     }
 
-    fun good(context: Context, song: Song, percent: Double, scale: Boolean) {
-        if (AudioUri.getAudioUri(context, song.id)?.good(percent) == true) {
-            probabilityFunction.good(song, scale)
-        }
-    }
-
-    fun bad(context: Context, song: Song, percent: Double) {
-        if (AudioUri.getAudioUri(context, song.id)?.bad(percent) == true) {
-            probabilityFunction.bad(song)
-        }
-    }
-
     fun getProbability(song: Song): Double {
         return probabilityFunction.getProbability(song)
     }
 
-    fun clearProbabilities(context: Context) {
-        for (song in probabilityFunction.getKeys()) {
-            AudioUri.getAudioUri(context, song.id)?.clearProbabilities()
-        }
-        probabilityFunction.clearProbabilities()
+    fun clearProbabilities() {
+        probabilityFunction.resetProbabilities()
     }
 
-    fun lowerProbabilities(context: Context, lowerProb: Double) {
+    fun lowerProbabilities(lowerProb: Double) {
         probabilityFunction.lowerProbs(lowerProb)
     }
 
     fun next(context: Context, random: Random): AudioUri? {
-        var song: Song
-        var audioUri: AudioUri? = null
-        var next = false
-        while (!next) {
-            song = probabilityFunction.`fun`(random)
-            audioUri = AudioUri.getAudioUri(context, song.id)!!
-            next = audioUri.shouldPlay(random)
-        }
-        return audioUri
+        val song: Song = probabilityFunction.next(random)
+        return AudioUri.getAudioUri(context, song.id)
     }
 
     fun size(): Int {
@@ -106,11 +93,11 @@ class RandomPlaylist constructor(
     }
 
     fun swapSongPositions(oldPosition: Int, newPosition: Int) {
-        probabilityFunction.swapPositions(oldPosition, newPosition)
+        (probabilityFunction as? ProbFun.ProbFunLinkedMap)?.swapTwoPositions(oldPosition, newPosition)
     }
 
     fun switchSongPositions(oldPosition: Int, newPosition: Int) {
-        probabilityFunction.switchPositions(oldPosition, newPosition)
+        (probabilityFunction as? ProbFun.ProbFunLinkedMap)?.switchOnesPosition(oldPosition, newPosition)
     }
 
     fun next(context: Context, random: Random, looping: Boolean, shuffling: Boolean): AudioUri? {
@@ -133,6 +120,7 @@ class RandomPlaylist constructor(
         shuffling: Boolean
     ): AudioUri? {
         return if (shuffling) {
+            // TODO play previous
             next(context, random)
         } else {
             if (looping && !playlistIterator.hasPrevious()) {
@@ -142,30 +130,17 @@ class RandomPlaylist constructor(
         }
     }
 
-    /*
-    public void goToFront() {
-        playlistIterator = null;
-        playlistIterator = playlistArray.listIterator();
-    }
-
-    public void goToBack() {
-        playlistIterator = null;
-        playlistIterator = playlistArray.listIterator(playlistArray.size());
-    }
-
-     */
-
     fun setIndexTo(songID: Long) {
         val i = playlistArray.indexOf(songID)
         playlistIterator = playlistArray.listIterator(i + 1)
     }
 
-    fun globalBad(song: Song) {
+    fun bad(song: Song) {
         probabilityFunction.bad(song)
     }
 
-    fun globalGood(song: Song) {
-        probabilityFunction.good(song, true)
+    fun good(song: Song) {
+        probabilityFunction.good(song)
     }
 
     companion object {
@@ -184,9 +159,9 @@ class RandomPlaylist constructor(
         require(music.isNotEmpty()) { "List music must contain at least one AudioURI" }
         val files: MutableSet<Song> = LinkedHashSet(music)
         probabilityFunction = if (comparable) {
-            ProbFunTreeMap(files)
+            ProbFun.ProbFunTreeMap(files, maxPercent)
         } else {
-            ProbFunLinkedMap(files)
+            ProbFun.ProbFunLinkedMap(files, maxPercent)
         }
         this.name = name
         for (song in music) {
@@ -195,7 +170,7 @@ class RandomPlaylist constructor(
         playlistIterator = playlistArray.listIterator()
     }
 
-    class DiffUtilItemCallbackPlaylists : DiffUtil.ItemCallback<RandomPlaylist>(){
+    class DiffUtilItemCallbackPlaylists : DiffUtil.ItemCallback<RandomPlaylist>() {
         override fun areItemsTheSame(oldItem: RandomPlaylist, newItem: RandomPlaylist): Boolean {
             return oldItem.getName() == newItem.getName()
         }
@@ -205,4 +180,5 @@ class RandomPlaylist constructor(
         }
 
     }
+
 }

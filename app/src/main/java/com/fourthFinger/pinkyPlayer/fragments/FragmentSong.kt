@@ -42,7 +42,8 @@ class FragmentSong : Fragment() {
     private val viewModelAddToQueue by activityViewModels<ViewModelAddToQueue>()
     private val viewModelFragmentSong by viewModels<ViewModelFragmentSong>()
 
-    private val mediaPlayerModel = MediaPlayerSession.getInstance()
+    private val mediaPlayerSession =
+        MediaPlayerSession.getInstance(requireActivity().applicationContext)
     private val mediaSession: MediaSession =
         MediaSession.getInstance(requireActivity().applicationContext)
 
@@ -63,20 +64,20 @@ class FragmentSong : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         KeyboardUtil.hideKeyboard(view)
-        mediaPlayerModel.currentAudioUri.observe(viewLifecycleOwner) {
+        mediaPlayerSession.currentAudioUri.observe(viewLifecycleOwner) {
             if (it != null) {
                 // TODO why does this need to be cached?
                 currentAudioUri = it
                 viewModelAddToQueue.newSong(it.id)
                 binding.textViewSongName.text = it.title
-                setUpSeekBar(it.getDuration(requireActivity().applicationContext))
+                setUpSeekBar(it.getDuration(requireActivity().applicationContext).toInt())
                 setUpSeekBarUpdater()
                 updateSongArt()
             }
         }
         viewModelActivityMain.setActionBarTitle(resources.getString(R.string.now_playing))
         viewModelActivityMain.showFab(false)
-        mediaPlayerModel.isPlaying.observe(viewLifecycleOwner) { b: Boolean? ->
+        mediaPlayerSession.isPlaying.observe(viewLifecycleOwner) { b: Boolean? ->
             if (b != null) {
                 updateSongPlayButton(b)
             }
@@ -97,12 +98,12 @@ class FragmentSong : Fragment() {
 
     private fun setUpSeekBar(maxMillis: Int) {
         val stringEndTime = formatMillis(maxMillis)
-        val stringCurrentTime = formatMillis(mediaPlayerModel.getCurrentTime())
+        val stringCurrentTime = formatMillis(mediaPlayerSession.getCurrentTime())
         binding.editTextCurrentTime.text = stringCurrentTime
         binding.editTextEndTime.text = stringEndTime
         val seekBar: SeekBar = binding.seekBar
         seekBar.max = maxMillis
-        seekBar.progress = mediaPlayerModel.getCurrentTime()
+        seekBar.progress = mediaPlayerSession.getCurrentTime()
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
             override fun onStartTrackingTouch(seekBar: SeekBar) {}
@@ -117,26 +118,22 @@ class FragmentSong : Fragment() {
         val textViewCurrent: TextView = binding.editTextCurrentTime
         shutDownSeekBarUpdater()
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
-        mediaPlayerModel.getCurrentMediaPlayerWUri()?.let {
-            val runnableSeekBarUpdater = Runnable {
-                seekBar.post {
-                    if (it.isPrepared()) {
-                        val currentMilliseconds: Int = it.getCurrentPosition()
-                        if (seekBar.progress != currentMilliseconds) {
-                            seekBar.progress = currentMilliseconds
-                            val currentTime = formatMillis(currentMilliseconds)
-                            textViewCurrent.text = currentTime
-                        }
-                    }
+        val runnableSeekBarUpdater = Runnable {
+            seekBar.post {
+                val currentMilliseconds: Int = mediaPlayerSession.getCurrentTime()
+                if (seekBar.progress != currentMilliseconds) {
+                    seekBar.progress = currentMilliseconds
+                    val currentTime = formatMillis(currentMilliseconds)
+                    textViewCurrent.text = currentTime
                 }
             }
-            scheduledExecutorService.scheduleAtFixedRate(
-                runnableSeekBarUpdater,
-                0L,
-                1L,
-                TimeUnit.SECONDS
-            )
         }
+        scheduledExecutorService.scheduleAtFixedRate(
+            runnableSeekBarUpdater,
+            0L,
+            1L,
+            TimeUnit.SECONDS
+        )
     }
 
     private fun shutDownSeekBarUpdater() {
@@ -251,7 +248,7 @@ class FragmentSong : Fragment() {
                         viewModelFragmentSong.playPauseClicked()
                     }
                     R.id.imageButtonNext -> {
-                        viewModelFragmentSong.nextClicked()
+                        viewModelFragmentSong.nextClicked(currentAudioUri)
                     }
                     R.id.imageButtonRepeat -> {
                         viewModelFragmentSong.repeatClicked()
@@ -282,18 +279,6 @@ class FragmentSong : Fragment() {
         buttonNext.setOnClickListener(onClickListenerFragmentSong)
         buttonLoop.setOnClickListener(onClickListenerFragmentSong)
         buttonNext.isLongClickable = true
-        buttonNext.setOnLongClickListener {
-            // TODO change color of button
-            // Change color, start a runnable to change it back
-            viewModelFragmentSong.nextLongClicked(currentAudioUri)
-            it.setBackgroundColor(
-                ContextCompat.getColor(
-                    requireContext(),
-                    R.color.colorPrimaryVariant
-                )
-            )
-            true
-        }
         val onTouchListenerFragmentSongButtons =
             View.OnTouchListener { view1: View, motionEvent: MotionEvent ->
                 when (motionEvent.action) {
@@ -432,8 +417,8 @@ class FragmentSong : Fragment() {
     }
 
     override fun onPrepareOptionsMenu(menu: Menu) {
-            super.onPrepareOptionsMenu(menu)
-            setUpToolbar()
+        super.onPrepareOptionsMenu(menu)
+        setUpToolbar()
     }
 
     override fun onStop() {

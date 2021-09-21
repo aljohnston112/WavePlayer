@@ -17,7 +17,7 @@ class ViewModelFragmentSong(application: Application): AndroidViewModel(applicat
     fun thumbDownClicked(currentAudioUri: AudioUri?) {
         currentAudioUri?.id?.let {
             playlistsRepo.getSong(it)?.let { song ->
-                mediaSession.getCurrentPlaylist()?.globalBad(song)
+                mediaSession.getCurrentPlaylist()?.bad(song)
                 SaveFile.saveFile(getApplication<Application>().applicationContext)
             }
         }
@@ -26,7 +26,7 @@ class ViewModelFragmentSong(application: Application): AndroidViewModel(applicat
     fun thumbUpClicked(currentAudioUri: AudioUri?) {
         currentAudioUri?.id?.let {
             playlistsRepo.getSong(it)?.let { song ->
-                mediaSession.getCurrentPlaylist()?.globalGood(song)
+                mediaSession.getCurrentPlaylist()?.good(song)
                 SaveFile.saveFile(getApplication<Application>().applicationContext)
             }
         }
@@ -48,8 +48,14 @@ class ViewModelFragmentSong(application: Application): AndroidViewModel(applicat
         mediaSession.pauseOrPlay(getApplication<Application>().applicationContext)
     }
 
-    fun nextClicked() {
+    fun nextClicked(currentAudioUri: AudioUri?) {
         mediaSession.playNext(getApplication<Application>().applicationContext)
+        currentAudioUri?.id?.let { id ->
+            playlistsRepo.getSong(id)?.let {
+                mediaSession.getCurrentPlaylist()?.bad(it)
+                SaveFile.saveFile(getApplication<Application>().applicationContext)
+            }
+        }
     }
 
     fun repeatClicked() {
@@ -68,12 +74,6 @@ class ViewModelFragmentSong(application: Application): AndroidViewModel(applicat
         }
     }
 
-    fun nextLongClicked(currentAudioUri: AudioUri?) {
-        currentAudioUri?.id?.let { id ->
-            playlistsRepo.getSong(id)?.let {
-                mediaSession.getCurrentPlaylist()?.globalBad(it)
-            }
-        }
-    }
+
 
 }

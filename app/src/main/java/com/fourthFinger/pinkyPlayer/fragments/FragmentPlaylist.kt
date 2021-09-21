@@ -154,7 +154,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
             0
         } else {
             viewModelUserPicks.getUserPickedPlaylist()?.getSongs()?.let {
-                recyclerViewAdapterSongs.updateList(it)
+                recyclerViewAdapterSongs.updateList(it.toList())
             }
             ItemTouchHelper.UP or ItemTouchHelper.DOWN
         }
