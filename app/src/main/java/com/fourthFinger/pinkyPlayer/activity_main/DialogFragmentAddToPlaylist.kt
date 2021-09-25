@@ -1,10 +1,12 @@
 package com.fourthFinger.pinkyPlayer.activity_main
 
 import android.app.Dialog
+import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.activityViewModels
 import com.fourthFinger.pinkyPlayer.NavUtil
 import com.fourthFinger.pinkyPlayer.R
@@ -24,7 +26,7 @@ class DialogFragmentAddToPlaylist : DialogFragment() {
     private val selectedPlaylistIndices: MutableList<Int> = ArrayList()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val builder = AlertDialog.Builder(requireActivity().applicationContext)
+        val builder = AlertDialog.Builder(requireActivity())
         builder.setTitle(R.string.add_to_playlist)
         val bundle = arguments
         if (bundle != null) {
@@ -65,19 +67,26 @@ class DialogFragmentAddToPlaylist : DialogFragment() {
         builder.setPositiveButton(R.string.add) { _: DialogInterface?, _: Int ->
             if (song != null) {
                 for (index in selectedPlaylistIndices) {
-                    viewModelPlaylists.getPlaylists()[index].add(song)
+                    viewModelPlaylists.getPlaylists()[index].add(
+                        requireActivity().applicationContext,
+                        song
+                    )
                 }
             }
             if (randomPlaylist != null) {
                 for (randomPlaylistSong in randomPlaylist.getSongs()) {
                     for (index in selectedPlaylistIndices) {
-                        viewModelPlaylists.getPlaylists()[index].add(randomPlaylistSong)
+                        viewModelPlaylists.getPlaylists()[index].add(
+                            requireActivity().applicationContext,
+                            randomPlaylistSong
+                        )
                     }
                 }
             }
         }
         builder.setNeutralButton(R.string.new_playlist) { _: DialogInterface?, _: Int ->
             // UserPickedPlaylist need to be null for FragmentEditPlaylist to make a new playlist
+            unselectSongs(requireActivity().applicationContext)
             val songs = mutableListOf<Song>()
             if (song != null) {
                 songs.add(song)
@@ -88,8 +97,23 @@ class DialogFragmentAddToPlaylist : DialogFragment() {
                 }
             }
             viewModelUserPicks.startNewPlaylistWithSongs(songs)
-            // TODO this most definitely probably does not work
-            NavUtil.navigateTo(this, R.id.fragmentEditPlaylist)
+            val fragmentManager: FragmentManager = requireActivity().supportFragmentManager
+            val fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment)
+            fragment?.let {
+                NavUtil.navigateTo(
+                    it,
+                    R.id.fragmentEditPlaylist
+                )
+            }
+        }
+    }
+
+    private fun unselectSongs(context: Context) {
+        val songs = PlaylistsRepo.getInstance(context).getAllSongs()
+        if(songs != null) {
+            for (s in songs) {
+                s.setSelected(false)
+            }
         }
     }
 

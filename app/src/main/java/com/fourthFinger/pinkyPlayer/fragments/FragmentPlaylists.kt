@@ -99,7 +99,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
                     requireActivity().applicationContext,
                     position
                 )
-                recyclerViewAdapterPlaylists.notifyItemRemoved(position)
+                recyclerViewAdapterPlaylists.updateList(viewModelPlaylists.getPlaylists())
                 val snackBar: Snackbar = Snackbar.make(
                     binding.recyclerViewPlaylistList,
                     R.string.playlist_deleted, BaseTransientBottomBar.LENGTH_LONG
@@ -109,7 +109,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
                         requireActivity().applicationContext,
                         position
                     )
-                    recyclerViewAdapterPlaylists.notifyItemInserted(position)
+                    recyclerViewAdapterPlaylists.updateList(viewModelPlaylists.getPlaylists())
                 }
                 snackBar.show()
             }
@@ -147,7 +147,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
         intentFilter.addCategory(Intent.CATEGORY_DEFAULT)
         intentFilter.addAction(
             requireActivity().resources.getString(
-                R.string.broadcast_receiver_action_service_connected
+                R.string.action_service_connected
             )
         )
         requireActivity().registerReceiver(broadcastReceiver, intentFilter)
@@ -158,7 +158,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
             val action: String? = intent.action
             if (action != null) {
                 if (action == resources.getString(
-                        R.string.broadcast_receiver_action_service_connected
+                        R.string.action_service_connected
                     )
                 ) {
                     setUpRecyclerView()

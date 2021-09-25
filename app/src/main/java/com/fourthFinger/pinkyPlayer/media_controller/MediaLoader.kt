@@ -99,6 +99,7 @@ class MediaLoader private constructor() {
             } else {
                 playlistsRepo.setMasterPlaylist(
                     RandomPlaylist(
+                        context,
                         MASTER_PLAYLIST_NAME,
                         ArrayList(newSongs),
                         SettingsRepo.getInstance().getMaxPercent(),
@@ -116,7 +117,7 @@ class MediaLoader private constructor() {
             SaveFile.saveFile(context)
             val intent = Intent()
             intent.addCategory(Intent.CATEGORY_DEFAULT)
-            intent.action = context.resources.getString(R.string.broadcast_receiver_action_loaded)
+            intent.action = context.resources.getString(R.string.action_loaded)
             context.sendBroadcast(intent)
         }
     }
@@ -125,7 +126,7 @@ class MediaLoader private constructor() {
         val playlistsRepo = PlaylistsRepo.getInstance(context)
         val i = newSongs.size
         for ((j, songID) in newSongs.withIndex()) {
-            playlistsRepo.getMasterPlaylist()?.add(songID)
+            playlistsRepo.getMasterPlaylist()?.add(context, songID)
             _loadingProgress.postValue(j.toDouble() / i.toDouble())
         }
     }
@@ -139,7 +140,7 @@ class MediaLoader private constructor() {
             for ((j, songID) in ids.withIndex()) {
                 if (!filesThatExist.contains(songID)) {
                     playlistsRepo.getSong(songID)?.let {
-                        playlistsRepo.getMasterPlaylist()?.remove(it)
+                        playlistsRepo.getMasterPlaylist()?.remove(context, it)
                         playlistsRepo.removeSongFromDB(it)
                     }
                     mediaPlayerSession.removeMediaPlayerWUri(songID)

@@ -94,7 +94,7 @@ class PlaylistsRepo private constructor(context: Context) {
                 playlistIndex = i
             }
         }
-        return playlistIndex == -1
+        return playlistIndex != -1
     }
 
     fun getPlaylistTitles(): Array<String?> {

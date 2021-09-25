@@ -71,7 +71,7 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
         val intentFilter = IntentFilter()
         intentFilter.addCategory(Intent.CATEGORY_DEFAULT)
         intentFilter.addAction(requireActivity().resources.getString(
-                R.string.broadcast_receiver_action_service_connected))
+                R.string.action_service_connected))
         requireActivity().registerReceiver(broadcastReceiver, intentFilter)
     }
 
@@ -80,7 +80,7 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
             val action: String? = intent.action
             if (action != null) {
                 if (action == resources.getString(
-                        R.string.broadcast_receiver_action_service_connected)) {
+                        R.string.action_service_connected)) {
                     setUpRecyclerView()
                 }
             }

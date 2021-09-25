@@ -8,6 +8,7 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.fourthFinger.pinkyPlayer.DiffUtils
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
 
@@ -15,7 +16,7 @@ class RecyclerViewAdapterSelectSongs(
         private val listenerCallbackSelectSongs: ListenerCallbackSelectSongs,
         allSongs: Set<Song>
 ) : ListAdapter<Song, RecyclerViewAdapterSelectSongs.ViewHolder>(
-    Song.DiffUtilItemCallbackSongs()
+    DiffUtils.DiffUtilItemCallbackSongs()
 ) {
 
     interface ListenerCallbackSelectSongs {
@@ -25,7 +26,7 @@ class RecyclerViewAdapterSelectSongs(
     }
 
     fun updateList(songs: List<Song>) {
-        submitList(songs)
+        submitList(ArrayList(songs))
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -38,23 +39,7 @@ class RecyclerViewAdapterSelectSongs(
         val linearLayout: ConstraintLayout = holder.itemView.findViewById(
             R.id.constraint_layout_song_name
         )
-        // TODO find a better place for this
-        // Might already be in ViewModelPlaylist's editSongsClicked()
-        // Should be able to remove
-        // TODO Might also be needed if selection is never removed
-        /*
-        val userPickedSongs = listenerCallbackSelectSongs.getUserPickedSongs()
-        if (userPickedSongs.contains(getItem(position))) {
-            getItem(position).setSelected(true)
-            // TODO use color resources
-            holder.textViewSongName.setBackgroundColor(Color.parseColor("#575757"))
-            linearLayout.setBackgroundColor(Color.parseColor("#575757"))
-        } else {
-            getItem(position).setSelected(false)
-            holder.textViewSongName.setBackgroundColor(Color.parseColor("#000000"))
-            linearLayout.setBackgroundColor(Color.parseColor("#000000"))
-        }
-         */
+        // TODO use color resources
         if(getItem(position).isSelected()){
             holder.textViewSongName.setBackgroundColor(Color.parseColor("#575757"))
             linearLayout.setBackgroundColor(Color.parseColor("#575757"))
@@ -67,7 +52,7 @@ class RecyclerViewAdapterSelectSongs(
     }
     
     init{
-        submitList(allSongs.toList())
+        submitList(ArrayList(allSongs))
     }
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {

@@ -1,7 +1,7 @@
 package com.fourthFinger.pinkyPlayer.random_playlist
 
 import android.content.*
-import androidx.recyclerview.widget.DiffUtil
+import com.fourthFinger.pinkyPlayer.media_controller.SaveFile
 import java.io.Serializable
 import java.util.*
 
@@ -11,6 +11,7 @@ import java.util.*
  * A playlist where a group of media files are picked from randomly.
  */
 class RandomPlaylist constructor(
+    context: Context,
     name: String,
     music: MutableList<Song>,
     maxPercent: Double,
@@ -26,8 +27,9 @@ class RandomPlaylist constructor(
     fun getName(): String {
         return name
     }
-    fun setName(name: String) {
+    fun setName(context: Context, name: String) {
         this.name = name
+        SaveFile.saveFile(context)
     }
 
     // The ProbFun that randomly picks the media to play
@@ -40,19 +42,22 @@ class RandomPlaylist constructor(
         return playlistArray
     }
 
-    fun add(song: Song) {
+    fun add(context: Context, song: Song) {
         probabilityFunction.add(song)
         playlistArray.add(song.id)
+        SaveFile.saveFile(context)
     }
 
-    fun add(song: Song, probability: Double) {
+    fun add(context: Context, song: Song, probability: Double) {
         probabilityFunction.add(song, probability)
         playlistArray.add(song.id)
+        SaveFile.saveFile(context)
     }
 
-    fun remove(song: Song) {
+    fun remove(context: Context, song: Song) {
         probabilityFunction.remove(song)
         playlistArray.remove(song.id)
+        SaveFile.saveFile(context)
     }
 
     @Deprecated(
@@ -75,12 +80,14 @@ class RandomPlaylist constructor(
         return probabilityFunction.getProbability(song)
     }
 
-    fun clearProbabilities() {
+    fun clearProbabilities(context: Context) {
         probabilityFunction.resetProbabilities()
+        SaveFile.saveFile(context)
     }
 
-    fun lowerProbabilities(lowerProb: Double) {
+    fun lowerProbabilities(context: Context, lowerProb: Double) {
         probabilityFunction.lowerProbs(lowerProb)
+        SaveFile.saveFile(context)
     }
 
     fun next(context: Context, random: Random): AudioUri? {
@@ -92,12 +99,14 @@ class RandomPlaylist constructor(
         return probabilityFunction.size()
     }
 
-    fun swapSongPositions(oldPosition: Int, newPosition: Int) {
+    fun swapSongPositions(context: Context, oldPosition: Int, newPosition: Int) {
         (probabilityFunction as? ProbFun.ProbFunLinkedMap)?.swapTwoPositions(oldPosition, newPosition)
+        SaveFile.saveFile(context)
     }
 
-    fun switchSongPositions(oldPosition: Int, newPosition: Int) {
+    fun switchSongPositions(context: Context, oldPosition: Int, newPosition: Int) {
         (probabilityFunction as? ProbFun.ProbFunLinkedMap)?.switchOnesPosition(oldPosition, newPosition)
+        SaveFile.saveFile(context)
     }
 
     fun next(context: Context, random: Random, looping: Boolean, shuffling: Boolean): AudioUri? {
@@ -135,12 +144,14 @@ class RandomPlaylist constructor(
         playlistIterator = playlistArray.listIterator(i + 1)
     }
 
-    fun bad(song: Song) {
+    fun bad(context: Context, song: Song) {
         probabilityFunction.bad(song)
+        SaveFile.saveFile(context)
     }
 
-    fun good(song: Song) {
+    fun good(context: Context, song: Song) {
         probabilityFunction.good(song)
+        SaveFile.saveFile(context)
     }
 
     companion object {
@@ -168,17 +179,7 @@ class RandomPlaylist constructor(
             playlistArray.add(song.id)
         }
         playlistIterator = playlistArray.listIterator()
-    }
-
-    class DiffUtilItemCallbackPlaylists : DiffUtil.ItemCallback<RandomPlaylist>() {
-        override fun areItemsTheSame(oldItem: RandomPlaylist, newItem: RandomPlaylist): Boolean {
-            return oldItem.getName() == newItem.getName()
-        }
-
-        override fun areContentsTheSame(oldItem: RandomPlaylist, newItem: RandomPlaylist): Boolean {
-            return true
-        }
-
+        SaveFile.saveFile(context)
     }
 
 }

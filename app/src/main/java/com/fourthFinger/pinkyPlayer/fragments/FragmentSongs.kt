@@ -94,7 +94,7 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         intentFilter.addCategory(Intent.CATEGORY_DEFAULT)
         intentFilter.addAction(
             requireActivity().resources.getString(
-                R.string.broadcast_receiver_action_service_connected
+                R.string.action_service_connected
             )
         )
         requireActivity().registerReceiver(broadcastReceiver, intentFilter)
@@ -105,7 +105,7 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
             val action: String? = intent.action
             if (action != null) {
                 if (action == resources.getString(
-                        R.string.broadcast_receiver_action_service_connected
+                        R.string.action_service_connected
                     )
                 ) {
                     setUpRecyclerView()

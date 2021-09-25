@@ -26,11 +26,14 @@ class MediaSession private constructor(context: Context) {
         playlistsRepo.getMasterPlaylist()?.let { setCurrentPlaylist(it) }
     }
 
-    fun clearProbabilities() {
-        currentPlaylist?.clearProbabilities()
+    fun clearProbabilities(context: Context) {
+        currentPlaylist?.clearProbabilities(context)
     }
-    fun lowerProbabilities() {
-        currentPlaylist?.lowerProbabilities(SettingsRepo.getInstance().getLowerProb())
+    fun lowerProbabilities(context: Context) {
+        currentPlaylist?.lowerProbabilities(
+            context,
+            SettingsRepo.getInstance().getLowerProb()
+        )
     }
 
     private var shuffling: Boolean = true
@@ -153,7 +156,7 @@ class MediaSession private constructor(context: Context) {
         val intent = Intent()
         intent.addCategory(Intent.CATEGORY_DEFAULT)
         intent.action = context.resources.getString(
-            R.string.broadcast_receiver_action_new_song
+            R.string.action_new_song
         )
         context.sendBroadcast(intent)
     }

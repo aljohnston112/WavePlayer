@@ -21,7 +21,6 @@ class FragmentTitle : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
-    private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>()
     private val viewModelFragmentTitle by viewModels<ViewModelFragmentTitle>()
     private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>()
 

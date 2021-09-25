@@ -25,7 +25,6 @@ import com.fourthFinger.pinkyPlayer.NavUtil.Companion.navigateTo
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.databinding.ActivityMainBinding
 import com.fourthFinger.pinkyPlayer.fragments.ViewModelAddToQueue
-import com.fourthFinger.pinkyPlayer.fragments.ViewModelPlaylists
 import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerSession
 import com.fourthFinger.pinkyPlayer.media_controller.MediaSession
 import com.fourthFinger.pinkyPlayer.media_controller.ServiceMain
@@ -40,11 +39,8 @@ class ActivityMain : AppCompatActivity() {
     private lateinit var serviceMain: ServiceMain
 
     private val viewModelActivityMain by viewModels<ViewModelActivityMain>()
-    private val viewModelPlaylists by viewModels<ViewModelPlaylists>()
     private val viewModelAddToQueue by viewModels<ViewModelAddToQueue>()
 
-    private val mediaPlayerSession = MediaPlayerSession.getInstance(applicationContext)
-    private val mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
     private var loaded = false
 
     // region lifecycle
@@ -70,6 +66,7 @@ class ActivityMain : AppCompatActivity() {
     private val onDestinationChangedListenerSongPane =
         { _: NavController, destination: NavDestination, _: Bundle? ->
             if (destination.id != R.id.fragmentSong) {
+                val mediaPlayerSession = MediaPlayerSession.getInstance(applicationContext)
                 if (mediaPlayerSession.isSongInProgress()) {
                     fragmentSongVisible(false)
                     showSongPane()
@@ -205,7 +202,7 @@ class ActivityMain : AppCompatActivity() {
     private fun sendBroadcastServiceConnected() {
         val intent = Intent()
         intent.addCategory(Intent.CATEGORY_DEFAULT)
-        intent.action = resources.getString(R.string.broadcast_receiver_action_service_connected)
+        intent.action = resources.getString(R.string.action_service_connected)
         sendBroadcast(intent)
     }
 
@@ -221,6 +218,7 @@ class ActivityMain : AppCompatActivity() {
         )
         if (loaded) {
             if (fragment != null) {
+                val mediaPlayerSession = MediaPlayerSession.getInstance(applicationContext)
                 if (mediaPlayerSession.isPlaying.value == true) {
                     hideSongPane()
                     navigateTo(fragment, R.id.fragmentSong)
@@ -242,14 +240,14 @@ class ActivityMain : AppCompatActivity() {
     private fun setUpBroadcastReceiver() {
         val filter = IntentFilter()
         filter.addCategory(Intent.CATEGORY_DEFAULT)
-        filter.addAction(resources.getString(R.string.broadcast_receiver_action_loaded))
+        filter.addAction(resources.getString(R.string.action_loaded))
         registerReceiver(broadcastReceiverServiceMain, filter)
     }
 
     private var broadcastReceiverServiceMain = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
-                (resources.getString(R.string.broadcast_receiver_action_loaded)) -> {
+                (resources.getString(R.string.action_loaded)) -> {
                     loaded = true
                     val fragment: Fragment? = supportFragmentManager.findFragmentById(
                         binding.navHostFragment.id
@@ -294,14 +292,17 @@ class ActivityMain : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_reset_probs -> {
-                mediaSession.clearProbabilities()
+                val mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
+                mediaSession.clearProbabilities(applicationContext)
                 return true
             }
             R.id.action_lower_probs -> {
-                mediaSession.lowerProbabilities()
+                val mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
+                mediaSession.lowerProbabilities(applicationContext)
                 return true
             }
             R.id.action_add_to_queue -> {
+                val mediaPlayerSession = MediaPlayerSession.getInstance(applicationContext)
                 viewModelAddToQueue.actionAddToQueue(applicationContext)
                 if (viewModelActivityMain.fragmentSongVisible.value == false &&
                     mediaPlayerSession.isSongInProgress()

@@ -13,7 +13,6 @@ import androidx.core.graphics.drawable.toBitmap
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 import java.io.ByteArrayInputStream
 import java.io.FileNotFoundException
-import java.io.IOException
 import java.io.InputStream
 
 class BitmapUtil {
@@ -42,7 +41,7 @@ class BitmapUtil {
                         Size(width, height),
                         null)
 
-                } catch (e: IOException) {
+                } catch (e: FileNotFoundException) {
                     e.printStackTrace()
                 }
             } else {

@@ -14,6 +14,8 @@ const val MIN_VALUE = 0.0000000000000005
  * @since Copyright 2020
 </T> */
 // TODO fix max percent like the constructor
+// TODO Now uses a Set rather than a List. Fix usages rather than hodgepodge casts.
+// TODO get maxPercent from the settings
 sealed class ProbFun<T>(
     choices: Set<T>,
     maxPercent: Double,
@@ -22,7 +24,7 @@ sealed class ProbFun<T>(
 
     class ProbFunLinkedMap<T>(
         choices: Set<T>, maxPercent: Double
-    ) : ProbFun<T>(choices, maxPercent, false){
+    ) : ProbFun<T>(choices, maxPercent, false) {
         fun swapTwoPositions(oldPosition: Int, newPosition: Int) {
             val oldMap = probabilityMap
             val keys = ArrayList(oldMap.keys)
@@ -52,6 +54,7 @@ sealed class ProbFun<T>(
         choices: Set<T>, maxPercent: Double
     ) : ProbFun<T>(choices, maxPercent, true)
 
+    @Transient
     private val settingsRepo = SettingsRepo.getInstance()
 
     // The set of elements to be picked from, mapped to the probabilities of getting picked
@@ -60,8 +63,8 @@ sealed class ProbFun<T>(
     private var roundingError = 0.0
 
     private var _maxPercent = -1.0
-    fun maxPercent() = _maxPercent
-    fun setMaxPercent(maxPercent: Double) {
+    private fun maxPercent() = _maxPercent
+    private fun setMaxPercent(maxPercent: Double) {
         require((maxPercent > (0.0) && maxPercent <= 1.0)) {
             "maxPercent passed into the ProbFunTree constructor must be above 0 and under 1.0" +
                     "value was $maxPercent"

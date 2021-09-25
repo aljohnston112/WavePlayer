@@ -9,11 +9,9 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.NavHostFragment
 import com.fourthFinger.pinkyPlayer.KeyboardUtil
-import com.fourthFinger.pinkyPlayer.NavUtil
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.FragmentEditPlaylistBinding
-import com.fourthFinger.pinkyPlayer.media_controller.SaveFile
 
 class FragmentEditPlaylist : Fragment() {
 
@@ -53,17 +51,23 @@ class FragmentEditPlaylist : Fragment() {
         viewModelActivityMain.setFABText(R.string.fab_save)
         viewModelActivityMain.showFab(true)
         val editTextPlaylistName: EditText = binding.editTextPlaylistName
-        editTextPlaylistName.setText(viewModelUserPicks.getUserPickedPlaylist()?.getName())
+        viewModelUserPicks.getUserPickedPlaylist()?.let {
+            if(editTextPlaylistName.text.isEmpty()) {
+                editTextPlaylistName.setText(it.getName())
+            }
+        }
         viewModelActivityMain.setFabOnClickListener { view: View ->
-            viewModelUserPicks.editPlaylistFabClicked(requireActivity().applicationContext, editTextPlaylistName.text.toString())
+            viewModelUserPicks.editPlaylistFabClicked(
+                this,
+                requireActivity().applicationContext,
+                editTextPlaylistName.text.toString()
+            )
             cleanUp(view)
         }
     }
 
     private fun cleanUp(view: View) {
-        SaveFile.saveFile(requireActivity().applicationContext)
         KeyboardUtil.hideKeyboard(view)
-        NavUtil.popBackStack(this)
     }
 
     override fun onDestroyView() {

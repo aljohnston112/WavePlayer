@@ -3,6 +3,7 @@ package com.fourthFinger.pinkyPlayer.fragments
 import android.app.Application
 import android.content.Context
 import androidx.annotation.GuardedBy
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.AndroidViewModel
 import androidx.navigation.NavController
 import com.fourthFinger.pinkyPlayer.NavUtil
@@ -33,11 +34,13 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
     @Synchronized
     fun songSelected(songs: Song) {
         userPickedSongs.add(songs)
+        songs.setSelected(true)
     }
 
     @Synchronized
     fun songUnselected(song: Song) {
         userPickedSongs.remove(song)
+        song.setSelected(false)
     }
 
     @Synchronized
@@ -121,11 +124,11 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
     }
 
     fun fragmentEditPlaylistViewCreated() {
-        setPickedSongsToCurrentPlaylist()
+        selectSongsInUserPickedPlaylist()
     }
 
     @Synchronized
-    private fun setPickedSongsToCurrentPlaylist() {
+    private fun selectSongsInUserPickedPlaylist() {
         userPickedPlaylist?.let {
             for (song in it.getSongs()) {
                 songSelected(song)
@@ -156,7 +159,7 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    fun editPlaylistFabClicked(context: Context, playlistName: String) {
+    fun editPlaylistFabClicked(fragment: Fragment, context: Context, playlistName: String) {
         if (validatePlaylistInput(context, playlistName)) {
             val makingNewPlaylist = (userPickedPlaylist == null)
             if (makingNewPlaylist) {
@@ -164,6 +167,7 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
             } else if (!makingNewPlaylist) {
                 makeNewPlaylist(context, playlistName)
             }
+            NavUtil.popBackStack(fragment)
         }
     }
 
@@ -193,23 +197,30 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
         // TODO Is this a deep copy
         var finalPlaylist: RandomPlaylist? = userPickedPlaylist
         if (finalPlaylist?.getName() == playlistName ||
-            !playlistNames.contains(playlistName)
+            playlistNames.contains(playlistName)
         ) {
-            finalPlaylist?.setName(playlistName)
+            finalPlaylist?.setName(
+                context,
+                playlistName
+            )
             val songs = finalPlaylist?.getSongs()
             if (songs != null) {
                 for (song in songs) {
                     if (!userPickedSongs.contains(song)) {
-                        finalPlaylist?.remove(song)
+                        finalPlaylist?.remove(context, song)
                     }
                 }
             }
             for (song in userPickedSongs) {
-                finalPlaylist?.add(song)
+                finalPlaylist?.add(
+                    context,
+                    song
+                )
                 song.setSelected(false)
             }
         } else {
             finalPlaylist = RandomPlaylist(
+                context,
                 playlistName,
                 userPickedSongs,
                 SettingsRepo.getInstance().getMaxPercent(),
@@ -252,6 +263,7 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
     fun notifySongMoved(context: Context, fromPosition: Int, toPosition: Int) {
         // TODO make sure changes are persistent across app restarts
         userPickedPlaylist?.swapSongPositions(
+            context,
             fromPosition,
             toPosition
         )
@@ -271,14 +283,22 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
             // TODO test what happens when user is listening to a playlist and then removes it
             setUserPickedPlaylist(null)
         } else {
-            song?.let { userPickedPlaylist?.remove(it) }
+            song?.let { userPickedPlaylist?.remove(context, it) }
         }
     }
 
     fun notifyItemInserted(context: Context, position: Int) {
-        song?.let { probability?.let { it1 -> userPickedPlaylist?.add(it, it1) } }
+        song?.let { probability?.let { it1 -> userPickedPlaylist?.add(
+            getApplication<Application>().applicationContext,
+            it,
+            it1
+        ) } }
         userPickedPlaylist?.let {
-            it.switchSongPositions(it.size() - 1, position)
+            it.switchSongPositions(
+                context,
+                it.size() - 1,
+                position
+            )
             if (it.size() == 1) {
                 playlistsRepo.addPlaylist(context, it)
             }

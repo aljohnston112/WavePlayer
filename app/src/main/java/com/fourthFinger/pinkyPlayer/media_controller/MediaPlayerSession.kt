@@ -25,14 +25,14 @@ class MediaPlayerSession private constructor(context: Context) {
     private val _isPlaying: MutableLiveData<Boolean> = MutableLiveData(false)
     val isPlaying = _isPlaying as LiveData<Boolean>
     fun setIsPlaying(isPlaying: Boolean) {
-        this._isPlaying.value = isPlaying
+        this._isPlaying.postValue(isPlaying)
         songInProgress = isPlaying
     }
 
     private var _currentAudioUri = MutableLiveData<AudioUri>()
     val currentAudioUri = _currentAudioUri as LiveData<AudioUri>
     fun setCurrentAudioUri(audioUri: AudioUri) {
-        _currentAudioUri.value = audioUri
+        _currentAudioUri.postValue(audioUri)
     }
 
     fun getCurrentTime(): Int {
@@ -62,24 +62,25 @@ class MediaPlayerSession private constructor(context: Context) {
             }
             songIDToMediaPlayerWUriHashMap.clear()
         }
-        _isPlaying.value = false
+        _isPlaying.postValue(false)
         songInProgress = false
     }
 
     fun cleanUp(context: Context) {
+        val mediaSession = MediaSession.getInstance(context)
         if (isPlaying.value == true) {
             mediaSession.pauseOrPlay(context)
         }
         releaseMediaPlayers()
     }
 
-    private val mediaSession = MediaSession.getInstance(context)
     val onCompletionListener: MediaPlayer.OnCompletionListener =
         MediaPlayer.OnCompletionListener {
+            val mediaSession = MediaSession.getInstance(context)
             mediaSession.playNext(context)
             val intent = Intent()
             intent.addCategory(Intent.CATEGORY_DEFAULT)
-            intent.action = context.resources.getString(R.string.broadcast_receiver_action_new_song)
+            intent.action = context.resources.getString(R.string.action_new_song)
             context.sendBroadcast(intent)
         }
 

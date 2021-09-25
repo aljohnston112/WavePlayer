@@ -31,9 +31,6 @@ class ServiceMain : LifecycleService() {
     private var serviceStarted = false
     private val serviceMainBinder: IBinder = ServiceMainBinder()
 
-    private val mediaPlayerSession = MediaPlayerSession.getInstance(applicationContext)
-    private var mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
-
     // region lifecycle
     // region onCreate
     override fun onCreate() {
@@ -81,10 +78,10 @@ class ServiceMain : LifecycleService() {
     private fun setUpBroadCastReceivers() {
         val intentFilter = IntentFilter()
         intentFilter.addCategory(Intent.CATEGORY_DEFAULT)
-        intentFilter.addAction(resources.getString(R.string.broadcast_receiver_action_next))
-        intentFilter.addAction(resources.getString(R.string.broadcast_receiver_action_previous))
-        intentFilter.addAction(resources.getString(R.string.broadcast_receiver_action_play_pause))
-        intentFilter.addAction(resources.getString(R.string.broadcast_receiver_action_new_song))
+        intentFilter.addAction(resources.getString(R.string.action_next))
+        intentFilter.addAction(resources.getString(R.string.action_previous))
+        intentFilter.addAction(resources.getString(R.string.action_play_pause))
+        intentFilter.addAction(resources.getString(R.string.action_new_song))
         registerReceiver(broadcastReceiver, intentFilter)
     }
 
@@ -93,25 +90,26 @@ class ServiceMain : LifecycleService() {
             synchronized(LOCK) {
                 val action: String? = intent.action
                 if (action != null) {
+                    val mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
                     when (action) {
                         resources.getString(
-                            R.string.broadcast_receiver_action_next
+                            R.string.action_next
                         ) -> {
                             mediaSession.playNext(applicationContext)
                             SaveFile.saveFile(applicationContext)
                         }
                         resources.getString(
-                            R.string.broadcast_receiver_action_play_pause
+                            R.string.action_play_pause
                         ) -> {
                             mediaSession.pauseOrPlay(applicationContext)
                         }
                         resources.getString(
-                            R.string.broadcast_receiver_action_previous
+                            R.string.action_previous
                         ) -> {
                             mediaSession.playPrevious(applicationContext)
                         }
                         resources.getString(
-                            R.string.broadcast_receiver_action_new_song
+                            R.string.action_new_song
                         ) -> {
                             updateNotification()
                         }
@@ -130,6 +128,7 @@ class ServiceMain : LifecycleService() {
             Toast.makeText(applicationContext, "PinkyPlayer starting", Toast.LENGTH_SHORT).show()
             updateNotification()
             startForeground(NOTIFICATION_CHANNEL_ID.hashCode(), notification)
+            val mediaPlayerSession = MediaPlayerSession.getInstance(applicationContext)
             mediaPlayerSession.currentAudioUri.observe(this) {
                 updateSongArt(it)
                 updateNotificationSongName(it)
@@ -227,7 +226,7 @@ class ServiceMain : LifecycleService() {
 
     @SuppressLint("UnspecifiedImmutableFlag")
     private fun setUpBroadcastNext() {
-        val intentNext = Intent(resources.getString(R.string.broadcast_receiver_action_next))
+        val intentNext = Intent(resources.getString(R.string.action_next))
         intentNext.addCategory(Intent.CATEGORY_DEFAULT)
         val pendingIntentNext = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             getBroadcast(
@@ -254,7 +253,7 @@ class ServiceMain : LifecycleService() {
 
     @SuppressLint("UnspecifiedImmutableFlag")
     private fun setUpBroadcastPlayPause() {
-        val intentPlayPause = Intent(resources.getString(R.string.broadcast_receiver_action_play_pause))
+        val intentPlayPause = Intent(resources.getString(R.string.action_play_pause))
         intentPlayPause.addCategory(Intent.CATEGORY_DEFAULT)
         val pendingIntentPlayPause = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             getBroadcast(
@@ -281,7 +280,7 @@ class ServiceMain : LifecycleService() {
 
     @SuppressLint("UnspecifiedImmutableFlag")
     private fun setUpBroadcastPrevious() {
-        val intentPrev = Intent(resources.getString(R.string.broadcast_receiver_action_previous))
+        val intentPrev = Intent(resources.getString(R.string.action_previous))
         intentPrev.addCategory(Intent.CATEGORY_DEFAULT)
         val pendingIntentPrev = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             getBroadcast(
@@ -391,6 +390,7 @@ class ServiceMain : LifecycleService() {
     }
 
     private fun taskRemoved() {
+        val mediaPlayerSession = MediaPlayerSession.getInstance(applicationContext)
         mediaPlayerSession.cleanUp(applicationContext)
         unregisterReceiver(broadcastReceiver)
         stopSelf()
@@ -398,6 +398,7 @@ class ServiceMain : LifecycleService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        val mediaPlayerSession = MediaPlayerSession.getInstance(applicationContext)
         mediaPlayerSession.cleanUp(applicationContext)
         unregisterReceiver(broadcastReceiver)
         stopSelf()

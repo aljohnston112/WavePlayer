@@ -90,12 +90,6 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
                 viewHolder: RecyclerView.ViewHolder,
                 target: RecyclerView.ViewHolder
             ): Boolean {
-                // TODO hopefully not needed
-                /*
-                    Collections.swap(recyclerViewAdapterSongs.getSongs(),
-                            viewHolder.getAdapterPosition(), target.getAdapterPosition());
-
-                 */
                 viewModelUserPicks.notifySongMoved(
                     requireActivity().applicationContext,
                     viewHolder.absoluteAdapterPosition,
@@ -109,14 +103,9 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
             }
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                // TODO there might be a bug where the last song shows up once for every time a song is swiped.
                 val position = viewHolder.absoluteAdapterPosition
                 viewModelUserPicks.notifySongRemoved(requireActivity().applicationContext, position)
-                // TODO needed?
-                /*
-                recyclerViewAdapterSongs.getSongs().remove(position);
-                 */
-                recyclerViewAdapterSongs.notifyItemRemoved(position)
+                recyclerViewAdapterSongs.updateList(userPickedPlaylist.getSongs().toList())
                 val snackBar: Snackbar = Snackbar.make(
                     binding.recyclerViewSongList,
                     R.string.song_removed,
@@ -124,12 +113,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
                 )
                 snackBar.setAction(R.string.undo) {
                     viewModelUserPicks.notifyItemInserted(requireActivity().applicationContext, position)
-                    // TODO needed?
-                    /*
-                    recyclerViewAdapterSongs.updateList(userPickedPlaylist.getSongs());
-                 */
-                    // TODO make sure position is right
-                    recyclerViewAdapterSongs.notifyItemInserted(position)
+                    recyclerViewAdapterSongs.updateList(userPickedPlaylist.getSongs().toList())
                 }
                 snackBar.show()
             }
@@ -173,7 +157,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT)
         filterComplete.addAction(
             requireActivity().resources.getString(
-                R.string.broadcast_receiver_action_service_connected
+                R.string.action_service_connected
             )
         )
         broadcastReceiver = object : BroadcastReceiver() {
@@ -181,7 +165,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
                 val action: String? = intent.action
                 if (action != null) {
                     if (action == resources.getString(
-                            R.string.broadcast_receiver_action_service_connected
+                            R.string.action_service_connected
                         )
                     ) {
                         setUpRecyclerView(randomPlaylist)

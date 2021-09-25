@@ -42,11 +42,6 @@ class FragmentSong : Fragment() {
     private val viewModelAddToQueue by activityViewModels<ViewModelAddToQueue>()
     private val viewModelFragmentSong by viewModels<ViewModelFragmentSong>()
 
-    private val mediaPlayerSession =
-        MediaPlayerSession.getInstance(requireActivity().applicationContext)
-    private val mediaSession: MediaSession =
-        MediaSession.getInstance(requireActivity().applicationContext)
-
     private var currentAudioUri: AudioUri? = null
 
     // For updating the SeekBar
@@ -64,6 +59,7 @@ class FragmentSong : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         KeyboardUtil.hideKeyboard(view)
+        val mediaPlayerSession = MediaPlayerSession.getInstance(requireActivity().applicationContext)
         mediaPlayerSession.currentAudioUri.observe(viewLifecycleOwner) {
             if (it != null) {
                 // TODO why does this need to be cached?
@@ -97,6 +93,8 @@ class FragmentSong : Fragment() {
     }
 
     private fun setUpSeekBar(maxMillis: Int) {
+        val mediaPlayerSession = MediaPlayerSession.getInstance(requireActivity().applicationContext)
+        val mediaSession = MediaSession.getInstance(requireActivity().applicationContext)
         val stringEndTime = formatMillis(maxMillis)
         val stringCurrentTime = formatMillis(mediaPlayerSession.getCurrentTime())
         binding.editTextCurrentTime.text = stringCurrentTime
@@ -116,6 +114,7 @@ class FragmentSong : Fragment() {
     private fun setUpSeekBarUpdater() {
         val seekBar: SeekBar = binding.seekBar
         val textViewCurrent: TextView = binding.editTextCurrentTime
+        val mediaPlayerSession = MediaPlayerSession.getInstance(requireActivity().applicationContext)
         shutDownSeekBarUpdater()
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
         val runnableSeekBarUpdater = Runnable {
@@ -216,6 +215,7 @@ class FragmentSong : Fragment() {
 
     @SuppressLint("ClickableViewAccessibility")
     private fun setUpButtons() {
+        val mediaSession = MediaSession.getInstance(requireActivity().applicationContext)
         val buttonBad: ImageButton = binding.buttonThumbDown
         val buttonGood: ImageButton = binding.buttonThumbUp
         val buttonShuffle: ImageButton = binding.imageButtonShuffle
@@ -349,6 +349,7 @@ class FragmentSong : Fragment() {
     }
 
     private fun setUpShuffle() {
+        val mediaSession = MediaSession.getInstance(requireActivity().applicationContext)
         val imageView: ImageView = binding.imageButtonShuffle
         if (mediaSession.isShuffling()) {
             setUpButton(imageView, R.drawable.ic_shuffle_black_24dp)
@@ -358,6 +359,7 @@ class FragmentSong : Fragment() {
     }
 
     private fun setUpLoop() {
+        val mediaSession = MediaSession.getInstance(requireActivity().applicationContext)
         val imageView: ImageView = binding.imageButtonRepeat
         when {
             mediaSession.isLoopingOne() -> {
@@ -382,7 +384,7 @@ class FragmentSong : Fragment() {
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT)
         filterComplete.addAction(
             requireActivity().resources.getString(
-                R.string.broadcast_receiver_action_service_connected
+                R.string.action_service_connected
             )
         )
         requireActivity().registerReceiver(broadcastReceiver, filterComplete)
@@ -393,7 +395,7 @@ class FragmentSong : Fragment() {
             val action: String? = intent.action
             if (action != null) {
                 if (action == resources.getString(
-                        R.string.broadcast_receiver_action_service_connected
+                        R.string.action_service_connected
                     )
                 ) {
                     // TODO make sure this isn't needed

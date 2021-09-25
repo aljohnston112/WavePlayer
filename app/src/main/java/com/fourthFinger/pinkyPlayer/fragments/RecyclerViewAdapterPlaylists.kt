@@ -9,6 +9,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.fourthFinger.pinkyPlayer.DiffUtils
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
 
@@ -16,7 +17,7 @@ class RecyclerViewAdapterPlaylists(
         private var listenerCallbackPlaylists: ListenerCallbackPlaylists,
         randomPlaylists: List<RandomPlaylist>
 ) : ListAdapter<RandomPlaylist, RecyclerViewAdapterPlaylists.ViewHolder>(
-    RandomPlaylist.DiffUtilItemCallbackPlaylists()
+    DiffUtils.DiffUtilItemCallbackPlaylists()
 ) {
 
     interface ListenerCallbackPlaylists {
@@ -26,7 +27,7 @@ class RecyclerViewAdapterPlaylists(
     }
 
     fun updateList(randomPlaylists: List<RandomPlaylist>) {
-        submitList(randomPlaylists)
+        submitList(ArrayList(randomPlaylists))
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {

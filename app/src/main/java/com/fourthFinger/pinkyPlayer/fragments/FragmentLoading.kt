@@ -1,15 +1,19 @@
 package com.fourthFinger.pinkyPlayer.fragments
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
@@ -19,6 +23,7 @@ import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.FragmentLoadingBinding
 import com.fourthFinger.pinkyPlayer.media_controller.ViewModelFragmentLoading
 
+
 class FragmentLoading : Fragment() {
 
     private var _binding: FragmentLoadingBinding? = null
@@ -26,6 +31,11 @@ class FragmentLoading : Fragment() {
 
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
     private val viewModelFragmentLoading by activityViewModels<ViewModelFragmentLoading>()
+
+    private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
+
+    // TODO don't show loading screen when user denies permission
+    // TODO rerun scan after user comes back from settings screen
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -63,7 +73,7 @@ class FragmentLoading : Fragment() {
 
     private fun askForPermissionAndCreateMediaController() {
         val appContext = requireActivity().applicationContext
-        val requestPermissionLauncher =
+        requestPermissionLauncher =
             registerForActivityResult(
                 ActivityResultContracts.RequestPermission()
             ) { isGranted: Boolean ->
@@ -75,9 +85,20 @@ class FragmentLoading : Fragment() {
                         R.string.permission_read_needed,
                         Toast.LENGTH_LONG
                     ).show()
+                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                    val uri: Uri = Uri.fromParts(
+                        "package",
+                        requireActivity().packageName,
+                        null
+                    )
+                    intent.data = uri
+                    startActivity(intent)
                 }
             }
+    }
 
+    private fun checkPermission(requestPermissionLauncher: ActivityResultLauncher<String>) {
+        val appContext = requireActivity().applicationContext
         when {
             (ActivityCompat.checkSelfPermission(
                 appContext,
@@ -104,6 +125,7 @@ class FragmentLoading : Fragment() {
 
     override fun onResume() {
         super.onResume()
+        checkPermission(requestPermissionLauncher)
         updateMainContent()
     }
 

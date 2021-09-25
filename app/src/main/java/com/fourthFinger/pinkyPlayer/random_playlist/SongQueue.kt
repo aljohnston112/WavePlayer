@@ -42,7 +42,10 @@ class SongQueue private constructor() {
     }
 
     fun addToQueue(songID: Long) {
-        songQueue.add(songID)
+        val i = songQueueIterator.nextIndex()
+        goToBack()
+        songQueueIterator.add(songID)
+        songQueueIterator = songQueue.listIterator(i)
         // TODO seems to be unneeded due to method name, but may have a purpose
         // songQueueIterator = songQueue.listIterator(songQueue.lastIndexOf(songID))
     }

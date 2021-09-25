@@ -3,7 +3,6 @@ package com.fourthFinger.pinkyPlayer.fragments
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import com.fourthFinger.pinkyPlayer.media_controller.MediaSession
-import com.fourthFinger.pinkyPlayer.media_controller.SaveFile
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 
 class ViewModelFragmentSong(application: Application): AndroidViewModel(application) {
@@ -17,8 +16,10 @@ class ViewModelFragmentSong(application: Application): AndroidViewModel(applicat
     fun thumbDownClicked(currentAudioUri: AudioUri?) {
         currentAudioUri?.id?.let {
             playlistsRepo.getSong(it)?.let { song ->
-                mediaSession.getCurrentPlaylist()?.bad(song)
-                SaveFile.saveFile(getApplication<Application>().applicationContext)
+                mediaSession.getCurrentPlaylist()?.bad(
+                    getApplication<Application>().applicationContext,
+                    song
+                )
             }
         }
     }
@@ -26,8 +27,10 @@ class ViewModelFragmentSong(application: Application): AndroidViewModel(applicat
     fun thumbUpClicked(currentAudioUri: AudioUri?) {
         currentAudioUri?.id?.let {
             playlistsRepo.getSong(it)?.let { song ->
-                mediaSession.getCurrentPlaylist()?.good(song)
-                SaveFile.saveFile(getApplication<Application>().applicationContext)
+                mediaSession.getCurrentPlaylist()?.good(
+                    getApplication<Application>().applicationContext,
+                    song
+                )
             }
         }
     }
@@ -52,8 +55,10 @@ class ViewModelFragmentSong(application: Application): AndroidViewModel(applicat
         mediaSession.playNext(getApplication<Application>().applicationContext)
         currentAudioUri?.id?.let { id ->
             playlistsRepo.getSong(id)?.let {
-                mediaSession.getCurrentPlaylist()?.bad(it)
-                SaveFile.saveFile(getApplication<Application>().applicationContext)
+                mediaSession.getCurrentPlaylist()?.bad(
+                    getApplication<Application>().applicationContext,
+                    it
+                )
             }
         }
     }

@@ -10,6 +10,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.fourthFinger.pinkyPlayer.DiffUtils
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
 
@@ -17,7 +18,7 @@ class RecyclerViewAdapterSongs(
         private val listenerCallbackSongs: ListenerCallbackSongs,
         songs: Set<Song>
 ) : ListAdapter<Song, RecyclerViewAdapterSongs.ViewHolder>(
-    Song.DiffUtilItemCallbackSongs()
+    DiffUtils.DiffUtilItemCallbackSongs()
 ) {
 
     interface ListenerCallbackSongs {
@@ -28,7 +29,7 @@ class RecyclerViewAdapterSongs(
 
     @SuppressLint("NotifyDataSetChanged")
     fun updateList(songs: List<Song>) {
-        submitList(songs)
+        submitList(ArrayList(songs))
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -58,7 +59,7 @@ class RecyclerViewAdapterSongs(
     }
 
     init {
-        submitList(songs.toList())
+        submitList(ArrayList(songs))
     }
 
     class ViewHolder(val songView: View) : RecyclerView.ViewHolder(songView) {
@@ -71,4 +72,5 @@ class RecyclerViewAdapterSongs(
         }
 
     }
+
 }

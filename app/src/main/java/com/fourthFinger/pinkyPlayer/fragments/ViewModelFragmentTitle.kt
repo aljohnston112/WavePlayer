@@ -56,6 +56,7 @@ class ViewModelFragmentTitle : ViewModel() {
             if (randomPlaylist == null) {
                 randomPlaylist = uri.path?.let {
                     RandomPlaylist(
+                        context,
                         it,
                         songs,
                         SettingsRepo.getInstance().getMaxPercent(),
@@ -66,8 +67,11 @@ class ViewModelFragmentTitle : ViewModel() {
                     playlistsRepo.addPlaylist(context, randomPlaylist)
                 }
             } else {
-                addNewSongs(randomPlaylist)
-                removeMissingSongs(randomPlaylist)
+                addNewSongs(
+                    context,
+                    randomPlaylist
+                )
+                removeMissingSongs(context, randomPlaylist)
             }
             return randomPlaylist
         }
@@ -130,18 +134,21 @@ class ViewModelFragmentTitle : ViewModel() {
         }
     }
 
-    private fun addNewSongs(randomPlaylist: RandomPlaylist) {
+    private fun addNewSongs(context: Context, randomPlaylist: RandomPlaylist) {
         for (song in songs) {
-            if (!randomPlaylist.contains(song)) {
-                randomPlaylist.add(song)
+            if (!randomPlaylist.contains(song.id)) {
+                randomPlaylist.add(
+                    context,
+                    song
+                )
             }
         }
     }
 
-    private fun removeMissingSongs(randomPlaylist: RandomPlaylist) {
+    private fun removeMissingSongs(context: Context, randomPlaylist: RandomPlaylist) {
         for (song in randomPlaylist.getSongs()) {
             if (!songs.contains(song)) {
-                randomPlaylist.remove(song)
+                randomPlaylist.remove(context, song)
                 songs.remove(song)
             }
         }

@@ -19,11 +19,11 @@ class ViewModelSettings : ViewModel() {
     }
 
     fun getPercentChangeUp(): String {
-        return (100.0 / settingsRepo.getPercentChangeUp()).roundToInt().toString()
+        return (settingsRepo.getPercentChangeUp()*100.0).roundToInt().toString()
     }
 
     fun getPercentChangeDown(): String {
-        return (100.0 / settingsRepo.getPercentChangeDown()).roundToInt().toString()
+        return (settingsRepo.getPercentChangeDown()*100.0).roundToInt().toString()
     }
 
     fun fabClicked(

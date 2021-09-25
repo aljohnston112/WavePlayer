@@ -33,8 +33,6 @@ class FragmentPaneSong : Fragment() {
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
     private val viewModelFragmentPaneSong by viewModels<ViewModelFragmentPaneSong>()
 
-    private val mediaPlayerSession = MediaPlayerSession.getInstance(requireActivity().applicationContext)
-
     private var songArtWidth = 0
     private var visible = false
 
@@ -60,6 +58,7 @@ class FragmentPaneSong : Fragment() {
                     songArtWidth = binding.imageViewSongPaneSongArt.width
                 }
                 // TODO is this needed?
+                val mediaPlayerSession = MediaPlayerSession.getInstance(requireActivity().applicationContext)
                 updateSongUI(mediaPlayerSession.currentAudioUri.value)
                 setUpPrev()
                 setUpNext()
@@ -68,6 +67,7 @@ class FragmentPaneSong : Fragment() {
 
     fun updateSongUI(currentAudioUri: AudioUri?) {
         // TODO Get rid of mediaModel check via LiveData
+        val mediaPlayerSession = MediaPlayerSession.getInstance(requireActivity().applicationContext)
         if (currentAudioUri != null && visible && mediaPlayerSession.isSongInProgress()) {
             binding.textViewSongPaneSongName.text = currentAudioUri.title
             binding.imageViewSongPaneSongArt.post(runnableSongPaneArtUpdater)
@@ -75,6 +75,7 @@ class FragmentPaneSong : Fragment() {
     }
 
     private var runnableSongPaneArtUpdater = Runnable {
+        val mediaPlayerSession = MediaPlayerSession.getInstance(requireActivity().applicationContext)
         val imageViewSongPaneSongArt: ImageView = binding.imageViewSongPaneSongArt
         val bitmapSongArt: Bitmap? = BitmapUtil.getThumbnailBitmap(
             mediaPlayerSession.currentAudioUri.value,
@@ -196,12 +197,12 @@ class FragmentPaneSong : Fragment() {
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT)
         filterComplete.addAction(
             requireActivity().resources.getString(
-                R.string.broadcast_receiver_action_service_connected
+                R.string.action_service_connected
             )
         )
         filterComplete.addAction(
             requireActivity().resources.getString(
-                R.string.broadcast_receiver_action_loaded
+                R.string.action_loaded
             )
         )
         requireActivity().registerReceiver(broadcastReceiver, filterComplete)
@@ -210,15 +211,16 @@ class FragmentPaneSong : Fragment() {
     private var broadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             // TODO see if updateSongUi is really needed
+            val mediaPlayerSession = MediaPlayerSession.getInstance(requireActivity().applicationContext)
             val action: String? = intent.action
             if (action != null) {
                 if (action == resources.getString(
-                        R.string.broadcast_receiver_action_service_connected
+                        R.string.action_service_connected
                     )
                 ) {
                     updateSongUI(mediaPlayerSession.currentAudioUri.value)
                 } else if (action == resources.getString(
-                        R.string.broadcast_receiver_action_loaded
+                        R.string.action_loaded
                     )
                 ) {
                     // TODO can this not be done onViewCreated?
@@ -229,6 +231,7 @@ class FragmentPaneSong : Fragment() {
     }
 
     private fun setUpObservers() {
+        val mediaPlayerSession = MediaPlayerSession.getInstance(requireActivity().applicationContext)
         mediaPlayerSession.currentAudioUri.observe(viewLifecycleOwner) { currentAudioUri: AudioUri? ->
             // TODO make sure this works as intended
             updateSongUI(currentAudioUri)
