@@ -10,7 +10,7 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.activityViewModels
 import com.fourthFinger.pinkyPlayer.NavUtil
 import com.fourthFinger.pinkyPlayer.R
-import com.fourthFinger.pinkyPlayer.fragments.PlaylistsRepo
+import com.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
 import com.fourthFinger.pinkyPlayer.fragments.ViewModelPlaylists
 import com.fourthFinger.pinkyPlayer.fragments.ViewModelUserPicks
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist

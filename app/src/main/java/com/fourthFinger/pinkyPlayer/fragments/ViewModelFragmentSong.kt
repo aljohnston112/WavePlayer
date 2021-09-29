@@ -2,8 +2,9 @@ package com.fourthFinger.pinkyPlayer.fragments
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import com.fourthFinger.pinkyPlayer.media_controller.MediaSession
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
+import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
+import com.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
 
 class ViewModelFragmentSong(application: Application): AndroidViewModel(application) {
 
@@ -78,7 +79,5 @@ class ViewModelFragmentSong(application: Application): AndroidViewModel(applicat
             }
         }
     }
-
-
 
 }

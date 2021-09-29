@@ -1,4 +1,4 @@
-package com.fourthFinger.pinkyPlayer.media_controller
+package com.fourthFinger.pinkyPlayer
 
 import android.annotation.SuppressLint
 import android.app.*
@@ -10,10 +10,10 @@ import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
-import com.fourthFinger.pinkyPlayer.BitmapUtil
-import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
+import com.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerSession
+import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 import java.io.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -96,7 +96,6 @@ class ServiceMain : LifecycleService() {
                             R.string.action_next
                         ) -> {
                             mediaSession.playNext(applicationContext)
-                            SaveFile.saveFile(applicationContext)
                         }
                         resources.getString(
                             R.string.action_play_pause
@@ -111,7 +110,10 @@ class ServiceMain : LifecycleService() {
                         resources.getString(
                             R.string.action_new_song
                         ) -> {
-                            updateNotification()
+                            //updateNotification()
+                            val notificationManager: NotificationManager =
+                                getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                            notificationManager.notify(NOTIFICATION_CHANNEL_ID.hashCode(), notification)
                         }
                     }
                 }
@@ -132,17 +134,22 @@ class ServiceMain : LifecycleService() {
             mediaPlayerSession.currentAudioUri.observe(this) {
                 updateSongArt(it)
                 updateNotificationSongName(it)
+                val notificationManager: NotificationManager =
+                    getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                notificationManager.notify(NOTIFICATION_CHANNEL_ID.hashCode(), notification)
             }
             mediaPlayerSession.isPlaying.observe(this) {
                 updateNotificationPlayButton(it)
+                val notificationManager: NotificationManager =
+                    getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                notificationManager.notify(NOTIFICATION_CHANNEL_ID.hashCode(), notification)
             }
         }
         serviceStarted = true
         return START_STICKY
     }
 
-    fun updateNotification() {
-        // TODO try to reuse RemoteViews
+    private fun updateNotification() {
         setUpNotificationBuilder()
         setUpBroadCastsForNotificationButtons()
         remoteViewsNotificationLayout?.removeAllViews(R.id.pane_notification_linear_layout)
@@ -182,7 +189,6 @@ class ServiceMain : LifecycleService() {
             RemoteViews(packageName, R.layout.pane_notification_with_art)
         remoteViewsNotificationLayout = RemoteViews(packageName, R.layout.pane_notification)
 
-        // TODO try to open song pane
         val notificationIntent = Intent(applicationContext, ActivityMain::class.java)
         val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             getActivity(
@@ -332,41 +338,32 @@ class ServiceMain : LifecycleService() {
     }
 
     private fun updateNotificationSongName(audioUri: AudioUri) {
-        if (notificationHasArt) {
             remoteViewsNotificationLayoutWithArt?.setTextViewText(
                 R.id.textViewNotificationSongPaneSongNameWArt,
                 audioUri.title
             )
-        } else {
             remoteViewsNotificationLayoutWithoutArt?.setTextViewText(
                 R.id.textViewNotificationSongPaneSongName,
                 audioUri.title
             )
-        }
     }
 
     private fun updateNotificationPlayButton(isPlaying: Boolean) {
         if (isPlaying) {
-            if (notificationHasArt) {
                 remoteViewsNotificationLayoutWithArt?.setImageViewResource(
                     R.id.imageButtonNotificationSongPanePlayPauseWArt, R.drawable.pause_black_24dp
                 )
-            } else {
                 remoteViewsNotificationLayoutWithoutArt?.setImageViewResource(
                     R.id.imageButtonNotificationSongPanePlayPause, R.drawable.pause_black_24dp
                 )
-            }
         } else {
-            if (notificationHasArt) {
                 remoteViewsNotificationLayoutWithArt?.setImageViewResource(
                     R.id.imageButtonNotificationSongPanePlayPauseWArt,
                     R.drawable.play_arrow_black_24dp
                 )
-            } else {
                 remoteViewsNotificationLayoutWithoutArt?.setImageViewResource(
                     R.id.imageButtonNotificationSongPanePlayPause, R.drawable.play_arrow_black_24dp
                 )
-            }
         }
     }
 

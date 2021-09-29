@@ -1,7 +1,6 @@
-package com.fourthFinger.pinkyPlayer.media_controller
+package com.fourthFinger.pinkyPlayer.random_playlist
 
 import android.content.Context
-import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -9,30 +8,28 @@ import android.media.MediaPlayer
 import android.os.Build
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.fourthFinger.pinkyPlayer.R
-import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 import java.util.*
-import java.util.concurrent.Callable
 
 class MediaPlayerSession private constructor(context: Context) {
 
     private var haveAudioFocus: Boolean = false
-    private var songInProgress: Boolean = false
-    fun isSongInProgress(): Boolean {
-        return songInProgress
+    private var _songInProgress: MutableLiveData<Boolean> = MutableLiveData(false)
+    val songInProgress = _songInProgress as LiveData<Boolean>
+    fun isSongInProgress(): Boolean? {
+        return _songInProgress.value
     }
 
     private val _isPlaying: MutableLiveData<Boolean> = MutableLiveData(false)
     val isPlaying = _isPlaying as LiveData<Boolean>
     fun setIsPlaying(isPlaying: Boolean) {
         this._isPlaying.postValue(isPlaying)
-        songInProgress = isPlaying
+        _songInProgress.value = isPlaying
     }
 
     private var _currentAudioUri = MutableLiveData<AudioUri>()
     val currentAudioUri = _currentAudioUri as LiveData<AudioUri>
     fun setCurrentAudioUri(audioUri: AudioUri) {
-        _currentAudioUri.postValue(audioUri)
+        _currentAudioUri.value = (audioUri)
     }
 
     fun getCurrentTime(): Int {
@@ -47,9 +44,11 @@ class MediaPlayerSession private constructor(context: Context) {
     private fun getMediaPlayerWUri(songID: Long): MediaPlayerWUri? {
         return songIDToMediaPlayerWUriHashMap[songID]
     }
+
     private fun addMediaPlayerWUri(mediaPlayerWURI: MediaPlayerWUri) {
         songIDToMediaPlayerWUriHashMap[mediaPlayerWURI.id] = mediaPlayerWURI
     }
+
     fun removeMediaPlayerWUri(songID: Long) {
         songIDToMediaPlayerWUriHashMap.remove(songID)
     }
@@ -63,7 +62,7 @@ class MediaPlayerSession private constructor(context: Context) {
             songIDToMediaPlayerWUriHashMap.clear()
         }
         _isPlaying.postValue(false)
-        songInProgress = false
+        _songInProgress.value = false
     }
 
     fun cleanUp(context: Context) {
@@ -78,23 +77,19 @@ class MediaPlayerSession private constructor(context: Context) {
         MediaPlayer.OnCompletionListener {
             val mediaSession = MediaSession.getInstance(context)
             mediaSession.playNext(context)
-            val intent = Intent()
-            intent.addCategory(Intent.CATEGORY_DEFAULT)
-            intent.action = context.resources.getString(R.string.action_new_song)
-            context.sendBroadcast(intent)
         }
 
-    var onErrorListener: MediaPlayer.OnErrorListener
-     = MediaPlayer.OnErrorListener { _: MediaPlayer?, _: Int, _: Int ->
-        synchronized(MediaPlayerWUri.lock) {
-            val mediaSession: MediaSession = MediaSession.getInstance(context)
-            releaseMediaPlayers()
-            if (!isSongInProgress()) {
-                mediaSession.playNext(context)
+    var onErrorListener: MediaPlayer.OnErrorListener =
+        MediaPlayer.OnErrorListener { _: MediaPlayer?, _: Int, _: Int ->
+            synchronized(MediaPlayerWUri.lock) {
+                val mediaSession: MediaSession = MediaSession.getInstance(context)
+                releaseMediaPlayers()
+                if (isSongInProgress() == false) {
+                    mediaSession.playNext(context)
+                }
+                return@OnErrorListener false
             }
-            return@OnErrorListener false
         }
-    }
 
     private fun requestAudioFocus(context: Context): Boolean {
         if (haveAudioFocus) {
@@ -166,7 +161,7 @@ class MediaPlayerSession private constructor(context: Context) {
                 if (requestAudioFocus(context)) {
                     mediaPlayerWURI.shouldPlay(true)
                     setIsPlaying(true)
-                    songInProgress = true
+                    _songInProgress.value = true
                 }
             }
         }
@@ -180,9 +175,11 @@ class MediaPlayerSession private constructor(context: Context) {
                     it.stop(context, it1)
                     it.prepareAsync()
                 }
+            } else {
+                it.shouldPlay(false)
             }
         } ?: releaseMediaPlayers()
-        songInProgress = false
+        _songInProgress.value = false
         setIsPlaying(false)
     }
 
@@ -209,14 +206,11 @@ class MediaPlayerSession private constructor(context: Context) {
         var mediaPlayerWUri: MediaPlayerWUri? = getMediaPlayerWUri(songID)
         if (mediaPlayerWUri == null) {
             try {
-                mediaPlayerWUri = (Callable {
-                    val mediaPlayerWURI = MediaPlayerWUri(
-                        context,
-                        MediaPlayer.create(context, AudioUri.getUri(songID)),
-                        songID
-                    )
-                    mediaPlayerWURI
-                } as Callable<MediaPlayerWUri>).call()
+                mediaPlayerWUri = MediaPlayerWUri(
+                    context,
+                    MediaPlayer.create(context, AudioUri.getUri(songID)),
+                    songID
+                )
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -225,7 +219,7 @@ class MediaPlayerSession private constructor(context: Context) {
         if (requestAudioFocus(context)) {
             mediaPlayerWUri?.shouldPlay(true)
             setIsPlaying(true)
-            songInProgress = true
+            _songInProgress.value = true
         }
     }
 

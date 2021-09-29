@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -23,6 +24,16 @@ class FragmentTitle : Fragment() {
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
     private val viewModelFragmentTitle by viewModels<ViewModelFragmentTitle>()
     private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>()
+
+    private lateinit var getUri: ActivityResultLauncher<Uri>
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        getUri = registerForActivityResult(
+            ActivityResultContracts.OpenDocumentTree(),
+            activityResultCallback
+        )
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -69,13 +80,7 @@ class FragmentTitle : Fragment() {
                 R.id.button_folder_search -> {
                     // TODO why is this needed?
                     // binding.buttonFolderSearch.setOnClickListener(null)
-                    // TODO is this string needed?
-                    // view.resources.getString(R.string.pick_folder)
-                    val getUri = registerForActivityResult(
-                        ActivityResultContracts.OpenDocumentTree(),
-                        activityResultCallback
-                    )
-                    getUri.launch(null)
+                     getUri.launch(null)
                 }
             }
         }

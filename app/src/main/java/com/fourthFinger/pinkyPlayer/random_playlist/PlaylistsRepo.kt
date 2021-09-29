@@ -1,14 +1,8 @@
-package com.fourthFinger.pinkyPlayer.fragments
+package com.fourthFinger.pinkyPlayer.random_playlist
 
 import android.content.Context
 import androidx.room.Room
-import com.fourthFinger.pinkyPlayer.media_controller.MediaLoader
-import com.fourthFinger.pinkyPlayer.media_controller.SaveFile
-import com.fourthFinger.pinkyPlayer.media_controller.ServiceMain
-import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
-import com.fourthFinger.pinkyPlayer.random_playlist.Song
-import com.fourthFinger.pinkyPlayer.random_playlist.SongDAO
-import com.fourthFinger.pinkyPlayer.random_playlist.SongDatabase
+import com.fourthFinger.pinkyPlayer.ServiceMain
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
@@ -83,7 +77,9 @@ class PlaylistsRepo private constructor(context: Context) {
 
     fun addPlaylistsFromSaveFile(randomPlaylist: List<RandomPlaylist>) {
         for(p in randomPlaylist) {
-            playlists.add(p)
+            if(!playlists.contains(p)) {
+                playlists.add(p)
+            }
         }
     }
 

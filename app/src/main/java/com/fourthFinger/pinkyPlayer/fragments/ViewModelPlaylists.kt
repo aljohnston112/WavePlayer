@@ -3,7 +3,8 @@ package com.fourthFinger.pinkyPlayer.fragments
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
-import com.fourthFinger.pinkyPlayer.media_controller.SaveFile
+import com.fourthFinger.pinkyPlayer.random_playlist.SaveFile
+import com.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
 import java.util.*

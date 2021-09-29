@@ -1,10 +1,9 @@
-package com.fourthFinger.pinkyPlayer.media_controller
+package com.fourthFinger.pinkyPlayer.random_playlist
 
 import android.content.Context
 import android.media.MediaPlayer
 import android.media.MediaPlayer.OnPreparedListener
 import android.os.Build
-import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 import java.util.*
 
 class MediaPlayerWUri constructor(

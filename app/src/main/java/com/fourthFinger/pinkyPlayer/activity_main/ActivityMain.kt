@@ -23,11 +23,11 @@ import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
 import com.fourthFinger.pinkyPlayer.NavUtil.Companion.navigateTo
 import com.fourthFinger.pinkyPlayer.R
+import com.fourthFinger.pinkyPlayer.ServiceMain
 import com.fourthFinger.pinkyPlayer.databinding.ActivityMainBinding
 import com.fourthFinger.pinkyPlayer.fragments.ViewModelAddToQueue
-import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerSession
-import com.fourthFinger.pinkyPlayer.media_controller.MediaSession
-import com.fourthFinger.pinkyPlayer.media_controller.ServiceMain
+import com.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerSession
+import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 
 class ActivityMain : AppCompatActivity() {
@@ -53,6 +53,20 @@ class ActivityMain : AppCompatActivity() {
         setContentView(binding.root)
         setUpOnDestinationChangedListener()
         setUpViewModelActivityMainObservers()
+        val mediaPlayerSession = MediaPlayerSession.getInstance(applicationContext)
+        mediaPlayerSession.songInProgress.observe(this) {
+            val fragment: Fragment? = supportFragmentManager.findFragmentById(
+                binding.navHostFragment.id
+            )
+            if (fragment != null) {
+                val n = NavHostFragment.findNavController(fragment)
+                if (n.currentDestination?.id != R.id.fragmentSong &&
+                    it == true
+                ) {
+                    showSongPane()
+                }
+            }
+        }
     }
 
     private fun setUpOnDestinationChangedListener() {
@@ -67,7 +81,7 @@ class ActivityMain : AppCompatActivity() {
         { _: NavController, destination: NavDestination, _: Bundle? ->
             if (destination.id != R.id.fragmentSong) {
                 val mediaPlayerSession = MediaPlayerSession.getInstance(applicationContext)
-                if (mediaPlayerSession.isSongInProgress()) {
+                if (mediaPlayerSession.isSongInProgress() == true) {
                     fragmentSongVisible(false)
                     showSongPane()
                 }
@@ -290,22 +304,21 @@ class ActivityMain : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
+        val mediaPlayerSession = MediaPlayerSession.getInstance(applicationContext)
         when (item.itemId) {
             R.id.action_reset_probs -> {
-                val mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
-                mediaSession.clearProbabilities(applicationContext)
+                mediaSession.resetProbabilities(applicationContext)
                 return true
             }
             R.id.action_lower_probs -> {
-                val mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
                 mediaSession.lowerProbabilities(applicationContext)
                 return true
             }
             R.id.action_add_to_queue -> {
-                val mediaPlayerSession = MediaPlayerSession.getInstance(applicationContext)
                 viewModelAddToQueue.actionAddToQueue(applicationContext)
                 if (viewModelActivityMain.fragmentSongVisible.value == false &&
-                    mediaPlayerSession.isSongInProgress()
+                    mediaPlayerSession.isSongInProgress() == true
                 ) {
                     showSongPane()
                 }
@@ -335,12 +348,16 @@ class ActivityMain : AppCompatActivity() {
         // TODO Paid version with time boundaries
         // TODO Paid version with ability to make new playlist out of favorite songs
         // TODO consider exo player
+        // TODO Make a playlist based on favorites from the algorithm
+        // TODO Make a UI for the queue
         val MUSIC_CONTROL_LOCK: Any = Any()
-        const val MENU_ACTION_RESET_PROBS_INDEX = 0
-        const val MENU_ACTION_LOWER_PROBS_INDEX = 1
+
+        const val MENU_ACTION_RESET_PROBABILITIES_INDEX = 0
+        const val MENU_ACTION_LOWER_PROBABILITIES_INDEX = 1
         const val MENU_ACTION_ADD_TO_PLAYLIST_INDEX = 2
         const val MENU_ACTION_SEARCH_INDEX = 3
         const val MENU_ACTION_ADD_TO_QUEUE_INDEX = 4
+
     }
 
 }

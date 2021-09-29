@@ -1,12 +1,9 @@
-package com.fourthFinger.pinkyPlayer.media_controller
+package com.fourthFinger.pinkyPlayer.random_playlist
 
 import android.content.Context
 import android.content.Intent
 import com.fourthFinger.pinkyPlayer.R
-import com.fourthFinger.pinkyPlayer.fragments.PlaylistsRepo
-import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
-import com.fourthFinger.pinkyPlayer.random_playlist.SettingsRepo
-import com.fourthFinger.pinkyPlayer.random_playlist.SongQueue
+import com.fourthFinger.pinkyPlayer.ServiceMain
 import java.util.*
 
 class MediaSession private constructor(context: Context) {
@@ -26,35 +23,46 @@ class MediaSession private constructor(context: Context) {
         playlistsRepo.getMasterPlaylist()?.let { setCurrentPlaylist(it) }
     }
 
-    fun clearProbabilities(context: Context) {
-        currentPlaylist?.clearProbabilities(context)
+    fun resetProbabilities(context: Context) {
+        currentPlaylist?.resetProbabilities(context)
     }
     fun lowerProbabilities(context: Context) {
-        currentPlaylist?.lowerProbabilities(
-            context,
-            SettingsRepo.getInstance().getLowerProb()
-        )
+        currentPlaylist?.lowerProbabilities(context)
     }
 
+    @Volatile
     private var shuffling: Boolean = true
+    @Volatile
     private var looping: Boolean = false
+    @Volatile
     private var loopingOne: Boolean = false
 
+    @Synchronized
     fun isShuffling(): Boolean {
         return shuffling
     }
+
+    @Synchronized
     fun setShuffling(shuffling: Boolean) {
         this.shuffling = shuffling
     }
+
+    @Synchronized
     fun isLooping(): Boolean {
         return looping
     }
+
+    @Synchronized
     fun setLooping(looping: Boolean) {
         this.looping = looping
     }
+
+    @Synchronized
     fun isLoopingOne(): Boolean {
         return loopingOne
     }
+
+    @Synchronized
     fun setLoopingOne(loopingOne: Boolean) {
         this.loopingOne = loopingOne
     }
@@ -174,8 +182,6 @@ class MediaSession private constructor(context: Context) {
             playLoopingOne(context)
         } else if (!playPreviousInQueue(context)) {
             playPreviousInPlaylist(context)
-        } else {
-            mediaPlayerSession.setIsPlaying(true)
         }
         sendBroadcastNewSong(context)
     }
@@ -237,7 +243,11 @@ class MediaSession private constructor(context: Context) {
      * If there is no song in progress, nothing will be done.
      */
     fun pauseOrPlay(context: Context) {
-        mediaPlayerSession.pauseOrPlay(context)
+        if(mediaPlayerSession.currentAudioUri.value == null){
+            playNext(context)
+        } else {
+            mediaPlayerSession.pauseOrPlay(context)
+        }
     }
 
     fun seekTo(context: Context, progress: Int) {
@@ -249,6 +259,7 @@ class MediaSession private constructor(context: Context) {
 
     companion object {
         private val random: Random = Random()
+        @Volatile
         private var INSTANCE: MediaSession? = null
 
         @Synchronized
@@ -269,7 +280,7 @@ class MediaSession private constructor(context: Context) {
             // TODO why is this even here?
             // getMediaPlayerWUri(it.id)?.resetIfMKV(it, context)
             currentPlaylist?.setIndexTo(it.id)
-            songQueue.addToQueue(it.id)
+            // songQueue.addToQueue(it.id)
         }
     }
 }

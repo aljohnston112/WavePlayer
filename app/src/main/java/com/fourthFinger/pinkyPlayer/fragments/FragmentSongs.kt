@@ -37,6 +37,11 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
     private lateinit var recyclerViewSongs: RecyclerView
     private lateinit var recyclerViewAdapterSongs: RecyclerViewAdapterSongs
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -124,7 +129,7 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         val toolbar: Toolbar = requireActivity().findViewById(R.id.toolbar)
         val menu = toolbar.menu
         if (menu != null) {
-            menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).isVisible = true
+            menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBABILITIES_INDEX).isVisible = true
             menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).isVisible = true
             val itemSearch = menu.findItem(R.id.action_search)
             if (itemSearch != null) {

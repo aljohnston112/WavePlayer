@@ -36,6 +36,11 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
     private var recyclerViewSongList: RecyclerView? = null
     private lateinit var recyclerViewAdapter: RecyclerViewAdapterSelectSongs
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
+    }
+
     override fun onCreateView(
             inflater: LayoutInflater,
             container: ViewGroup?,

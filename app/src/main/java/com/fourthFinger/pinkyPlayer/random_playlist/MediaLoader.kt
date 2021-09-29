@@ -1,4 +1,4 @@
-package com.fourthFinger.pinkyPlayer.media_controller
+package com.fourthFinger.pinkyPlayer.random_playlist
 
 import android.content.Context
 import android.content.Intent
@@ -6,11 +6,7 @@ import android.provider.MediaStore
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.fourthFinger.pinkyPlayer.R
-import com.fourthFinger.pinkyPlayer.fragments.PlaylistsRepo
-import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
-import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
-import com.fourthFinger.pinkyPlayer.random_playlist.SettingsRepo
-import com.fourthFinger.pinkyPlayer.random_playlist.Song
+import com.fourthFinger.pinkyPlayer.ServiceMain
 import java.io.File
 import java.util.*
 import java.util.concurrent.ExecutorService
@@ -102,7 +98,6 @@ class MediaLoader private constructor() {
                         context,
                         MASTER_PLAYLIST_NAME,
                         ArrayList(newSongs),
-                        SettingsRepo.getInstance().getMaxPercent(),
                         true
                     )
                 )

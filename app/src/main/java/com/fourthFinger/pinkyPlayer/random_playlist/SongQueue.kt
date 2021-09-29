@@ -4,7 +4,7 @@ import java.util.*
 
 class SongQueue private constructor() {
 
-    // TODO Add methods to add and delete songs from the queue
+    // TODO Add methods plus a UI to add and delete songs from the queue
     private val songQueue: LinkedList<Long> = LinkedList()
     private var songQueueIterator: MutableListIterator<Long>
 

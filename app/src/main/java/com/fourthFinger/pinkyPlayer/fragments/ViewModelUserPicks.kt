@@ -10,9 +10,6 @@ import com.fourthFinger.pinkyPlayer.NavUtil
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.ToastUtil
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
-import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerSession
-import com.fourthFinger.pinkyPlayer.media_controller.MediaSession
-import com.fourthFinger.pinkyPlayer.media_controller.SaveFile
 import com.fourthFinger.pinkyPlayer.random_playlist.*
 import java.util.*
 
@@ -78,19 +75,14 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
             }
             getUserPickedPlaylist()?.let { mediaSession.setCurrentPlaylist(it) }
             songQueue.newSessionStarted(song)
-            val audioUri = AudioUri.getAudioUri(context, song.id)
-            if (audioUri != null) {
-                mediaPlayerSession.setCurrentAudioUri(audioUri)
-            }
             mediaSession.playNext(context)
         }
-        // TODO make sure this works
-        if (navController.currentDestination?.id != R.id.fragmentPlaylist) {
+        if (navController.currentDestination?.id == R.id.fragmentPlaylist) {
             NavUtil.navigate(
                 navController,
                 FragmentPlaylistDirections.actionFragmentPlaylistToFragmentSong()
             )
-        } else if (navController.currentDestination?.id != R.id.fragmentSongs) {
+        } else if (navController.currentDestination?.id == R.id.fragmentSongs) {
             NavUtil.navigate(
                 navController,
                 FragmentSongsDirections.actionFragmentSongsToFragmentSong()
@@ -167,6 +159,7 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
             } else if (!makingNewPlaylist) {
                 makeNewPlaylist(context, playlistName)
             }
+            clearUserPickedSongs()
             NavUtil.popBackStack(fragment)
         }
     }
@@ -223,7 +216,6 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
                 context,
                 playlistName,
                 userPickedSongs,
-                SettingsRepo.getInstance().getMaxPercent(),
                 false
             )
         }

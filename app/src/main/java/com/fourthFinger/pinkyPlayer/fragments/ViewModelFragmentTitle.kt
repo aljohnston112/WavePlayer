@@ -8,9 +8,12 @@ import android.provider.MediaStore
 import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
 import com.fourthFinger.pinkyPlayer.NavUtil
+import com.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
-import com.fourthFinger.pinkyPlayer.random_playlist.SettingsRepo
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
+
+
+
 
 class ViewModelFragmentTitle : ViewModel() {
 
@@ -59,7 +62,6 @@ class ViewModelFragmentTitle : ViewModel() {
                         context,
                         it,
                         songs,
-                        SettingsRepo.getInstance().getMaxPercent(),
                         false
                     )
                 }
@@ -108,12 +110,6 @@ class ViewModelFragmentTitle : ViewModel() {
                 val mimeCol: Int = cursor.getColumnIndexOrThrow(
                     DocumentsContract.Document.COLUMN_MIME_TYPE
                 )
-                val idCol = cursor.getColumnIndexOrThrow(
-                    MediaStore.Audio.Media._ID
-                )
-                val titleCol = cursor.getColumnIndexOrThrow(
-                    MediaStore.Audio.Media.TITLE
-                )
                 val nameCol: Int = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
                 while (cursor.moveToNext()) {
                     val docId: String = cursor.getString(docIdCol)
@@ -121,18 +117,41 @@ class ViewModelFragmentTitle : ViewModel() {
                     val displayName: String = cursor.getString(nameCol)
                     if (mime == DocumentsContract.Document.MIME_TYPE_DIR) {
                         val newNode: Uri = DocumentsContract.buildChildDocumentsUriUsingTree(
-                            rootUri, docId
+                            rootUri,
+                            docId
                         )
                         getFiles(contentResolver, newNode, rootUri)
                     } else {
-                        val id: Long = cursor.getLong(idCol)
-                        val title: String = cursor.getString(titleCol)
-                        songs.add(Song(id, title))
+                        getSong(contentResolver, displayName)?.let { songs.add(it) }
                     }
                 }
             }
         }
     }
+
+    private fun getSong(contentResolver: ContentResolver, displayName: String): Song? {
+        val selection = MediaStore.Audio.Media.DISPLAY_NAME + " == ?"
+        val selectionArgs = arrayOf(displayName)
+        contentResolver.query(
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, arrayOf(
+                MediaStore.Audio.Media._ID,
+                MediaStore.Audio.Media.TITLE
+            ),
+            selection, selectionArgs, null
+        ).use { cursor ->
+            if (cursor != null) {
+                if (cursor.moveToNext()) {
+                    val idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+                    val titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
+                    val id = cursor.getLong(idCol)
+                    val title = cursor.getString(titleCol)
+                    return Song(id, title)
+                }
+            }
+        }
+        return null
+    }
+
 
     private fun addNewSongs(context: Context, randomPlaylist: RandomPlaylist) {
         for (song in songs) {

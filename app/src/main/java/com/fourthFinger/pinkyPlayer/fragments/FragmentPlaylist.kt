@@ -46,6 +46,11 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
     var dragFlags: Int = ItemTouchHelper.UP or ItemTouchHelper.DOWN
     val swipeFlags: Int = ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -196,8 +201,8 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
 
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
-        menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBS_INDEX).isVisible = true
-        menu.getItem(ActivityMain.MENU_ACTION_LOWER_PROBS_INDEX).isVisible = true
+        menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBABILITIES_INDEX).isVisible = true
+        menu.getItem(ActivityMain.MENU_ACTION_LOWER_PROBABILITIES_INDEX).isVisible = true
         menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE_INDEX).isVisible = true
         menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).isVisible = true
         menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).isVisible = true

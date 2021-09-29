@@ -29,7 +29,7 @@ class SettingsRepo private constructor() {
         return settings.percentChangeDown
     }
 
-    fun getLowerProb(): Double {
+    fun getLowestProbability(): Double {
         return settings.lowerProb
     }
 

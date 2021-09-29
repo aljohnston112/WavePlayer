@@ -21,7 +21,7 @@
         android:theme="@style/AppTheme">
 
         <service
-            android:name=".media_controller.ServiceMain"
+            android:name=".ServiceMain"
             android:description="@string/service_description"
             android:exported="false" />
 

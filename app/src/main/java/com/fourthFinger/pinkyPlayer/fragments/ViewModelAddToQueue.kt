@@ -9,11 +9,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.fourthFinger.pinkyPlayer.activity_main.DialogFragmentAddToPlaylist
-import com.fourthFinger.pinkyPlayer.media_controller.MediaPlayerSession
-import com.fourthFinger.pinkyPlayer.media_controller.MediaSession
-import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
-import com.fourthFinger.pinkyPlayer.random_playlist.Song
-import com.fourthFinger.pinkyPlayer.random_playlist.SongQueue
+import com.fourthFinger.pinkyPlayer.random_playlist.*
 
 class ViewModelAddToQueue(application: Application): AndroidViewModel(application) {
 
@@ -34,7 +30,6 @@ class ViewModelAddToQueue(application: Application): AndroidViewModel(applicatio
     private fun getSongToAddToQueue(): Song? {
         return songToAddToQueue.value?.let { playlistsRepo.getSong(it) }
     }
-
     fun newSong(songToAddToQueue: Long?) {
         _songToAddToQueue.postValue(songToAddToQueue)
         setPlaylistToAddToQueue(null)
@@ -49,10 +44,9 @@ class ViewModelAddToQueue(application: Application): AndroidViewModel(applicatio
             }
         }
         // TODO Song will play even though user might not want it.
-        // Should be able to show the song pane with the first song.
-        val mediaSession: MediaSession = MediaSession.getInstance(context)
         val mediaPlayerSession = MediaPlayerSession.getInstance(context)
-        if (!mediaPlayerSession.isSongInProgress()) {
+        val mediaSession: MediaSession = MediaSession.getInstance(context)
+        if (mediaPlayerSession.isSongInProgress() == false) {
             mediaSession.playNext(context)
         }
     }
@@ -81,7 +75,7 @@ class ViewModelAddToQueue(application: Application): AndroidViewModel(applicatio
         val songQueue = SongQueue.getInstance()
         songQueue.addToQueue(song.id)
         val mediaPlayerSession = MediaPlayerSession.getInstance(context)
-        if (!mediaPlayerSession.isSongInProgress()) {
+        if (mediaPlayerSession.isSongInProgress() == false) {
             mediaSession.playNext(context)
         }
     }
@@ -98,7 +92,7 @@ class ViewModelAddToQueue(application: Application): AndroidViewModel(applicatio
         for (song in songs) {
             songQueue.addToQueue(song.id)
         }
-        if (!mediaPlayerSession.isSongInProgress()) {
+        if (mediaPlayerSession.isSongInProgress() == false) {
             mediaSession.playNext(context)
         }
     }

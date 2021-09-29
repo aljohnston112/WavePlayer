@@ -4,9 +4,9 @@
 
     <string name="action_service_connected">ServiceConnected</string>
     <string name="action_new_song">Complete</string>
-    <string name="action_next">Next</string>
-    <string name="action_previous">Previous</string>
-    <string name="action_play_pause">PlayPause</string>
+    <string name="action_next">ActionNext</string>
+    <string name="action_previous">ActionPrevious</string>
+    <string name="action_play_pause">ActionPlayPause</string>
     <string name="action_on_create_options_menu">OptionsMenuCreated</string>
     <string name="action_loaded">Loaded</string>
 

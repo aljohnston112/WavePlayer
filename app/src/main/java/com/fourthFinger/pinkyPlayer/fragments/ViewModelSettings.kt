@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.ToastUtil
-import com.fourthFinger.pinkyPlayer.media_controller.SaveFile
+import com.fourthFinger.pinkyPlayer.random_playlist.SaveFile
 import com.fourthFinger.pinkyPlayer.random_playlist.Settings
 import com.fourthFinger.pinkyPlayer.random_playlist.SettingsRepo
 import kotlin.math.roundToInt

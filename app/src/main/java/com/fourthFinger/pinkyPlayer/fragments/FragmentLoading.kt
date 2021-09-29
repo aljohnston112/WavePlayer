@@ -21,7 +21,6 @@ import androidx.fragment.app.activityViewModels
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.FragmentLoadingBinding
-import com.fourthFinger.pinkyPlayer.media_controller.ViewModelFragmentLoading
 
 
 class FragmentLoading : Fragment() {

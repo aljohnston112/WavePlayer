@@ -6,7 +6,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModel
 import com.fourthFinger.pinkyPlayer.NavUtil
 import com.fourthFinger.pinkyPlayer.R
-import com.fourthFinger.pinkyPlayer.media_controller.MediaSession
+import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 
 class ViewModelFragmentPaneSong: ViewModel() {
 

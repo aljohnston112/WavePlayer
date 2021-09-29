@@ -1,11 +1,12 @@
 package com.fourthFinger.pinkyPlayer.fragments
 
 import android.annotation.SuppressLint
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.res.Resources
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.*
@@ -28,8 +29,9 @@ import com.fourthFinger.pinkyPlayer.ToastUtil
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.FragmentSongBinding
-import com.fourthFinger.pinkyPlayer.media_controller.*
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
+import com.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerSession
+import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -42,10 +44,13 @@ class FragmentSong : Fragment() {
     private val viewModelAddToQueue by activityViewModels<ViewModelAddToQueue>()
     private val viewModelFragmentSong by viewModels<ViewModelFragmentSong>()
 
-    private var currentAudioUri: AudioUri? = null
-
     // For updating the SeekBar
     private var scheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -59,16 +64,16 @@ class FragmentSong : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         KeyboardUtil.hideKeyboard(view)
-        val mediaPlayerSession = MediaPlayerSession.getInstance(requireActivity().applicationContext)
+        val mediaPlayerSession =
+            MediaPlayerSession.getInstance(requireActivity().applicationContext)
         mediaPlayerSession.currentAudioUri.observe(viewLifecycleOwner) {
             if (it != null) {
-                // TODO why does this need to be cached?
-                currentAudioUri = it
                 viewModelAddToQueue.newSong(it.id)
                 binding.textViewSongName.text = it.title
                 setUpSeekBar(it.getDuration(requireActivity().applicationContext).toInt())
                 setUpSeekBarUpdater()
-                updateSongArt()
+                updateSongArt(it)
+                setUpButtons(it)
             }
         }
         viewModelActivityMain.setActionBarTitle(resources.getString(R.string.now_playing))
@@ -89,11 +94,12 @@ class FragmentSong : Fragment() {
                 setUpLoop()
             }
         }
-        setUpButtons()
+        setUpButtons(null)
     }
 
     private fun setUpSeekBar(maxMillis: Int) {
-        val mediaPlayerSession = MediaPlayerSession.getInstance(requireActivity().applicationContext)
+        val mediaPlayerSession =
+            MediaPlayerSession.getInstance(requireActivity().applicationContext)
         val mediaSession = MediaSession.getInstance(requireActivity().applicationContext)
         val stringEndTime = formatMillis(maxMillis)
         val stringCurrentTime = formatMillis(mediaPlayerSession.getCurrentTime())
@@ -114,7 +120,8 @@ class FragmentSong : Fragment() {
     private fun setUpSeekBarUpdater() {
         val seekBar: SeekBar = binding.seekBar
         val textViewCurrent: TextView = binding.editTextCurrentTime
-        val mediaPlayerSession = MediaPlayerSession.getInstance(requireActivity().applicationContext)
+        val mediaPlayerSession =
+            MediaPlayerSession.getInstance(requireActivity().applicationContext)
         shutDownSeekBarUpdater()
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
         val runnableSeekBarUpdater = Runnable {
@@ -142,38 +149,42 @@ class FragmentSong : Fragment() {
         }
     }
 
-    private fun updateSongArt() {
+    private fun updateSongArt(audioUri: AudioUri) {
         val imageViewSongArt: ImageView = binding.imageViewSongArt
+        val runnableSongArtUpdater = RunnableSongArtUpdater(
+            requireActivity().resources,
+            binding.imageViewSongArt,
+            audioUri
+        )
         imageViewSongArt.post(runnableSongArtUpdater)
     }
 
-    private val runnableSongArtUpdater = Runnable {
-        val imageViewSongArt: ImageView = binding.imageViewSongArt
-        var songArtHeight = imageViewSongArt.height
-        var songArtWidth = imageViewSongArt.width
-        if (songArtWidth > songArtHeight) {
-            songArtWidth = songArtHeight
-        } else {
-            songArtHeight = songArtWidth
-        }
-        if (songArtHeight > 0 && songArtWidth > 0) {
-            currentAudioUri?.let { it ->
+    private class RunnableSongArtUpdater(
+        val resources: Resources,
+        val imageViewSongArt: ImageView,
+        val currentAudioUri: AudioUri
+    ) : Runnable {
+
+        override fun run() {
+            var songArtHeight = imageViewSongArt.height
+            var songArtWidth = imageViewSongArt.width
+            if (songArtWidth > songArtHeight) {
+                songArtWidth = songArtHeight
+            } else {
+                songArtHeight = songArtWidth
+            }
+            if (songArtHeight > 0 && songArtWidth > 0) {
                 val bitmap: Bitmap? = BitmapUtil.getThumbnailBitmap(
-                    it,
+                    currentAudioUri,
                     songArtWidth,
-                    requireActivity().applicationContext
+                    imageViewSongArt.context
                 )
                 if (bitmap == null) {
                     val drawable: Drawable? = ResourcesCompat.getDrawable(
-                        imageViewSongArt.resources,
+                        resources,
                         R.drawable.music_note_black_48dp,
                         null
                     )
-                    // TODO Make sure this works
-                    drawable?.let { d ->
-                        imageViewSongArt.setImageBitmap(d.toBitmap(songArtWidth, songArtWidth))
-                    }
-                    /*
                     if (drawable != null) {
                         drawable.setBounds(0, 0, songArtWidth, songArtHeight)
                         val bitmapDrawable: Bitmap = Bitmap.createBitmap(
@@ -183,12 +194,14 @@ class FragmentSong : Fragment() {
                         )
                         val canvas = Canvas(bitmapDrawable)
                         val paint = Paint()
-                        paint.color = ContextCompat.getColor(requireContext(), R.color.colorPrimary)
+                        paint.color = ContextCompat.getColor(
+                            imageViewSongArt.context,
+                            R.color.colorPrimary
+                        )
                         canvas.drawRect(0f, 0f, songArtWidth.toFloat(), songArtHeight.toFloat(), paint)
                         drawable.draw(canvas)
                         imageViewSongArt.setImageBitmap(bitmapDrawable)
                     }
-                     */
                 } else {
                     imageViewSongArt.setImageBitmap(bitmap)
                 }
@@ -214,7 +227,7 @@ class FragmentSong : Fragment() {
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private fun setUpButtons() {
+    private fun setUpButtons(currentAudioUri: AudioUri?) {
         val mediaSession = MediaSession.getInstance(requireActivity().applicationContext)
         val buttonBad: ImageButton = binding.buttonThumbDown
         val buttonGood: ImageButton = binding.buttonThumbUp
@@ -236,9 +249,9 @@ class FragmentSong : Fragment() {
                         viewModelFragmentSong.shuffleClicked()
                         val imageButton: ImageButton = clickedView as ImageButton
                         if (mediaSession.isShuffling()) {
-                            imageButton.setImageResource(R.drawable.ic_shuffle_white_24dp)
-                        } else {
                             imageButton.setImageResource(R.drawable.ic_shuffle_black_24dp)
+                        } else {
+                            imageButton.setImageResource(R.drawable.ic_shuffle_white_24dp)
                         }
                     }
                     R.id.imageButtonPrev -> {
@@ -255,13 +268,13 @@ class FragmentSong : Fragment() {
                         val imageButton: ImageButton = clickedView as ImageButton
                         when {
                             mediaSession.isLoopingOne() -> {
-                                imageButton.setImageResource(R.drawable.repeat_white_24dp)
-                            }
-                            mediaSession.isLooping() -> {
                                 imageButton.setImageResource(R.drawable.repeat_one_black_24dp)
                             }
-                            else -> {
+                            mediaSession.isLooping() -> {
                                 imageButton.setImageResource(R.drawable.repeat_black_24dp)
+                            }
+                            else -> {
+                                imageButton.setImageResource(R.drawable.repeat_white_24dp)
                             }
                         }
                     }
@@ -336,15 +349,9 @@ class FragmentSong : Fragment() {
             drawableID,
             null
         )?.let {
-            // TODO Make sure this works
-            imageView.setImageBitmap(it.toBitmap(width, width))
-            /*
-            it.setBounds(0, 0, width, width)
-            val bitmap: Bitmap = Bitmap.createBitmap(width, width, Bitmap.Config.ARGB_8888)
-            val canvas = Canvas(bitmap)
-            it.draw(canvas)
-            imageView.setImageBitmap(bitmap)
-             */
+            if (width > 0) {
+                imageView.setImageBitmap(it.toBitmap(width, width))
+            }
         }
     }
 
@@ -387,22 +394,6 @@ class FragmentSong : Fragment() {
                 R.string.action_service_connected
             )
         )
-        requireActivity().registerReceiver(broadcastReceiver, filterComplete)
-    }
-
-    private val broadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            val action: String? = intent.action
-            if (action != null) {
-                if (action == resources.getString(
-                        R.string.action_service_connected
-                    )
-                ) {
-                    // TODO make sure this isn't needed
-                    // setUpButtons()
-                }
-            }
-        }
     }
 
     private fun setUpToolbar() {
@@ -421,11 +412,6 @@ class FragmentSong : Fragment() {
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
         setUpToolbar()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        requireActivity().unregisterReceiver(broadcastReceiver)
     }
 
     override fun onDestroyView() {

@@ -1,7 +1,6 @@
 package com.fourthFinger.pinkyPlayer.random_playlist
 
 import android.content.*
-import com.fourthFinger.pinkyPlayer.media_controller.SaveFile
 import java.io.Serializable
 import java.util.*
 
@@ -14,7 +13,6 @@ class RandomPlaylist constructor(
     context: Context,
     name: String,
     music: MutableList<Song>,
-    maxPercent: Double,
     comparable: Boolean
 ) : Serializable {
 
@@ -80,13 +78,13 @@ class RandomPlaylist constructor(
         return probabilityFunction.getProbability(song)
     }
 
-    fun clearProbabilities(context: Context) {
+    fun resetProbabilities(context: Context) {
         probabilityFunction.resetProbabilities()
         SaveFile.saveFile(context)
     }
 
-    fun lowerProbabilities(context: Context, lowerProb: Double) {
-        probabilityFunction.lowerProbs(lowerProb)
+    fun lowerProbabilities(context: Context) {
+        probabilityFunction.lowerProbabilities()
         SaveFile.saveFile(context)
     }
 
@@ -154,6 +152,10 @@ class RandomPlaylist constructor(
         SaveFile.saveFile(context)
     }
 
+    override fun equals(other: Any?): Boolean {
+        return other is RandomPlaylist && other.getName() == name
+    }
+
     companion object {
         private const val serialVersionUID = 2323326608918863420L
     }
@@ -170,9 +172,9 @@ class RandomPlaylist constructor(
         require(music.isNotEmpty()) { "List music must contain at least one AudioURI" }
         val files: MutableSet<Song> = LinkedHashSet(music)
         probabilityFunction = if (comparable) {
-            ProbFun.ProbFunTreeMap(files, maxPercent)
+            ProbFun.ProbFunTreeMap(files)
         } else {
-            ProbFun.ProbFunLinkedMap(files, maxPercent)
+            ProbFun.ProbFunLinkedMap(files)
         }
         this.name = name
         for (song in music) {
