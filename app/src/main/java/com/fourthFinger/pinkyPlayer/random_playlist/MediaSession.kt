@@ -132,12 +132,12 @@ class MediaSession private constructor(context: Context) {
      * isPlaying will be true
      * if a [MediaPlayerWUri] was made, there is audio focus, and the song is playing.
      * @param context Context used to request audio focus and make a MediaPlayer if needed.
-     * @param songID The id of the song to make and play.
+     * @param song The id of the song to make and play.
      */
-    private fun makeIfNeededAndPlay(context: Context, songID: Long) {
+    private fun makeIfNeededAndPlay(context: Context, song: Song) {
         stopCurrentSong(context)
-        currentPlaylist?.setIndexTo(songID)
-        mediaPlayerSession.makeIfNeededAndPlay(context, songID)
+        currentPlaylist?.setIndexTo(song.id)
+        mediaPlayerSession.makeIfNeededAndPlay(context, song.id)
     }
 
     /** Plays the next song in the current playlist if there is one.
@@ -152,7 +152,7 @@ class MediaSession private constructor(context: Context) {
         val audioUriCurrent = currentPlaylist?.next(context, random, looping, shuffling)
         if (audioUriCurrent != null) {
             currentPlaylist?.setIndexTo(audioUriCurrent.id)
-            songQueue.addToQueue(audioUriCurrent.id)
+            songQueue.addToQueue(context, audioUriCurrent.id)
             makeIfNeededAndPlay(context, songQueue.next())
             mediaPlayerSession.setCurrentAudioUri(audioUriCurrent)
         } else {

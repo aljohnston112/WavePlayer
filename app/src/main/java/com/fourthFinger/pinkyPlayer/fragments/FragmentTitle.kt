@@ -85,19 +85,21 @@ class FragmentTitle : Fragment() {
             }
         }
 
-    private val activityResultCallback = ActivityResultCallback<Uri> { uri ->
+    private val activityResultCallback = ActivityResultCallback<Uri?> { uri ->
         binding.buttonFolderSearch.setOnClickListener(
             onClickListenerFragmentTitleButtons
         )
-        val playlist = viewModelFragmentTitle.createPlaylist(
-            requireActivity().applicationContext,
-            requireActivity().contentResolver,
-            uri
-        )
-        viewModelUserPicks.playlistCreatedFromFolder(
-            NavHostFragment.findNavController(this@FragmentTitle),
-            playlist
-        )
+        if(uri != null) {
+            val playlist = viewModelFragmentTitle.createPlaylist(
+                requireActivity().applicationContext,
+                requireActivity().contentResolver,
+                uri
+            )
+            viewModelUserPicks.playlistCreatedFromFolder(
+                NavHostFragment.findNavController(this@FragmentTitle),
+                playlist
+            )
+        }
     }
 
     override fun onDestroyView() {

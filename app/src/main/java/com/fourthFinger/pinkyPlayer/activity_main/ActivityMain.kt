@@ -66,6 +66,12 @@ class ActivityMain : AppCompatActivity() {
                     showSongPane()
                 }
             }
+            // TODO this doesn't always show
+            if(it) {
+                val toolbar = binding.toolbar
+                if (toolbar.menu.size() > 0)
+                    toolbar.menu.getItem(MENU_ACTION_QUEUE).isVisible = true
+            }
         }
     }
 
@@ -328,6 +334,15 @@ class ActivityMain : AppCompatActivity() {
                 viewModelAddToQueue.actionAddToPlaylist(supportFragmentManager)
                 return true
             }
+            R.id.action_queue -> {
+                val fragment: Fragment? = supportFragmentManager.findFragmentById(
+                    binding.navHostFragment.id
+                )
+                if (fragment != null) {
+                    navigateTo(fragment, R.id.fragmentQueue)
+                }
+            }
+
         }
         return super.onOptionsItemSelected(item)
     }
@@ -357,6 +372,7 @@ class ActivityMain : AppCompatActivity() {
         const val MENU_ACTION_ADD_TO_PLAYLIST_INDEX = 2
         const val MENU_ACTION_SEARCH_INDEX = 3
         const val MENU_ACTION_ADD_TO_QUEUE_INDEX = 4
+        const val MENU_ACTION_QUEUE = 5
 
     }
 

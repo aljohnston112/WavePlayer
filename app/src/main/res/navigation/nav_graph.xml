@@ -70,7 +70,8 @@
     <fragment
         android:id="@+id/FragmentSelectSongs"
         android:name="com.fourthFinger.pinkyPlayer.fragments.FragmentSelectSongs"
-        android:label="fragment_select_song_list"/>
+        android:label="fragment_select_song_list"
+        tools:layout="@layout/recycler_view_song_list"/>
     <fragment
         android:id="@+id/fragmentEditPlaylist"
         android:name="com.fourthFinger.pinkyPlayer.fragments.FragmentEditPlaylist"
@@ -89,4 +90,10 @@
             android:id="@+id/action_fragmentLoading_to_FragmentTitle"
             app:destination="@id/FragmentTitle" />
     </fragment>
+    <fragment
+        android:id="@+id/fragmentQueue"
+        android:name="com.fourthFinger.pinkyPlayer.fragments.FragmentQueue"
+        android:label="fragment_queue"
+        tools:layout="@layout/fragment_queue" />
+
 </navigation>

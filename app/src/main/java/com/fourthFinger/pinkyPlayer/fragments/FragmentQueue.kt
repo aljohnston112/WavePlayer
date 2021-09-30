@@ -6,37 +6,35 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.widget.SearchView
-import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.fourthFinger.pinkyPlayer.KeyboardUtil
 import com.fourthFinger.pinkyPlayer.R
-import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.DialogFragmentAddToPlaylist
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.RecyclerViewSongListBinding
-import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
+import com.fourthFinger.pinkyPlayer.random_playlist.SongQueue
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
 
-class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs {
+class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs {
+
+    // TODO update RecyclerView when a new song is added to the queue
+    // TODO stop playback of song when removed from queue and start the next
 
     private var _binding: RecyclerViewSongListBinding? = null
     private val binding get() = _binding!!
 
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
-    private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>()
     private val viewModelAddToQueue by activityViewModels<ViewModelAddToQueue>()
+    private val viewModelFragmentQueue by activityViewModels<ViewModelFragmentQueue>()
 
     private var broadcastReceiver: BroadcastReceiver? = null
 
@@ -63,23 +61,18 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         KeyboardUtil.hideKeyboard(view)
-        val randomPlaylist: RandomPlaylist? = viewModelUserPicks.getUserPickedPlaylist()
-        if (randomPlaylist != null) {
-            viewModelAddToQueue.setPlaylistToAddToQueue(randomPlaylist)
-            viewModelActivityMain.setActionBarTitle(randomPlaylist.getName())
-            // TODO why is this set up twice in all the fragments?!
-            // I think due to incomplete state
-            setUpRecyclerView(randomPlaylist)
-            setUpSearchView()
-        }
+        // TODO why is this set up twice in all the fragments?!
+        // I think due to incomplete state
+        setUpRecyclerView()
     }
 
-    private fun setUpRecyclerView(userPickedPlaylist: RandomPlaylist) {
+    private fun setUpRecyclerView() {
+        val songQueue = SongQueue.getInstance()
         recyclerViewSongList = binding.recyclerViewSongList
         recyclerViewSongList?.layoutManager = LinearLayoutManager(recyclerViewSongList?.context)
         recyclerViewAdapterSongs = RecyclerViewAdapterSongs(
             this,
-            userPickedPlaylist.getSongs()
+            songQueue.queue()
         )
         recyclerViewSongList?.adapter = recyclerViewAdapterSongs
         val itemTouchHelperCallback = object : ItemTouchHelper.Callback() {
@@ -95,8 +88,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
                 viewHolder: RecyclerView.ViewHolder,
                 target: RecyclerView.ViewHolder
             ): Boolean {
-                viewModelUserPicks.notifySongMoved(
-                    requireActivity().applicationContext,
+                songQueue.notifySongMoved(
                     viewHolder.absoluteAdapterPosition,
                     target.absoluteAdapterPosition
                 )
@@ -109,16 +101,16 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val position = viewHolder.absoluteAdapterPosition
-                viewModelUserPicks.notifySongRemoved(requireActivity().applicationContext, position)
-                recyclerViewAdapterSongs.updateList(userPickedPlaylist.getSongs().toList())
+                songQueue.notifySongRemoved(position)
+                recyclerViewAdapterSongs.updateList(songQueue.queue().toList())
                 val snackBar: Snackbar = Snackbar.make(
                     binding.recyclerViewSongList,
                     R.string.song_removed,
                     BaseTransientBottomBar.LENGTH_LONG
                 )
                 snackBar.setAction(R.string.undo) {
-                    viewModelUserPicks.notifyItemInserted(requireActivity().applicationContext, position)
-                    recyclerViewAdapterSongs.updateList(userPickedPlaylist.getSongs().toList())
+                    songQueue.notifyItemInserted(position)
+                    recyclerViewAdapterSongs.updateList(songQueue.queue().toList())
                 }
                 snackBar.show()
             }
@@ -126,38 +118,12 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
         ItemTouchHelper(itemTouchHelperCallback).attachToRecyclerView(recyclerViewSongList)
     }
 
-    private fun setUpSearchView() {
-        val searchView: SearchView = requireActivity().findViewById<Toolbar>(
-            R.id.toolbar
-        ).menu?.findItem(R.id.action_search)?.actionView as SearchView
-        if (searchView.query.isNotEmpty()) {
-            val newText = searchView.query.toString()
-            filterSongs(newText)
-        }
-    }
-
-    private fun filterSongs(newText: String) {
-        dragFlags = if (newText.isNotEmpty()) {
-            val sifted = viewModelUserPicks.filterPlaylistSongs(newText)
-            recyclerViewAdapterSongs.updateList(sifted)
-            0
-        } else {
-            viewModelUserPicks.getUserPickedPlaylist()?.getSongs()?.let {
-                recyclerViewAdapterSongs.updateList(it.toList())
-            }
-            ItemTouchHelper.UP or ItemTouchHelper.DOWN
-        }
-    }
-
     override fun onStart() {
         super.onStart()
-        val randomPlaylist: RandomPlaylist? = viewModelUserPicks.getUserPickedPlaylist()
-        if (randomPlaylist != null) {
-            setUpBroadcastReceiver(randomPlaylist)
-        }
+        setUpBroadcastReceiver()
     }
 
-    private fun setUpBroadcastReceiver(randomPlaylist: RandomPlaylist) {
+    private fun setUpBroadcastReceiver() {
         val filterComplete = IntentFilter()
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT)
         filterComplete.addAction(
@@ -173,7 +139,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
                             R.string.action_service_connected
                         )
                     ) {
-                        setUpRecyclerView(randomPlaylist)
+                        setUpRecyclerView()
                     }
                 }
             }
@@ -183,45 +149,12 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
 
     override fun onResume() {
         super.onResume()
+        viewModelActivityMain.setActionBarTitle(resources.getString(R.string.queue))
         updateFAB()
     }
 
     private fun updateFAB() {
-        viewModelActivityMain.setFabImage(R.drawable.ic_add_black_24dp)
-        viewModelActivityMain.setFABText(R.string.fab_edit)
-        viewModelActivityMain.showFab(true)
-        viewModelActivityMain.setFabOnClickListener {
-            // userPickedSongs.isEmpty() when the user is editing a playlist
-            // TODO got interrupted by food being done
-            viewModelUserPicks.fragmentPlaylistFABClicked(
-                NavHostFragment.findNavController(this)
-            )
-        }
-    }
-
-    override fun onPrepareOptionsMenu(menu: Menu) {
-        super.onPrepareOptionsMenu(menu)
-        menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBABILITIES_INDEX).isVisible = true
-        menu.getItem(ActivityMain.MENU_ACTION_LOWER_PROBABILITIES_INDEX).isVisible = true
-        menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE_INDEX).isVisible = true
-        menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).isVisible = true
-        menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).isVisible = true
-        val itemSearch = menu.findItem(R.id.action_search)
-        if (itemSearch != null) {
-            val searchView = itemSearch.actionView as SearchView
-            searchView.setOnQueryTextListener(onQueryTextListener)
-        }
-    }
-
-    private val onQueryTextListener = object : SearchView.OnQueryTextListener {
-        override fun onQueryTextSubmit(query: String): Boolean {
-            return false
-        }
-
-        override fun onQueryTextChange(newText: String): Boolean {
-            filterSongs(newText)
-            return true
-        }
+        viewModelActivityMain.showFab(false)
     }
 
     override fun onMenuItemClickAddToPlaylist(song: Song): Boolean {
@@ -244,31 +177,16 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
     override fun onClickViewHolder(pos: Int, song: Song) {
         // TODO make sure user picked playlist and queue is updated
         // Should queue be cleared?
-        viewModelUserPicks.songClicked(
+        viewModelFragmentQueue.songClicked(
             requireActivity().applicationContext,
-            NavHostFragment.findNavController(this),
-            song
+            this,
+            pos
         )
     }
 
     override fun onStop() {
         super.onStop()
         requireActivity().unregisterReceiver(broadcastReceiver)
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-        val toolbar: Toolbar = requireActivity().findViewById(R.id.toolbar)
-        val menu = toolbar.menu
-        if (menu != null) {
-            val itemSearch = menu.findItem(R.id.action_search)
-            val searchView = itemSearch.actionView as SearchView
-            searchView.setOnQueryTextListener(null)
-            searchView.onActionViewCollapsed()
-        }
-        viewModelActivityMain.setFabOnClickListener(null)
-        viewModelAddToQueue.setPlaylistToAddToQueue(null)
     }
 
 }

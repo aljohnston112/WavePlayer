@@ -22,7 +22,7 @@ class RecyclerViewAdapterSongs(
 ) {
 
     interface ListenerCallbackSongs {
-        fun onClickViewHolder(song: Song)
+        fun onClickViewHolder(pos: Int, song: Song)
         fun onMenuItemClickAddToPlaylist(song: Song): Boolean
         fun onMenuItemClickAddToQueue(song: Song): Boolean
     }
@@ -42,7 +42,7 @@ class RecyclerViewAdapterSongs(
         holder.handle.setOnClickListener { holder.handle.performLongClick() }
         holder.songView.setOnClickListener {
             if (position != RecyclerView.NO_POSITION) {
-                listenerCallbackSongs.onClickViewHolder(holder.song)
+                listenerCallbackSongs.onClickViewHolder(position, holder.song)
             }
         }
         holder.textViewSongName.text = getItem(position).title

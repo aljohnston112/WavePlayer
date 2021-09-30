@@ -1,18 +1,18 @@
 package com.fourthFinger.pinkyPlayer.random_playlist
 
+import android.content.Context
 import java.util.*
 
 class SongQueue private constructor() {
 
-    // TODO Add methods plus a UI to add and delete songs from the queue
-    private val songQueue: LinkedList<Long> = LinkedList()
-    private var songQueueIterator: MutableListIterator<Long>
+    private val songQueue: LinkedList<Song> = LinkedList()
+    private var songQueueIterator: MutableListIterator<Song>
 
     operator fun hasNext(): Boolean {
         return songQueueIterator.hasNext()
     }
 
-    operator fun next(): Long {
+    operator fun next(): Song {
         if (!hasNext()) {
             throw NoSuchElementException()
         }
@@ -21,7 +21,7 @@ class SongQueue private constructor() {
     fun hasPrevious(): Boolean {
         return songQueueIterator.hasPrevious()
     }
-    fun previous(): Long {
+    fun previous(): Song {
         if (!hasPrevious()) {
             throw NoSuchElementException()
         }
@@ -41,18 +41,59 @@ class SongQueue private constructor() {
         songQueueIterator = songQueue.listIterator(songQueue.size)
     }
 
-    fun addToQueue(songID: Long) {
+    fun addToQueue(context: Context, songID: Long) {
+        val playlistsRepo = PlaylistsRepo.getInstance(context)
         val i = songQueueIterator.nextIndex()
         goToBack()
-        songQueueIterator.add(songID)
+        playlistsRepo.getSong(songID)?.let { songQueueIterator.add(it) }
         songQueueIterator = songQueue.listIterator(i)
-        // TODO seems to be unneeded due to method name, but may have a purpose
-        // songQueueIterator = songQueue.listIterator(songQueue.lastIndexOf(songID))
     }
 
-    fun newSessionStarted(song: Song) {
+    fun newSessionStarted(context: Context, song: Long) {
         clearSongQueue()
-        addToQueue(song.id)
+        addToQueue(context, song)
+    }
+
+    fun queue(): Set<Song> {
+        return songQueue.toSet()
+    }
+
+    fun notifySongMoved(from: Int, to: Int) {
+        val i = songQueueIterator.nextIndex()
+        songQueueIterator = songQueue.listIterator(from)
+        val song = songQueueIterator.next()
+        songQueueIterator.remove()
+        songQueueIterator = songQueue.listIterator(to)
+        songQueueIterator.add(song)
+        songQueueIterator = songQueue.listIterator(i)
+    }
+
+    private var undoSong: Song? = null
+
+    fun notifySongRemoved(position: Int) {
+        var i = songQueueIterator.nextIndex()
+        if(i == songQueue.size){
+            i--
+        }
+        songQueueIterator = songQueue.listIterator(position)
+        undoSong = songQueueIterator.next()
+        songQueueIterator.remove()
+        songQueueIterator = songQueue.listIterator(i)
+    }
+
+    fun notifyItemInserted(position: Int) {
+        val i = songQueueIterator.nextIndex()
+        songQueueIterator = songQueue.listIterator(position)
+        undoSong?.let { songQueueIterator.add(it) }
+        undoSong = null
+        songQueueIterator = songQueue.listIterator(i)
+    }
+
+    fun songClicked(pos: Int): Song {
+        songQueueIterator = songQueue.listIterator(pos)
+        val song =  songQueueIterator.next()
+        songQueueIterator.previous()
+        return song
     }
 
     init {

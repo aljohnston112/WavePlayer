@@ -74,7 +74,7 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
                 mediaSession.seekTo(context, 0)
             }
             getUserPickedPlaylist()?.let { mediaSession.setCurrentPlaylist(it) }
-            songQueue.newSessionStarted(song)
+            songQueue.newSessionStarted(context, song.id)
             mediaSession.playNext(context)
         }
         if (navController.currentDestination?.id == R.id.fragmentPlaylist) {

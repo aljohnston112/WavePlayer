@@ -119,12 +119,6 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        // TODO should not be needed
-        // setUpToolbar()
-    }
-
     private fun setUpToolbar() {
         val toolbar: Toolbar = requireActivity().findViewById(R.id.toolbar)
         val menu = toolbar.menu
@@ -170,7 +164,7 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         return true
     }
 
-    override fun onClickViewHolder(song: Song) {
+    override fun onClickViewHolder(pos: Int, song: Song) {
         viewModelUserPicks.songClicked(
             requireActivity().applicationContext,
             NavHostFragment.findNavController(this),

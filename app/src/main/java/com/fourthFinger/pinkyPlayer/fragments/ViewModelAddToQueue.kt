@@ -37,10 +37,10 @@ class ViewModelAddToQueue(application: Application): AndroidViewModel(applicatio
 
     fun actionAddToQueue(context: Context) {
         // TODO pretty sure song and playlist could be non-null at the same time
-        songToAddToQueue.value?.let { songQueue.addToQueue(it) }
+        songToAddToQueue.value?.let { songQueue.addToQueue(context, it) }
         playlistToAddToQueue.value?.getSongs()?.let {
             for (songs in it) {
-                songQueue.addToQueue(songs.id)
+                songQueue.addToQueue(context, songs.id)
             }
         }
         // TODO Song will play even though user might not want it.
@@ -73,7 +73,7 @@ class ViewModelAddToQueue(application: Application): AndroidViewModel(applicatio
     fun addToQueueClicked(context: Context, song: Song) {
         val mediaSession: MediaSession = MediaSession.getInstance(context)
         val songQueue = SongQueue.getInstance()
-        songQueue.addToQueue(song.id)
+        songQueue.addToQueue(context, song.id)
         val mediaPlayerSession = MediaPlayerSession.getInstance(context)
         if (mediaPlayerSession.isSongInProgress() == false) {
             mediaSession.playNext(context)
@@ -90,7 +90,7 @@ class ViewModelAddToQueue(application: Application): AndroidViewModel(applicatio
         val songQueue = SongQueue.getInstance()
         val songs = randomPlaylist.getSongs()
         for (song in songs) {
-            songQueue.addToQueue(song.id)
+            songQueue.addToQueue(context, song.id)
         }
         if (mediaPlayerSession.isSongInProgress() == false) {
             mediaSession.playNext(context)
