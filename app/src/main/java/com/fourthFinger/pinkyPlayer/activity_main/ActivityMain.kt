@@ -65,12 +65,11 @@ class ActivityMain : AppCompatActivity() {
                 ) {
                     showSongPane()
                 }
-            }
-            // TODO this doesn't always show
-            if(it) {
-                val toolbar = binding.toolbar
-                if (toolbar.menu.size() > 0)
-                    toolbar.menu.getItem(MENU_ACTION_QUEUE).isVisible = true
+                if(it == true){
+                    val toolbar = binding.toolbar
+                    if (toolbar.menu.size() > 0)
+                        toolbar.menu.getItem(MENU_ACTION_QUEUE).isVisible = true
+                }
             }
         }
     }
@@ -306,6 +305,11 @@ class ActivityMain : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_toolbar, menu)
+        if(MediaPlayerSession.getInstance(applicationContext).isSongInProgress() == true) {
+            val toolbar = binding.toolbar
+            if (toolbar.menu.size() > 0)
+                toolbar.menu.getItem(MENU_ACTION_QUEUE).isVisible = true
+        }
         return true
     }
 
@@ -365,6 +369,8 @@ class ActivityMain : AppCompatActivity() {
         // TODO consider exo player
         // TODO Make a playlist based on favorites from the algorithm
         // TODO Make a UI for the queue
+        // TODO notification art doesn't work
+        // TODO song pane art has blue background, but it should be black.
         val MUSIC_CONTROL_LOCK: Any = Any()
 
         const val MENU_ACTION_RESET_PROBABILITIES_INDEX = 0

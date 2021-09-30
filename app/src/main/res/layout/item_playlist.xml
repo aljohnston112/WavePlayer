@@ -23,7 +23,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/text_view_playlist_name"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_more_vert_white_18dp"
+            app:srcCompat="@drawable/ic_more_vert_white_48dp"
             android:scaleType="centerInside" />
 
         <TextView

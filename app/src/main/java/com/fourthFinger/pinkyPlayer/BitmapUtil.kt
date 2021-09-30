@@ -42,7 +42,7 @@ class BitmapUtil {
                         null)
 
                 } catch (e: FileNotFoundException) {
-                    e.printStackTrace()
+
                 }
             } else {
                 val mmr = MediaMetadataRetriever()

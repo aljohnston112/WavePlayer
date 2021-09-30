@@ -14,6 +14,9 @@
         <entry key="app/src/main/res/layout/fragment_pane_song.xml" value="0.1" />
         <entry key="app/src/main/res/layout/fragment_queue.xml" value="0.13179347826086957" />
         <entry key="app/src/main/res/layout/fragment_settings.xml" value="0.13179347826086957" />
+        <entry key="app/src/main/res/layout/fragment_song.xml" value="0.1793478260869565" />
+        <entry key="app/src/main/res/layout/item_playlist.xml" value="0.1793478260869565" />
+        <entry key="app/src/main/res/layout/item_song.xml" value="0.1793478260869565" />
         <entry key="app/src/main/res/layout/pane_notification.xml" value="0.20677083333333332" />
         <entry key="app/src/main/res/layout/recycler_view_song_list.xml" value="0.20677083333333332" />
         <entry key="app/src/main/res/menu/menu_toolbar.xml" value="0.20677083333333332" />

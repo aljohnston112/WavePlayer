@@ -19,6 +19,7 @@ import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.activity_main.DialogFragmentAddToPlaylist
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.RecyclerViewSongListBinding
+import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
 import com.fourthFinger.pinkyPlayer.random_playlist.SongQueue
 import com.google.android.material.snackbar.BaseTransientBottomBar
@@ -44,16 +45,17 @@ class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
     var dragFlags: Int = ItemTouchHelper.UP or ItemTouchHelper.DOWN
     val swipeFlags: Int = ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        val songQueue = SongQueue.getInstance()
+        songQueue.songQueue.observe(viewLifecycleOwner){
+            if(::recyclerViewAdapterSongs.isInitialized) {
+                recyclerViewAdapterSongs.updateList(it.toList())
+            }
+        }
         _binding = RecyclerViewSongListBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -101,7 +103,12 @@ class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val position = viewHolder.absoluteAdapterPosition
-                songQueue.notifySongRemoved(position)
+                if(songQueue.notifySongRemoved(position)){
+                    val context = requireActivity().applicationContext
+                    val mediaSession = MediaSession.getInstance(context)
+                    mediaSession.pauseOrPlay(context)
+                    mediaSession.playNext(context)
+                }
                 recyclerViewAdapterSongs.updateList(songQueue.queue().toList())
                 val snackBar: Snackbar = Snackbar.make(
                     binding.recyclerViewSongList,
@@ -151,6 +158,7 @@ class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         super.onResume()
         viewModelActivityMain.setActionBarTitle(resources.getString(R.string.queue))
         updateFAB()
+        setUpRecyclerView()
     }
 
     private fun updateFAB() {
