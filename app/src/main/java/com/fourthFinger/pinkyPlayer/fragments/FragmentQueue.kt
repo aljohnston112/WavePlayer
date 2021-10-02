@@ -78,7 +78,7 @@ class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         recyclerViewSongList?.layoutManager = LinearLayoutManager(recyclerViewSongList?.context)
         recyclerViewAdapterSongs = RecyclerViewAdapterSongs(
             this,
-            songQueue.queue()
+            songQueue.queue().toList()
         )
         recyclerViewSongList?.adapter = recyclerViewAdapterSongs
         val itemTouchHelperCallback = object : ItemTouchHelper.Callback() {

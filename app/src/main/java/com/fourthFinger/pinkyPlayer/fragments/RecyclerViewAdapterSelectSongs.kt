@@ -1,23 +1,20 @@
 package com.fourthFinger.pinkyPlayer.fragments
 
+import android.annotation.SuppressLint
 import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.fourthFinger.pinkyPlayer.DiffUtils
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
 
 class RecyclerViewAdapterSelectSongs(
         private val listenerCallbackSelectSongs: ListenerCallbackSelectSongs,
-        allSongs: Set<Song>
-) : ListAdapter<Song, RecyclerViewAdapterSelectSongs.ViewHolder>(
-    DiffUtils.DiffUtilItemCallbackSongs()
-) {
+        var allSongs: List<Song>
+) : RecyclerView.Adapter<RecyclerViewAdapterSelectSongs.ViewHolder>() {
 
     interface ListenerCallbackSelectSongs {
         fun getUserPickedSongs(): List<Song>
@@ -25,8 +22,10 @@ class RecyclerViewAdapterSelectSongs(
         fun songSelected(song: Song)
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     fun updateList(songs: List<Song>) {
-        submitList(ArrayList(songs))
+        allSongs = songs
+        notifyDataSetChanged()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -40,19 +39,19 @@ class RecyclerViewAdapterSelectSongs(
             R.id.constraint_layout_song_name
         )
         // TODO use color resources
-        if(getItem(position).isSelected()){
+        if(allSongs[position].isSelected()){
             holder.textViewSongName.setBackgroundColor(Color.parseColor("#575757"))
             linearLayout.setBackgroundColor(Color.parseColor("#575757"))
         } else {
             holder.textViewSongName.setBackgroundColor(Color.parseColor("#000000"))
             linearLayout.setBackgroundColor(Color.parseColor("#000000"))
         }
-        holder.song = getItem(position)
-        holder.textViewSongName.text = getItem(position).title
+        holder.song = allSongs[position]
+        holder.textViewSongName.text = allSongs[position].title
     }
-    
-    init{
-        submitList(ArrayList(allSongs))
+
+    override fun getItemCount(): Int {
+        return allSongs.size
     }
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -81,4 +80,5 @@ class RecyclerViewAdapterSelectSongs(
             view.setOnClickListener(onClickListener)
         }
     }
+
 }

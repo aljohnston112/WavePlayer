@@ -64,7 +64,7 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         recyclerViewSongs = binding.recyclerViewSongList
         recyclerViewAdapterSongs = RecyclerViewAdapterSongs(
             this,
-            viewModelPlaylists.getAllSongs().toSet()
+            viewModelPlaylists.getAllSongs().toList()
         )
         recyclerViewSongs.adapter = recyclerViewAdapterSongs
         recyclerViewSongs.layoutManager = LinearLayoutManager(recyclerViewSongs.context)
