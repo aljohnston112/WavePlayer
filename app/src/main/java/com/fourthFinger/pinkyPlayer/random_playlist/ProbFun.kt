@@ -91,7 +91,7 @@ sealed class ProbFun<T>(
         }
         probabilityMap = if (comparable) TreeMap() else LinkedHashMap()
         for (choice in choices) {
-            probabilityMap[choice] = 1.0 / choices.size
+            probabilityMap[choice] = 1.0 / choices.size.toDouble()
         }
         fixProbSum()
     }
@@ -432,17 +432,17 @@ sealed class ProbFun<T>(
      * TODO This is a terrible solution to the rounding error
      */
     private fun fixProbSum() {
-        roundingError = 1.0 - probSum()
-        var firstProb = probabilityMap.entries.iterator().next()
-        while (firstProb.value * 2.0 < roundingError) {
-            var p: Double
+        var add = 100.0
+        while(add > MIN_VALUE) {
+            roundingError = 1.0 - probSum()
+            add = roundingError / probabilityMap.size.toDouble()
             for (e in probabilityMap.entries) {
-                p = e.value + (roundingError / probabilityMap.size.toDouble())
-                e.setValue(p)
+                e.setValue(e.value + add)
             }
-            firstProb = probabilityMap.entries.iterator().next()
         }
-        firstProb.setValue(firstProb.value + roundingError)
+        roundingError = 1.0 - probSum()
+        val e = probabilityMap.entries.iterator().next()
+        e.setValue(e.value + roundingError)
     }
 
     /**

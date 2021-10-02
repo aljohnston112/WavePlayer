@@ -56,7 +56,6 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         KeyboardUtil.hideKeyboard(view)
         viewModelActivityMain.setActionBarTitle(resources.getString(R.string.songs))
         viewModelActivityMain.showFab(false)
-        viewModelPlaylists.fragmentSongsViewCreated(requireActivity().applicationContext)
         setUpRecyclerView()
         setUpSearchView()
     }

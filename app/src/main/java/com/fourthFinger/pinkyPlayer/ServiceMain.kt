@@ -22,6 +22,7 @@ class ServiceMain : LifecycleService() {
     private var remoteViewsNotificationLayout: RemoteViews? = null
     private var remoteViewsNotificationLayoutWithoutArt: RemoteViews? = null
     private var remoteViewsNotificationLayoutWithArt: RemoteViews? = null
+
     private var notificationHasArt = false
 
     private var notificationCompatBuilder: NotificationCompat.Builder? = null
@@ -29,6 +30,8 @@ class ServiceMain : LifecycleService() {
 
     private var serviceStarted = false
     private val serviceMainBinder: IBinder = ServiceMainBinder()
+
+    private var loaded = false
 
     // region lifecycle
     // region onCreate
@@ -89,22 +92,33 @@ class ServiceMain : LifecycleService() {
             synchronized(LOCK) {
                 val action: String? = intent.action
                 if (action != null) {
-                    val mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
                     when (action) {
+                        (resources.getString(R.string.action_loaded)) -> {
+                            loaded = true
+                        }
                         resources.getString(
                             R.string.action_next
                         ) -> {
-                            mediaSession.playNext(applicationContext)
+                            if(loaded) {
+                                val mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
+                                mediaSession.playNext(applicationContext)
+                            }
                         }
                         resources.getString(
                             R.string.action_play_pause
                         ) -> {
-                            mediaSession.pauseOrPlay(applicationContext)
+                            if(loaded) {
+                                val mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
+                                mediaSession.pauseOrPlay(applicationContext)
+                            }
                         }
                         resources.getString(
                             R.string.action_previous
                         ) -> {
-                            mediaSession.playPrevious(applicationContext)
+                            if(loaded) {
+                                val mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
+                                mediaSession.playPrevious(applicationContext)
+                            }
                         }
                         resources.getString(
                             R.string.action_new_song
@@ -131,11 +145,15 @@ class ServiceMain : LifecycleService() {
             startForeground(NOTIFICATION_CHANNEL_ID.hashCode(), notification)
             val mediaPlayerSession = MediaPlayerManager.getInstance(applicationContext)
             mediaPlayerSession.currentAudioUri.observe(this) {
+                setUpNotificationBuilder()
+                setUpBroadCastsForNotificationButtons()
                 updateSongArt(it)
                 updateNotificationSongName(it)
                 updateNotification()
             }
             mediaPlayerSession.isPlaying.observe(this) {
+                setUpNotificationBuilder()
+                setUpBroadCastsForNotificationButtons()
                 updateNotificationPlayButton(it)
                 updateNotification()
             }

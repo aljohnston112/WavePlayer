@@ -66,7 +66,10 @@ class MediaLoader private constructor() {
                         val file = File(context.filesDir, id.toString())
                         // TODO put in user triggered scan
                         // !file.exists() || (songDAO.getSong(id) == null)
-                        if ((playlistsRepo.getMasterPlaylist().contains(id))) {
+                        if (!playlistsRepo.isMasterPlaylistInitialized() ||
+                            (playlistsRepo.isMasterPlaylistInitialized() &&
+                                    !playlistsRepo.getMasterPlaylist().contains(id))
+                        ) {
                             AudioUri.saveAudioUri(context, AudioUri(displayName, artist, title, id))
                             newSongs.add(Song(id, title))
                         }

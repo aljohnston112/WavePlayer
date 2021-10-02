@@ -67,10 +67,14 @@ class SongQueue private constructor() {
         return _songQueue.toSet()
     }
 
+    // TODO update FragmentQueue after all moves have been completed!
+
     fun notifySongMoved(from: Int, to: Int) {
         var i = songQueueIterator.nextIndex()
-        if(i-1 == from){
-            i = to+1
+        if(i == from){
+            i++
+        } else if(i-1 == to){
+            i --
         }
         songQueueIterator = _songQueue.listIterator(from)
         val song = songQueueIterator.next()
@@ -98,6 +102,7 @@ class SongQueue private constructor() {
             i--
         }
         songQueueIterator = _songQueue.listIterator(i)
+        mLDSongQueue.value = _songQueue
         return playing
     }
 
@@ -107,6 +112,7 @@ class SongQueue private constructor() {
         undoSong?.let { songQueueIterator.add(it) }
         undoSong = null
         songQueueIterator = _songQueue.listIterator(i)
+        mLDSongQueue.value = _songQueue
     }
 
     fun setIndex(position: Int): Song {
@@ -114,6 +120,10 @@ class SongQueue private constructor() {
         val song =  songQueueIterator.next()
         songQueueIterator.previous()
         return song
+    }
+
+    fun updateSongQueue() {
+        mLDSongQueue.value = _songQueue
     }
 
     init {

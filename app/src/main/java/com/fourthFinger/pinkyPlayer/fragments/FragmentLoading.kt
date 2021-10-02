@@ -111,6 +111,15 @@ class FragmentLoading : Fragment() {
                     R.string.permission_read_needed,
                     Toast.LENGTH_LONG
                 ).show()
+                // TODO these pollute the backstack
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                val uri: Uri = Uri.fromParts(
+                    "package",
+                    requireActivity().packageName,
+                    null
+                )
+                intent.data = uri
+                startActivity(intent)
             }
             else -> {
                 requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)

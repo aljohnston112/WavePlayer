@@ -22,7 +22,6 @@ class MediaSession private constructor(context: Context) {
     fun setCurrentPlaylistToMaster() {
         setCurrentPlaylist(playlistsRepo.getMasterPlaylist())
     }
-
     fun resetProbabilities(context: Context) {
         currentPlaylist.resetProbabilities(context)
     }

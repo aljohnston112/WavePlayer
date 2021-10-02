@@ -3,7 +3,10 @@ package com.fourthFinger.pinkyPlayer.fragments
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
-import com.fourthFinger.pinkyPlayer.random_playlist.*
+import com.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
+import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
+import com.fourthFinger.pinkyPlayer.random_playlist.SaveFile
+import com.fourthFinger.pinkyPlayer.random_playlist.Song
 import java.util.*
 
 class ViewModelPlaylists(application: Application) : AndroidViewModel(application) {
@@ -62,10 +65,6 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
             }
         }
         return sifted
-    }
-
-    fun fragmentSongsViewCreated(context: Context) {
-        MediaSession.getInstance(context).setCurrentPlaylistToMaster()
     }
 
 }
