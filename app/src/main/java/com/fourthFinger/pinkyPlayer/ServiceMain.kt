@@ -7,12 +7,11 @@ import android.content.*
 import android.os.*
 import android.util.Log
 import android.widget.RemoteViews
-import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
-import com.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerSession
+import com.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerManager
 import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 import java.io.*
 import java.util.concurrent.ExecutorService
@@ -126,23 +125,19 @@ class ServiceMain : LifecycleService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         if (!serviceStarted) {
-            // TODO remove before release?
-            Toast.makeText(applicationContext, "PinkyPlayer starting", Toast.LENGTH_SHORT).show()
+            setUpNotificationBuilder()
+            setUpBroadCastsForNotificationButtons()
             updateNotification()
             startForeground(NOTIFICATION_CHANNEL_ID.hashCode(), notification)
-            val mediaPlayerSession = MediaPlayerSession.getInstance(applicationContext)
+            val mediaPlayerSession = MediaPlayerManager.getInstance(applicationContext)
             mediaPlayerSession.currentAudioUri.observe(this) {
                 updateSongArt(it)
                 updateNotificationSongName(it)
-                val notificationManager: NotificationManager =
-                    getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-                notificationManager.notify(NOTIFICATION_CHANNEL_ID.hashCode(), notification)
+                updateNotification()
             }
             mediaPlayerSession.isPlaying.observe(this) {
                 updateNotificationPlayButton(it)
-                val notificationManager: NotificationManager =
-                    getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-                notificationManager.notify(NOTIFICATION_CHANNEL_ID.hashCode(), notification)
+                updateNotification()
             }
         }
         serviceStarted = true
@@ -150,8 +145,6 @@ class ServiceMain : LifecycleService() {
     }
 
     private fun updateNotification() {
-        setUpNotificationBuilder()
-        setUpBroadCastsForNotificationButtons()
         remoteViewsNotificationLayout?.removeAllViews(R.id.pane_notification_linear_layout)
         if (notificationHasArt) {
             remoteViewsNotificationLayout?.addView(
@@ -213,8 +206,7 @@ class ServiceMain : LifecycleService() {
                 NOTIFICATION_CHANNEL_ID,
                 importance
             )
-            // TODO put in String
-            val description = "Intelligent music player"
+            val description = getString(R.string.description)
             channel.description = description
             val notificationManager = getSystemService(NotificationManager::class.java)
             notificationManager.createNotificationChannel(channel)
@@ -312,8 +304,7 @@ class ServiceMain : LifecycleService() {
     }
 
     private fun updateSongArt(audioUri: AudioUri) {
-        // TODO update song art background
-        // TODO 92?!
+        // TODO 92? Seems to get resized for the Notification
         val bitmap = BitmapUtil.getThumbnail(
             audioUri.getUri(),
             92,
@@ -321,8 +312,6 @@ class ServiceMain : LifecycleService() {
             applicationContext
         )
         notificationHasArt = if (bitmap != null) {
-            // TODO why? Try to get height of imageView and make the width match
-            // BitmapLoader.getResizedBitmap(bitmap, songPaneArtWidth, songPaneArtHeight);
             remoteViewsNotificationLayoutWithArt?.setImageViewBitmap(
                 R.id.imageViewNotificationSongPaneSongArtWArt,
                 bitmap
@@ -387,20 +376,18 @@ class ServiceMain : LifecycleService() {
     }
 
     private fun taskRemoved() {
-        val mediaPlayerSession = MediaPlayerSession.getInstance(applicationContext)
-        mediaPlayerSession.cleanUp(applicationContext)
+        val mediaPlayerManager = MediaPlayerManager.getInstance(applicationContext)
+        mediaPlayerManager.cleanUp(applicationContext)
         unregisterReceiver(broadcastReceiver)
         stopSelf()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        val mediaPlayerSession = MediaPlayerSession.getInstance(applicationContext)
-        mediaPlayerSession.cleanUp(applicationContext)
+        val mediaPlayerManager = MediaPlayerManager.getInstance(applicationContext)
+        mediaPlayerManager.cleanUp(applicationContext)
         unregisterReceiver(broadcastReceiver)
         stopSelf()
-        // TODO remove on release?
-        Toast.makeText(this, "PinkyPlayer done", Toast.LENGTH_SHORT).show()
     }
 
     // endregion lifecycle

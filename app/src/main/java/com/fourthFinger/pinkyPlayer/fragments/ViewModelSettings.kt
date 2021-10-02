@@ -14,7 +14,7 @@ class ViewModelSettings : ViewModel() {
 
     private val settingsRepo = SettingsRepo.getInstance()
 
-    fun getNSongs(): String {
+    fun getMaxNumberOfSongs(): String {
         return (1.0 / settingsRepo.getMaxPercent()).roundToInt().toString()
     }
 

@@ -132,7 +132,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
     }
 
     private fun filterPlaylists(newText: String) {
-        val sifted = viewModelPlaylists.filterPlaylists(newText)
+        val sifted = viewModelPlaylists.siftPlaylists(newText)
         dragFlags = if (newText.isNotEmpty()) {
             recyclerViewAdapterPlaylists.updateList(sifted)
             0
@@ -221,7 +221,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
     }
 
     override fun onMenuItemClickAddToQueue(randomPlaylist: RandomPlaylist): Boolean {
-        viewModelAddToQueue.addToQueueClicked(requireActivity().applicationContext, randomPlaylist)
+        viewModelAddToQueue.addToQueue(requireActivity().applicationContext, randomPlaylist)
         return true
     }
 

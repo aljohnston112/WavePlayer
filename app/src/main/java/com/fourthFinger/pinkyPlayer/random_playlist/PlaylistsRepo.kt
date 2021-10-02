@@ -40,25 +40,27 @@ class PlaylistsRepo private constructor(context: Context) {
         return out
     }
 
-    private var masterPlaylist: RandomPlaylist? = null
+    private lateinit var masterPlaylist: RandomPlaylist
     fun setMasterPlaylist(masterPlaylist: RandomPlaylist) {
         this.masterPlaylist = masterPlaylist
     }
-
-    fun getMasterPlaylist(): RandomPlaylist? {
+    fun getMasterPlaylist(): RandomPlaylist {
         return masterPlaylist
     }
-
-    fun getAllSongs(): Set<Song>? {
-        return masterPlaylist?.getSongs()
+    fun getAllSongs(): Set<Song> {
+        return masterPlaylist.getSongs()
+    }
+    fun isMasterPlaylistInitialized(): Boolean {
+        return ::masterPlaylist.isInitialized
     }
 
     private var songDAO: SongDAO
     fun getSong(songID: Long): Song? {
         var song: Song? = null
         try {
-            song =
-                ServiceMain.executorServicePool.submit(Callable { songDAO.getSong(songID) }).get()
+            song = ServiceMain.executorServicePool.submit(
+                Callable { songDAO.getSong(songID) }
+            ).get()
         } catch (e: ExecutionException) {
             e.printStackTrace()
         } catch (e: InterruptedException) {
@@ -83,7 +85,7 @@ class PlaylistsRepo private constructor(context: Context) {
         }
     }
 
-    fun doesPlaylistExist(playlistName: String): Boolean {
+    fun playlistExists(playlistName: String): Boolean {
         var playlistIndex = -1
         for ((i, randomPlaylist) in getPlaylists().withIndex()) {
             if (randomPlaylist.getName() == playlistName) {

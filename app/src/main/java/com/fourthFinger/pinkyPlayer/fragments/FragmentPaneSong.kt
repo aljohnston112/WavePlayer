@@ -17,7 +17,7 @@ import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.FragmentPaneSongBinding
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
-import com.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerSession
+import com.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerManager
 
 class FragmentPaneSong : Fragment() {
 
@@ -45,12 +45,12 @@ class FragmentPaneSong : Fragment() {
     }
 
     private fun setUpObservers() {
-        val mediaPlayerSession =
-            MediaPlayerSession.getInstance(requireActivity().applicationContext)
-        mediaPlayerSession.currentAudioUri.observe(viewLifecycleOwner) { currentAudioUri: AudioUri? ->
+        val mediaPlayerManager =
+            MediaPlayerManager.getInstance(requireActivity().applicationContext)
+        mediaPlayerManager.currentAudioUri.observe(viewLifecycleOwner) { currentAudioUri: AudioUri? ->
             updateSongUI(currentAudioUri)
         }
-        mediaPlayerSession.isPlaying.observe(viewLifecycleOwner) { isPlaying: Boolean? ->
+        mediaPlayerManager.isPlaying.observe(viewLifecycleOwner) { isPlaying: Boolean? ->
             if (isPlaying != null) {
                 setUpPlayButton(isPlaying)
             }
@@ -59,11 +59,11 @@ class FragmentPaneSong : Fragment() {
 
     private val onLayoutChangeListenerSongPane =
         { _: View?, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int ->
-            val mediaPlayerSession =
-                MediaPlayerSession.getInstance(requireActivity().applicationContext)
+            val mediaPlayerManager =
+                MediaPlayerManager.getInstance(requireActivity().applicationContext)
                 songArtWidth = binding.imageViewSongPaneSongArt.width
                 setUpPrev()
-                setUpPlayButton(mediaPlayerSession.isPlaying.value?:false)
+                setUpPlayButton(mediaPlayerManager.isPlaying.value?:false)
                 setUpNext()
         }
 
@@ -75,12 +75,12 @@ class FragmentPaneSong : Fragment() {
     }
 
     private var runnableSongPaneArtUpdater = Runnable {
-        val mediaPlayerSession =
-            MediaPlayerSession.getInstance(requireActivity().applicationContext)
+        val mediaPlayerManager =
+            MediaPlayerManager.getInstance(requireActivity().applicationContext)
         val imageViewSongPaneSongArt: ImageView = binding.imageViewSongPaneSongArt
         if (songArtWidth > 0) {
             val bitmapSongArt: Bitmap? = BitmapUtil.getThumbnailBitmap(
-                mediaPlayerSession.currentAudioUri.value,
+                mediaPlayerManager.currentAudioUri.value,
                 songArtWidth,
                 requireActivity().applicationContext
             )
@@ -153,7 +153,6 @@ class FragmentPaneSong : Fragment() {
             val fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment)
             if (fragment != null) {
                 viewModelFragmentPaneSong.clicked(
-                    requireActivity().applicationContext,
                     fragment,
                     v.id
                 )

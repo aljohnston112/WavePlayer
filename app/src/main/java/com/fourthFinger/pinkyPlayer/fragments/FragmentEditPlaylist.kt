@@ -32,7 +32,6 @@ class FragmentEditPlaylist : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModelUserPicks.fragmentEditPlaylistViewCreated()
         binding.buttonEditSongs.setOnClickListener {
             viewModelUserPicks.editSongsClicked(
                 NavHostFragment.findNavController(this)
@@ -43,7 +42,6 @@ class FragmentEditPlaylist : Fragment() {
     override fun onResume() {
         super.onResume()
         updateFAB()
-        viewModelUserPicks.fragmentEditPlaylistOnResume()
     }
 
     private fun updateFAB() {
@@ -59,7 +57,6 @@ class FragmentEditPlaylist : Fragment() {
         viewModelActivityMain.setFabOnClickListener { view: View ->
             viewModelUserPicks.editPlaylistFabClicked(
                 this,
-                requireActivity().applicationContext,
                 editTextPlaylistName.text.toString()
             )
             cleanUp(view)
@@ -77,7 +74,6 @@ class FragmentEditPlaylist : Fragment() {
 
     override fun onDestroy() {
         super.onDestroy()
-        // TODO Tie this with the view being created and destroyed
         viewModelActivityMain.setFabOnClickListener(null)
     }
 

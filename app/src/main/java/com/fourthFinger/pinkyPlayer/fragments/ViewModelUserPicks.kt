@@ -13,7 +13,7 @@ import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.random_playlist.*
 import java.util.*
 
-class ViewModelUserPicks(application: Application) : AndroidViewModel(application)  {
+class ViewModelUserPicks(application: Application) : AndroidViewModel(application) {
 
     // TODO log user picked songs and playlist during program run to verify correct operation
 
@@ -21,7 +21,7 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
     private val songQueue = SongQueue.getInstance()
 
     @GuardedBy("this")
-    private val userPickedSongs: MutableList<Song> = ArrayList()
+    private val userPickedSongs: MutableList<Song> = mutableListOf()
 
     @Synchronized
     fun getUserPickedSongs(): List<Song> {
@@ -29,19 +29,19 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
     }
 
     @Synchronized
-    fun songSelected(songs: Song) {
+    fun selectSong(songs: Song) {
         userPickedSongs.add(songs)
         songs.setSelected(true)
     }
 
     @Synchronized
-    fun songUnselected(song: Song) {
+    fun unselectedSong(song: Song) {
         userPickedSongs.remove(song)
         song.setSelected(false)
     }
 
     @Synchronized
-    fun clearUserPickedSongs() {
+    fun unselectUserPickedSongs() {
         for (song in userPickedSongs) {
             song.setSelected(false)
         }
@@ -63,11 +63,11 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
     }
 
     fun songClicked(context: Context, navController: NavController, song: Song) {
-        val mediaPlayerSession = MediaPlayerSession.getInstance(context)
+        val mediaPlayerManager = MediaPlayerManager.getInstance(context)
         val mediaSession: MediaSession = MediaSession.getInstance(context)
         synchronized(ActivityMain.MUSIC_CONTROL_LOCK) {
             // TODO pass this in?
-            if (song == mediaPlayerSession.currentAudioUri.value?.id?.let {
+            if (song == mediaPlayerManager.currentAudioUri.value?.id?.let {
                     playlistsRepo.getSong(it)
                 }
             ) {
@@ -99,7 +99,8 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
     }
 
     fun fragmentPlaylistFABClicked(navController: NavController) {
-        clearUserPickedSongs()
+        unselectUserPickedSongs()
+        selectSongsInUserPickedPlaylist()
         NavUtil.navigate(
             navController,
             FragmentPlaylistDirections.actionFragmentPlaylistToFragmentEditPlaylist()
@@ -108,58 +109,34 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
 
     fun fragmentPlaylistsFABClicked(navController: NavController) {
         setUserPickedPlaylist(null)
-        clearUserPickedSongs()
+        unselectUserPickedSongs()
         NavUtil.navigate(
             navController,
             FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentEditPlaylist()
         )
     }
 
-    fun fragmentEditPlaylistViewCreated() {
-        selectSongsInUserPickedPlaylist()
-    }
-
     @Synchronized
     private fun selectSongsInUserPickedPlaylist() {
         userPickedPlaylist?.let {
             for (song in it.getSongs()) {
-                songSelected(song)
+                selectSong(song)
+                userPickedSongs.add(song)
             }
         }
     }
 
-    fun fragmentEditPlaylistOnResume() {
-        val makingNewPlaylist = (userPickedPlaylist == null)
-        if (!makingNewPlaylist) {
-            editingCurrentPlaylist()
-        }
-    }
-
-    private fun editingCurrentPlaylist() {
-        // userPickedSongs.isEmpty() when the user is editing a playlist
-        // TODO
-        //  if (user is editing a playlist,
-        //      unselects all the songs, and
-        //      returns here){
-        //          ERROR
-        //  }
-        // TODO how come only when it is empty?
-        if (userPickedSongs.isEmpty()) {
-            getUserPickedPlaylist()?.getSongs()?.let {
-                userPickedSongs.addAll(it)
-            }
-        }
-    }
-
-    fun editPlaylistFabClicked(fragment: Fragment, context: Context, playlistName: String) {
+    fun editPlaylistFabClicked(fragment: Fragment, playlistName: String) {
+        val context = fragment.requireActivity().applicationContext
         if (validatePlaylistInput(context, playlistName)) {
-            val makingNewPlaylist = (userPickedPlaylist == null)
-            if (makingNewPlaylist) {
-                makeNewPlaylist(context, playlistName)
-            } else if (!makingNewPlaylist) {
+            val finalPlaylist: RandomPlaylist? = userPickedPlaylist
+            // userPickedPlaylist is non-null when editing a playlist.
+            if (finalPlaylist != null) {
+                updatePlaylist(context, finalPlaylist, playlistName)
+            } else {
                 makeNewPlaylist(context, playlistName)
             }
-            clearUserPickedSongs()
+            unselectUserPickedSongs()
             NavUtil.popBackStack(fragment)
         }
     }
@@ -175,9 +152,7 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
             ToastUtil.showToast(context, R.string.no_name_playlist)
             false
         } else if (
-            playlistsRepo.doesPlaylistExist(playlistName) &&
-            makingNewPlaylist
-        ) {
+            playlistsRepo.playlistExists(playlistName) && makingNewPlaylist) {
             ToastUtil.showToast(context, R.string.duplicate_name_playlist)
             false
         } else {
@@ -185,41 +160,48 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    private fun makeNewPlaylist(context: Context, playlistName: String) {
-        val playlistNames = playlistsRepo.getPlaylistTitles()
-        // TODO Is this a deep copy
-        var finalPlaylist: RandomPlaylist? = userPickedPlaylist
-        if (finalPlaylist?.getName() == playlistName ||
-            playlistNames.contains(playlistName)
-        ) {
-            finalPlaylist?.setName(
-                context,
-                playlistName
-            )
-            val songs = finalPlaylist?.getSongs()
-            if (songs != null) {
-                for (song in songs) {
-                    if (!userPickedSongs.contains(song)) {
-                        finalPlaylist?.remove(context, song)
-                    }
-                }
+    private fun updatePlaylist(
+        context: Context,
+        finalPlaylist: RandomPlaylist,
+        playlistName: String
+    ) {
+        playlistsRepo.removePlaylist(context, finalPlaylist)
+        finalPlaylist.setName(
+            context,
+            playlistName
+        )
+        removeMissingSongs(context, finalPlaylist)
+        addNewSongs(context, finalPlaylist)
+    }
+
+    private fun removeMissingSongs(context: Context, finalPlaylist: RandomPlaylist) {
+        val songs = finalPlaylist.getSongs()
+        for (song in songs) {
+            if (!userPickedSongs.contains(song)) {
+                finalPlaylist.remove(context, song)
             }
-            for (song in userPickedSongs) {
-                finalPlaylist?.add(
-                    context,
-                    song
-                )
-                song.setSelected(false)
-            }
-        } else {
-            finalPlaylist = RandomPlaylist(
-                context,
-                playlistName,
-                userPickedSongs,
-                false
-            )
         }
-        finalPlaylist?.let { playlistsRepo.addPlaylist(context, it) }
+    }
+
+    private fun addNewSongs(context: Context, finalPlaylist: RandomPlaylist) {
+        for (song in userPickedSongs) {
+            finalPlaylist.add(
+                context,
+                song
+            )
+            song.setSelected(false)
+        }
+        userPickedSongs.clear()
+    }
+
+    private fun makeNewPlaylist(context: Context, playlistName: String) {
+        val finalPlaylist = RandomPlaylist(
+            context,
+            playlistName,
+            userPickedSongs,
+            false
+        )
+        playlistsRepo.addPlaylist(context, finalPlaylist)
     }
 
     fun editSongsClicked(navController: NavController) {
@@ -232,23 +214,20 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
         )
     }
 
-    fun fragmentSongsViewCreated() {
-        setUserPickedPlaylist(playlistsRepo.getMasterPlaylist())
-    }
-
     fun playlistCreatedFromFolder(navController: NavController, playlist: RandomPlaylist?) {
-        setUserPickedPlaylist(playlist)
-        NavUtil.navigate(
-            navController,
-            FragmentTitleDirections.actionFragmentTitleToFragmentPlaylists()
-        )
+        playlist?.let {
+            setUserPickedPlaylist(it)
+            NavUtil.navigate(
+                navController,
+                FragmentTitleDirections.actionFragmentTitleToFragmentPlaylists()
+            )}
     }
 
-    fun startNewPlaylistWithSongs(songs: MutableList<Song>) {
+    fun startNewPlaylistWithSongs(songs: List<Song>) {
         setUserPickedPlaylist(null)
-        clearUserPickedSongs()
-        for(song in songs){
-            songSelected(song)
+        unselectUserPickedSongs()
+        for (song in songs) {
+            selectSong(song)
         }
     }
 
@@ -259,32 +238,37 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
             fromPosition,
             toPosition
         )
-        SaveFile.saveFile(context)
     }
 
-    private var song: Song? = null
-    private var probability: Double? = null
+    private var songForUndo: Song? = null
+    private var probabilityForUndo: Double? = null
 
-    fun notifySongRemoved(context: Context, position: Int) {
-        song = userPickedPlaylist?.getSongs()?.toList()?.get(position)
-        probability = song?.let { userPickedPlaylist?.getProbability(it) }
+    fun notifySongRemoved(fragment: Fragment, position: Int) {
+        val context = fragment.requireActivity().applicationContext
+        songForUndo = userPickedPlaylist?.getSongs()?.toList()?.get(position)
+        probabilityForUndo = songForUndo?.let { userPickedPlaylist?.getProbability(it) }
         if (userPickedPlaylist?.size() == 1) {
             userPickedPlaylist?.let {
                 playlistsRepo.removePlaylist(context, it)
+                // TODO test what happens when user is listening to a playlist and then removes it
+                setUserPickedPlaylist(null)
+                NavUtil.popBackStack(fragment)
             }
-            // TODO test what happens when user is listening to a playlist and then removes it
-            setUserPickedPlaylist(null)
         } else {
-            song?.let { userPickedPlaylist?.remove(context, it) }
+            songForUndo?.let { userPickedPlaylist?.remove(context, it) }
         }
     }
 
     fun notifyItemInserted(context: Context, position: Int) {
-        song?.let { probability?.let { it1 -> userPickedPlaylist?.add(
-            getApplication<Application>().applicationContext,
-            it,
-            it1
-        ) } }
+        songForUndo?.let {
+            probabilityForUndo?.let { it1 ->
+                userPickedPlaylist?.add(
+                    getApplication<Application>().applicationContext,
+                    it,
+                    it1
+                )
+            }
+        }
         userPickedPlaylist?.let {
             it.switchSongPositions(
                 context,
@@ -295,13 +279,11 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
                 playlistsRepo.addPlaylist(context, it)
             }
         }
-        song = null
-        probability = null
+        songForUndo = null
+        probabilityForUndo = null
     }
 
-    fun filterPlaylistSongs(string: String): List<Song> {
-        // TODO fix bug where you can reorder songs when sifted
-        // I think this is fixed
+    fun siftPlaylistSongs(string: String): List<Song> {
         val songs: Set<Song>? = userPickedPlaylist?.getSongs()
         val sifted: MutableList<Song> = ArrayList<Song>()
         if (songs != null) {

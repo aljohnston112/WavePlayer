@@ -26,7 +26,7 @@ import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.ServiceMain
 import com.fourthFinger.pinkyPlayer.databinding.ActivityMainBinding
 import com.fourthFinger.pinkyPlayer.fragments.ViewModelAddToQueue
-import com.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerSession
+import com.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerManager
 import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 
@@ -53,8 +53,8 @@ class ActivityMain : AppCompatActivity() {
         setContentView(binding.root)
         setUpOnDestinationChangedListener()
         setUpViewModelActivityMainObservers()
-        val mediaPlayerSession = MediaPlayerSession.getInstance(applicationContext)
-        mediaPlayerSession.songInProgress.observe(this) {
+        val mediaPlayerManager = MediaPlayerManager.getInstance(applicationContext)
+        mediaPlayerManager.songInProgress.observe(this) {
             val fragment: Fragment? = supportFragmentManager.findFragmentById(
                 binding.navHostFragment.id
             )
@@ -85,8 +85,8 @@ class ActivityMain : AppCompatActivity() {
     private val onDestinationChangedListenerSongPane =
         { _: NavController, destination: NavDestination, _: Bundle? ->
             if (destination.id != R.id.fragmentSong) {
-                val mediaPlayerSession = MediaPlayerSession.getInstance(applicationContext)
-                if (mediaPlayerSession.isSongInProgress() == true) {
+                val mediaPlayerManager = MediaPlayerManager.getInstance(applicationContext)
+                if (mediaPlayerManager.isSongInProgress() == true) {
                     fragmentSongVisible(false)
                     showSongPane()
                 }
@@ -237,8 +237,8 @@ class ActivityMain : AppCompatActivity() {
         )
         if (loaded) {
             if (fragment != null) {
-                val mediaPlayerSession = MediaPlayerSession.getInstance(applicationContext)
-                if (mediaPlayerSession.isPlaying.value == true) {
+                val mediaPlayerManager = MediaPlayerManager.getInstance(applicationContext)
+                if (mediaPlayerManager.isPlaying.value == true) {
                     hideSongPane()
                     navigateTo(fragment, R.id.fragmentSong)
                 } else {
@@ -305,7 +305,7 @@ class ActivityMain : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_toolbar, menu)
-        if(MediaPlayerSession.getInstance(applicationContext).isSongInProgress() == true) {
+        if(MediaPlayerManager.getInstance(applicationContext).isSongInProgress() == true) {
             val toolbar = binding.toolbar
             if (toolbar.menu.size() > 0)
                 toolbar.menu.getItem(MENU_ACTION_QUEUE).isVisible = true
@@ -315,7 +315,7 @@ class ActivityMain : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
-        val mediaPlayerSession = MediaPlayerSession.getInstance(applicationContext)
+        val mediaPlayerManager = MediaPlayerManager.getInstance(applicationContext)
         when (item.itemId) {
             R.id.action_reset_probs -> {
                 mediaSession.resetProbabilities(applicationContext)
@@ -328,7 +328,7 @@ class ActivityMain : AppCompatActivity() {
             R.id.action_add_to_queue -> {
                 viewModelAddToQueue.actionAddToQueue(applicationContext)
                 if (viewModelActivityMain.fragmentSongVisible.value == false &&
-                    mediaPlayerSession.isSongInProgress() == true
+                    mediaPlayerManager.isSongInProgress() == true
                 ) {
                     showSongPane()
                 }

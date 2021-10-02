@@ -6,33 +6,27 @@ import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 import com.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
 
-class ViewModelFragmentSong(application: Application): AndroidViewModel(application) {
+class ViewModelFragmentSong(application: Application) : AndroidViewModel(application) {
 
     private val playlistsRepo = PlaylistsRepo.getInstance(application)
 
-    private val mediaSession: MediaSession = MediaSession.getInstance(
-        application.applicationContext
-    )
+    private val mediaSession: MediaSession = MediaSession.getInstance(getApplication())
 
-    fun thumbDownClicked(currentAudioUri: AudioUri?) {
-        currentAudioUri?.id?.let {
-            playlistsRepo.getSong(it)?.let { song ->
-                mediaSession.getCurrentPlaylist()?.bad(
-                    getApplication<Application>().applicationContext,
-                    song
-                )
-            }
+    fun thumbDownClicked(currentAudioUri: AudioUri) {
+        playlistsRepo.getSong(currentAudioUri.id)?.let { song ->
+            mediaSession.getCurrentPlaylist().bad(
+                getApplication<Application>().applicationContext,
+                song
+            )
         }
     }
 
-    fun thumbUpClicked(currentAudioUri: AudioUri?) {
-        currentAudioUri?.id?.let {
-            playlistsRepo.getSong(it)?.let { song ->
-                mediaSession.getCurrentPlaylist()?.good(
-                    getApplication<Application>().applicationContext,
-                    song
-                )
-            }
+    fun thumbUpClicked(currentAudioUri: AudioUri) {
+        playlistsRepo.getSong(currentAudioUri.id)?.let { song ->
+            mediaSession.getCurrentPlaylist().good(
+                getApplication<Application>().applicationContext,
+                song
+            )
         }
     }
 
@@ -52,15 +46,13 @@ class ViewModelFragmentSong(application: Application): AndroidViewModel(applicat
         mediaSession.pauseOrPlay(getApplication<Application>().applicationContext)
     }
 
-    fun nextClicked(currentAudioUri: AudioUri?) {
+    fun nextClicked(currentAudioUri: AudioUri) {
         mediaSession.playNext(getApplication<Application>().applicationContext)
-        currentAudioUri?.id?.let { id ->
-            playlistsRepo.getSong(id)?.let {
-                mediaSession.getCurrentPlaylist()?.bad(
-                    getApplication<Application>().applicationContext,
-                    it
-                )
-            }
+        playlistsRepo.getSong(currentAudioUri.id)?.let {
+            mediaSession.getCurrentPlaylist().bad(
+                getApplication<Application>().applicationContext,
+                it
+            )
         }
     }
 

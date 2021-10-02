@@ -1,6 +1,6 @@
 package com.fourthFinger.pinkyPlayer.random_playlist
 
-import android.content.*
+import android.content.Context
 import java.io.Serializable
 import java.util.*
 
@@ -8,6 +8,15 @@ import java.util.*
  * @author Alexander Johnston
  * @since Copyright 2019
  * A playlist where a group of media files are picked from randomly.
+ */
+
+/**
+ * Creates a random playlist.
+ *
+ * @param name            The name of this RandomPlaylist.
+ * @param music           The List of AudioURIs to add to this playlist.
+ * @throws IllegalArgumentException if there is not at least one AudioURI in music.
+ * @throws IllegalArgumentException if folder is not a directory.
  */
 class RandomPlaylist constructor(
     context: Context,
@@ -25,6 +34,7 @@ class RandomPlaylist constructor(
     fun getName(): String {
         return name
     }
+
     fun setName(context: Context, name: String) {
         this.name = name
         SaveFile.saveFile(context)
@@ -156,18 +166,14 @@ class RandomPlaylist constructor(
         return other is RandomPlaylist && other.getName() == name
     }
 
+    override fun hashCode(): Int {
+        return name.hashCode()
+    }
+
     companion object {
         private const val serialVersionUID = 2323326608918863420L
     }
 
-    /**
-     * Creates a random playlist.
-     *
-     * @param name            The name of this RandomPlaylist.
-     * @param music           The List of AudioURIs to add to this playlist.
-     * @throws IllegalArgumentException if there is not at least one AudioURI in music.
-     * @throws IllegalArgumentException if folder is not a directory.
-     */
     init {
         require(music.isNotEmpty()) { "List music must contain at least one AudioURI" }
         val files: MutableSet<Song> = LinkedHashSet(music)

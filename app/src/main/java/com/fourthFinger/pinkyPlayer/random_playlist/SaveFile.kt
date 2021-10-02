@@ -50,14 +50,12 @@ object SaveFile {
                     FILE_NAME_SETTINGS,
                     SAVE_FILE_VERIFICATION_NUMBER
                 )
-                playlistsRepo.getMasterPlaylist()?.let {
-                    FileUtil.save(
-                        it,
-                        context,
-                        FILE_NAME_MASTER_PLAYLIST,
-                        SAVE_FILE_VERIFICATION_NUMBER
-                    )
-                }
+                FileUtil.save(
+                    playlistsRepo.getMasterPlaylist(),
+                    context,
+                    FILE_NAME_MASTER_PLAYLIST,
+                    SAVE_FILE_VERIFICATION_NUMBER
+                )
                 FileUtil.saveList(
                     playlistsRepo.getPlaylists(),
                     context,

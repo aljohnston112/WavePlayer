@@ -109,7 +109,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val position = viewHolder.absoluteAdapterPosition
-                viewModelUserPicks.notifySongRemoved(requireActivity().applicationContext, position)
+                viewModelUserPicks.notifySongRemoved(this@FragmentPlaylist, position)
                 recyclerViewAdapterSongs.updateList(userPickedPlaylist.getSongs().toList())
                 val snackBar: Snackbar = Snackbar.make(
                     binding.recyclerViewSongList,
@@ -138,7 +138,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
 
     private fun filterSongs(newText: String) {
         dragFlags = if (newText.isNotEmpty()) {
-            val sifted = viewModelUserPicks.filterPlaylistSongs(newText)
+            val sifted = viewModelUserPicks.siftPlaylistSongs(newText)
             recyclerViewAdapterSongs.updateList(sifted)
             0
         } else {
@@ -192,7 +192,6 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
         viewModelActivityMain.showFab(true)
         viewModelActivityMain.setFabOnClickListener {
             // userPickedSongs.isEmpty() when the user is editing a playlist
-            // TODO got interrupted by food being done
             viewModelUserPicks.fragmentPlaylistFABClicked(
                 NavHostFragment.findNavController(this)
             )
@@ -234,16 +233,11 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
     }
 
     override fun onMenuItemClickAddToQueue(song: Song): Boolean {
-        // TODO fix how music continues after queue is depleted
-        // turn shuffle and looping off
-        // TODO showSongPane?
-        viewModelAddToQueue.addToQueueClicked(requireActivity().applicationContext, song)
+        viewModelAddToQueue.addToQueue(requireActivity().applicationContext, song)
         return true
     }
 
     override fun onClickViewHolder(pos: Int, song: Song) {
-        // TODO make sure user picked playlist and queue is updated
-        // Should queue be cleared?
         viewModelUserPicks.songClicked(
             requireActivity().applicationContext,
             NavHostFragment.findNavController(this),

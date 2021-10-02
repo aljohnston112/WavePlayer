@@ -66,7 +66,7 @@ class MediaLoader private constructor() {
                         val file = File(context.filesDir, id.toString())
                         // TODO put in user triggered scan
                         // !file.exists() || (songDAO.getSong(id) == null)
-                        if ((playlistsRepo.getMasterPlaylist()?.contains(id) != true)) {
+                        if ((playlistsRepo.getMasterPlaylist().contains(id))) {
                             AudioUri.saveAudioUri(context, AudioUri(displayName, artist, title, id))
                             newSongs.add(Song(id, title))
                         }
@@ -87,7 +87,7 @@ class MediaLoader private constructor() {
             }
         }
         executorServiceFIFO.execute {
-            if (playlistsRepo.getMasterPlaylist() != null) {
+            if (playlistsRepo.isMasterPlaylistInitialized()) {
                 _loadingText.postValue(resources.getString(R.string.loading3))
                 addNewSongs(context, newSongs)
                 _loadingText.postValue(resources.getString(R.string.loading4))
@@ -104,11 +104,6 @@ class MediaLoader private constructor() {
             }
         }
         executorServiceFIFO.execute {
-            /* TODO why is this needed? Find a place to set the default value
-            if (settings.lowerProb == 0.0) {
-                setLowerProb(2.0 / (masterPlaylist?.size()?:2).toDouble())
-            }
-            */
             SaveFile.saveFile(context)
             val intent = Intent()
             intent.addCategory(Intent.CATEGORY_DEFAULT)
@@ -121,27 +116,25 @@ class MediaLoader private constructor() {
         val playlistsRepo = PlaylistsRepo.getInstance(context)
         val i = newSongs.size
         for ((j, songID) in newSongs.withIndex()) {
-            playlistsRepo.getMasterPlaylist()?.add(context, songID)
+            playlistsRepo.getMasterPlaylist().add(context, songID)
             _loadingProgress.postValue(j.toDouble() / i.toDouble())
         }
     }
 
     private fun removeMissingSongs(context: Context, filesThatExist: List<Long>) {
-        val mediaPlayerSession = MediaPlayerSession.getInstance(context)
+        val mediaPlayerManager = MediaPlayerManager.getInstance(context)
         val playlistsRepo = PlaylistsRepo.getInstance(context)
         val i = filesThatExist.size
-        val ids = playlistsRepo.getMasterPlaylist()?.getSongIDs()
-        if (ids != null) {
-            for ((j, songID) in ids.withIndex()) {
-                if (!filesThatExist.contains(songID)) {
-                    playlistsRepo.getSong(songID)?.let {
-                        playlistsRepo.getMasterPlaylist()?.remove(context, it)
-                        playlistsRepo.removeSongFromDB(it)
-                    }
-                    mediaPlayerSession.removeMediaPlayerWUri(songID)
+        val ids = playlistsRepo.getMasterPlaylist().getSongIDs()
+        for ((j, songID) in ids.withIndex()) {
+            if (!filesThatExist.contains(songID)) {
+                playlistsRepo.getSong(songID)?.let {
+                    playlistsRepo.getMasterPlaylist().remove(context, it)
+                    playlistsRepo.removeSongFromDB(it)
                 }
-                _loadingProgress.postValue(j.toDouble() / i.toDouble())
+                mediaPlayerManager.removeMediaPlayerWUri(songID)
             }
+            _loadingProgress.postValue(j.toDouble() / i.toDouble())
         }
     }
 

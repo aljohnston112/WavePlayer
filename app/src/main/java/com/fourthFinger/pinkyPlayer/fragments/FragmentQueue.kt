@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.DialogFragment
@@ -16,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.fourthFinger.pinkyPlayer.KeyboardUtil
 import com.fourthFinger.pinkyPlayer.R
+import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.DialogFragmentAddToPlaylist
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.RecyclerViewSongListBinding
@@ -26,9 +28,6 @@ import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
 
 class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs {
-
-    // TODO update RecyclerView when a new song is added to the queue
-    // TODO stop playback of song when removed from queue and start the next
 
     private var _binding: RecyclerViewSongListBinding? = null
     private val binding get() = _binding!!
@@ -44,6 +43,11 @@ class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
 
     var dragFlags: Int = ItemTouchHelper.UP or ItemTouchHelper.DOWN
     val swipeFlags: Int = ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -158,11 +162,17 @@ class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         super.onResume()
         viewModelActivityMain.setActionBarTitle(resources.getString(R.string.queue))
         updateFAB()
-        setUpRecyclerView()
     }
 
     private fun updateFAB() {
         viewModelActivityMain.showFab(false)
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu) {
+        super.onPrepareOptionsMenu(menu)
+        // TODO add addToQueue functionality
+        menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).isVisible = false
+        menu.getItem(ActivityMain.MENU_ACTION_QUEUE).isVisible = false
     }
 
     override fun onMenuItemClickAddToPlaylist(song: Song): Boolean {
@@ -175,18 +185,12 @@ class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
     }
 
     override fun onMenuItemClickAddToQueue(song: Song): Boolean {
-        // TODO fix how music continues after queue is depleted
-        // turn shuffle and looping off
-        // TODO showSongPane?
-        viewModelAddToQueue.addToQueueClicked(requireActivity().applicationContext, song)
+        viewModelAddToQueue.addToQueue(requireActivity().applicationContext, song)
         return true
     }
 
     override fun onClickViewHolder(pos: Int, song: Song) {
-        // TODO make sure user picked playlist and queue is updated
-        // Should queue be cleared?
         viewModelFragmentQueue.songClicked(
-            requireActivity().applicationContext,
             this,
             pos
         )

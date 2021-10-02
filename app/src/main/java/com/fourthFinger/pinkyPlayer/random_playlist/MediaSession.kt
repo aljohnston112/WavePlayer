@@ -8,32 +8,35 @@ import java.util.*
 
 class MediaSession private constructor(context: Context) {
 
-    private val mediaPlayerSession = MediaPlayerSession.getInstance(context)
+    private val playlistsRepo = PlaylistsRepo.getInstance(context)
+    private val mediaPlayerSession = MediaPlayerManager.getInstance(context)
     private val songQueue: SongQueue = SongQueue.getInstance()
 
-    private var currentPlaylist: RandomPlaylist? = null
-    fun getCurrentPlaylist(): RandomPlaylist? {
+    private var currentPlaylist: RandomPlaylist = playlistsRepo.getMasterPlaylist()
+    fun getCurrentPlaylist(): RandomPlaylist {
         return currentPlaylist
     }
     fun setCurrentPlaylist(currentPlaylist: RandomPlaylist) {
         this.currentPlaylist = currentPlaylist
     }
-    fun setCurrentPlaylistToMaster(context: Context) {
-        val playlistsRepo = PlaylistsRepo.getInstance(context)
-        playlistsRepo.getMasterPlaylist()?.let { setCurrentPlaylist(it) }
+    fun setCurrentPlaylistToMaster() {
+        setCurrentPlaylist(playlistsRepo.getMasterPlaylist())
     }
 
     fun resetProbabilities(context: Context) {
-        currentPlaylist?.resetProbabilities(context)
+        currentPlaylist.resetProbabilities(context)
     }
+
     fun lowerProbabilities(context: Context) {
-        currentPlaylist?.lowerProbabilities(context)
+        currentPlaylist.lowerProbabilities(context)
     }
 
     @Volatile
     private var shuffling: Boolean = true
+
     @Volatile
     private var looping: Boolean = false
+
     @Volatile
     private var loopingOne: Boolean = false
 
@@ -136,7 +139,7 @@ class MediaSession private constructor(context: Context) {
      */
     private fun makeIfNeededAndPlay(context: Context, song: Song) {
         stopCurrentSong(context)
-        currentPlaylist?.setIndexTo(song.id)
+        currentPlaylist.setIndexTo(song.id)
         mediaPlayerSession.makeIfNeededAndPlay(context, song.id)
     }
 
@@ -149,9 +152,9 @@ class MediaSession private constructor(context: Context) {
      * if the playlist did not have a song to play.
      */
     private fun playNextInPlaylist(context: Context) {
-        val audioUriCurrent = currentPlaylist?.next(context, random, looping, shuffling)
+        val audioUriCurrent = currentPlaylist.next(context, random, looping, shuffling)
         if (audioUriCurrent != null) {
-            currentPlaylist?.setIndexTo(audioUriCurrent.id)
+            currentPlaylist.setIndexTo(audioUriCurrent.id)
             songQueue.addToQueue(context, audioUriCurrent.id)
             makeIfNeededAndPlay(context, songQueue.next())
             mediaPlayerSession.setCurrentAudioUri(audioUriCurrent)
@@ -225,7 +228,7 @@ class MediaSession private constructor(context: Context) {
     private fun playPreviousInPlaylist(context: Context) {
         // TODO loop through playlist rather than relying on queue
         // This is clearly bugged
-        val audioUriCurrent = currentPlaylist?.previous(context, random, looping, shuffling)
+        val audioUriCurrent = currentPlaylist.previous(context, random, looping, shuffling)
         if (audioUriCurrent != null) {
             mediaPlayerSession.setCurrentAudioUri(audioUriCurrent)
         }
@@ -243,7 +246,7 @@ class MediaSession private constructor(context: Context) {
      * If there is no song in progress, nothing will be done.
      */
     fun pauseOrPlay(context: Context) {
-        if(mediaPlayerSession.currentAudioUri.value == null){
+        if (mediaPlayerSession.currentAudioUri.value == null) {
             playNext(context)
         } else {
             mediaPlayerSession.pauseOrPlay(context)
@@ -259,6 +262,7 @@ class MediaSession private constructor(context: Context) {
 
     companion object {
         private val random: Random = Random()
+
         @Volatile
         private var INSTANCE: MediaSession? = null
 
@@ -279,7 +283,7 @@ class MediaSession private constructor(context: Context) {
         mediaPlayerSession.currentAudioUri.observeForever {
             // TODO why is this even here?
             // getMediaPlayerWUri(it.id)?.resetIfMKV(it, context)
-            currentPlaylist?.setIndexTo(it.id)
+            currentPlaylist.setIndexTo(it.id)
             // songQueue.addToQueue(it.id)
         }
     }

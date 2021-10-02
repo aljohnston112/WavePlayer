@@ -131,7 +131,7 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
 
     private fun filterSongs(newText: String) {
         if (newText.isNotEmpty()) {
-            val sifted = viewModelPlaylists.filterAllSongs(newText)
+            val sifted = viewModelPlaylists.siftAllSongs(newText)
             recyclerViewAdapter.updateList(sifted)
         } else {
             viewModelUserPicks.getUserPickedPlaylist()?.getSongs()?.let {
@@ -146,11 +146,11 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
     }
 
     override fun songUnselected(song: Song) {
-        viewModelUserPicks.songUnselected(song)
+        viewModelUserPicks.unselectedSong(song)
     }
 
     override fun songSelected(song: Song) {
-        viewModelUserPicks.songSelected(song)
+        viewModelUserPicks.selectSong(song)
     }
 
     override fun onStop() {

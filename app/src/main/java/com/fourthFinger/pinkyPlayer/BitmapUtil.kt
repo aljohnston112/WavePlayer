@@ -76,14 +76,6 @@ class BitmapUtil {
                     context.theme
                 )
                 if (drawableSongArt != null) {
-                    /*
-                    drawableSongArt.setBounds(0, 0, songArtWidth, songArtWidth)
-                    val bitmapSongArt: Bitmap = Bitmap.createBitmap(
-                        songArtWidth, songArtWidth, Bitmap.Config.ARGB_8888
-                    )
-                    val canvas = Canvas(bitmapSongArt)
-                    drawableSongArt.draw(canvas)
-                     */
                     return drawableSongArt.toBitmap(songArtWidth, songArtWidth)
                 }
             }

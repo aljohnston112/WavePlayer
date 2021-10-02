@@ -56,7 +56,7 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         KeyboardUtil.hideKeyboard(view)
         viewModelActivityMain.setActionBarTitle(resources.getString(R.string.songs))
         viewModelActivityMain.showFab(false)
-        viewModelUserPicks.fragmentSongsViewCreated()
+        viewModelPlaylists.fragmentSongsViewCreated(requireActivity().applicationContext)
         setUpRecyclerView()
         setUpSearchView()
     }
@@ -65,7 +65,7 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         recyclerViewSongs = binding.recyclerViewSongList
         recyclerViewAdapterSongs = RecyclerViewAdapterSongs(
             this,
-            viewModelPlaylists.getAllSongs()?.toSet() ?: setOf()
+            viewModelPlaylists.getAllSongs().toSet()
         )
         recyclerViewSongs.adapter = recyclerViewAdapterSongs
         recyclerViewSongs.layoutManager = LinearLayoutManager(recyclerViewSongs.context)
@@ -82,10 +82,10 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
 
     private fun filterSongs(newText: String?) {
         if (newText != null && newText != "") {
-            val sifted = viewModelPlaylists.filterAllSongs(newText)
+            val sifted = viewModelPlaylists.siftAllSongs(newText)
             recyclerViewAdapterSongs.updateList(sifted)
         } else {
-            viewModelPlaylists.getAllSongs()?.let { recyclerViewAdapterSongs.updateList(it.toList()) }
+            recyclerViewAdapterSongs.updateList(viewModelPlaylists.getAllSongs().toList())
         }
     }
 
@@ -143,8 +143,8 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
     }
 
     override fun onPrepareOptionsMenu(menu: Menu) {
-            super.onPrepareOptionsMenu(menu)
-            setUpToolbar()
+        super.onPrepareOptionsMenu(menu)
+        setUpToolbar()
     }
 
     override fun onMenuItemClickAddToPlaylist(song: Song): Boolean {
@@ -157,10 +157,7 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
     }
 
     override fun onMenuItemClickAddToQueue(song: Song): Boolean {
-        // TODO fix how music continues after queue is depleted
-        // turn shuffle and looping off
-        // TODO showSongPane?
-        viewModelAddToQueue.addToQueueClicked(requireActivity().applicationContext, song)
+        viewModelAddToQueue.addToQueue(requireActivity().applicationContext, song)
         return true
     }
 

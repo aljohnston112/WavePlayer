@@ -3,10 +3,7 @@ package com.fourthFinger.pinkyPlayer.fragments
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
-import com.fourthFinger.pinkyPlayer.random_playlist.SaveFile
-import com.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
-import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
-import com.fourthFinger.pinkyPlayer.random_playlist.Song
+import com.fourthFinger.pinkyPlayer.random_playlist.*
 import java.util.*
 
 class ViewModelPlaylists(application: Application) : AndroidViewModel(application) {
@@ -17,7 +14,7 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
         return playlistsRepo.getPlaylists()
     }
 
-    fun getAllSongs(): Set<Song>? {
+    fun getAllSongs(): Set<Song> {
         return playlistsRepo.getAllSongs()
     }
 
@@ -31,20 +28,20 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
         SaveFile.saveFile(context)
     }
 
-    private var playlist: RandomPlaylist? = null
+    private var playlistForUndo: RandomPlaylist? = null
 
     fun notifyPlaylistRemoved(context: Context, position: Int) {
-        playlist = getPlaylists()[position]
-        playlist?.let { playlistsRepo.removePlaylist(context, it) }
+        playlistForUndo = getPlaylists()[position]
+        playlistForUndo?.let { playlistsRepo.removePlaylist(context, it) }
     }
 
     fun notifyPlaylistInserted(context: Context, position: Int) {
-        playlist?.let { playlistsRepo.addPlaylist(context, position, it) }
-        playlist = null
+        playlistForUndo?.let { playlistsRepo.addPlaylist(context, position, it) }
+        playlistForUndo = null
     }
 
-    fun filterPlaylists(newText: String): List<RandomPlaylist> {
-        val sifted: MutableList<RandomPlaylist> = ArrayList<RandomPlaylist>()
+    fun siftPlaylists(newText: String): List<RandomPlaylist> {
+        val sifted: MutableList<RandomPlaylist> = mutableListOf()
         for (randomPlaylist in getPlaylists()) {
             if (randomPlaylist.getName().lowercase(Locale.ROOT)
                     .contains(newText.lowercase(Locale.ROOT))
@@ -55,9 +52,9 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
         return sifted
     }
 
-    fun filterAllSongs(newText: String): List<Song> {
-        val sifted: MutableList<Song> = ArrayList<Song>()
-        for (song in getAllSongs() ?: listOf()) {
+    fun siftAllSongs(newText: String): List<Song> {
+        val sifted: MutableList<Song> = mutableListOf()
+        for (song in getAllSongs()) {
             if (song.title.lowercase(Locale.ROOT)
                     .contains(newText.lowercase(Locale.ROOT))
             ) {
@@ -65,6 +62,10 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
             }
         }
         return sifted
+    }
+
+    fun fragmentSongsViewCreated(context: Context) {
+        MediaSession.getInstance(context).setCurrentPlaylistToMaster()
     }
 
 }

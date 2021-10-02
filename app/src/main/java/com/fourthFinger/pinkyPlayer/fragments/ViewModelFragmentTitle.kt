@@ -8,41 +8,41 @@ import android.provider.MediaStore
 import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
 import com.fourthFinger.pinkyPlayer.NavUtil
+import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
-
-
 
 
 class ViewModelFragmentTitle : ViewModel() {
 
     private var songs: MutableList<Song> = mutableListOf()
 
-    fun onViewCreated() {
+    fun clearSongs() {
         songs.clear()
     }
 
-    fun playlistsClicked(navController: NavController) {
-        NavUtil.navigate(
-            navController,
-            FragmentTitleDirections.actionFragmentTitleToFragmentPlaylists()
-        )
-    }
-
-    fun songsClicked(navController: NavController) {
-        NavUtil.navigate(
-            navController,
-            FragmentTitleDirections.actionFragmentTitleToFragmentSongs()
-        )
-    }
-
-    fun settingsClicked(navController: NavController) {
-        NavUtil.navigate(
-            navController,
-            FragmentTitleDirections.actionFragmentTitleToFragmentSettings()
-        )
-
+    fun buttonClicked(id: Int, navController: NavController) {
+        when (id) {
+            R.id.button_playlists -> {
+                NavUtil.navigate(
+                    navController,
+                    FragmentTitleDirections.actionFragmentTitleToFragmentPlaylists()
+                )
+            }
+            R.id.button_songs -> {
+                NavUtil.navigate(
+                    navController,
+                    FragmentTitleDirections.actionFragmentTitleToFragmentSongs()
+                )
+            }
+            R.id.button_settings -> {
+                NavUtil.navigate(
+                    navController,
+                    FragmentTitleDirections.actionFragmentTitleToFragmentSettings()
+                )
+            }
+        }
     }
 
     fun createPlaylist(
@@ -69,10 +69,7 @@ class ViewModelFragmentTitle : ViewModel() {
                     playlistsRepo.addPlaylist(context, randomPlaylist)
                 }
             } else {
-                addNewSongs(
-                    context,
-                    randomPlaylist
-                )
+                addNewSongs(context, randomPlaylist)
                 removeMissingSongs(context, randomPlaylist)
             }
             return randomPlaylist
@@ -81,27 +78,27 @@ class ViewModelFragmentTitle : ViewModel() {
     }
 
     private fun getFilesFromDirRecursive(contentResolver: ContentResolver, rootUri: Uri) {
-        val childrenUri: Uri = DocumentsContract.buildChildDocumentsUriUsingTree(
-            rootUri, DocumentsContract.getTreeDocumentId(rootUri)
+        val childUri: Uri = DocumentsContract.buildChildDocumentsUriUsingTree(
+            rootUri,
+            DocumentsContract.getTreeDocumentId(rootUri)
         )
-        getFiles(contentResolver, childrenUri, rootUri)
+        searchFilesForMusic(contentResolver, childUri, rootUri)
     }
 
-    private fun getFiles(contentResolver: ContentResolver, childrenUri: Uri, rootUri: Uri) {
-        val selection: String =
-            MediaStore.Audio.Media.IS_MUSIC + " != ? OR" +
-                    DocumentsContract.Document.COLUMN_MIME_TYPE + " " + "== ?"
-        val selectionArgs = arrayOf<String?>("0", DocumentsContract.Document.MIME_TYPE_DIR)
+    private fun searchFilesForMusic(contentResolver: ContentResolver, childUri: Uri, rootUri: Uri) {
+        val selection = MediaStore.Audio.Media.IS_MUSIC + " != ? OR" +
+                DocumentsContract.Document.COLUMN_MIME_TYPE + " " + "== ?"
+        val selectionArgs = arrayOf("0", DocumentsContract.Document.MIME_TYPE_DIR)
         contentResolver.query(
-            childrenUri, arrayOf<String?>(
+            childUri,
+            arrayOf(
                 DocumentsContract.Document.COLUMN_DOCUMENT_ID,
                 DocumentsContract.Document.COLUMN_MIME_TYPE,
-                MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.DISPLAY_NAME,
-                MediaStore.Audio.Media.TITLE,
-                MediaStore.Audio.Media.ARTIST_ID,
+                DocumentsContract.Document.COLUMN_DISPLAY_NAME
             ),
-            selection, selectionArgs, null
+            selection,
+            selectionArgs,
+            null
         ).use { cursor ->
             if (cursor != null) {
                 val docIdCol: Int = cursor.getColumnIndexOrThrow(
@@ -110,7 +107,9 @@ class ViewModelFragmentTitle : ViewModel() {
                 val mimeCol: Int = cursor.getColumnIndexOrThrow(
                     DocumentsContract.Document.COLUMN_MIME_TYPE
                 )
-                val nameCol: Int = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
+                val nameCol: Int = cursor.getColumnIndexOrThrow(
+                    DocumentsContract.Document.COLUMN_DISPLAY_NAME
+                )
                 while (cursor.moveToNext()) {
                     val docId: String = cursor.getString(docIdCol)
                     val mime: String = cursor.getString(mimeCol)
@@ -120,7 +119,7 @@ class ViewModelFragmentTitle : ViewModel() {
                             rootUri,
                             docId
                         )
-                        getFiles(contentResolver, newNode, rootUri)
+                        searchFilesForMusic(contentResolver, newNode, rootUri)
                     } else {
                         getSong(contentResolver, displayName)?.let { songs.add(it) }
                     }
@@ -133,11 +132,14 @@ class ViewModelFragmentTitle : ViewModel() {
         val selection = MediaStore.Audio.Media.DISPLAY_NAME + " == ?"
         val selectionArgs = arrayOf(displayName)
         contentResolver.query(
-            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, arrayOf(
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+            arrayOf(
                 MediaStore.Audio.Media._ID,
                 MediaStore.Audio.Media.TITLE
             ),
-            selection, selectionArgs, null
+            selection,
+            selectionArgs,
+            null
         ).use { cursor ->
             if (cursor != null) {
                 if (cursor.moveToNext()) {

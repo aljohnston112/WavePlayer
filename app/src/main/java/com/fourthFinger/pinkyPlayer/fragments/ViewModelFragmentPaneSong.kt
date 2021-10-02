@@ -1,6 +1,5 @@
 package com.fourthFinger.pinkyPlayer.fragments
 
-import android.content.Context
 import androidx.annotation.IdRes
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModel
@@ -10,7 +9,8 @@ import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 
 class ViewModelFragmentPaneSong: ViewModel() {
 
-    fun clicked(context: Context, fragment: Fragment, @IdRes id: Int) {
+    fun clicked(fragment: Fragment, @IdRes id: Int) {
+        val context = fragment.requireActivity().applicationContext
         val mediaSession = MediaSession.getInstance(context)
         if (id == R.id.imageButtonSongPaneNext) {
             mediaSession.playNext(context)

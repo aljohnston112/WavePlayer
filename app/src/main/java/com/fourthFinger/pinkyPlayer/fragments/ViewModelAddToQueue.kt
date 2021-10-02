@@ -13,29 +13,56 @@ import com.fourthFinger.pinkyPlayer.random_playlist.*
 
 class ViewModelAddToQueue(application: Application): AndroidViewModel(application) {
 
-    private val playlistsRepo = PlaylistsRepo.getInstance(application)
-    private val songQueue = SongQueue.getInstance()
+    // TODO add setting to stop playlist from continuing after queue is done
+    // shuffle is off and looping is on or something like that?
 
     private val _playlistToAddToQueue = MutableLiveData<RandomPlaylist?>()
     private val playlistToAddToQueue = _playlistToAddToQueue as LiveData<RandomPlaylist?>
+    private fun getPlaylistToAddToQueue(): RandomPlaylist? {
+        val playlistsRepo = PlaylistsRepo.getInstance(getApplication())
+        return playlistToAddToQueue.value?.let { playlistsRepo.getPlaylist(it.getName()) }
+    }
     fun setPlaylistToAddToQueue(playlistToAddToQueue: RandomPlaylist?) {
         _playlistToAddToQueue.postValue(playlistToAddToQueue)
-    }
-    private fun getPlaylistToAddToQueue(): RandomPlaylist? {
-        return playlistToAddToQueue.value?.let { playlistsRepo.getPlaylist(it.getName()) }
+        _songToAddToQueue.postValue(null)
     }
 
     private val _songToAddToQueue = MutableLiveData<Long?>()
     private val songToAddToQueue = _songToAddToQueue as LiveData<Long?>
     private fun getSongToAddToQueue(): Song? {
+        val playlistsRepo = PlaylistsRepo.getInstance(getApplication())
         return songToAddToQueue.value?.let { playlistsRepo.getSong(it) }
     }
-    fun newSong(songToAddToQueue: Long?) {
+    fun setSongToAddToQueue(songToAddToQueue: Long?) {
         _songToAddToQueue.postValue(songToAddToQueue)
-        setPlaylistToAddToQueue(null)
+        _playlistToAddToQueue.postValue(null)
+    }
+
+    fun addToQueue(context: Context, song: Song) {
+        val mediaSession: MediaSession = MediaSession.getInstance(context)
+        val songQueue = SongQueue.getInstance()
+        songQueue.addToQueue(context, song.id)
+        val mediaPlayerSession = MediaPlayerManager.getInstance(context)
+        if (mediaPlayerSession.isSongInProgress() == false) {
+            mediaSession.playNext(context)
+        }
+    }
+
+    fun addToQueue(context: Context, randomPlaylist: RandomPlaylist) {
+        val mediaSession: MediaSession = MediaSession.getInstance(context)
+        val mediaPlayerSession = MediaPlayerManager.getInstance(context)
+        val songQueue = SongQueue.getInstance()
+        val songs = randomPlaylist.getSongs()
+        for (song in songs) {
+            songQueue.addToQueue(context, song.id)
+        }
+        if (mediaPlayerSession.isSongInProgress() == false) {
+            mediaSession.playNext(context)
+        }
     }
 
     fun actionAddToQueue(context: Context) {
+        val songQueue = SongQueue.getInstance()
         // TODO pretty sure song and playlist could be non-null at the same time
         songToAddToQueue.value?.let { songQueue.addToQueue(context, it) }
         playlistToAddToQueue.value?.getSongs()?.let {
@@ -43,10 +70,10 @@ class ViewModelAddToQueue(application: Application): AndroidViewModel(applicatio
                 songQueue.addToQueue(context, songs.id)
             }
         }
-        // TODO Song will play even though user might not want it.
-        val mediaPlayerSession = MediaPlayerSession.getInstance(context)
+        // TODO Song will play even though user might not want it. Make a setting.
+        val mediaPlayerManager = MediaPlayerManager.getInstance(context)
         val mediaSession: MediaSession = MediaSession.getInstance(context)
-        if (mediaPlayerSession.isSongInProgress() == false) {
+        if (mediaPlayerManager.isSongInProgress() == false) {
             mediaSession.playNext(context)
         }
     }
@@ -68,33 +95,6 @@ class ViewModelAddToQueue(application: Application): AndroidViewModel(applicatio
         val dialogFragment: DialogFragment = DialogFragmentAddToPlaylist()
         dialogFragment.arguments = bundle
         dialogFragment.show(supportFragmentManager, DialogFragmentAddToPlaylist.TAG)
-    }
-
-    fun addToQueueClicked(context: Context, song: Song) {
-        val mediaSession: MediaSession = MediaSession.getInstance(context)
-        val songQueue = SongQueue.getInstance()
-        songQueue.addToQueue(context, song.id)
-        val mediaPlayerSession = MediaPlayerSession.getInstance(context)
-        if (mediaPlayerSession.isSongInProgress() == false) {
-            mediaSession.playNext(context)
-        }
-    }
-
-
-    fun addToQueueClicked(context: Context, randomPlaylist: RandomPlaylist) {
-        // TODO stop MasterPlaylist from continuing after queue is done
-        // shuffle is off and looping is on or something like that?
-        val mediaSession: MediaSession = MediaSession.getInstance(context)
-        val mediaPlayerSession = MediaPlayerSession.getInstance(context)
-        mediaSession.setCurrentPlaylistToMaster(context)
-        val songQueue = SongQueue.getInstance()
-        val songs = randomPlaylist.getSongs()
-        for (song in songs) {
-            songQueue.addToQueue(context, song.id)
-        }
-        if (mediaPlayerSession.isSongInProgress() == false) {
-            mediaSession.playNext(context)
-        }
     }
 
 }

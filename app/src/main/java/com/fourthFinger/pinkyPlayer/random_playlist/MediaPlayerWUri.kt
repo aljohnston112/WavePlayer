@@ -106,15 +106,15 @@ class MediaPlayerWUri constructor(
         val s: Array<String> = audioUri.displayName.split("\\.").toTypedArray()
         if (s.isNotEmpty()) {
             if ((s[s.size - 1].lowercase(Locale.ROOT) == "mkv")) {
-                val mediaPlayerSession = MediaPlayerSession.getInstance(context)
+                val mediaPlayerManager = MediaPlayerManager.getInstance(context)
                 mediaPlayer.reset()
                 mediaPlayer.release()
                 mediaPlayer = MediaPlayer.create(context, audioUri.getUri())
                 mediaPlayer.setOnPreparedListener(null)
                 mediaPlayer.setOnErrorListener(null)
                 mediaPlayer.setOnPreparedListener(mOnPreparedListener)
-                mediaPlayer.setOnErrorListener(mediaPlayerSession.onErrorListener)
-                mediaPlayer.setOnCompletionListener(mediaPlayerSession.onCompletionListener)
+                mediaPlayer.setOnErrorListener(mediaPlayerManager.onErrorListener)
+                mediaPlayer.setOnCompletionListener(mediaPlayerManager.onCompletionListener)
                 return true
             }
         }
@@ -125,8 +125,8 @@ class MediaPlayerWUri constructor(
         synchronized(this) {
             isPrepared = true
             if (shouldPlay) {
-                val mediaPlayerSession = MediaPlayerSession.getInstance(context)
-                mediaPlayer.setOnCompletionListener(mediaPlayerSession.onCompletionListener)
+                val mediaPlayerManager = MediaPlayerManager.getInstance(context)
+                mediaPlayer.setOnCompletionListener(mediaPlayerManager.onCompletionListener)
                 mediaPlayer.start()
                 shouldPlay = false
             }
@@ -138,10 +138,10 @@ class MediaPlayerWUri constructor(
     }
 
     init {
-        val mediaPlayerSession = MediaPlayerSession.getInstance(context)
+        val mediaPlayerManager = MediaPlayerManager.getInstance(context)
         mediaPlayer.setOnPreparedListener(null)
         mediaPlayer.setOnErrorListener(null)
         mediaPlayer.setOnPreparedListener(mOnPreparedListener)
-        mediaPlayer.setOnErrorListener(mediaPlayerSession.onErrorListener)
+        mediaPlayer.setOnErrorListener(mediaPlayerManager.onErrorListener)
     }
 }

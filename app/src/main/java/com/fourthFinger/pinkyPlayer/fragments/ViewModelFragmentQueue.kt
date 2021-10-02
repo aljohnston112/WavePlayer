@@ -1,6 +1,5 @@
 package com.fourthFinger.pinkyPlayer.fragments
 
-import android.content.Context
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModel
 import com.fourthFinger.pinkyPlayer.NavUtil
@@ -10,15 +9,15 @@ import com.fourthFinger.pinkyPlayer.random_playlist.*
 
 class ViewModelFragmentQueue: ViewModel() {
 
-    fun songClicked(context: Context, fragment: Fragment, pos: Int) {
-        val mediaPlayerSession = MediaPlayerSession.getInstance(context)
-        val mediaSession: MediaSession = MediaSession.getInstance(context)
+    fun songClicked(fragment: Fragment, queuePosition: Int) {
+        val context = fragment.requireActivity().applicationContext
         val playlistsRepo = PlaylistsRepo.getInstance(context)
+        val mediaSession: MediaSession = MediaSession.getInstance(context)
+        val mediaPlayerManager = MediaPlayerManager.getInstance(context)
         val songQueue = SongQueue.getInstance()
-        val song: Song = songQueue.songClicked(pos)
+        val song: Song = songQueue.setIndex(queuePosition)
         synchronized(ActivityMain.MUSIC_CONTROL_LOCK) {
-            // TODO pass this in?
-            if (song == mediaPlayerSession.currentAudioUri.value?.id?.let {
+            if (song == mediaPlayerManager.currentAudioUri.value?.id?.let {
                     playlistsRepo.getSong(it)
                 }
             ) {

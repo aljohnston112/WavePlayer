@@ -46,7 +46,7 @@ class FragmentTitle : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModelFragmentTitle.onViewCreated()
+        viewModelFragmentTitle.clearSongs()
         viewModelActivityMain.setActionBarTitle(resources.getString(R.string.app_name))
         viewModelActivityMain.showFab(false)
         setUpButtons()
@@ -61,35 +61,22 @@ class FragmentTitle : Fragment() {
 
     private val onClickListenerFragmentTitleButtons: View.OnClickListener =
         View.OnClickListener { view: View ->
-            when (view.id) {
-                R.id.button_playlists -> {
-                    viewModelFragmentTitle.playlistsClicked(
-                        NavHostFragment.findNavController(this)
-                    )
-                }
-                R.id.button_songs -> {
-                    viewModelFragmentTitle.songsClicked(
-                        NavHostFragment.findNavController(this)
-                    )
-                }
-                R.id.button_settings -> {
-                    viewModelFragmentTitle.settingsClicked(
-                        NavHostFragment.findNavController(this)
-                    )
-                }
-                R.id.button_folder_search -> {
-                    // TODO why is this needed?
-                    // binding.buttonFolderSearch.setOnClickListener(null)
-                     getUri.launch(null)
-                }
+            if (view.id != R.id.button_folder_search) {
+                viewModelFragmentTitle.buttonClicked(
+                    view.id,
+                    NavHostFragment.findNavController(this)
+                )
+            } else {
+                getUri.launch(null)
             }
         }
 
     private val activityResultCallback = ActivityResultCallback<Uri?> { uri ->
+        // TODO why is this needed?
         binding.buttonFolderSearch.setOnClickListener(
             onClickListenerFragmentTitleButtons
         )
-        if(uri != null) {
+        if (uri != null) {
             val playlist = viewModelFragmentTitle.createPlaylist(
                 requireActivity().applicationContext,
                 requireActivity().contentResolver,

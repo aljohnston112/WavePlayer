@@ -57,7 +57,7 @@ class FragmentSettings : Fragment() {
         val editTextNSongs: EditText = binding.editTextNSongs
         val editTextPercentChangeUp: EditText = binding.editTextPercentChangeUp
         val editTextPercentChangeDown: EditText = binding.editTextPercentChangeDown
-        editTextNSongs.setText(viewModelSettings.getNSongs())
+        editTextNSongs.setText(viewModelSettings.getMaxNumberOfSongs())
         editTextPercentChangeUp.setText(viewModelSettings.getPercentChangeUp())
         editTextPercentChangeDown.setText(viewModelSettings.getPercentChangeDown())
     }

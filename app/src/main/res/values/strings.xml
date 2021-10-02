@@ -1,6 +1,7 @@
 <resources>
 
     <string name="service_description">PinkyPlayer</string>
+    <string name="description">Intelligent music player</string>
 
     <string name="action_service_connected">ServiceConnected</string>
     <string name="action_new_song">Complete</string>

@@ -11,11 +11,11 @@ class ViewModelFragmentLoading(application: Application) : AndroidViewModel(appl
 
     private val mediaLoader: MediaLoader = MediaLoader.getInstance()
 
-    val loadingProgress: LiveData<Int> = Transformations.map(mediaLoader.loadingProgress){ percent ->
-        return@map (percent * 100.0).roundToInt()
-    }
-
     val loadingText: LiveData<String> = mediaLoader.loadingText
+
+    val loadingProgress: LiveData<Int> = Transformations.map(mediaLoader.loadingProgress){ percent ->
+        (percent * 100.0).roundToInt()
+    }
 
     fun permissionGranted(){
         mediaLoader.loadData(getApplication())

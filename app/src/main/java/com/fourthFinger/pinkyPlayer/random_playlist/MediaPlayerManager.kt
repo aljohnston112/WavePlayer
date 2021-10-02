@@ -10,7 +10,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import java.util.*
 
-class MediaPlayerSession private constructor(context: Context) {
+class MediaPlayerManager private constructor(context: Context) {
 
     private var haveAudioFocus: Boolean = false
     private var _songInProgress: MutableLiveData<Boolean> = MutableLiveData(false)
@@ -231,11 +231,11 @@ class MediaPlayerSession private constructor(context: Context) {
 
     companion object {
 
-        private var INSTANCE: MediaPlayerSession? = null
+        private var INSTANCE: MediaPlayerManager? = null
 
-        fun getInstance(context: Context): MediaPlayerSession {
+        fun getInstance(context: Context): MediaPlayerManager {
             if (INSTANCE == null) {
-                INSTANCE = MediaPlayerSession(context)
+                INSTANCE = MediaPlayerManager(context)
             }
             return INSTANCE!!
         }

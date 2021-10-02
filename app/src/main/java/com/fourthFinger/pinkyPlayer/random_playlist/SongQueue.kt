@@ -109,8 +109,8 @@ class SongQueue private constructor() {
         songQueueIterator = _songQueue.listIterator(i)
     }
 
-    fun songClicked(pos: Int): Song {
-        songQueueIterator = _songQueue.listIterator(pos)
+    fun setIndex(position: Int): Song {
+        songQueueIterator = _songQueue.listIterator(position)
         val song =  songQueueIterator.next()
         songQueueIterator.previous()
         return song
