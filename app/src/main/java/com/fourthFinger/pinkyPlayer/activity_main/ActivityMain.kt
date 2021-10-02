@@ -371,6 +371,10 @@ class ActivityMain : AppCompatActivity() {
         // TODO Make a UI for the queue
         // TODO notification art doesn't work
         // TODO song pane art has blue background, but it should be black.
+        // TODO remove songs from master playlist that are in a folder
+        // TODO check what happens when files are removed.
+        // TODO add feature to show what is playing next
+        // TODO play song from file system (mp3 intent)
         val MUSIC_CONTROL_LOCK: Any = Any()
 
         const val MENU_ACTION_RESET_PROBABILITIES_INDEX = 0
