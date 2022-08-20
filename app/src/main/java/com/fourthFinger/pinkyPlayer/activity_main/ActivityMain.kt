@@ -48,8 +48,6 @@ class ActivityMain : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
-        binding.setLifecycleOwner { lifecycle }
-        binding.viewModelActivityMain = viewModelActivityMain
         setContentView(binding.root)
         setUpOnDestinationChangedListener()
         setUpViewModelActivityMainObservers()

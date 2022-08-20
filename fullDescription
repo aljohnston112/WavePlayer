@@ -1,20 +1,22 @@
 Listen to your favorite music with a free music player that can learn your favorite music. Now you can listen without having to hear the songs you don't like as much with PinkyPlayer! The undiscovered shuffle algorithm used by this music player will tune itself to your tastes. You can even tune the app to your liking.
 
-You can easily make playlists with your offline music. Use the powerful search to select which ones to add. Add any playlist or song to any other playlist, or add them to a new one. Reorder and remove songs with ease.
+You can easily make playlists with your offline music. Use the powerful search to select which songs to add. Add any playlist or song to any other playlist, or add them to a new one. Reorder and remove songs with ease.
 
-Shuffle all you songs with an algorithm that will let your favorite songs shine. Reset the shuffle to give all songs a chance. or just lower its power to give other songs a chance.
+Shuffle all you songs with an algorithm that will let your favorite songs shine. Reset the shuffle to give all songs an equal chance, or lower its power to let other songs play.
 
-Song queue fully customizable. Add any song or playlist to the queue. Remove and reorder.
+Song queue is fully customizable. Add any song or playlist to the queue. Remove and reorder.
 
 Shuffle, loop, and repeat are all supported.
 
 Clean, minimalistic design makes the app easy to use.
 
-Supports all music supported by your phone manufacturer making it a perfect replacement to the default player.
+Supports all music supported by your phone manufacturer, making it a perfect replacement to the default player.
 
 *** Required App Permissions ***
 Storage permission
 -Needed to access media files.
+Notification permission 
+-Needed to play music in the background
 
 Please note that Pinky Player can not play online music.
 
@@ -22,7 +24,7 @@ Feel free to contact us at fourthfinger112@gmail.com for questions and suggestio
 
 We appreciate you feedback and kind support.
 
-We have always wanted a shuffle algorithm that didn't play some songs as often as others and now it is reality.
+We have always wanted a shuffle algorithm that didn't play the same songs it chose, and to shape it as we like, and now it is a reality.
 
 Made and tested by music lovers.
 

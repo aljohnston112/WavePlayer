@@ -25,7 +25,7 @@ class FragmentTitle : Fragment() {
     private val viewModelFragmentTitle by viewModels<ViewModelFragmentTitle>()
     private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>()
 
-    private lateinit var getUri: ActivityResultLauncher<Uri>
+    private lateinit var getUri: ActivityResultLauncher<Uri?>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

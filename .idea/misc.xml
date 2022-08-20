@@ -10,14 +10,21 @@
         <entry key="app/src/main/res/drawable/ic_playlist_add_black_48dp.xml" value="0.22291666666666668" />
         <entry key="app/src/main/res/drawable/ic_queue_black_48dp.xml" value="0.22291666666666668" />
         <entry key="app/src/main/res/drawable/music_note_black_48dp.xml" value="0.11041666666666666" />
+        <entry key="app/src/main/res/layout-land/fragment_song.xml" value="0.16358024691358025" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.20677083333333332" />
+        <entry key="app/src/main/res/layout/fragment_edit_playlist.xml" value="0.13055555555555556" />
+        <entry key="app/src/main/res/layout/fragment_loading.xml" value="0.19322916666666667" />
         <entry key="app/src/main/res/layout/fragment_pane_song.xml" value="0.1" />
         <entry key="app/src/main/res/layout/fragment_queue.xml" value="0.13179347826086957" />
         <entry key="app/src/main/res/layout/fragment_settings.xml" value="0.13179347826086957" />
         <entry key="app/src/main/res/layout/fragment_song.xml" value="0.1793478260869565" />
+        <entry key="app/src/main/res/layout/fragment_title.xml" value="0.19322916666666667" />
         <entry key="app/src/main/res/layout/item_playlist.xml" value="0.1793478260869565" />
         <entry key="app/src/main/res/layout/item_song.xml" value="0.1793478260869565" />
         <entry key="app/src/main/res/layout/pane_notification.xml" value="0.20677083333333332" />
+        <entry key="app/src/main/res/layout/pane_notification_with_art.xml" value="0.19322916666666667" />
+        <entry key="app/src/main/res/layout/pane_notification_without_art.xml" value="0.19322916666666667" />
+        <entry key="app/src/main/res/layout/recycler_view_playlist_list.xml" value="0.19322916666666667" />
         <entry key="app/src/main/res/layout/recycler_view_song_list.xml" value="0.20677083333333332" />
         <entry key="app/src/main/res/menu/menu_toolbar.xml" value="0.20677083333333332" />
       </map>
