@@ -22,7 +22,8 @@ class RandomPlaylist constructor(
     context: Context,
     name: String,
     music: MutableList<Song>,
-    comparable: Boolean
+    comparable: Boolean,
+    maxPercent: Double
 ) : Serializable {
 
     private val playlistArray: MutableList<Long> = ArrayList()
@@ -42,6 +43,23 @@ class RandomPlaylist constructor(
 
     // The ProbFun that randomly picks the media to play
     private var probabilityFunction: ProbFun<Song>
+
+    init {
+        require(music.isNotEmpty()) { "List music must contain at least one AudioURI" }
+        val files: MutableSet<Song> = LinkedHashSet(music)
+        probabilityFunction = if (comparable) {
+            ProbFun.ProbFunTreeMap(files, maxPercent)
+        } else {
+            ProbFun.ProbFunLinkedMap(files, maxPercent)
+        }
+        this.name = name
+        for (song in music) {
+            playlistArray.add(song.id)
+        }
+        playlistIterator = playlistArray.listIterator()
+        SaveFile.saveFile(context)
+    }
+
     fun getSongs(): Set<Song> {
         return probabilityFunction.getKeys()
     }
@@ -93,13 +111,13 @@ class RandomPlaylist constructor(
         SaveFile.saveFile(context)
     }
 
-    fun lowerProbabilities(context: Context) {
-        probabilityFunction.lowerProbabilities()
+    fun lowerProbabilities(context: Context, lowerProb: Double) {
+        probabilityFunction.lowerProbs(lowerProb)
         SaveFile.saveFile(context)
     }
 
-    fun next(context: Context, random: Random): AudioUri? {
-        val song: Song = probabilityFunction.next(random)
+    fun next(context: Context): AudioUri? {
+        val song: Song = probabilityFunction.next()
         return AudioUri.getAudioUri(context, song.id)
     }
 
@@ -117,9 +135,9 @@ class RandomPlaylist constructor(
         SaveFile.saveFile(context)
     }
 
-    fun next(context: Context, random: Random, looping: Boolean, shuffling: Boolean): AudioUri? {
+    fun next(context: Context, looping: Boolean, shuffling: Boolean): AudioUri? {
         return if (shuffling) {
-            next(context, random)
+            next(context)
         } else {
             if (looping && !playlistIterator.hasNext()) {
                 playlistIterator = playlistArray.listIterator()
@@ -132,13 +150,12 @@ class RandomPlaylist constructor(
 
     fun previous(
         context: Context,
-        random: Random,
         looping: Boolean,
         shuffling: Boolean
     ): AudioUri? {
         return if (shuffling) {
             // TODO play previous
-            next(context, random)
+            next(context)
         } else {
             if (looping && !playlistIterator.hasPrevious()) {
                 playlistIterator = playlistArray.listIterator(playlistArray.size - 1)
@@ -152,13 +169,13 @@ class RandomPlaylist constructor(
         playlistIterator = playlistArray.listIterator(i + 1)
     }
 
-    fun bad(context: Context, song: Song) {
-        probabilityFunction.bad(song)
+    fun bad(context: Context, song: Song, percentChangeDown: Double) {
+        probabilityFunction.bad(song, percentChangeDown)
         SaveFile.saveFile(context)
     }
 
-    fun good(context: Context, song: Song) {
-        probabilityFunction.good(song)
+    fun good(context: Context, song: Song, percentChangeUp: Double) {
+        probabilityFunction.good(song, percentChangeUp)
         SaveFile.saveFile(context)
     }
 
@@ -172,22 +189,6 @@ class RandomPlaylist constructor(
 
     companion object {
         private const val serialVersionUID = 2323326608918863420L
-    }
-
-    init {
-        require(music.isNotEmpty()) { "List music must contain at least one AudioURI" }
-        val files: MutableSet<Song> = LinkedHashSet(music)
-        probabilityFunction = if (comparable) {
-            ProbFun.ProbFunTreeMap(files)
-        } else {
-            ProbFun.ProbFunLinkedMap(files)
-        }
-        this.name = name
-        for (song in music) {
-            playlistArray.add(song.id)
-        }
-        playlistIterator = playlistArray.listIterator()
-        SaveFile.saveFile(context)
     }
 
 }

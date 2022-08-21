@@ -1,10 +1,12 @@
 package com.fourthFinger.pinkyPlayer.fragments
 
+import android.app.Application
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.provider.MediaStore
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
 import com.fourthFinger.pinkyPlayer.NavUtil
@@ -12,9 +14,12 @@ import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
+import com.fourthFinger.pinkyPlayer.settings.SettingsRepo
 
 
-class ViewModelFragmentTitle : ViewModel() {
+class ViewModelFragmentTitle(application: Application) : AndroidViewModel(application) {
+
+    private val settingsRepo = SettingsRepo.getInstance(application)
 
     private var songs: MutableList<Song> = mutableListOf()
 
@@ -62,7 +67,8 @@ class ViewModelFragmentTitle : ViewModel() {
                         context,
                         it,
                         songs,
-                        false
+                        false,
+                        settingsRepo.settings.maxPercent
                     )
                 }
                 if (randomPlaylist != null) {

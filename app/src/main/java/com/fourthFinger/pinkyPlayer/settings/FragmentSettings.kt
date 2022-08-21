@@ -1,4 +1,4 @@
-package com.fourthFinger.pinkyPlayer.fragments
+package com.fourthFinger.pinkyPlayer.settings
 
 import android.os.Bundle
 import android.view.LayoutInflater

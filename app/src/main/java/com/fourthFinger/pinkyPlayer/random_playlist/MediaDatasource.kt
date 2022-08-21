@@ -6,12 +6,12 @@ import android.provider.MediaStore
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.fourthFinger.pinkyPlayer.R
-import com.fourthFinger.pinkyPlayer.ServiceMain
 import java.io.File
 import java.util.*
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
-class MediaLoader private constructor() {
+class MediaDatasource private constructor(context: Context, maxPercent: Double) {
 
     private val _loadingText: MutableLiveData<String> = MutableLiveData()
     val loadingText = _loadingText as LiveData<String>
@@ -19,24 +19,24 @@ class MediaLoader private constructor() {
     private val _loadingProgress: MutableLiveData<Double> = MutableLiveData(0.0)
     val loadingProgress = _loadingProgress as LiveData<Double>
 
-    fun loadData(context: Context) {
+    init {
         // Loading the save file is needed to ensure the master playlist is valid
         // before getting songs from the MediaStore.
         SaveFile.loadSaveFile(context)
-        getSongsFromMediaStore(context)
+        getSongsFromMediaStore(context, maxPercent)
     }
 
-    private fun getSongsFromMediaStore(context: Context) {
+    private fun getSongsFromMediaStore(context: Context, maxPercent: Double) {
         val playlistsRepo = PlaylistsRepo.getInstance(context)
         val resources = context.resources
         val newSongs = mutableListOf<Song>()
         val filesThatExist = mutableListOf<Long>()
-        val executorServiceFIFO: ExecutorService = ServiceMain.executorServiceFIFO
-        executorServiceFIFO.execute {
+        val executorFIFO: ExecutorService = Executors.newSingleThreadExecutor()
+        executorFIFO.execute {
             val projection = arrayOf(
                 MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.DISPLAY_NAME,
                 MediaStore.Audio.Media.IS_MUSIC,
+                MediaStore.Audio.Media.DISPLAY_NAME,
                 MediaStore.Audio.Media.ARTIST_ID,
                 MediaStore.Audio.Media.TITLE
             )
@@ -81,7 +81,7 @@ class MediaLoader private constructor() {
                 }
             }
         }
-        executorServiceFIFO.execute {
+        executorFIFO.execute {
             val i = newSongs.size
             _loadingText.postValue(context.resources.getString(R.string.loading2))
             for ((k, song) in newSongs.withIndex()) {
@@ -89,7 +89,7 @@ class MediaLoader private constructor() {
                 _loadingProgress.postValue(k.toDouble() / i.toDouble())
             }
         }
-        executorServiceFIFO.execute {
+        executorFIFO.execute {
             if (playlistsRepo.isMasterPlaylistInitialized()) {
                 _loadingText.postValue(resources.getString(R.string.loading3))
                 addNewSongs(context, newSongs)
@@ -101,12 +101,13 @@ class MediaLoader private constructor() {
                         context,
                         MASTER_PLAYLIST_NAME,
                         ArrayList(newSongs),
-                        true
+                        true,
+                        maxPercent
                     )
                 )
             }
         }
-        executorServiceFIFO.execute {
+        executorFIFO.execute {
             SaveFile.saveFile(context)
             val intent = Intent()
             intent.addCategory(Intent.CATEGORY_DEFAULT)
@@ -145,16 +146,12 @@ class MediaLoader private constructor() {
         const val SONG_DATABASE_NAME: String = "SONG_DATABASE_NAME"
         private val MEDIA_DATA_LOCK: Any = Any()
         private const val MASTER_PLAYLIST_NAME: String = "MASTER_PLAYLIST_NAME"
-        private var INSTANCE: MediaLoader? = null
+        private var INSTANCE: MediaDatasource? = null
 
-        /** Returns a singleton instance of this class.
-         * loadData(Context context) must be called for methods on the singleton to function properly.
-         * @return A singleton instance of this class that may or may not be loaded with data.
-         */
-        fun getInstance(): MediaLoader {
+        fun getInstance(context: Context, maxPercent: Double): MediaDatasource {
             synchronized(MEDIA_DATA_LOCK) {
                 if (INSTANCE == null) {
-                    INSTANCE = MediaLoader()
+                    INSTANCE = MediaDatasource(context, maxPercent)
                 }
                 return INSTANCE!!
             }

@@ -18,8 +18,8 @@
             android:layout_height="match_parent"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="4dp"
-            android:background="@color/colorPrimary"
-            android:src="@drawable/music_note_black_48dp" />
+            android:src="@drawable/music_note_black_48dp"
+            android:contentDescription="@string/song_art" />
 
         <TextView
             android:id="@+id/textViewSongPaneSongName"
@@ -28,7 +28,7 @@
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
             android:layout_weight="2"
-            android:text="Easter Egg!" />
+            android:text="@string/easter_egg" />
 
         <ImageButton
             android:id="@+id/imageButtonSongPanePrev"
@@ -36,7 +36,6 @@
             android:layout_height="match_parent"
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp"
-            android:background="@color/colorPrimary"
             app:srcCompat="@drawable/skip_previous_black_24dp" />
 
         <ImageButton
@@ -45,7 +44,6 @@
             android:layout_height="match_parent"
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp"
-            android:background="@color/colorPrimary"
             app:srcCompat="@drawable/pause_black_24dp" />
 
         <ImageButton
@@ -54,7 +52,6 @@
             android:layout_height="match_parent"
             android:layout_marginStart="4dp"
             android:layout_marginEnd="8dp"
-            android:background="@color/colorPrimary"
             app:srcCompat="@drawable/skip_next_black_24dp" />
 
     </LinearLayout>

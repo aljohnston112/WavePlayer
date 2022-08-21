@@ -9,22 +9,15 @@ object SaveFile {
     // TODO do not queue every single save. Only the last save needs to be done.
 
     private const val SAVE_FILE_VERIFICATION_NUMBER = 4596834290567902435L
-    private const val FILE_NAME_SETTINGS = "SETTINGS"
+
     private const val FILE_NAME_MASTER_PLAYLIST = "MASTER_PLAYLIST"
     private const val FILE_NAME_PLAYLISTS = "PLAYLISTS"
-
-    private val settingsRepo = SettingsRepo.getInstance()
 
     private val FILE_LOCK: Any = Any()
 
     fun loadSaveFile(context: Context) {
         synchronized(FILE_LOCK) {
             val playlistsRepo = PlaylistsRepo.getInstance(context)
-            FileUtil.load<Settings>(
-                context,
-                FILE_NAME_SETTINGS,
-                SAVE_FILE_VERIFICATION_NUMBER
-            )?.let { settingsRepo.setSettings(it) }
             FileUtil.load<RandomPlaylist>(
                 context,
                 FILE_NAME_MASTER_PLAYLIST,
@@ -43,13 +36,6 @@ object SaveFile {
         ServiceMain.executorServicePool.submit {
             synchronized(FILE_LOCK) {
                 val playlistsRepo = PlaylistsRepo.getInstance(context)
-                val settingsRepo = SettingsRepo.getInstance()
-                FileUtil.save(
-                    settingsRepo.getSettings(),
-                    context,
-                    FILE_NAME_SETTINGS,
-                    SAVE_FILE_VERIFICATION_NUMBER
-                )
                 FileUtil.save(
                     playlistsRepo.getMasterPlaylist(),
                     context,

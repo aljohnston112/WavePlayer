@@ -5,10 +5,12 @@ import androidx.lifecycle.AndroidViewModel
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 import com.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
+import com.fourthFinger.pinkyPlayer.settings.SettingsRepo
 
 class ViewModelFragmentSong(application: Application) : AndroidViewModel(application) {
 
     private val playlistsRepo = PlaylistsRepo.getInstance(application)
+    private val settingsRepo = SettingsRepo.getInstance(application)
 
     private val mediaSession: MediaSession = MediaSession.getInstance(getApplication())
 
@@ -16,7 +18,8 @@ class ViewModelFragmentSong(application: Application) : AndroidViewModel(applica
         playlistsRepo.getSong(currentAudioUri.id)?.let { song ->
             mediaSession.getCurrentPlaylist().bad(
                 getApplication<Application>().applicationContext,
-                song
+                song,
+                settingsRepo.settings.percentChangeDown
             )
         }
     }
@@ -25,7 +28,8 @@ class ViewModelFragmentSong(application: Application) : AndroidViewModel(applica
         playlistsRepo.getSong(currentAudioUri.id)?.let { song ->
             mediaSession.getCurrentPlaylist().good(
                 getApplication<Application>().applicationContext,
-                song
+                song,
+                settingsRepo.settings.percentChangeUp
             )
         }
     }
@@ -51,7 +55,8 @@ class ViewModelFragmentSong(application: Application) : AndroidViewModel(applica
         playlistsRepo.getSong(currentAudioUri.id)?.let {
             mediaSession.getCurrentPlaylist().bad(
                 getApplication<Application>().applicationContext,
-                it
+                it,
+                settingsRepo.settings.percentChangeDown
             )
         }
     }

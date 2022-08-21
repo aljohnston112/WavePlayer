@@ -11,12 +11,14 @@ import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.ToastUtil
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.random_playlist.*
+import com.fourthFinger.pinkyPlayer.settings.SettingsRepo
 import java.util.*
 
 class ViewModelUserPicks(application: Application) : AndroidViewModel(application) {
 
     // TODO log user picked songs and playlist during program run to verify correct operation
 
+    private val settingsRepo = SettingsRepo.getInstance(application)
     private val playlistsRepo = PlaylistsRepo.getInstance(application)
     private val songQueue = SongQueue.getInstance()
 
@@ -203,7 +205,8 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
             context,
             playlistName,
             userPickedSongs,
-            false
+            false,
+            settingsRepo.settings.maxPercent
         )
         playlistsRepo.addPlaylist(context, finalPlaylist)
     }

@@ -76,8 +76,14 @@
         When min grain size is 1 and mod up is 100, a song will take the least number of taps to play more often.
         When mod down is 1, songs will take a lot of taps until you do not hear them as often.</string>
     <string name="percent_change_error">Mod must be between 1 and 100</string>
+    <string name="hint_min_n_songs">Min number of songs</string>
+    <string name="hint_percent_change_up">Mod up</string>
+    <string name="hint_percent_change_down">Mod down</string>
     <string name="action_settings">Settings</string>
 
     <string name="RR">Ruh roh</string>
+    <string name="song_art">Song Art</string>
+    <string name="easter_egg">Easter Egg!</string>
+
 
 </resources>

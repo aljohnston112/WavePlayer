@@ -1,4 +1,4 @@
-package com.fourthFinger.pinkyPlayer.random_playlist
+package com.fourthFinger.pinkyPlayer.settings
 
 import java.io.Serializable
 

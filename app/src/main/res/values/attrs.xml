@@ -1,0 +1,8 @@
+
+<resources>
+    <attr name="colorFFADD8E6" format="color" />
+    <attr name="colorOnFFADD8E6" format="color" />
+    <attr name="colorFFADD8E6Container" format="color" />
+    <attr name="colorOnFFADD8E6Container" format="color" />
+    <attr name="harmonizeFFADD8E6" format="boolean" />
+</resources>

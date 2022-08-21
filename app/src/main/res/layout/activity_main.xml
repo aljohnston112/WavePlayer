@@ -12,7 +12,6 @@
             android:id="@+id/constraintMain"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/colorOnPrimary"
             app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
             <androidx.fragment.app.FragmentContainerView
@@ -45,15 +44,12 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|end"
                 android:layout_margin="@dimen/fab_margin"
-                android:backgroundTint="@color/colorPrimary"
                 android:onClick="@{viewModelActivityMain.fabOnClickListener}"
-                android:text="@{viewModelActivityMain.fabText"
-                android:textColor="@color/colorOnPrimary"
+                android:text="@{viewModelActivityMain.fabText}"
                 android:textSize="16sp"
-                app:iconTint="@color/colorOnPrimary"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:rippleColor="@color/colorPrimaryVariant" />
+                 />
 
 
         </androidx.constraintlayout.widget.ConstraintLayout>
@@ -68,17 +64,14 @@
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                android:background="@color/colorPrimary"
                 android:theme="@style/ThemeOverlay.MaterialComponents.ActionBar"
-                app:popupTheme="@style/ThemeOverlay.MaterialComponents.Light"
-                app:titleTextColor="@color/colorOnPrimary">
+                app:popupTheme="@style/ThemeOverlay.MaterialComponents.Light">
 
                 <TextView
                     android:id="@+id/toolbar_title"
                     style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/colorOnPrimary"
                     android:textAlignment="center"
                     android:textSize="28sp" />
 

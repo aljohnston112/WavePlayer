@@ -193,12 +193,12 @@ class FragmentSong : Fragment() {
                                 Bitmap.Config.ARGB_8888
                         )
                         val canvas = Canvas(bitmapDrawable)
-                        val paint = Paint()
-                        paint.color = ContextCompat.getColor(
-                            imageViewSongArt.context,
-                            R.color.colorPrimary
-                        )
-                        canvas.drawRect(0f, 0f, songArtWidth.toFloat(), songArtHeight.toFloat(), paint)
+//                        val paint = Paint()
+//                        paint.color = ContextCompat.getColor(
+//                            imageViewSongArt.context,
+//                            R.color.colorPrimary
+//                        )
+//                        canvas.drawRect(0f, 0f, songArtWidth.toFloat(), songArtHeight.toFloat(), paint)
                         drawable.draw(canvas)
                         imageViewSongArt.setImageBitmap(bitmapDrawable)
                     }
@@ -296,21 +296,21 @@ class FragmentSong : Fragment() {
             View.OnTouchListener { view1: View, motionEvent: MotionEvent ->
                 when (motionEvent.action) {
                     MotionEvent.ACTION_DOWN -> {
-                        view1.setBackgroundColor(
-                            ContextCompat.getColor(
-                                requireContext(),
-                                R.color.colorOnSecondary
-                            )
-                        )
+//                        view1.setBackgroundColor(
+//                            ContextCompat.getColor(
+//                                requireContext(),
+//                                R.color.colorOnSecondary
+//                            )
+//                        )
                         return@OnTouchListener false
                     }
                     MotionEvent.ACTION_UP -> {
-                        view1.setBackgroundColor(
-                            ContextCompat.getColor(
-                                requireContext(),
-                                R.color.colorPrimary
-                            )
-                        )
+//                        view1.setBackgroundColor(
+//                            ContextCompat.getColor(
+//                                requireContext(),
+//                                R.color.colorPrimary
+//                            )
+//                        )
                         view1.performClick()
                         return@OnTouchListener true
                     }

@@ -6,7 +6,6 @@
         android:id="@+id/linear_layout_song_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/colorOnPrimary"
         android:layout_marginTop="4dp"
         android:layout_marginBottom="4dp">
 

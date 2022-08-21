@@ -112,7 +112,7 @@ class PlaylistsRepo private constructor(context: Context) {
     init {
         val songDatabase = Room.databaseBuilder(
             context, SongDatabase::class.java,
-            MediaLoader.SONG_DATABASE_NAME
+            MediaDatasource.SONG_DATABASE_NAME
         ).build()
         songDAO = songDatabase.songDAO()
     }

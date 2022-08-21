@@ -26,7 +26,7 @@
     </fragment>
     <fragment
         android:id="@+id/FragmentSettings"
-        android:name="com.fourthFinger.pinkyPlayer.fragments.FragmentSettings"
+        android:name="com.fourthFinger.pinkyPlayer.settings.FragmentSettings"
         android:label="fragment_settings"
         tools:layout="@layout/fragment_settings" />
     <fragment

@@ -1,14 +1,21 @@
 package com.fourthFinger.pinkyPlayer.activity_main
 
+import android.app.Application
 import android.view.View.OnClickListener
 import android.view.View.VISIBLE
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
+import com.fourthFinger.pinkyPlayer.settings.SettingsRepo
 
-class ViewModelActivityMain : ViewModel() {
+class ViewModelActivityMain(application: Application) : AndroidViewModel(application) {
+
+    private val settingsRepo = SettingsRepo.getInstance(application)
+    private val mediaSession: MediaSession = MediaSession.getInstance(application)
 
     private val _actionBarTitle: MutableLiveData<String> = MutableLiveData()
     val actionBarTitle = _actionBarTitle as LiveData<String>
@@ -50,6 +57,13 @@ class ViewModelActivityMain : ViewModel() {
     val fragmentSongVisible = _fragmentSongVisible as LiveData<Boolean>
     fun fragmentSongVisible(visible: Boolean) {
         this._fragmentSongVisible.postValue(visible)
+    }
+
+    fun lowerProbs() {
+        mediaSession.lowerProbabilities(
+            getApplication(),
+            settingsRepo.settings.lowerProb
+        )
     }
 
 }

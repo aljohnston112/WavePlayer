@@ -16,9 +16,7 @@
             android:layout_marginTop="8dp"
             android:layout_marginEnd="8dp"
             android:layout_marginBottom="8dp"
-            android:layout_weight="14"
-            android:background="@color/colorOnPrimary" />
-
+            android:layout_weight="14"/>
         <LinearLayout
             android:id="@+id/linearLayout"
             android:layout_width="match_parent"
@@ -34,7 +32,6 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="@color/colorPrimary"
                 android:layout_marginEnd="4dp"
                 app:srcCompat="@drawable/thumb_down_alt_black_24dp" />
 
@@ -55,7 +52,6 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="@color/colorPrimary"
                 android:layout_marginStart="4dp"
                 app:srcCompat="@drawable/thumb_up_alt_black_24dp" />
 
@@ -108,7 +104,6 @@
                 android:layout_height="match_parent"
                 android:layout_marginEnd="4dp"
                 android:layout_weight="1"
-                android:background="@color/colorPrimary"
                 app:srcCompat="@drawable/ic_shuffle_black_24dp" />
 
             <ImageButton
@@ -119,7 +114,6 @@
                 android:layout_marginStart="4dp"
                 android:layout_marginEnd="4dp"
                 android:layout_weight="1"
-                android:background="@color/colorPrimary"
                 app:srcCompat="@drawable/skip_previous_black_24dp" />
 
             <ImageButton
@@ -130,7 +124,6 @@
                 android:layout_marginStart="4dp"
                 android:layout_marginEnd="4dp"
                 android:layout_weight="1"
-                android:background="@color/colorPrimary"
                 app:srcCompat="@drawable/pause_black_24dp" />
 
             <ImageButton
@@ -141,7 +134,6 @@
                 android:layout_marginStart="4dp"
                 android:layout_marginEnd="4dp"
                 android:layout_weight="1"
-                android:background="@color/colorPrimary"
                 app:srcCompat="@drawable/skip_next_black_24dp" />
 
             <ImageButton
@@ -151,7 +143,6 @@
                 android:layout_height="match_parent"
                 android:layout_marginStart="4dp"
                 android:layout_weight="1"
-                android:background="@color/colorPrimary"
                 app:srcCompat="@drawable/repeat_white_24dp" />
         </LinearLayout>
 

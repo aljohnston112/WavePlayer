@@ -179,14 +179,14 @@ class ActivityMain : AppCompatActivity() {
     }
 
     private fun setOverflowIconColor() {
-        binding.toolbar.overflowIcon?.colorFilter =
-            PorterDuffColorFilter(
-                ContextCompat.getColor(
-                    applicationContext,
-                    R.color.colorOnPrimary
-                ),
-                PorterDuff.Mode.SRC_ATOP
-            )
+//        binding.toolbar.overflowIcon?.colorFilter =
+//            PorterDuffColorFilter(
+//                ContextCompat.getColor(
+//                    applicationContext,
+//                    R.color.colorOnPrimary
+//                ),
+//                PorterDuff.Mode.SRC_ATOP
+//            )
     }
 
     private fun startAndBindServiceMain() {
@@ -320,7 +320,7 @@ class ActivityMain : AppCompatActivity() {
                 return true
             }
             R.id.action_lower_probs -> {
-                mediaSession.lowerProbabilities(applicationContext)
+                viewModelActivityMain.lowerProbs()
                 return true
             }
             R.id.action_add_to_queue -> {

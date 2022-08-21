@@ -26,8 +26,8 @@ class MediaSession private constructor(context: Context) {
         currentPlaylist.resetProbabilities(context)
     }
 
-    fun lowerProbabilities(context: Context) {
-        currentPlaylist.lowerProbabilities(context)
+    fun lowerProbabilities(context: Context, lowerProb: Double) {
+        currentPlaylist.lowerProbabilities(context, lowerProb)
     }
 
     @Volatile
@@ -151,7 +151,7 @@ class MediaSession private constructor(context: Context) {
      * if the playlist did not have a song to play.
      */
     private fun playNextInPlaylist(context: Context) {
-        val audioUriCurrent = currentPlaylist.next(context, random, looping, shuffling)
+        val audioUriCurrent = currentPlaylist.next(context, looping, shuffling)
         if (audioUriCurrent != null) {
             currentPlaylist.setIndexTo(audioUriCurrent.id)
             songQueue.addToQueue(context, audioUriCurrent.id)
@@ -227,7 +227,7 @@ class MediaSession private constructor(context: Context) {
     private fun playPreviousInPlaylist(context: Context) {
         // TODO loop through playlist rather than relying on queue
         // This is clearly bugged
-        val audioUriCurrent = currentPlaylist.previous(context, random, looping, shuffling)
+        val audioUriCurrent = currentPlaylist.previous(context, looping, shuffling)
         if (audioUriCurrent != null) {
             mediaPlayerSession.setCurrentAudioUri(audioUriCurrent)
         }

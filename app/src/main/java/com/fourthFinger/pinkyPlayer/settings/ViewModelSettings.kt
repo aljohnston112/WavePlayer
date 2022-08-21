@@ -1,29 +1,32 @@
-package com.fourthFinger.pinkyPlayer.fragments
+package com.fourthFinger.pinkyPlayer.settings
 
+import android.app.Application
 import android.content.Context
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.ToastUtil
 import com.fourthFinger.pinkyPlayer.random_playlist.SaveFile
-import com.fourthFinger.pinkyPlayer.random_playlist.Settings
-import com.fourthFinger.pinkyPlayer.random_playlist.SettingsRepo
+import com.fourthFinger.pinkyPlayer.settings.Settings
+import com.fourthFinger.pinkyPlayer.settings.SettingsRepo
 import kotlin.math.roundToInt
 
-class ViewModelSettings : ViewModel() {
+class ViewModelSettings(application: Application) : AndroidViewModel(application) {
 
-    private val settingsRepo = SettingsRepo.getInstance()
+    private val settingsRepo = SettingsRepo.getInstance(application)
 
     fun getMaxNumberOfSongs(): String {
-        return (1.0 / settingsRepo.getMaxPercent()).roundToInt().toString()
+
+        return (1.0 / settingsRepo.settings.maxPercent).roundToInt().toString()
     }
 
     fun getPercentChangeUp(): String {
-        return (settingsRepo.getPercentChangeUp()*100.0).roundToInt().toString()
+        return (settingsRepo.settings.percentChangeUp*100.0).roundToInt().toString()
     }
 
     fun getPercentChangeDown(): String {
-        return (settingsRepo.getPercentChangeDown()*100.0).roundToInt().toString()
+        return (settingsRepo.settings.percentChangeDown*100.0).roundToInt().toString()
     }
 
     fun fabClicked(
@@ -72,15 +75,14 @@ class ViewModelSettings : ViewModel() {
         percentChangeDown: Int
     ) {
         settingsRepo.setSettings(
+            context,
             // TODO add lower prob
             Settings(
                 1.0 / nSongs.toDouble(),
                 percentChangeUp.toDouble() / 100.0,
                 percentChangeDown.toDouble() / 100.0,
                 0.5
-            )
-        )
-        SaveFile.saveFile(context)
+            ))
     }
 
 }
