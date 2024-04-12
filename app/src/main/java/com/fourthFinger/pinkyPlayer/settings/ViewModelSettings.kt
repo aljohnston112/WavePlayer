@@ -1,32 +1,33 @@
 package com.fourthFinger.pinkyPlayer.settings
 
-import android.app.Application
 import android.content.Context
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.navigation.NavController
+import com.fourthFinger.pinkyPlayer.ApplicationMain
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.ToastUtil
-import com.fourthFinger.pinkyPlayer.random_playlist.SaveFile
-import com.fourthFinger.pinkyPlayer.settings.Settings
-import com.fourthFinger.pinkyPlayer.settings.SettingsRepo
 import kotlin.math.roundToInt
 
-class ViewModelSettings(application: Application) : AndroidViewModel(application) {
-
-    private val settingsRepo = SettingsRepo.getInstance(application)
+class ViewModelSettings(
+    val settingsRepo: SettingsRepo,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
     fun getMaxNumberOfSongs(): String {
 
-        return (1.0 / settingsRepo.settings.maxPercent).roundToInt().toString()
+        return (1.0 / settingsRepo.settings.value!!.maxPercent).roundToInt().toString()
     }
 
     fun getPercentChangeUp(): String {
-        return (settingsRepo.settings.percentChangeUp*100.0).roundToInt().toString()
+        return (settingsRepo.settings.value!!.percentChangeUp*100.0).roundToInt().toString()
     }
 
     fun getPercentChangeDown(): String {
-        return (settingsRepo.settings.percentChangeDown*100.0).roundToInt().toString()
+        return (settingsRepo.settings.value!!.percentChangeDown*100.0).roundToInt().toString()
     }
 
     fun fabClicked(
@@ -84,5 +85,27 @@ class ViewModelSettings(application: Application) : AndroidViewModel(application
                 0.5
             ))
     }
+
+    companion object {
+
+        val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(
+                modelClass: Class<T>,
+                extras: CreationExtras
+            ): T {
+                // Get the Application object from extras
+                val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
+                // Create a SavedStateHandle for this ViewModel from extras
+                val savedStateHandle = extras.createSavedStateHandle()
+
+                return ViewModelSettings(
+                    (application as ApplicationMain).settingsRepo,
+                    savedStateHandle
+                ) as T
+            }
+        }
+    }
+
 
 }

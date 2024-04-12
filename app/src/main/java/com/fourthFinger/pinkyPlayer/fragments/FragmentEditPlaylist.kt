@@ -18,7 +18,9 @@ class FragmentEditPlaylist : Fragment() {
     private var _binding: FragmentEditPlaylistBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
+    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>{
+        ViewModelActivityMain.Factory
+    }
     private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>()
 
     override fun onCreateView(

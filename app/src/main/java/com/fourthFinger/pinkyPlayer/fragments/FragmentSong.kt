@@ -40,9 +40,15 @@ class FragmentSong : Fragment() {
     private var _binding: FragmentSongBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
-    private val viewModelAddToQueue by activityViewModels<ViewModelAddToQueue>()
-    private val viewModelFragmentSong by viewModels<ViewModelFragmentSong>()
+    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain> {
+        ViewModelActivityMain.Factory
+    }
+    private val viewModelAddToQueue by activityViewModels<ViewModelAddToQueue> {
+        ViewModelAddToQueue.Factory
+    }
+    private val viewModelFragmentSong by viewModels<ViewModelFragmentSong> {
+        ViewModelFragmentSong.Factory
+    }
 
     // For updating the SeekBar
     private var scheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
@@ -64,9 +70,7 @@ class FragmentSong : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         KeyboardUtil.hideKeyboard(view)
-        val mediaPlayerManager =
-            MediaPlayerManager.getInstance(requireActivity().applicationContext)
-        mediaPlayerManager.currentAudioUri.observe(viewLifecycleOwner) {
+        viewModelFragmentSong.currentAudioUri.observe(viewLifecycleOwner) {
             if (it != null) {
                 viewModelAddToQueue.setSongToAddToQueue(it.id)
                 binding.textViewSongName.text = it.title
@@ -78,7 +82,7 @@ class FragmentSong : Fragment() {
         }
         viewModelActivityMain.setActionBarTitle(resources.getString(R.string.now_playing))
         viewModelActivityMain.showFab(false)
-        mediaPlayerManager.isPlaying.observe(viewLifecycleOwner) { b: Boolean? ->
+        viewModelFragmentSong.isPlaying.observe(viewLifecycleOwner) { b: Boolean? ->
             if (b != null) {
                 updateSongPlayButton(b)
             }
@@ -98,21 +102,21 @@ class FragmentSong : Fragment() {
     }
 
     private fun setUpSeekBar(maxMillis: Int) {
-        val mediaPlayerManager =
-            MediaPlayerManager.getInstance(requireActivity().applicationContext)
-        val mediaSession = MediaSession.getInstance(requireActivity().applicationContext)
         val stringEndTime = formatMillis(maxMillis)
-        val stringCurrentTime = formatMillis(mediaPlayerManager.getCurrentTime())
+        val stringCurrentTime = formatMillis(viewModelFragmentSong.getCurrentTime())
         binding.editTextCurrentTime.text = stringCurrentTime
         binding.editTextEndTime.text = stringEndTime
         val seekBar: SeekBar = binding.seekBar
         seekBar.max = maxMillis
-        seekBar.progress = mediaPlayerManager.getCurrentTime()
+        seekBar.progress = viewModelFragmentSong.getCurrentTime()
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
             override fun onStartTrackingTouch(seekBar: SeekBar) {}
             override fun onStopTrackingTouch(seekBar: SeekBar) {
-                mediaSession.seekTo(requireActivity().applicationContext, seekBar.progress)
+                viewModelFragmentSong.seekTo(
+                    requireContext(),
+                    seekBar.progress
+                )
             }
         })
     }
@@ -120,13 +124,11 @@ class FragmentSong : Fragment() {
     private fun setUpSeekBarUpdater() {
         val seekBar: SeekBar = binding.seekBar
         val textViewCurrent: TextView = binding.editTextCurrentTime
-        val mediaPlayerManager =
-            MediaPlayerManager.getInstance(requireActivity().applicationContext)
         shutDownSeekBarUpdater()
         scheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
         val runnableSeekBarUpdater = Runnable {
             seekBar.post {
-                val currentMilliseconds: Int = mediaPlayerManager.getCurrentTime()
+                val currentMilliseconds: Int = viewModelFragmentSong.getCurrentTime()
                 if (seekBar.progress != currentMilliseconds) {
                     seekBar.progress = currentMilliseconds
                     val currentTime = formatMillis(currentMilliseconds)
@@ -188,9 +190,9 @@ class FragmentSong : Fragment() {
                     if (drawable != null) {
                         drawable.setBounds(0, 0, songArtWidth, songArtHeight)
                         val bitmapDrawable: Bitmap = Bitmap.createBitmap(
-                                songArtWidth,
-                                songArtHeight,
-                                Bitmap.Config.ARGB_8888
+                            songArtWidth,
+                            songArtHeight,
+                            Bitmap.Config.ARGB_8888
                         )
                         val canvas = Canvas(bitmapDrawable)
 //                        val paint = Paint()
@@ -228,7 +230,6 @@ class FragmentSong : Fragment() {
 
     @SuppressLint("ClickableViewAccessibility")
     private fun setUpButtons(currentAudioUri: AudioUri?) {
-        val mediaSession = MediaSession.getInstance(requireActivity().applicationContext)
         val buttonBad: ImageButton = binding.buttonThumbDown
         val buttonGood: ImageButton = binding.buttonThumbUp
         val buttonShuffle: ImageButton = binding.imageButtonShuffle
@@ -240,44 +241,66 @@ class FragmentSong : Fragment() {
             synchronized(ActivityMain.MUSIC_CONTROL_LOCK) {
                 when (clickedView.id) {
                     R.id.button_thumb_down -> {
-                        currentAudioUri?.let { viewModelFragmentSong.thumbDownClicked(it) }
+                        currentAudioUri?.let {
+                            viewModelFragmentSong.thumbDownClicked(requireContext(),
+                                it
+                            )
+                        }
                     }
+
                     R.id.button_thumb_up -> {
-                        currentAudioUri?.let { viewModelFragmentSong.thumbUpClicked(it) }
+                        currentAudioUri?.let {
+                            viewModelFragmentSong.thumbUpClicked(requireContext(),
+                                it
+                            )
+                        }
                     }
+
                     R.id.imageButtonShuffle -> {
-                        viewModelFragmentSong.shuffleClicked()
+                        viewModelFragmentSong.shuffleClicked(requireContext())
                         val imageButton: ImageButton = clickedView as ImageButton
-                        if (mediaSession.isShuffling()) {
+                        if (viewModelFragmentSong.isShuffling()) {
                             imageButton.setImageResource(R.drawable.ic_shuffle_black_24dp)
                         } else {
                             imageButton.setImageResource(R.drawable.ic_shuffle_white_24dp)
                         }
                     }
+
                     R.id.imageButtonPrev -> {
-                        viewModelFragmentSong.prevClicked()
+                        viewModelFragmentSong.prevClicked(requireContext())
                     }
+
                     R.id.imageButtonPlayPause -> {
-                        viewModelFragmentSong.playPauseClicked()
+                        viewModelFragmentSong.playPauseClicked(requireContext())
                     }
+
                     R.id.imageButtonNext -> {
-                        currentAudioUri?.let { viewModelFragmentSong.nextClicked(it) }
+                        currentAudioUri?.let {
+                            viewModelFragmentSong.nextClicked(
+                                requireContext(),
+                                it
+                            )
+                        }
                     }
+
                     R.id.imageButtonRepeat -> {
                         viewModelFragmentSong.repeatClicked()
                         val imageButton: ImageButton = clickedView as ImageButton
                         when {
-                            mediaSession.isLoopingOne() -> {
+                            viewModelFragmentSong.isLoopingOne() -> {
                                 imageButton.setImageResource(R.drawable.repeat_one_black_24dp)
                             }
-                            mediaSession.isLooping() -> {
+
+                            viewModelFragmentSong.isLooping() -> {
                                 imageButton.setImageResource(R.drawable.repeat_black_24dp)
                             }
+
                             else -> {
                                 imageButton.setImageResource(R.drawable.repeat_white_24dp)
                             }
                         }
                     }
+
                     else -> {
                         ToastUtil.showToast(requireActivity().applicationContext, R.string.RR)
                     }
@@ -304,6 +327,7 @@ class FragmentSong : Fragment() {
 //                        )
                         return@OnTouchListener false
                     }
+
                     MotionEvent.ACTION_UP -> {
 //                        view1.setBackgroundColor(
 //                            ContextCompat.getColor(
@@ -324,18 +348,20 @@ class FragmentSong : Fragment() {
         buttonPause.setOnTouchListener(onTouchListenerFragmentSongButtons)
         buttonNext.setOnTouchListener(onTouchListenerFragmentSongButtons)
         buttonLoop.setOnTouchListener(onTouchListenerFragmentSongButtons)
-        if (mediaSession.isShuffling()) {
+        if (viewModelFragmentSong.isShuffling()) {
             buttonShuffle.setImageResource(R.drawable.ic_shuffle_black_24dp)
         } else {
             buttonShuffle.setImageResource(R.drawable.ic_shuffle_white_24dp)
         }
         when {
-            mediaSession.isLoopingOne() -> {
+            viewModelFragmentSong.isLoopingOne() -> {
                 buttonLoop.setImageResource(R.drawable.repeat_one_black_24dp)
             }
-            mediaSession.isLooping() -> {
+
+            viewModelFragmentSong.isLooping() -> {
                 buttonLoop.setImageResource(R.drawable.repeat_black_24dp)
             }
+
             else -> {
                 buttonLoop.setImageResource(R.drawable.repeat_white_24dp)
             }
@@ -356,9 +382,8 @@ class FragmentSong : Fragment() {
     }
 
     private fun setUpShuffle() {
-        val mediaSession = MediaSession.getInstance(requireActivity().applicationContext)
         val imageView: ImageView = binding.imageButtonShuffle
-        if (mediaSession.isShuffling()) {
+        if (viewModelFragmentSong.isShuffling()) {
             setUpButton(imageView, R.drawable.ic_shuffle_black_24dp)
         } else {
             setUpButton(imageView, R.drawable.ic_shuffle_white_24dp)
@@ -366,15 +391,16 @@ class FragmentSong : Fragment() {
     }
 
     private fun setUpLoop() {
-        val mediaSession = MediaSession.getInstance(requireActivity().applicationContext)
         val imageView: ImageView = binding.imageButtonRepeat
         when {
-            mediaSession.isLoopingOne() -> {
+            viewModelFragmentSong.isLoopingOne() -> {
                 setUpButton(imageView, R.drawable.repeat_one_black_24dp)
             }
-            mediaSession.isLooping() -> {
+
+            viewModelFragmentSong.isLooping() -> {
                 setUpButton(imageView, R.drawable.repeat_black_24dp)
             }
+
             else -> {
                 setUpButton(imageView, R.drawable.repeat_white_24dp)
             }

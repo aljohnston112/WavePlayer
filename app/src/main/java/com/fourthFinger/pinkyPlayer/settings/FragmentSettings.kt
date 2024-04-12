@@ -17,8 +17,12 @@ class FragmentSettings : Fragment() {
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
-    private val viewModelSettings by activityViewModels<ViewModelSettings>()
+    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>{
+        ViewModelActivityMain.Factory
+    }
+    private val viewModelSettings by activityViewModels<ViewModelSettings>{
+        ViewModelSettings.Factory
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,

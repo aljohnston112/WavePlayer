@@ -5,20 +5,27 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDirections
 import androidx.navigation.fragment.NavHostFragment
 import com.fourthFinger.pinkyPlayer.fragments.*
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class NavUtil {
 
     companion object {
 
+        @OptIn(DelicateCoroutinesApi::class)
         fun navigateTo(fragment: Fragment, id: Int) {
-            val navController: NavController = NavHostFragment.findNavController(fragment)
-            val d = navController.currentDestination
-            if (d != null) {
-                if (d.id != id) {
+            GlobalScope.launch(Dispatchers.Main) {
+                val navController: NavController = NavHostFragment.findNavController(fragment)
+                val d = navController.currentDestination
+                if (d != null) {
+                    if (d.id != id) {
+                        navController.navigate(id)
+                    }
+                } else {
                     navController.navigate(id)
                 }
-            } else {
-                navController.navigate(id)
             }
         }
 

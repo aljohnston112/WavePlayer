@@ -1,23 +1,33 @@
 package com.fourthFinger.pinkyPlayer.settings
 
 import android.content.Context
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 
-class SettingsRepo private constructor(context: Context) {
+class SettingsRepo private constructor() {
 
     private val settingsDataSource = SettingsDataSource.getInstance()
 
-    var settings =
-        settingsDataSource.loadSettings(context)
+    private val _settings = MutableLiveData<Settings>()
+    val settings = _settings as LiveData<Settings>
+
+    fun loadSettings(context: Context): Settings {
+        val loadedSettings = settingsDataSource.loadSettings(context)
             ?: Settings(
                 0.1,
                 0.1,
                 0.5,
                 0.1
             )
-        private set
+        _settings.postValue(loadedSettings)
+        return loadedSettings
+    }
 
-    fun setSettings(context: Context, settings: Settings) {
-        this.settings = settings
+    fun setSettings(
+        context: Context,
+        settings: Settings
+    ) {
+        this._settings.postValue(settings)
         settingsDataSource.saveSettings(context, settings)
     }
 
@@ -26,9 +36,9 @@ class SettingsRepo private constructor(context: Context) {
         private var INSTANCE: SettingsRepo? = null
 
         @Synchronized
-        fun getInstance(context: Context): SettingsRepo {
+        fun getInstance(): SettingsRepo {
             if (INSTANCE == null) {
-                INSTANCE = SettingsRepo(context)
+                INSTANCE = SettingsRepo()
             }
             return INSTANCE!!
         }

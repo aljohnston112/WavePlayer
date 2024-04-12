@@ -3,6 +3,7 @@ package com.fourthFinger.pinkyPlayer.random_playlist
 import android.content.Context
 import com.fourthFinger.pinkyPlayer.FileUtil
 import com.fourthFinger.pinkyPlayer.ServiceMain
+import java.util.ArrayList
 
 object SaveFile {
 
@@ -12,17 +13,35 @@ object SaveFile {
 
     private const val FILE_NAME_MASTER_PLAYLIST = "MASTER_PLAYLIST"
     private const val FILE_NAME_PLAYLISTS = "PLAYLISTS"
+    private const val MASTER_PLAYLIST_NAME: String = "MASTER_PLAYLIST_NAME"
 
     private val FILE_LOCK: Any = Any()
 
-    fun loadSaveFile(context: Context) {
+    fun loadSaveFile(
+        context: Context,
+        playlistsRepo: PlaylistsRepo,
+        maxPercent: Double
+    ) {
         synchronized(FILE_LOCK) {
-            val playlistsRepo = PlaylistsRepo.getInstance(context)
-            FileUtil.load<RandomPlaylist>(
+            val playlist = FileUtil.load<RandomPlaylist>(
                 context,
                 FILE_NAME_MASTER_PLAYLIST,
                 SAVE_FILE_VERIFICATION_NUMBER
-            )?.let { playlistsRepo.setMasterPlaylist(it) }
+            )
+            playlist?.let {
+                playlistsRepo.setMasterPlaylist(it)
+            }?: run {
+                playlistsRepo.setMasterPlaylist(
+                    RandomPlaylist(
+                        context,
+                        MASTER_PLAYLIST_NAME,
+                        ArrayList(),
+                        true,
+                        maxPercent,
+                        playlistsRepo
+                    )
+                )
+            }
             FileUtil.loadList<RandomPlaylist>(
                 context,
                 FILE_NAME_PLAYLISTS,
@@ -32,10 +51,9 @@ object SaveFile {
     }
 
 
-    fun saveFile(context: Context) {
+    fun saveFile(context: Context, playlistsRepo: PlaylistsRepo) {
         ServiceMain.executorServicePool.submit {
             synchronized(FILE_LOCK) {
-                val playlistsRepo = PlaylistsRepo.getInstance(context)
                 FileUtil.save(
                     playlistsRepo.getMasterPlaylist(),
                     context,

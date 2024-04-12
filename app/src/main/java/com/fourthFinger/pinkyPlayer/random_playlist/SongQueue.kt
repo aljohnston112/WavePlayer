@@ -3,14 +3,16 @@ package com.fourthFinger.pinkyPlayer.random_playlist
 import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Transformations
+import androidx.lifecycle.map
 import java.util.*
 
-class SongQueue private constructor() {
+class SongQueue private constructor(
+    val playlistsRepo: PlaylistsRepo
+) {
 
     private val _songQueue: LinkedList<Song> = LinkedList()
     private val mLDSongQueue: MutableLiveData<LinkedList<Song>> = MutableLiveData(LinkedList())
-    val songQueue: LiveData<Set<Song>> = Transformations.map(mLDSongQueue){
+    val songQueue: LiveData<Set<Song>> = mLDSongQueue.map {
         it.toSet()
     }
     private var songQueueIterator: MutableListIterator<Song>
@@ -25,9 +27,11 @@ class SongQueue private constructor() {
         }
         return songQueueIterator.next()
     }
+
     fun hasPrevious(): Boolean {
         return songQueueIterator.hasPrevious()
     }
+
     fun previous(): Song {
         if (!hasPrevious()) {
             throw NoSuchElementException()
@@ -49,8 +53,7 @@ class SongQueue private constructor() {
         songQueueIterator = _songQueue.listIterator(_songQueue.size)
     }
 
-    fun addToQueue(context: Context, songID: Long) {
-        val playlistsRepo = PlaylistsRepo.getInstance(context)
+    fun addToQueue(songID: Long) {
         val i = songQueueIterator.nextIndex()
         goToBack()
         playlistsRepo.getSong(songID)?.let { songQueueIterator.add(it) }
@@ -58,9 +61,9 @@ class SongQueue private constructor() {
         mLDSongQueue.value = _songQueue
     }
 
-    fun newSessionStarted(context: Context, song: Long) {
+    fun newSessionStarted(song: Long) {
         clearSongQueue()
-        addToQueue(context, song)
+        addToQueue(song)
     }
 
     fun queue(): Set<Song> {
@@ -71,10 +74,10 @@ class SongQueue private constructor() {
 
     fun notifySongMoved(from: Int, to: Int) {
         var i = songQueueIterator.nextIndex()
-        if(i == from){
+        if (i == from) {
             i++
-        } else if(i-1 == to){
-            i --
+        } else if (i - 1 == to) {
+            i--
         }
         songQueueIterator = _songQueue.listIterator(from)
         val song = songQueueIterator.next()
@@ -89,16 +92,16 @@ class SongQueue private constructor() {
     fun notifySongRemoved(position: Int): Boolean {
         var i = songQueueIterator.nextIndex()
         var playing = false
-        if(position == i-1){
+        if (position == i - 1) {
             playing = true
         }
-        if(i == _songQueue.size){
+        if (i == _songQueue.size) {
             i--
         }
         songQueueIterator = _songQueue.listIterator(position)
         undoSong = songQueueIterator.next()
         songQueueIterator.remove()
-        if(playing && i != _songQueue.size){
+        if (playing && i != _songQueue.size) {
             i--
         }
         songQueueIterator = _songQueue.listIterator(i)
@@ -117,7 +120,7 @@ class SongQueue private constructor() {
 
     fun setIndex(position: Int): Song {
         songQueueIterator = _songQueue.listIterator(position)
-        val song =  songQueueIterator.next()
+        val song = songQueueIterator.next()
         songQueueIterator.previous()
         return song
     }
@@ -134,9 +137,9 @@ class SongQueue private constructor() {
         private var INSTANCE: SongQueue? = null
 
         @Synchronized
-        fun getInstance(): SongQueue {
+        fun getInstance(playlistsRepo: PlaylistsRepo): SongQueue {
             if (INSTANCE == null) {
-                INSTANCE = SongQueue()
+                INSTANCE = SongQueue(playlistsRepo)
             }
             return INSTANCE!!
         }

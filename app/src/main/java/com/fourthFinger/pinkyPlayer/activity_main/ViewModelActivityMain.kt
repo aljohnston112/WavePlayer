@@ -1,21 +1,26 @@
 package com.fourthFinger.pinkyPlayer.activity_main
 
-import android.app.Application
+import android.content.Context
 import android.view.View.OnClickListener
 import android.view.View.VISIBLE
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.CreationExtras
+import com.fourthFinger.pinkyPlayer.ApplicationMain
 import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 import com.fourthFinger.pinkyPlayer.settings.SettingsRepo
 
-class ViewModelActivityMain(application: Application) : AndroidViewModel(application) {
-
-    private val settingsRepo = SettingsRepo.getInstance(application)
-    private val mediaSession: MediaSession = MediaSession.getInstance(application)
+class ViewModelActivityMain(
+    val settingsRepo: SettingsRepo,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
     private val _actionBarTitle: MutableLiveData<String> = MutableLiveData()
     val actionBarTitle = _actionBarTitle as LiveData<String>
@@ -59,11 +64,42 @@ class ViewModelActivityMain(application: Application) : AndroidViewModel(applica
         this._fragmentSongVisible.postValue(visible)
     }
 
-    fun lowerProbs() {
+    fun lowerProbabilities(
+        context: Context,
+        mediaSession: MediaSession
+    ) {
         mediaSession.lowerProbabilities(
-            getApplication(),
-            settingsRepo.settings.lowerProb
+            context,
+            settingsRepo.settings.value!!.lowerProb
         )
+    }
+
+    fun resetProbabilities(
+        context: Context,
+        mediaSession: MediaSession
+    ) {
+        mediaSession.resetProbabilities(context)
+    }
+
+    companion object {
+
+        val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(
+                modelClass: Class<T>,
+                extras: CreationExtras
+            ): T {
+                // Get the Application object from extras
+                val application = checkNotNull(extras[APPLICATION_KEY])
+                // Create a SavedStateHandle for this ViewModel from extras
+                val savedStateHandle = extras.createSavedStateHandle()
+
+                return ViewModelActivityMain(
+                    (application as ApplicationMain).settingsRepo,
+                    savedStateHandle
+                ) as T
+            }
+        }
     }
 
 }

@@ -11,7 +11,7 @@ import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class MediaDatasource private constructor(context: Context, maxPercent: Double) {
+class MediaDatasource private constructor() {
 
     private val _loadingText: MutableLiveData<String> = MutableLiveData()
     val loadingText = _loadingText as LiveData<String>
@@ -19,15 +19,19 @@ class MediaDatasource private constructor(context: Context, maxPercent: Double) 
     private val _loadingProgress: MutableLiveData<Double> = MutableLiveData(0.0)
     val loadingProgress = _loadingProgress as LiveData<Double>
 
-    init {
-        // Loading the save file is needed to ensure the master playlist is valid
-        // before getting songs from the MediaStore.
-        SaveFile.loadSaveFile(context)
-        getSongsFromMediaStore(context, maxPercent)
+    fun loadSongs(
+        context: Context,
+        playlistsRepo: PlaylistsRepo,
+        mediaPlayerManager: MediaPlayerManager
+    ) {
+        getSongsFromMediaStore(context, playlistsRepo, mediaPlayerManager)
     }
 
-    private fun getSongsFromMediaStore(context: Context, maxPercent: Double) {
-        val playlistsRepo = PlaylistsRepo.getInstance(context)
+    private fun getSongsFromMediaStore(
+        context: Context,
+        playlistsRepo: PlaylistsRepo,
+        mediaPlayerManager: MediaPlayerManager
+    ) {
         val resources = context.resources
         val newSongs = mutableListOf<Song>()
         val filesThatExist = mutableListOf<Long>()
@@ -92,23 +96,13 @@ class MediaDatasource private constructor(context: Context, maxPercent: Double) 
         executorFIFO.execute {
             if (playlistsRepo.isMasterPlaylistInitialized()) {
                 _loadingText.postValue(resources.getString(R.string.loading3))
-                addNewSongs(context, newSongs)
+                addNewSongs(context, playlistsRepo, newSongs)
                 _loadingText.postValue(resources.getString(R.string.loading4))
-                removeMissingSongs(context, filesThatExist)
-            } else {
-                playlistsRepo.setMasterPlaylist(
-                    RandomPlaylist(
-                        context,
-                        MASTER_PLAYLIST_NAME,
-                        ArrayList(newSongs),
-                        true,
-                        maxPercent
-                    )
-                )
+                removeMissingSongs(context, playlistsRepo, mediaPlayerManager, filesThatExist)
             }
         }
         executorFIFO.execute {
-            SaveFile.saveFile(context)
+            SaveFile.saveFile(context, playlistsRepo)
             val intent = Intent()
             intent.addCategory(Intent.CATEGORY_DEFAULT)
             intent.action = context.resources.getString(R.string.action_loaded)
@@ -116,24 +110,30 @@ class MediaDatasource private constructor(context: Context, maxPercent: Double) 
         }
     }
 
-    private fun addNewSongs(context: Context, newSongs: List<Song>) {
-        val playlistsRepo = PlaylistsRepo.getInstance(context)
+    private fun addNewSongs(
+        context: Context,
+        playlistsRepo: PlaylistsRepo,
+        newSongs: List<Song>
+    ) {
         val i = newSongs.size
         for ((j, songID) in newSongs.withIndex()) {
-            playlistsRepo.getMasterPlaylist().add(context, songID)
+            playlistsRepo.getMasterPlaylist().add(context, playlistsRepo, songID)
             _loadingProgress.postValue(j.toDouble() / i.toDouble())
         }
     }
 
-    private fun removeMissingSongs(context: Context, filesThatExist: List<Long>) {
-        val mediaPlayerManager = MediaPlayerManager.getInstance(context)
-        val playlistsRepo = PlaylistsRepo.getInstance(context)
+    private fun removeMissingSongs(
+        context: Context,
+        playlistsRepo: PlaylistsRepo,
+        mediaPlayerManager: MediaPlayerManager,
+        filesThatExist: List<Long>
+    ) {
         val i = filesThatExist.size
         val ids = playlistsRepo.getMasterPlaylist().getSongIDs()
         for ((j, songID) in ids.withIndex()) {
             if (!filesThatExist.contains(songID)) {
                 playlistsRepo.getSong(songID)?.let {
-                    playlistsRepo.getMasterPlaylist().remove(context, it)
+                    playlistsRepo.getMasterPlaylist().remove(context, playlistsRepo, it)
                     playlistsRepo.removeSongFromDB(it)
                 }
                 mediaPlayerManager.removeMediaPlayerWUri(songID)
@@ -145,13 +145,13 @@ class MediaDatasource private constructor(context: Context, maxPercent: Double) 
     companion object {
         const val SONG_DATABASE_NAME: String = "SONG_DATABASE_NAME"
         private val MEDIA_DATA_LOCK: Any = Any()
-        private const val MASTER_PLAYLIST_NAME: String = "MASTER_PLAYLIST_NAME"
         private var INSTANCE: MediaDatasource? = null
 
-        fun getInstance(context: Context, maxPercent: Double): MediaDatasource {
+        fun getInstance(
+        ): MediaDatasource {
             synchronized(MEDIA_DATA_LOCK) {
                 if (INSTANCE == null) {
-                    INSTANCE = MediaDatasource(context, maxPercent)
+                    INSTANCE = MediaDatasource()
                 }
                 return INSTANCE!!
             }

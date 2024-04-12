@@ -1,19 +1,35 @@
 package com.fourthFinger.pinkyPlayer
 
 import android.annotation.SuppressLint
-import android.app.*
-import android.app.PendingIntent.*
-import android.content.*
-import android.os.*
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent.FLAG_CANCEL_CURRENT
+import android.app.PendingIntent.FLAG_IMMUTABLE
+import android.app.PendingIntent.getActivity
+import android.app.PendingIntent.getBroadcast
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.ServiceInfo
+import android.os.Binder
+import android.os.Build
+import android.os.IBinder
 import android.util.Log
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
+import androidx.core.app.ServiceCompat
 import androidx.lifecycle.LifecycleService
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 import com.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerManager
-import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
-import java.io.*
+import java.io.BufferedReader
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.FileReader
+import java.io.IOException
+import java.io.PrintWriter
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -31,12 +47,13 @@ class ServiceMain : LifecycleService() {
     private var serviceStarted = false
     private val serviceMainBinder: IBinder = ServiceMainBinder()
 
-    private var loaded = false
+    private lateinit var mediaPlayerManager: MediaPlayerManager
 
     // region lifecycle
     // region onCreate
     override fun onCreate() {
         super.onCreate()
+        mediaPlayerManager = (application as ApplicationMain).mediaPlayerManager
         setUpExceptionSaver()
         logLastThrownException()
         setUpBroadCastReceivers()
@@ -84,7 +101,11 @@ class ServiceMain : LifecycleService() {
         intentFilter.addAction(resources.getString(R.string.action_previous))
         intentFilter.addAction(resources.getString(R.string.action_play_pause))
         intentFilter.addAction(resources.getString(R.string.action_new_song))
-        registerReceiver(broadcastReceiver, intentFilter)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(broadcastReceiver, intentFilter, RECEIVER_EXPORTED)
+        } else {
+            registerReceiver(broadcastReceiver, intentFilter)
+        }
     }
 
     private var broadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
@@ -92,33 +113,22 @@ class ServiceMain : LifecycleService() {
             synchronized(LOCK) {
                 val action: String? = intent.action
                 if (action != null) {
+                    val mediaSession = (application as ApplicationMain).mediaSession
                     when (action) {
-                        (resources.getString(R.string.action_loaded)) -> {
-                            loaded = true
-                        }
                         resources.getString(
                             R.string.action_next
                         ) -> {
-                            if(loaded) {
-                                val mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
-                                mediaSession.playNext(applicationContext)
-                            }
+                            mediaSession.playNext(applicationContext)
                         }
                         resources.getString(
                             R.string.action_play_pause
                         ) -> {
-                            if(loaded) {
-                                val mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
-                                mediaSession.pauseOrPlay(applicationContext)
-                            }
+                            mediaSession.pauseOrPlay(applicationContext)
                         }
                         resources.getString(
                             R.string.action_previous
                         ) -> {
-                            if(loaded) {
-                                val mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
-                                mediaSession.playPrevious(applicationContext)
-                            }
+                            mediaSession.playPrevious(applicationContext)
                         }
                         resources.getString(
                             R.string.action_new_song
@@ -142,16 +152,27 @@ class ServiceMain : LifecycleService() {
             setUpNotificationBuilder()
             setUpBroadCastsForNotificationButtons()
             updateNotification()
-            startForeground(NOTIFICATION_CHANNEL_ID.hashCode(), notification)
-            val mediaPlayerSession = MediaPlayerManager.getInstance(applicationContext)
-            mediaPlayerSession.currentAudioUri.observe(this) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ServiceCompat.startForeground(
+                    this,
+                    NOTIFICATION_CHANNEL_ID.hashCode(),
+                    notification!!,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+                )
+            } else {
+                startForeground(
+                    NOTIFICATION_CHANNEL_ID.hashCode(),
+                    notification
+                )
+            }
+            mediaPlayerManager.currentAudioUri.observe(this) {
                 setUpNotificationBuilder()
                 setUpBroadCastsForNotificationButtons()
                 updateSongArt(it)
                 updateNotificationSongName(it)
                 updateNotification()
             }
-            mediaPlayerSession.isPlaying.observe(this) {
+            mediaPlayerManager.isPlaying.observe(this) {
                 setUpNotificationBuilder()
                 setUpBroadCastsForNotificationButtons()
                 updateNotificationPlayButton(it)
@@ -233,11 +254,12 @@ class ServiceMain : LifecycleService() {
     }
 
     private fun setUpBroadCastsForNotificationButtons() {
-        // Log.v(TAG, "Setting up broadcasts");
+        val TAG = "ServiceMain"
+        Log.v(TAG, "Setting up broadcasts");
         setUpBroadcastNext()
         setUpBroadcastPlayPause()
         setUpBroadcastPrevious()
-        // Log.v(TAG, "Done setting up broadcasts");
+        Log.v(TAG, "Done setting up broadcasts");
     }
 
     @SuppressLint("UnspecifiedImmutableFlag")
@@ -388,22 +410,14 @@ class ServiceMain : LifecycleService() {
     }
 
     // endregion onBind
-    override fun onTaskRemoved(rootIntent: Intent) {
-        super.onTaskRemoved(rootIntent)
-        taskRemoved()
-    }
-
-    private fun taskRemoved() {
-        val mediaPlayerManager = MediaPlayerManager.getInstance(applicationContext)
-        mediaPlayerManager.cleanUp(applicationContext)
-        unregisterReceiver(broadcastReceiver)
-        stopSelf()
-    }
 
     override fun onDestroy() {
         super.onDestroy()
-        val mediaPlayerManager = MediaPlayerManager.getInstance(applicationContext)
-        mediaPlayerManager.cleanUp(applicationContext)
+        val mediaSession = (application as ApplicationMain).mediaSession
+        mediaPlayerManager.cleanUp(
+            applicationContext,
+            mediaSession
+        )
         unregisterReceiver(broadcastReceiver)
         stopSelf()
     }

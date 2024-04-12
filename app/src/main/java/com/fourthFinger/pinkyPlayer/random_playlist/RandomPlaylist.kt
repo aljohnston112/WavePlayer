@@ -18,34 +18,31 @@ import java.util.*
  * @throws IllegalArgumentException if there is not at least one AudioURI in music.
  * @throws IllegalArgumentException if folder is not a directory.
  */
-class RandomPlaylist constructor(
+class RandomPlaylist(
     context: Context,
     name: String,
     music: MutableList<Song>,
     comparable: Boolean,
-    maxPercent: Double
+    maxPercent: Double,
+    playlistsRepo: PlaylistsRepo
 ) : Serializable {
 
     private val playlistArray: MutableList<Long> = ArrayList()
-
-    @Transient
-    private var playlistIterator: MutableListIterator<Long>
 
     private var name: String
     fun getName(): String {
         return name
     }
 
-    fun setName(context: Context, name: String) {
+    fun setName(context: Context, playlistsRepo: PlaylistsRepo, name: String) {
         this.name = name
-        SaveFile.saveFile(context)
+        SaveFile.saveFile(context, playlistsRepo)
     }
 
     // The ProbFun that randomly picks the media to play
     private var probabilityFunction: ProbFun<Song>
 
     init {
-        require(music.isNotEmpty()) { "List music must contain at least one AudioURI" }
         val files: MutableSet<Song> = LinkedHashSet(music)
         probabilityFunction = if (comparable) {
             ProbFun.ProbFunTreeMap(files, maxPercent)
@@ -56,8 +53,7 @@ class RandomPlaylist constructor(
         for (song in music) {
             playlistArray.add(song.id)
         }
-        playlistIterator = playlistArray.listIterator()
-        SaveFile.saveFile(context)
+        SaveFile.saveFile(context, playlistsRepo)
     }
 
     fun getSongs(): Set<Song> {
@@ -68,22 +64,22 @@ class RandomPlaylist constructor(
         return playlistArray
     }
 
-    fun add(context: Context, song: Song) {
+    fun add(context: Context, playlistsRepo: PlaylistsRepo, song: Song) {
         probabilityFunction.add(song)
         playlistArray.add(song.id)
-        SaveFile.saveFile(context)
+        SaveFile.saveFile(context, playlistsRepo)
     }
 
-    fun add(context: Context, song: Song, probability: Double) {
+    fun add(context: Context, playlistsRepo: PlaylistsRepo, song: Song, probability: Double) {
         probabilityFunction.add(song, probability)
         playlistArray.add(song.id)
-        SaveFile.saveFile(context)
+        SaveFile.saveFile(context, playlistsRepo)
     }
 
-    fun remove(context: Context, song: Song) {
+    fun remove(context: Context, playlistsRepo: PlaylistsRepo, song: Song) {
         probabilityFunction.remove(song)
         playlistArray.remove(song.id)
-        SaveFile.saveFile(context)
+        SaveFile.saveFile(context, playlistsRepo)
     }
 
     @Deprecated(
@@ -106,17 +102,17 @@ class RandomPlaylist constructor(
         return probabilityFunction.getProbability(song)
     }
 
-    fun resetProbabilities(context: Context) {
+    fun resetProbabilities(context: Context, playlistsRepo: PlaylistsRepo,) {
         probabilityFunction.resetProbabilities()
-        SaveFile.saveFile(context)
+        SaveFile.saveFile(context, playlistsRepo)
     }
 
-    fun lowerProbabilities(context: Context, lowerProb: Double) {
+    fun lowerProbabilities(context: Context, playlistsRepo: PlaylistsRepo, lowerProb: Double) {
         probabilityFunction.lowerProbs(lowerProb)
-        SaveFile.saveFile(context)
+        SaveFile.saveFile(context, playlistsRepo)
     }
 
-    fun next(context: Context): AudioUri? {
+    fun nextRandomSong(context: Context): AudioUri? {
         val song: Song = probabilityFunction.next()
         return AudioUri.getAudioUri(context, song.id)
     }
@@ -125,58 +121,30 @@ class RandomPlaylist constructor(
         return probabilityFunction.size()
     }
 
-    fun swapSongPositions(context: Context, oldPosition: Int, newPosition: Int) {
-        (probabilityFunction as? ProbFun.ProbFunLinkedMap)?.swapTwoPositions(oldPosition, newPosition)
-        SaveFile.saveFile(context)
+    fun swapSongPositions(context: Context, playlistsRepo: PlaylistsRepo, oldPosition: Int, newPosition: Int) {
+        (probabilityFunction as? ProbFun.ProbFunLinkedMap)?.swapTwoPositions(
+            oldPosition,
+            newPosition
+        )
+        SaveFile.saveFile(context, playlistsRepo)
     }
 
-    fun switchSongPositions(context: Context, oldPosition: Int, newPosition: Int) {
-        (probabilityFunction as? ProbFun.ProbFunLinkedMap)?.switchOnesPosition(oldPosition, newPosition)
-        SaveFile.saveFile(context)
+    fun switchSongPositions(context: Context, playlistsRepo: PlaylistsRepo, oldPosition: Int, newPosition: Int) {
+        (probabilityFunction as? ProbFun.ProbFunLinkedMap)?.switchOnesPosition(
+            oldPosition,
+            newPosition
+        )
+        SaveFile.saveFile(context, playlistsRepo)
     }
 
-    fun next(context: Context, looping: Boolean, shuffling: Boolean): AudioUri? {
-        return if (shuffling) {
-            next(context)
-        } else {
-            if (looping && !playlistIterator.hasNext()) {
-                playlistIterator = playlistArray.listIterator()
-            }
-            if (!playlistIterator.hasNext()) {
-                null
-            } else AudioUri.getAudioUri(context, playlistIterator.next())
-        }
+    fun bad(context: Context, playlistsRepo: PlaylistsRepo, song: Song, percentChangeDown: Double) {
+        val i = probabilityFunction.bad(song, percentChangeDown)
+        SaveFile.saveFile(context, playlistsRepo)
     }
 
-    fun previous(
-        context: Context,
-        looping: Boolean,
-        shuffling: Boolean
-    ): AudioUri? {
-        return if (shuffling) {
-            // TODO play previous
-            next(context)
-        } else {
-            if (looping && !playlistIterator.hasPrevious()) {
-                playlistIterator = playlistArray.listIterator(playlistArray.size - 1)
-            }
-            AudioUri.getAudioUri(context, playlistIterator.previous())
-        }
-    }
-
-    fun setIndexTo(songID: Long) {
-        val i = playlistArray.indexOf(songID)
-        playlistIterator = playlistArray.listIterator(i + 1)
-    }
-
-    fun bad(context: Context, song: Song, percentChangeDown: Double) {
-        probabilityFunction.bad(song, percentChangeDown)
-        SaveFile.saveFile(context)
-    }
-
-    fun good(context: Context, song: Song, percentChangeUp: Double) {
+    fun good(context: Context, playlistsRepo: PlaylistsRepo, song: Song, percentChangeUp: Double) {
         probabilityFunction.good(song, percentChangeUp)
-        SaveFile.saveFile(context)
+        SaveFile.saveFile(context, playlistsRepo)
     }
 
     override fun equals(other: Any?): Boolean {

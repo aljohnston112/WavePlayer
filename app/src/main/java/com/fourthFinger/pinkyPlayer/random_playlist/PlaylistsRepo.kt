@@ -7,26 +7,28 @@ import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 
-class PlaylistsRepo private constructor(context: Context) {
+class PlaylistsRepo private constructor() {
 
+    private lateinit var songDAO: SongDAO
     private val playlists: MutableList<RandomPlaylist> = mutableListOf()
+
     fun getPlaylists(): List<RandomPlaylist> {
         return playlists
     }
 
     fun addPlaylist(context: Context, randomPlaylist: RandomPlaylist) {
         playlists.add(randomPlaylist)
-        SaveFile.saveFile(context)
+        SaveFile.saveFile(context,  this)
     }
 
     fun addPlaylist(context: Context, position: Int, randomPlaylist: RandomPlaylist) {
         playlists.add(position, randomPlaylist)
-        SaveFile.saveFile(context)
+        SaveFile.saveFile(context, this)
     }
 
     fun removePlaylist(context: Context, randomPlaylist: RandomPlaylist) {
         playlists.remove(randomPlaylist)
-        SaveFile.saveFile(context)
+        SaveFile.saveFile(context, this)
     }
 
     fun getPlaylist(playlistName: String): RandomPlaylist? {
@@ -53,8 +55,6 @@ class PlaylistsRepo private constructor(context: Context) {
     fun isMasterPlaylistInitialized(): Boolean {
         return ::masterPlaylist.isInitialized
     }
-
-    private var songDAO: SongDAO
     fun getSong(songID: Long): Song? {
         var song: Song? = null
         try {
@@ -95,13 +95,13 @@ class PlaylistsRepo private constructor(context: Context) {
         return playlistIndex != -1
     }
 
-    fun getPlaylistTitles(): Array<String?> {
+    fun getPlaylistTitles(): Array<String> {
         val randomPlaylists = getPlaylists()
         val titles: MutableList<String> = ArrayList(randomPlaylists.size)
         for (randomPlaylist in randomPlaylists) {
             titles.add(randomPlaylist.getName())
         }
-        val titlesArray = arrayOfNulls<String>(titles.size)
+        val titlesArray = Array(titles.size) { "" }
         var i = 0
         for (title in titles) {
             titlesArray[i++] = title
@@ -109,7 +109,7 @@ class PlaylistsRepo private constructor(context: Context) {
         return titlesArray
     }
 
-    init {
+    fun loadDatabase(context: Context) {
         val songDatabase = Room.databaseBuilder(
             context, SongDatabase::class.java,
             MediaDatasource.SONG_DATABASE_NAME
@@ -121,9 +121,9 @@ class PlaylistsRepo private constructor(context: Context) {
 
         private var INSTANCE: PlaylistsRepo? = null
 
-        fun getInstance(context: Context): PlaylistsRepo {
+        fun getInstance(): PlaylistsRepo {
             if (INSTANCE == null) {
-                INSTANCE = PlaylistsRepo(context)
+                INSTANCE = PlaylistsRepo()
             }
             return INSTANCE!!
         }

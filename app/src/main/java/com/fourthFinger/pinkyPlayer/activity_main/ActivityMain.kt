@@ -1,8 +1,6 @@
 package com.fourthFinger.pinkyPlayer.activity_main
 
 import android.content.*
-import android.graphics.PorterDuff
-import android.graphics.PorterDuffColorFilter
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
@@ -15,19 +13,18 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
-import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
+import com.fourthFinger.pinkyPlayer.ApplicationMain
 import com.fourthFinger.pinkyPlayer.NavUtil.Companion.navigateTo
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.ServiceMain
 import com.fourthFinger.pinkyPlayer.databinding.ActivityMainBinding
 import com.fourthFinger.pinkyPlayer.fragments.ViewModelAddToQueue
 import com.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerManager
-import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 
 class ActivityMain : AppCompatActivity() {
@@ -38,8 +35,14 @@ class ActivityMain : AppCompatActivity() {
 
     private lateinit var serviceMain: ServiceMain
 
-    private val viewModelActivityMain by viewModels<ViewModelActivityMain>()
-    private val viewModelAddToQueue by viewModels<ViewModelAddToQueue>()
+    private val viewModelActivityMain by viewModels<ViewModelActivityMain>{
+        ViewModelActivityMain.Factory
+    }
+    private val viewModelAddToQueue by viewModels<ViewModelAddToQueue>{
+        ViewModelAddToQueue.Factory
+    }
+
+    private lateinit var mediaPlayerManager: MediaPlayerManager
 
     private var loaded = false
 
@@ -51,19 +54,19 @@ class ActivityMain : AppCompatActivity() {
         setContentView(binding.root)
         setUpOnDestinationChangedListener()
         setUpViewModelActivityMainObservers()
-        val mediaPlayerManager = MediaPlayerManager.getInstance(applicationContext)
-        mediaPlayerManager.songInProgress.observe(this) {
-            val fragment: Fragment? = supportFragmentManager.findFragmentById(
+        mediaPlayerManager = (application as ApplicationMain).mediaPlayerManager
+        mediaPlayerManager.songInProgress.observe(this) { songInProgress ->
+            val currentFragment: Fragment? = supportFragmentManager.findFragmentById(
                 binding.navHostFragment.id
             )
-            if (fragment != null) {
-                val n = NavHostFragment.findNavController(fragment)
+            if (currentFragment != null) {
+                val n = NavHostFragment.findNavController(currentFragment)
                 if (n.currentDestination?.id != R.id.fragmentSong &&
-                    it == true
+                    songInProgress == true
                 ) {
                     showSongPane()
                 }
-                if(it == true){
+                if (songInProgress) {
                     val toolbar = binding.toolbar
                     if (toolbar.menu.size() > 0)
                         toolbar.menu.getItem(MENU_ACTION_QUEUE).isVisible = true
@@ -82,15 +85,16 @@ class ActivityMain : AppCompatActivity() {
 
     private val onDestinationChangedListenerSongPane =
         { _: NavController, destination: NavDestination, _: Bundle? ->
-            if (destination.id != R.id.fragmentSong) {
-                val mediaPlayerManager = MediaPlayerManager.getInstance(applicationContext)
-                if (mediaPlayerManager.isSongInProgress() == true) {
-                    fragmentSongVisible(false)
-                    showSongPane()
+            if (destination.id != R.id.fragmentLoading) {
+                if (destination.id != R.id.fragmentSong) {
+                    if (mediaPlayerManager.isSongInProgress() == true) {
+                        fragmentSongVisible(false)
+                        showSongPane()
+                    }
+                } else {
+                    fragmentSongVisible(true)
+                    hideSongPane()
                 }
-            } else {
-                fragmentSongVisible(true)
-                hideSongPane()
             }
         }
 
@@ -154,6 +158,9 @@ class ActivityMain : AppCompatActivity() {
         viewModelActivityMain.fabImageID.observe(this) { drawableID: Int ->
             fab.icon = ResourcesCompat.getDrawable(resources, drawableID, theme)
         }
+        viewModelActivityMain.fabOnClickListener.observe(this) {
+            fab.setOnClickListener(it)
+        }
         val toolbar = binding.toolbar
         viewModelActivityMain.actionBarTitle.observe(this) { title ->
             toolbar.title = title
@@ -166,7 +173,13 @@ class ActivityMain : AppCompatActivity() {
     override fun onStart() {
         setUpToolbar()
         startAndBindServiceMain()
+        setUpBroadcastReceiver()
         super.onStart()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        unregisterReceiver(broadcastReceiverServiceMain)
     }
 
     private fun setUpToolbar() {
@@ -211,9 +224,7 @@ class ActivityMain : AppCompatActivity() {
             setUpAfterServiceConnection()
         }
 
-        override fun onServiceDisconnected(arg0: ComponentName) {
-            serviceDisconnected()
-        }
+        override fun onServiceDisconnected(arg0: ComponentName) {}
     }
 
     private fun sendBroadcastServiceConnected() {
@@ -224,32 +235,30 @@ class ActivityMain : AppCompatActivity() {
     }
 
     private fun setUpAfterServiceConnection() {
-        goToDestinationFragment()
-        setUpBroadcastReceiver()
+        goToFirstFragment()
         hideSongPane()
     }
 
-    private fun goToDestinationFragment() {
+    private fun goToFirstFragment() {
         val fragment: Fragment? = supportFragmentManager.findFragmentById(
             binding.navHostFragment.id
         )
-        if (loaded) {
-            if (fragment != null) {
-                val mediaPlayerManager = MediaPlayerManager.getInstance(applicationContext)
+        if (fragment != null) {
+            if (loaded) {
                 if (mediaPlayerManager.isPlaying.value == true) {
                     hideSongPane()
                     navigateTo(fragment, R.id.fragmentSong)
                 } else {
                     navigateTo(fragment, R.id.FragmentTitle)
                 }
-            }
-        } else {
-            // TODO inclusive why?
-            if (fragment != null) {
-                NavHostFragment.findNavController(fragment).popBackStack(
-                    R.id.fragmentLoading,
-                    true
-                )
+
+            } else {
+                // TODO inclusive why?
+//                val navController = NavHostFragment.findNavController(fragment)
+//                navController.popBackStack(
+//                    R.id.fragmentLoading,
+//                    true
+//                )
             }
         }
     }
@@ -258,7 +267,11 @@ class ActivityMain : AppCompatActivity() {
         val filter = IntentFilter()
         filter.addCategory(Intent.CATEGORY_DEFAULT)
         filter.addAction(resources.getString(R.string.action_loaded))
-        registerReceiver(broadcastReceiverServiceMain, filter)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(broadcastReceiverServiceMain, filter, RECEIVER_EXPORTED)
+        } else {
+            registerReceiver(broadcastReceiverServiceMain, filter)
+        }
     }
 
     private var broadcastReceiverServiceMain = object : BroadcastReceiver() {
@@ -269,22 +282,18 @@ class ActivityMain : AppCompatActivity() {
                     val fragment: Fragment? = supportFragmentManager.findFragmentById(
                         binding.navHostFragment.id
                     )
-                    fragment?.let { navigateTo(it, R.id.FragmentTitle) }
+                    fragment?.let {
+                        navigateTo(it, R.id.FragmentTitle)
+                    }
                 }
             }
         }
     }
-
-    fun serviceDisconnected() {
-        unregisterReceiver(broadcastReceiverServiceMain)
-    }
-
 // endregion onStart
 
     override fun onDestroy() {
         super.onDestroy()
         applicationContext.unbindService(connectionServiceMain)
-        serviceDisconnected()
         removeListeners()
     }
 
@@ -303,7 +312,7 @@ class ActivityMain : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_toolbar, menu)
-        if(MediaPlayerManager.getInstance(applicationContext).isSongInProgress() == true) {
+        if (mediaPlayerManager.isSongInProgress() == true) {
             val toolbar = binding.toolbar
             if (toolbar.menu.size() > 0)
                 toolbar.menu.getItem(MENU_ACTION_QUEUE).isVisible = true
@@ -312,17 +321,24 @@ class ActivityMain : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val mediaSession: MediaSession = MediaSession.getInstance(applicationContext)
-        val mediaPlayerManager = MediaPlayerManager.getInstance(applicationContext)
+        val mediaSession = (application as ApplicationMain).mediaSession
         when (item.itemId) {
             R.id.action_reset_probs -> {
-                mediaSession.resetProbabilities(applicationContext)
+                viewModelActivityMain.resetProbabilities(
+                    applicationContext,
+                    mediaSession
+                )
                 return true
             }
+
             R.id.action_lower_probs -> {
-                viewModelActivityMain.lowerProbs()
+                viewModelActivityMain.lowerProbabilities(
+                    applicationContext,
+                    mediaSession
+                )
                 return true
             }
+
             R.id.action_add_to_queue -> {
                 viewModelAddToQueue.actionAddToQueue(applicationContext)
                 if (viewModelActivityMain.fragmentSongVisible.value == false &&
@@ -332,10 +348,12 @@ class ActivityMain : AppCompatActivity() {
                 }
                 return true
             }
+
             R.id.action_add_to_playlist -> {
                 viewModelAddToQueue.actionAddToPlaylist(supportFragmentManager)
                 return true
             }
+
             R.id.action_queue -> {
                 val fragment: Fragment? = supportFragmentManager.findFragmentById(
                     binding.navHostFragment.id

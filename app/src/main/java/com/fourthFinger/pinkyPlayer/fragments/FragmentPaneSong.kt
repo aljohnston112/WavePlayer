@@ -17,14 +17,18 @@ import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.FragmentPaneSongBinding
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
-import com.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerManager
 
-class FragmentPaneSong : Fragment() {
+class FragmentPaneSong() : Fragment() {
 
     private var _binding: FragmentPaneSongBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModelFragmentPaneSong by viewModels<ViewModelFragmentPaneSong>()
+    private val viewModelFragmentPaneSong by viewModels<ViewModelFragmentPaneSong>{
+        ViewModelFragmentPaneSong.Factory
+    }
+    private val viewModelFragmentSong by viewModels<ViewModelFragmentSong> {
+        ViewModelFragmentSong.Factory
+    }
 
     private var songArtWidth = 0
 
@@ -45,12 +49,10 @@ class FragmentPaneSong : Fragment() {
     }
 
     private fun setUpObservers() {
-        val mediaPlayerManager =
-            MediaPlayerManager.getInstance(requireActivity().applicationContext)
-        mediaPlayerManager.currentAudioUri.observe(viewLifecycleOwner) { currentAudioUri: AudioUri? ->
+        viewModelFragmentSong.currentAudioUri.observe(viewLifecycleOwner) { currentAudioUri: AudioUri? ->
             updateSongUI(currentAudioUri)
         }
-        mediaPlayerManager.isPlaying.observe(viewLifecycleOwner) { isPlaying: Boolean? ->
+        viewModelFragmentSong.isPlaying.observe(viewLifecycleOwner) { isPlaying: Boolean? ->
             if (isPlaying != null) {
                 setUpPlayButton(isPlaying)
             }
@@ -59,11 +61,9 @@ class FragmentPaneSong : Fragment() {
 
     private val onLayoutChangeListenerSongPane =
         { _: View?, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int ->
-            val mediaPlayerManager =
-                MediaPlayerManager.getInstance(requireActivity().applicationContext)
                 songArtWidth = binding.imageViewSongPaneSongArt.width
                 setUpPrev()
-                setUpPlayButton(mediaPlayerManager.isPlaying.value?:false)
+                setUpPlayButton(viewModelFragmentSong.isPlaying.value?:false)
                 setUpNext()
         }
 
@@ -75,12 +75,10 @@ class FragmentPaneSong : Fragment() {
     }
 
     private var runnableSongPaneArtUpdater = Runnable {
-        val mediaPlayerManager =
-            MediaPlayerManager.getInstance(requireActivity().applicationContext)
         val imageViewSongPaneSongArt: ImageView = binding.imageViewSongPaneSongArt
         if (songArtWidth > 0) {
             val bitmapSongArt: Bitmap? = BitmapUtil.getThumbnailBitmap(
-                mediaPlayerManager.currentAudioUri.value,
+                viewModelFragmentSong.currentAudioUri.value,
                 songArtWidth,
                 requireActivity().applicationContext
             )

@@ -10,7 +10,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import java.util.*
 
-class MediaPlayerManager private constructor(context: Context) {
+class MediaPlayerManager private constructor() {
 
     private var haveAudioFocus: Boolean = false
     private var _songInProgress: MutableLiveData<Boolean> = MutableLiveData(false)
@@ -30,6 +30,26 @@ class MediaPlayerManager private constructor(context: Context) {
     val currentAudioUri = _currentAudioUri as LiveData<AudioUri>
     fun setCurrentAudioUri(audioUri: AudioUri) {
         _currentAudioUri.value = (audioUri)
+    }
+
+    lateinit var onCompletionListener: MediaPlayer.OnCompletionListener
+
+    fun setUp(
+        context: Context,
+        mediaSession: MediaSession
+    ) {
+        onCompletionListener = MediaPlayer.OnCompletionListener {
+            mediaSession.playNext(context)
+        }
+        onErrorListener = MediaPlayer.OnErrorListener { _: MediaPlayer?, _: Int, _: Int ->
+            synchronized(MediaPlayerWUri.lock) {
+                releaseMediaPlayers()
+                if (isSongInProgress() == false) {
+                    mediaSession.playNext(context)
+                }
+                return@OnErrorListener false
+            }
+        }
     }
 
     fun getCurrentTime(): Int {
@@ -65,31 +85,17 @@ class MediaPlayerManager private constructor(context: Context) {
         _songInProgress.value = false
     }
 
-    fun cleanUp(context: Context) {
-        val mediaSession = MediaSession.getInstance(context)
+    fun cleanUp(
+        context: Context,
+        mediaSession: MediaSession
+    ) {
         if (isPlaying.value == true) {
             mediaSession.pauseOrPlay(context)
         }
         releaseMediaPlayers()
     }
 
-    val onCompletionListener: MediaPlayer.OnCompletionListener =
-        MediaPlayer.OnCompletionListener {
-            val mediaSession = MediaSession.getInstance(context)
-            mediaSession.playNext(context)
-        }
-
-    var onErrorListener: MediaPlayer.OnErrorListener =
-        MediaPlayer.OnErrorListener { _: MediaPlayer?, _: Int, _: Int ->
-            synchronized(MediaPlayerWUri.lock) {
-                val mediaSession: MediaSession = MediaSession.getInstance(context)
-                releaseMediaPlayers()
-                if (isSongInProgress() == false) {
-                    mediaSession.playNext(context)
-                }
-                return@OnErrorListener false
-            }
-        }
+    lateinit var onErrorListener: MediaPlayer.OnErrorListener
 
     private fun requestAudioFocus(context: Context): Boolean {
         if (haveAudioFocus) {
@@ -111,6 +117,7 @@ class MediaPlayerManager private constructor(context: Context) {
                                 }
                             }
                         }
+
                         AudioManager.AUDIOFOCUS_LOSS -> {
                             synchronized(lock) {
                                 haveAudioFocus = false
@@ -183,7 +190,10 @@ class MediaPlayerManager private constructor(context: Context) {
         setIsPlaying(false)
     }
 
-    fun playLoopingOne(context: Context) {
+    fun playLoopingOne(
+        context: Context,
+        mediaPlayerManager: MediaPlayerManager,
+    ) {
         val mediaPlayerWURI: MediaPlayerWUri? = getCurrentMediaPlayerWUri()
         if (mediaPlayerWURI != null) {
             currentAudioUri.value?.let {
@@ -194,11 +204,17 @@ class MediaPlayerManager private constructor(context: Context) {
                 //addToQueueAtCurrentIndex(currentSong.getUri());
             }
         } else {
-            currentAudioUri.value?.let { makeIfNeededAndPlay(context, it.id) }
+            currentAudioUri.value?.let {
+                makeIfNeededAndPlay(context, mediaPlayerManager, it.id)
+            }
         }
     }
 
-    fun makeIfNeededAndPlay(context: Context, songID: Long) {
+    fun makeIfNeededAndPlay(
+        context: Context,
+        mediaPlayerManager: MediaPlayerManager,
+        songID: Long
+    ) {
         val audioUriCurrent = AudioUri.getAudioUri(context, songID)
         if (audioUriCurrent != null) {
             setCurrentAudioUri(audioUriCurrent)
@@ -207,7 +223,7 @@ class MediaPlayerManager private constructor(context: Context) {
         if (mediaPlayerWUri == null) {
             try {
                 mediaPlayerWUri = MediaPlayerWUri(
-                    context,
+                    mediaPlayerManager,
                     MediaPlayer.create(context, AudioUri.getUri(songID)),
                     songID
                 )
@@ -233,9 +249,9 @@ class MediaPlayerManager private constructor(context: Context) {
 
         private var INSTANCE: MediaPlayerManager? = null
 
-        fun getInstance(context: Context): MediaPlayerManager {
+        fun getInstance(): MediaPlayerManager {
             if (INSTANCE == null) {
-                INSTANCE = MediaPlayerManager(context)
+                INSTANCE = MediaPlayerManager()
             }
             return INSTANCE!!
         }

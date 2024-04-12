@@ -1,9 +1,11 @@
 package com.fourthFinger.pinkyPlayer.fragments
 
+import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -29,9 +31,15 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
     private var _binding: RecyclerViewSongListBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
-    private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>()
-    private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>()
+    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>{
+        ViewModelActivityMain.Factory
+    }
+    private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>{
+        ViewModelPlaylists.Factory
+    }
+    private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>{
+        ViewModelUserPicks.Factory
+    }
 
     private var recyclerViewSongList: RecyclerView? = null
     private lateinit var recyclerViewAdapter: RecyclerViewAdapterSelectSongs
@@ -78,8 +86,11 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
         intentFilter.addCategory(Intent.CATEGORY_DEFAULT)
         intentFilter.addAction(requireActivity().resources.getString(
                 R.string.action_service_connected))
-        requireActivity().registerReceiver(broadcastReceiver, intentFilter)
-    }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requireActivity().registerReceiver(broadcastReceiver, intentFilter, Service.RECEIVER_EXPORTED)
+        } else {
+            requireActivity().registerReceiver(broadcastReceiver, intentFilter)
+        }    }
 
     private val broadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {

@@ -32,7 +32,7 @@ class Song(
     }
 
     override fun hashCode(): Int {
-        return System.identityHashCode(title)
+        return title.hashCode()
     }
 
 }

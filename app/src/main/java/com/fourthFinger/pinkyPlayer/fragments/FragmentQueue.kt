@@ -1,9 +1,11 @@
 package com.fourthFinger.pinkyPlayer.fragments
 
+import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -27,14 +29,23 @@ import com.fourthFinger.pinkyPlayer.random_playlist.SongQueue
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
 
-class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs {
+class FragmentQueue() : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs {
 
     private var _binding: RecyclerViewSongListBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
-    private val viewModelAddToQueue by activityViewModels<ViewModelAddToQueue>()
-    private val viewModelFragmentQueue by activityViewModels<ViewModelFragmentQueue>()
+    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>{
+        ViewModelActivityMain.Factory
+    }
+    private val viewModelAddToQueue by activityViewModels<ViewModelAddToQueue>{
+        ViewModelAddToQueue.Factory
+    }
+    private val viewModelFragmentQueue by activityViewModels<ViewModelFragmentQueue>{
+        ViewModelFragmentQueue.Factory
+    }
+    private val viewModelFragmentSong by activityViewModels<ViewModelFragmentSong>{
+        ViewModelFragmentSong.Factory
+    }
 
     private var broadcastReceiver: BroadcastReceiver? = null
 
@@ -54,8 +65,7 @@ class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val songQueue = SongQueue.getInstance()
-        songQueue.songQueue.observe(viewLifecycleOwner){
+        viewModelFragmentQueue.songQueue.observe(viewLifecycleOwner){
             if(::recyclerViewAdapterSongs.isInitialized) {
                 recyclerViewAdapterSongs.updateList(it.toList())
             }
@@ -73,12 +83,11 @@ class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
     }
 
     private fun setUpRecyclerView() {
-        val songQueue = SongQueue.getInstance()
         recyclerViewSongList = binding.recyclerViewSongList
         recyclerViewSongList?.layoutManager = LinearLayoutManager(recyclerViewSongList?.context)
         recyclerViewAdapterSongs = RecyclerViewAdapterSongs(
             this,
-            songQueue.queue().toList()
+            viewModelFragmentQueue.songQueue.value!!.toList()
         )
         recyclerViewSongList?.adapter = recyclerViewAdapterSongs
         val itemTouchHelperCallback = object : ItemTouchHelper.Callback() {
@@ -94,7 +103,7 @@ class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
                 viewHolder: RecyclerView.ViewHolder,
                 target: RecyclerView.ViewHolder
             ): Boolean {
-                songQueue.notifySongMoved(
+                viewModelFragmentQueue.notifySongMoved(
                     viewHolder.absoluteAdapterPosition,
                     target.absoluteAdapterPosition
                 )
@@ -107,21 +116,20 @@ class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val position = viewHolder.absoluteAdapterPosition
-                if(songQueue.notifySongRemoved(position)){
+                if(viewModelFragmentQueue.notifySongRemoved(position)){
                     val context = requireActivity().applicationContext
-                    val mediaSession = MediaSession.getInstance(context)
-                    mediaSession.pauseOrPlay(context)
-                    mediaSession.playNext(context)
+                    viewModelFragmentSong.playPauseClicked(context)
+                    viewModelFragmentSong.playNext(context)
                 }
-                recyclerViewAdapterSongs.updateList(songQueue.queue().toList())
+                recyclerViewAdapterSongs.updateList(viewModelFragmentQueue.songQueue.value!!.toList())
                 val snackBar: Snackbar = Snackbar.make(
                     binding.recyclerViewSongList,
                     R.string.song_removed,
                     BaseTransientBottomBar.LENGTH_LONG
                 )
                 snackBar.setAction(R.string.undo) {
-                    songQueue.notifyItemInserted(position)
-                    recyclerViewAdapterSongs.updateList(songQueue.queue().toList())
+                    viewModelFragmentQueue.notifyItemInserted(position)
+                    recyclerViewAdapterSongs.updateList(viewModelFragmentQueue.songQueue.value!!.toList())
                 }
                 snackBar.show()
             }
@@ -155,8 +163,11 @@ class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
                 }
             }
         }
-        requireActivity().registerReceiver(broadcastReceiver, filterComplete)
-    }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requireActivity().registerReceiver(broadcastReceiver, filterComplete, Service.RECEIVER_EXPORTED)
+        } else {
+            requireActivity().registerReceiver(broadcastReceiver, filterComplete)
+        }    }
 
     override fun onResume() {
         super.onResume()

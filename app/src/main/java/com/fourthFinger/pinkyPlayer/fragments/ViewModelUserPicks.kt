@@ -1,11 +1,15 @@
 package com.fourthFinger.pinkyPlayer.fragments
 
-import android.app.Application
 import android.content.Context
 import androidx.annotation.GuardedBy
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.navigation.NavController
+import com.fourthFinger.pinkyPlayer.ApplicationMain
 import com.fourthFinger.pinkyPlayer.NavUtil
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.ToastUtil
@@ -14,13 +18,16 @@ import com.fourthFinger.pinkyPlayer.random_playlist.*
 import com.fourthFinger.pinkyPlayer.settings.SettingsRepo
 import java.util.*
 
-class ViewModelUserPicks(application: Application) : AndroidViewModel(application) {
+class ViewModelUserPicks(
+    val settingsRepo: SettingsRepo,
+    val playlistsRepo: PlaylistsRepo,
+    val mediaSession: MediaSession,
+    val mediaPlayerManager: MediaPlayerManager,
+    val songQueue: SongQueue,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
     // TODO log user picked songs and playlist during program run to verify correct operation
-
-    private val settingsRepo = SettingsRepo.getInstance(application)
-    private val playlistsRepo = PlaylistsRepo.getInstance(application)
-    private val songQueue = SongQueue.getInstance()
 
     @GuardedBy("this")
     private val userPickedSongs: MutableList<Song> = mutableListOf()
@@ -65,8 +72,6 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
     }
 
     fun songClicked(context: Context, navController: NavController, song: Song) {
-        val mediaPlayerManager = MediaPlayerManager.getInstance(context)
-        val mediaSession: MediaSession = MediaSession.getInstance(context)
         synchronized(ActivityMain.MUSIC_CONTROL_LOCK) {
             // TODO pass this in?
             if (song == mediaPlayerManager.currentAudioUri.value?.id?.let {
@@ -80,7 +85,7 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
             } else if(navController.currentDestination?.id == R.id.fragmentSongs){
                 mediaSession.setCurrentPlaylistToMaster()
             }
-            songQueue.newSessionStarted(context, song.id)
+            songQueue.newSessionStarted(song.id)
             mediaSession.playNext(context)
         }
         if (navController.currentDestination?.id == R.id.fragmentPlaylist) {
@@ -174,6 +179,7 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
         playlistsRepo.removePlaylist(context, finalPlaylist)
         finalPlaylist.setName(
             context,
+            playlistsRepo,
             playlistName
         )
         removeMissingSongs(context, finalPlaylist)
@@ -184,7 +190,7 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
         val songs = finalPlaylist.getSongs()
         for (song in songs) {
             if (!userPickedSongs.contains(song)) {
-                finalPlaylist.remove(context, song)
+                finalPlaylist.remove(context, playlistsRepo, song)
             }
         }
     }
@@ -193,6 +199,7 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
         for (song in userPickedSongs) {
             finalPlaylist.add(
                 context,
+                playlistsRepo,
                 song
             )
             song.setSelected(false)
@@ -206,7 +213,8 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
             playlistName,
             userPickedSongs,
             false,
-            settingsRepo.settings.maxPercent
+            settingsRepo.settings.value!!.maxPercent,
+            playlistsRepo
         )
         playlistsRepo.addPlaylist(context, finalPlaylist)
     }
@@ -242,6 +250,7 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
         // TODO make sure changes are persistent across app restarts
         userPickedPlaylist?.swapSongPositions(
             context,
+            playlistsRepo,
             fromPosition,
             toPosition
         )
@@ -262,7 +271,7 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
                 NavUtil.popBackStack(fragment)
             }
         } else {
-            songForUndo?.let { userPickedPlaylist?.remove(context, it) }
+            songForUndo?.let { userPickedPlaylist?.remove(context, playlistsRepo, it) }
         }
     }
 
@@ -270,7 +279,8 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
         songForUndo?.let {
             probabilityForUndo?.let { it1 ->
                 userPickedPlaylist?.add(
-                    getApplication<Application>().applicationContext,
+                    context,
+                    playlistsRepo,
                     it,
                     it1
                 )
@@ -279,6 +289,7 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
         userPickedPlaylist?.let {
             it.switchSongPositions(
                 context,
+                playlistsRepo,
                 it.size() - 1,
                 position
             )
@@ -303,6 +314,28 @@ class ViewModelUserPicks(application: Application) : AndroidViewModel(applicatio
             }
         }
         return sifted
+    }
+
+    companion object {
+
+        val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(
+                modelClass: Class<T>,
+                extras: CreationExtras
+            ): T {
+                val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
+                val savedStateHandle = extras.createSavedStateHandle()
+                return ViewModelUserPicks(
+                    (application as ApplicationMain).settingsRepo,
+                    application.playlistsRepo,
+                    application.mediaSession,
+                    application.mediaPlayerManager,
+                    application.songQueue,
+                    savedStateHandle
+                ) as T
+            }
+        }
     }
 
 }

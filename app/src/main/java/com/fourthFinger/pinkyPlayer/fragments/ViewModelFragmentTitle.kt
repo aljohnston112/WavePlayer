@@ -1,14 +1,17 @@
 package com.fourthFinger.pinkyPlayer.fragments
 
-import android.app.Application
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.provider.MediaStore
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.navigation.NavController
+import com.fourthFinger.pinkyPlayer.ApplicationMain
 import com.fourthFinger.pinkyPlayer.NavUtil
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
@@ -17,9 +20,12 @@ import com.fourthFinger.pinkyPlayer.random_playlist.Song
 import com.fourthFinger.pinkyPlayer.settings.SettingsRepo
 
 
-class ViewModelFragmentTitle(application: Application) : AndroidViewModel(application) {
+class ViewModelFragmentTitle(
+    val settingsRepo: SettingsRepo,
+    val playlistsRepo: PlaylistsRepo,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
-    private val settingsRepo = SettingsRepo.getInstance(application)
 
     private var songs: MutableList<Song> = mutableListOf()
 
@@ -55,7 +61,6 @@ class ViewModelFragmentTitle(application: Application) : AndroidViewModel(applic
         contentResolver: ContentResolver,
         uri: Uri
     ): RandomPlaylist? {
-        val playlistsRepo = PlaylistsRepo.getInstance(context)
         getFilesFromDirRecursive(contentResolver, uri)
         if (songs.isNotEmpty()) {
             var randomPlaylist: RandomPlaylist? = uri.path?.let {
@@ -68,7 +73,8 @@ class ViewModelFragmentTitle(application: Application) : AndroidViewModel(applic
                         it,
                         songs,
                         false,
-                        settingsRepo.settings.maxPercent
+                        settingsRepo.settings.value!!.maxPercent,
+                        playlistsRepo
                     )
                 }
                 if (randomPlaylist != null) {
@@ -166,6 +172,7 @@ class ViewModelFragmentTitle(application: Application) : AndroidViewModel(applic
             if (!randomPlaylist.contains(song.id)) {
                 randomPlaylist.add(
                     context,
+                    playlistsRepo,
                     song
                 )
             }
@@ -175,10 +182,31 @@ class ViewModelFragmentTitle(application: Application) : AndroidViewModel(applic
     private fun removeMissingSongs(context: Context, randomPlaylist: RandomPlaylist) {
         for (song in randomPlaylist.getSongs()) {
             if (!songs.contains(song)) {
-                randomPlaylist.remove(context, song)
+                randomPlaylist.remove(context, playlistsRepo, song)
                 songs.remove(song)
             }
         }
+    }
+
+    companion object {
+
+        val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(
+                modelClass: Class<T>,
+                extras: CreationExtras
+            ): T {
+                val application =
+                    checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
+                val savedStateHandle = extras.createSavedStateHandle()
+                return ViewModelFragmentTitle(
+                    (application as ApplicationMain).settingsRepo,
+                    application.playlistsRepo,
+                    savedStateHandle
+                ) as T
+            }
+        }
+
     }
 
 }

@@ -60,9 +60,6 @@ sealed class ProbFun<T>(
 
     init {
         Objects.requireNonNull(choices)
-        require(choices.isNotEmpty()) {
-            "Must have at least 1 element in the choices passed to the ProbFunTree constructor\n"
-        }
         require(choices.size < 2000000000000000) {
             "ProbFun will not work with a size greater than 2,000,000,000,000,000"
         }
@@ -77,7 +74,9 @@ sealed class ProbFun<T>(
         for (choice in choices) {
             probabilityMap[choice] = 1.0 / choices.size
         }
-        fixProbSum()
+        if(choices.isNotEmpty()) {
+            fixProbSum()
+        }
     }
 
     /**
@@ -91,7 +90,10 @@ sealed class ProbFun<T>(
     fun add(element: T) {
         Objects.requireNonNull(element)
         if (!probabilityMap.containsKey(element)) {
-            val probability = 1.0 / probabilityMap.size
+            var probability = 1.0 / probabilityMap.size
+            if(probabilityMap.isEmpty()){
+                probability = 1.0
+            }
             probabilityMap[element] = probability
             scaleProbs()
         }

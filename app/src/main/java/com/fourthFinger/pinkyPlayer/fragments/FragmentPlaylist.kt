@@ -1,9 +1,11 @@
 package com.fourthFinger.pinkyPlayer.fragments
 
+import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -34,9 +36,15 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
     private var _binding: RecyclerViewSongListBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
-    private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>()
-    private val viewModelAddToQueue by activityViewModels<ViewModelAddToQueue>()
+    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>{
+        ViewModelActivityMain.Factory
+    }
+    private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>{
+        ViewModelUserPicks.Factory
+    }
+    private val viewModelAddToQueue by activityViewModels<ViewModelAddToQueue>{
+        ViewModelAddToQueue.Factory
+    }
 
     private var broadcastReceiver: BroadcastReceiver? = null
 
@@ -178,7 +186,11 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
                 }
             }
         }
-        requireActivity().registerReceiver(broadcastReceiver, filterComplete)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requireActivity().registerReceiver(broadcastReceiver, filterComplete, Service.RECEIVER_EXPORTED)
+        } else {
+            requireActivity().registerReceiver(broadcastReceiver, filterComplete)
+        }
     }
 
     override fun onResume() {

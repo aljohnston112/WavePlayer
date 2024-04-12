@@ -6,8 +6,8 @@ import android.media.MediaPlayer.OnPreparedListener
 import android.os.Build
 import java.util.*
 
-class MediaPlayerWUri constructor(
-    context: Context,
+class MediaPlayerWUri(
+    val mediaPlayerManager: MediaPlayerManager,
     private var mediaPlayer: MediaPlayer,
     val id: Long
 ) {
@@ -68,7 +68,10 @@ class MediaPlayerWUri constructor(
         }
     }
 
-    fun stop(context: Context, audioUri: AudioUri) {
+    fun stop(
+        context: Context,
+        audioUri: AudioUri
+    ) {
         synchronized(lock) {
             isPrepared = false
             shouldPlay = false
@@ -86,7 +89,11 @@ class MediaPlayerWUri constructor(
         }
     }
 
-    fun seekTo(context: Context, audioUri: AudioUri, millis: Int) {
+    fun seekTo(
+        context: Context,
+        audioUri: AudioUri,
+        millis: Int
+    ) {
         synchronized(lock) {
             if (isPrepared) {
                 if (resetIfMKV(audioUri, context)) {
@@ -102,11 +109,13 @@ class MediaPlayerWUri constructor(
         }
     }
 
-    private fun resetIfMKV(audioUri: AudioUri, context: Context): Boolean {
+    private fun resetIfMKV(
+        audioUri: AudioUri,
+        context: Context
+    ): Boolean {
         val s: Array<String> = audioUri.displayName.split("\\.").toTypedArray()
         if (s.isNotEmpty()) {
             if ((s[s.size - 1].lowercase(Locale.ROOT) == "mkv")) {
-                val mediaPlayerManager = MediaPlayerManager.getInstance(context)
                 mediaPlayer.reset()
                 mediaPlayer.release()
                 mediaPlayer = MediaPlayer.create(context, audioUri.getUri())
@@ -125,7 +134,6 @@ class MediaPlayerWUri constructor(
         synchronized(this) {
             isPrepared = true
             if (shouldPlay) {
-                val mediaPlayerManager = MediaPlayerManager.getInstance(context)
                 mediaPlayer.setOnCompletionListener(mediaPlayerManager.onCompletionListener)
                 mediaPlayer.start()
                 shouldPlay = false
@@ -138,7 +146,6 @@ class MediaPlayerWUri constructor(
     }
 
     init {
-        val mediaPlayerManager = MediaPlayerManager.getInstance(context)
         mediaPlayer.setOnPreparedListener(null)
         mediaPlayer.setOnErrorListener(null)
         mediaPlayer.setOnPreparedListener(mOnPreparedListener)

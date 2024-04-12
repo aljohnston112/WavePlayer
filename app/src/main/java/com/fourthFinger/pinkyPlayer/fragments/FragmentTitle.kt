@@ -21,9 +21,15 @@ class FragmentTitle : Fragment() {
     private var _binding: FragmentTitleBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>()
-    private val viewModelFragmentTitle by viewModels<ViewModelFragmentTitle>()
-    private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>()
+    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>{
+        ViewModelActivityMain.Factory
+    }
+    private val viewModelFragmentTitle by viewModels<ViewModelFragmentTitle>{
+        ViewModelFragmentTitle.Factory
+    }
+    private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>{
+        ViewModelUserPicks.Factory
+    }
 
     private lateinit var getUri: ActivityResultLauncher<Uri?>
 

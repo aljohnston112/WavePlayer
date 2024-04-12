@@ -1,17 +1,23 @@
 package com.fourthFinger.pinkyPlayer.fragments
 
-import android.app.Application
 import android.content.Context
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.CreationExtras
+import com.fourthFinger.pinkyPlayer.ApplicationMain
 import com.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
 import com.fourthFinger.pinkyPlayer.random_playlist.SaveFile
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
 import java.util.*
 
-class ViewModelPlaylists(application: Application) : AndroidViewModel(application) {
-
-    private val playlistsRepo = PlaylistsRepo.getInstance(application)
+class ViewModelPlaylists(
+    val playlistsRepo: PlaylistsRepo,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
     fun getPlaylists(): List<RandomPlaylist> {
         return playlistsRepo.getPlaylists()
@@ -28,7 +34,7 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
             fromPosition,
             toPosition
         )
-        SaveFile.saveFile(context)
+        SaveFile.saveFile(context, playlistsRepo)
     }
 
     private var playlistForUndo: RandomPlaylist? = null
@@ -65,6 +71,28 @@ class ViewModelPlaylists(application: Application) : AndroidViewModel(applicatio
             }
         }
         return sifted
+    }
+
+    fun getPlaylistTitles(): Array<String> {
+        return playlistsRepo.getPlaylistTitles()
+    }
+
+    companion object {
+
+        val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(
+                modelClass: Class<T>,
+                extras: CreationExtras
+            ): T {
+                val application = checkNotNull(extras[APPLICATION_KEY])
+                val savedStateHandle = extras.createSavedStateHandle()
+                return ViewModelPlaylists(
+                    (application as ApplicationMain).playlistsRepo,
+                    savedStateHandle
+                ) as T
+            }
+        }
     }
 
 }
