@@ -9,8 +9,8 @@ interface SongDAO {
     fun insertAll(vararg songs: Song)
     @Delete
     fun delete(user: Song)
-    @Query("SELECT * FROM songs WHERE id = :song_id")
-    fun getSong(song_id: Long): Song?
+    @Query("SELECT * FROM songs WHERE id = :songId")
+    fun getSong(songId: Long): Song?
     @Query("SELECT * FROM songs")
     fun getAll(): MutableList<Song>
     @Query("DELETE FROM songs")

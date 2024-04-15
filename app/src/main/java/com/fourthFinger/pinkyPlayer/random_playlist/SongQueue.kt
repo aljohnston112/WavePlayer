@@ -1,10 +1,9 @@
 package com.fourthFinger.pinkyPlayer.random_playlist
 
-import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.map
-import java.util.*
+import java.util.LinkedList
 
 class SongQueue private constructor(
     val playlistsRepo: PlaylistsRepo

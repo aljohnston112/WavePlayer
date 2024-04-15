@@ -63,8 +63,7 @@
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                android:theme="@style/ThemeOverlay.MaterialComponents.ActionBar"
-                app:popupTheme="@style/ThemeOverlay.MaterialComponents.Light">
+                android:theme="@style/ThemeOverlay.MaterialComponents.ActionBar">
 
                 <TextView
                     android:id="@+id/toolbar_title"

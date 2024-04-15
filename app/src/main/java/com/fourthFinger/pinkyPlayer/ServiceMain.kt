@@ -254,12 +254,9 @@ class ServiceMain : LifecycleService() {
     }
 
     private fun setUpBroadCastsForNotificationButtons() {
-        val TAG = "ServiceMain"
-        Log.v(TAG, "Setting up broadcasts");
         setUpBroadcastNext()
         setUpBroadcastPlayPause()
         setUpBroadcastPrevious()
-        Log.v(TAG, "Done setting up broadcasts");
     }
 
     @SuppressLint("UnspecifiedImmutableFlag")

@@ -18,7 +18,7 @@ import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.FragmentPaneSongBinding
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 
-class FragmentPaneSong() : Fragment() {
+class FragmentPaneSong : Fragment() {
 
     private var _binding: FragmentPaneSongBinding? = null
     private val binding get() = _binding!!

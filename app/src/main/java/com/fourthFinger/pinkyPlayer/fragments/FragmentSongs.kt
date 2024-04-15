@@ -159,18 +159,16 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         setUpToolbar()
     }
 
-    override fun onMenuItemClickAddToPlaylist(song: Song): Boolean {
+    override fun onMenuItemClickAddToPlaylist(song: Song) {
         val bundle = Bundle()
         bundle.putSerializable(DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, song)
         val dialogFragmentAddToPlaylist = DialogFragmentAddToPlaylist()
         dialogFragmentAddToPlaylist.arguments = bundle
         dialogFragmentAddToPlaylist.show(parentFragmentManager, tag)
-        return true
     }
 
-    override fun onMenuItemClickAddToQueue(song: Song): Boolean {
+    override fun onMenuItemClickAddToQueue(song: Song) {
         viewModelAddToQueue.addToQueue(requireActivity().applicationContext, song)
-        return true
     }
 
     override fun onClickViewHolder(pos: Int, song: Song) {

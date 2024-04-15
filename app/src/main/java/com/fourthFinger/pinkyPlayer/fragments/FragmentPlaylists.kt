@@ -222,7 +222,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
         }
     }
 
-    override fun onMenuItemClickAddToPlaylist(randomPlaylist: RandomPlaylist): Boolean {
+    override fun onMenuItemClickAddToPlaylist(randomPlaylist: RandomPlaylist) {
         val bundle = Bundle()
         bundle.putSerializable(
             DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST,
@@ -231,12 +231,10 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
         val dialogFragmentAddToPlaylist = DialogFragmentAddToPlaylist()
         dialogFragmentAddToPlaylist.arguments = bundle
         dialogFragmentAddToPlaylist.show(parentFragmentManager, tag)
-        return true
     }
 
-    override fun onMenuItemClickAddToQueue(randomPlaylist: RandomPlaylist): Boolean {
+    override fun onMenuItemClickAddToQueue(randomPlaylist: RandomPlaylist) {
         viewModelAddToQueue.addToQueue(requireActivity().applicationContext, randomPlaylist)
-        return true
     }
 
     override fun onClickViewHolder(randomPlaylist: RandomPlaylist) {

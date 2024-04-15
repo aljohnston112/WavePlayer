@@ -15,22 +15,24 @@ import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 
 class ViewModelFragmentPaneSong(
     val mediaSession: MediaSession,
-    val mediaPlayerManager: MediaPlayerManager,
     savedStateHandle: SavedStateHandle
 ): ViewModel() {
 
     fun clicked(fragment: Fragment, @IdRes id: Int) {
         val context = fragment.requireActivity().applicationContext
-        if (id == R.id.imageButtonSongPaneNext) {
-            mediaSession.playNext(context)
-        } else if (id == R.id.imageButtonSongPanePlayPause) {
-            mediaSession.pauseOrPlay(context)
-        } else if (id == R.id.imageButtonSongPanePrev) {
-            mediaSession.playPrevious(context)
-        } else if (id == R.id.textViewSongPaneSongName ||
-            id == R.id.imageViewSongPaneSongArt
-        ) {
-            NavUtil.navigateTo(fragment, R.id.fragmentSong)
+        when (id) {
+            R.id.imageButtonSongPaneNext -> {
+                mediaSession.playNext(context)
+            }
+            R.id.imageButtonSongPanePlayPause -> {
+                mediaSession.pauseOrPlay(context)
+            }
+            R.id.imageButtonSongPanePrev -> {
+                mediaSession.playPrevious(context)
+            }
+            R.id.textViewSongPaneSongName, R.id.imageViewSongPaneSongArt -> {
+                NavUtil.navigateTo(fragment, R.id.fragmentSong)
+            }
         }
     }
 
@@ -47,7 +49,6 @@ class ViewModelFragmentPaneSong(
                 val savedStateHandle = extras.createSavedStateHandle()
                 return ViewModelFragmentPaneSong(
                     (application as ApplicationMain).mediaSession,
-                    application.mediaPlayerManager,
                     savedStateHandle
                 ) as T
             }

@@ -32,7 +32,8 @@ class ApplicationMain : Application() {
         mediaSession = MediaSession.getInstance(
             playlistsRepo,
             mediaPlayerManager,
-            songQueue)
+            songQueue
+        )
         mediaPlayerManager.setUp(
             this,
             mediaSession

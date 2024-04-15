@@ -23,13 +23,11 @@ import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.DialogFragmentAddToPlaylist
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.RecyclerViewSongListBinding
-import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
-import com.fourthFinger.pinkyPlayer.random_playlist.SongQueue
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
 
-class FragmentQueue() : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs {
+class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs {
 
     private var _binding: RecyclerViewSongListBinding? = null
     private val binding get() = _binding!!
@@ -186,18 +184,16 @@ class FragmentQueue() : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSon
         menu.getItem(ActivityMain.MENU_ACTION_QUEUE).isVisible = false
     }
 
-    override fun onMenuItemClickAddToPlaylist(song: Song): Boolean {
+    override fun onMenuItemClickAddToPlaylist(song: Song) {
         val bundle = Bundle()
         bundle.putSerializable(DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, song)
         val dialogFragment: DialogFragment = DialogFragmentAddToPlaylist()
         dialogFragment.arguments = bundle
         dialogFragment.show(parentFragmentManager, tag)
-        return true
     }
 
-    override fun onMenuItemClickAddToQueue(song: Song): Boolean {
+    override fun onMenuItemClickAddToQueue(song: Song) {
         viewModelAddToQueue.addToQueue(requireActivity().applicationContext, song)
-        return true
     }
 
     override fun onClickViewHolder(pos: Int, song: Song) {

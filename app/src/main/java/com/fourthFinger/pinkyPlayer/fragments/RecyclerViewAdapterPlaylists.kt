@@ -20,8 +20,8 @@ class RecyclerViewAdapterPlaylists(
 
     interface ListenerCallbackPlaylists {
         fun onClickViewHolder(randomPlaylist: RandomPlaylist)
-        fun onMenuItemClickAddToPlaylist(randomPlaylist: RandomPlaylist): Boolean
-        fun onMenuItemClickAddToQueue(randomPlaylist: RandomPlaylist): Boolean
+        fun onMenuItemClickAddToPlaylist(randomPlaylist: RandomPlaylist)
+        fun onMenuItemClickAddToQueue(randomPlaylist: RandomPlaylist)
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -47,17 +47,17 @@ class RecyclerViewAdapterPlaylists(
             val itemAddToPlaylist = menu?.add(R.string.add_to_playlist)
             itemAddToPlaylist?.setOnMenuItemClickListener {
                 listenerCallbackPlaylists.onMenuItemClickAddToPlaylist(randomPlaylists[position])
+                true
             }
             val itemAddToQueue = menu?.add(R.string.add_to_queue)
             itemAddToQueue?.setOnMenuItemClickListener {
                 listenerCallbackPlaylists.onMenuItemClickAddToQueue(randomPlaylists[position])
+                true
             }
         }
         holder.handle.setOnClickListener { holder.handle.performLongClick() }
         holder.playlistView.setOnClickListener {
-            if (position != RecyclerView.NO_POSITION) {
                 listenerCallbackPlaylists.onClickViewHolder(randomPlaylists[position])
-            }
         }
     }
 

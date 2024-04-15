@@ -42,15 +42,17 @@ class BitmapUtil {
                         null)
 
                 } catch (e: FileNotFoundException) {
-
+                    bitmap = null
                 }
             } else {
                 val mmr = MediaMetadataRetriever()
                 try {
-                    mmr.setDataSource(context.contentResolver.openFileDescriptor(
+                    context.contentResolver.openFileDescriptor(
                         uri,
-                        "r")
-                        ?.fileDescriptor)
+                        "r"
+                    )?.use {
+                        mmr.setDataSource(it.fileDescriptor)
+                    }
                 } catch (e: FileNotFoundException) {
                     e.printStackTrace()
                 }
@@ -69,7 +71,7 @@ class BitmapUtil {
 
         fun getDefaultBitmap(songArtWidth: Int, context: Context): Bitmap? {
             // TODO cache bitmap
-            if (songArtWidth > 0 && songArtWidth > 0) {
+            if (songArtWidth > 0) {
                 val drawableSongArt: Drawable? = ResourcesCompat.getDrawable(
                     context.resources,
                     R.drawable.music_note_black_48dp,

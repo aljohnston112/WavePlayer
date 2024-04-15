@@ -94,6 +94,6 @@
         android:id="@+id/fragmentQueue"
         android:name="com.fourthFinger.pinkyPlayer.fragments.FragmentQueue"
         android:label="fragment_queue"
-        tools:layout="@layout/fragment_queue" />
+        tools:layout="@layout/recycler_view_song_list" />
 
 </navigation>

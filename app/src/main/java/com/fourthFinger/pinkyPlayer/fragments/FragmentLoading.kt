@@ -1,6 +1,7 @@
 package com.fourthFinger.pinkyPlayer.fragments
 
 import android.Manifest
+import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -9,10 +10,12 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -27,12 +30,14 @@ class FragmentLoading : Fragment() {
     private var _binding: FragmentLoadingBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>{
+    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain> {
         ViewModelActivityMain.Factory
     }
-    private val viewModelFragmentLoading by activityViewModels<ViewModelFragmentLoading>{
+    private val viewModelFragmentLoading by activityViewModels<ViewModelFragmentLoading> {
         ViewModelFragmentLoading.Factory
     }
+
+    private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
 
     // TODO don't show loading screen when user denies permission
     // TODO rerun scan after user comes back from settings screen
@@ -43,7 +48,7 @@ class FragmentLoading : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         setUpObservers()
-        requestPermissionsAndLoadMusicFiles()
+        registerPermissions()
         _binding = FragmentLoadingBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -65,16 +70,26 @@ class FragmentLoading : Fragment() {
                 val textView: TextView = binding.textViewLoading
                 textView.post { textView.text = loadingText }
             }
+        viewModelFragmentLoading.showLoadingBar
+            .observe(viewLifecycleOwner) { showLoadingBar: Boolean ->
+                if (showLoadingBar) {
+                    binding.progressBarLoading.visibility = VISIBLE
+                }
+            }
     }
 
-    private fun requestPermissionsAndLoadMusicFiles() {
+    private fun registerPermissions() {
+        registerAudioPermission()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requestPermission(Manifest.permission.READ_MEDIA_AUDIO)
-        } else if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
-            requestPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+            registerPermission(Manifest.permission.POST_NOTIFICATIONS)
         }
+    }
+
+    private fun registerAudioPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requestPermission(Manifest.permission.POST_NOTIFICATIONS)
+            registerPermission(Manifest.permission.READ_MEDIA_AUDIO)
+        } else {
+            registerPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
     }
 
@@ -83,49 +98,112 @@ class FragmentLoading : Fragment() {
      *
      * @param permission The [Manifest.permission] to request.
      */
-    private fun requestPermission(permission: String) {
+    private fun registerPermission(permission: String) {
 
-        val requestPermissionLauncher = registerForActivityResult(
+        val isAudioPermission =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                permission == Manifest.permission.READ_MEDIA_AUDIO
+            } else {
+                permission == Manifest.permission.READ_EXTERNAL_STORAGE
+            }
+
+        requestPermissionLauncher = registerForActivityResult(
             ActivityResultContracts.RequestPermission()
         ) { isGranted: Boolean ->
-            if (isGranted) {
-                if(permission != Manifest.permission.POST_NOTIFICATIONS) {
-                    permissionGranted()
-                }
-            } else {
-                Toast.makeText(
-                    requireContext(),
-                    R.string.permission_read_needed,
-                    Toast.LENGTH_LONG
-                ).show()
-                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                val uri: Uri = Uri.fromParts(
-                    "package",
-                    requireActivity().packageName,
-                    null
-                )
-                intent.data = uri
-                startActivity(intent)
+            if (isGranted && isAudioPermission) {
+                audioPermissionGranted()
+            } else if (isAudioPermission) {
+                showAudioMediaPermissionRationale()
+            } else if (!isGranted) {
+                showNotificationPermissionRationale()
             }
         }
+
+    }
+
+    private fun askForPermission(permission: String) {
+        val isAudioPermission =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                permission == Manifest.permission.READ_MEDIA_AUDIO
+            } else {
+                permission == Manifest.permission.READ_EXTERNAL_STORAGE
+            }
 
         when {
             ContextCompat.checkSelfPermission(
                 requireContext(),
                 permission
             ) == PackageManager.PERMISSION_GRANTED -> {
-                if(Manifest.permission.POST_NOTIFICATIONS != permission) {
-                    permissionGranted()
+                if (isAudioPermission) {
+                    audioPermissionGranted()
                 }
             }
 
             shouldShowRequestPermissionRationale(permission) -> {
+                if (isAudioPermission) {
+                    showAudioMediaPermissionRationale()
+                } else {
+                    showNotificationPermissionRationale()
+                }
+            }
+
+            else -> {
+                requestPermissionLauncher.launch(permission)
+            }
+        }
+    }
+
+    private fun askForPermissionsAndLoadMusic() {
+        askForAudioPermissionAndLoadMusic()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            askForPermission(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    private fun askForAudioPermissionAndLoadMusic() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            askForPermission(Manifest.permission.READ_MEDIA_AUDIO)
+        } else {
+            askForPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+    }
+
+    private fun showAudioMediaPermissionRationale() {
+        val dialog = AlertDialog.Builder(requireContext())
+            .setMessage(
+                getString(R.string.permission_audio_needed)
+            )
+            .setTitle(getString(R.string.permission_title))
+
+        dialog.setPositiveButton(R.string.go_to_settings) { dialog, _ ->
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+            val uri: Uri = Uri.fromParts(
+                "package",
+                requireActivity().packageName,
+                null
+            )
+            intent.data = uri
+            dialog.dismiss()
+            startActivity(intent)
+        }
+            .setNegativeButton(R.string.cancel) { _, _ ->
                 Toast.makeText(
                     requireContext(),
-                    R.string.permission_read_needed,
+                    getString(R.string.permission_audio_denied),
                     Toast.LENGTH_LONG
                 ).show()
-                // TODO these pollute the backstack
+            }
+            .create()
+        dialog.show()
+    }
+
+    private fun showNotificationPermissionRationale() {
+        AlertDialog.Builder(requireContext())
+            .setMessage(
+                getString(R.string.permission_notification_needed)
+            )
+            .setTitle(getString(R.string.permission_title))
+            .setPositiveButton(R.string.go_to_settings) { _, _ ->
                 val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                 val uri: Uri = Uri.fromParts(
                     "package",
@@ -135,16 +213,24 @@ class FragmentLoading : Fragment() {
                 intent.data = uri
                 startActivity(intent)
             }
-
-            else -> {
-                requestPermissionLauncher.launch(permission)
+            .setNegativeButton(R.string.cancel) { _, _ ->
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.permission_notification_denied),
+                    Toast.LENGTH_LONG
+                ).show()
             }
-        }
-
+            .create()
+            .show()
     }
 
-    private fun permissionGranted() {
+    private fun audioPermissionGranted() {
         viewModelFragmentLoading.permissionGranted(requireActivity())
+    }
+
+    override fun onStart() {
+        super.onStart()
+        askForPermissionsAndLoadMusic()
     }
 
     override fun onResume() {

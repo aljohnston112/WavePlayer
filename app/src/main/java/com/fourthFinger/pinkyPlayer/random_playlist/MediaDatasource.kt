@@ -7,7 +7,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.fourthFinger.pinkyPlayer.R
 import java.io.File
-import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -37,6 +36,7 @@ class MediaDatasource private constructor() {
         val filesThatExist = mutableListOf<Long>()
         val executorFIFO: ExecutorService = Executors.newSingleThreadExecutor()
         executorFIFO.execute {
+            _loadingText.postValue(resources.getString(R.string.loading1))
             val projection = arrayOf(
                 MediaStore.Audio.Media._ID,
                 MediaStore.Audio.Media.IS_MUSIC,
@@ -61,7 +61,6 @@ class MediaDatasource private constructor() {
                     val artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST_ID)
                     val i = cursor.count
                     var j = 0
-                    _loadingText.postValue(resources.getString(R.string.loading1))
                     while (cursor.moveToNext()) {
                         val id = cursor.getLong(idCol)
                         val displayName = cursor.getString(nameCol)

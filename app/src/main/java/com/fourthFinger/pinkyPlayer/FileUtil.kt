@@ -203,6 +203,8 @@ class FileUtil {
                         e.printStackTrace()
                     } catch (e: ClassNotFoundException) {
                         e.printStackTrace()
+                    } catch (e: InvalidClassException){
+                        e.printStackTrace()
                     }
                 }
             }

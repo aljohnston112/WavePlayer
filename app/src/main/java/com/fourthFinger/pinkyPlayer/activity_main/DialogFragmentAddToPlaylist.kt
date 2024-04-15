@@ -16,7 +16,7 @@ import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
 import java.util.*
 
-class DialogFragmentAddToPlaylist() : DialogFragment() {
+class DialogFragmentAddToPlaylist : DialogFragment() {
 
     // TODO add a cancel button
     private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>{

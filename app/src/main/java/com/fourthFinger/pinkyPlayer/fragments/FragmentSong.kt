@@ -6,16 +6,18 @@ import android.content.IntentFilter
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Paint
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.view.*
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
-import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.fragment.app.Fragment
@@ -30,8 +32,6 @@ import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import com.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import com.fourthFinger.pinkyPlayer.databinding.FragmentSongBinding
 import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
-import com.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerManager
-import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -175,7 +175,7 @@ class FragmentSong : Fragment() {
             } else {
                 songArtHeight = songArtWidth
             }
-            if (songArtHeight > 0 && songArtWidth > 0) {
+            if (songArtHeight > 0) {
                 val bitmap: Bitmap? = BitmapUtil.getThumbnailBitmap(
                     currentAudioUri,
                     songArtWidth,

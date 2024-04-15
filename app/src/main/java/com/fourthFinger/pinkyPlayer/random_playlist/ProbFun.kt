@@ -95,7 +95,7 @@ sealed class ProbFun<T>(
                 probability = 1.0
             }
             probabilityMap[element] = probability
-            scaleProbs()
+            scaleProbabilities()
         }
     }
 
@@ -119,7 +119,7 @@ sealed class ProbFun<T>(
             e.setValue(e.value * scale)
         }
         probabilityMap[element] = percent
-        scaleProbs()
+        scaleProbabilities()
     }
 
     /**
@@ -137,12 +137,12 @@ sealed class ProbFun<T>(
         if (probabilityMap.remove(element) == null) {
             return false
         }
-        scaleProbs()
+        scaleProbabilities()
         return true
     }
 
     /**
-     * Removes elements with the lowest probability of occurring when [fun] is called.
+     * Removes elements with the lowest probability of occurring when [next] is called.
      * If elements have the same maximum probability of occurring, no elements will be removed.
      * If after a removal,
      * elements have the same maximum probability of occurring,
@@ -172,16 +172,16 @@ sealed class ProbFun<T>(
             if (e.value <= min.get() && e.value < (max.get() - roundingError)) {
                 it.remove()
                 if (size() == 1) {
-                    scaleProbs()
+                    scaleProbabilities()
                     return
                 }
             }
         }
-        scaleProbs()
+        scaleProbabilities()
     }
 
     /**
-     * Removes elements with lower than [percent] probability of occurring when [fun] is called.
+     * Removes elements with lower than [percent] probability of occurring when [next] is called.
      * If elements have the same maximum probability of occurring, no elements will be removed.
      * If after a removal,
      * elements have the same maximum probability of occurring,
@@ -215,12 +215,12 @@ sealed class ProbFun<T>(
             if (e.value <= min.get() && e.value < max.get() - roundingError) {
                 it.remove()
                 if (size() == 1) {
-                    scaleProbs()
+                    scaleProbabilities()
                     return
                 }
             }
         }
-        scaleProbs()
+        scaleProbabilities()
     }
 
     fun swapTwoPositions(oldPosition: Int, newPosition: Int) {
@@ -345,17 +345,17 @@ sealed class ProbFun<T>(
      * [low] chance of getting any element from this ProbFunTree.
      * @param low as the low chance between 0.0 and 1.0.
      */
-    fun lowerProbs(low: Double) {
+    fun lowerProbabilities(low: Double) {
         require((low >= (size() * MIN_VALUE)) && low <= (1.0 - (size() * MIN_VALUE)))
-        val probs: Collection<T> = probabilityMap.keys.toList()
-        for (t in probs) {
+        val probabilities: Collection<T> = probabilityMap.keys.toList()
+        for (t in probabilities) {
             if (probabilityMap[t]!! > low) {
                 probabilityMap[t] = low
             }
         }
         var maxSum = 0.0
         var otherSum = 0.0
-        for (t in probs) {
+        for (t in probabilities) {
             if (probabilityMap[t] == low) {
                 maxSum += probabilityMap[t]!!
             } else {
@@ -364,12 +364,12 @@ sealed class ProbFun<T>(
         }
         val leftovers = 1.0 - maxSum
         val scale = leftovers / otherSum
-        for (t in probs) {
+        for (t in probabilities) {
             if (probabilityMap[t] != low) {
                 probabilityMap[t] = probabilityMap[t]!! * scale
             }
         }
-        scaleProbs()
+        scaleProbabilities()
     }
 
     /**
@@ -379,7 +379,7 @@ sealed class ProbFun<T>(
         for (e in probabilityMap.entries.toList()) {
             probabilityMap[e.key] = 1.0
         }
-        scaleProbs()
+        scaleProbabilities()
     }
 
     /**
@@ -416,7 +416,7 @@ sealed class ProbFun<T>(
     /**
      * Scales the probabilities so they add up to 1.0.
      */
-    private fun scaleProbs() {
+    private fun scaleProbabilities() {
         val scale = 1.0 / probSum()
         val probabilities = probabilityMap.entries.toList()
         for (e in probabilities) {
@@ -479,7 +479,7 @@ sealed class ProbFun<T>(
 
     companion object {
 
-        private const val serialVersionUID = -6556634307811294014L
+        private const val SERIAL_VERSION_UID = -6556634307811294014L
 
     }
 }

@@ -19,8 +19,8 @@ class RecyclerViewAdapterSongs(
 
     interface ListenerCallbackSongs {
         fun onClickViewHolder(pos: Int, song: Song)
-        fun onMenuItemClickAddToPlaylist(song: Song): Boolean
-        fun onMenuItemClickAddToQueue(song: Song): Boolean
+        fun onMenuItemClickAddToPlaylist(song: Song)
+        fun onMenuItemClickAddToQueue(song: Song)
     }
 
 
@@ -39,19 +39,19 @@ class RecyclerViewAdapterSongs(
         holder.song = songs[position]
         holder.handle.setOnClickListener { holder.handle.performLongClick() }
         holder.songView.setOnClickListener {
-            if (position != RecyclerView.NO_POSITION) {
                 listenerCallbackSongs.onClickViewHolder(position, holder.song)
-            }
         }
         holder.textViewSongName.text = songs[position].title
         holder.handle.setOnCreateContextMenuListener{ menu: ContextMenu?, _: View?, _: ContextMenuInfo? ->
             val menuItemAddToPlaylist = menu?.add(R.string.add_to_playlist)
             menuItemAddToPlaylist?.setOnMenuItemClickListener {
                 listenerCallbackSongs.onMenuItemClickAddToPlaylist(holder.song)
+                true
             }
             val menuItemAddToQueue = menu?.add(R.string.add_to_queue)
             menuItemAddToQueue?.setOnMenuItemClickListener {
                 listenerCallbackSongs.onMenuItemClickAddToQueue(holder.song)
+                true
             }
         }
     }

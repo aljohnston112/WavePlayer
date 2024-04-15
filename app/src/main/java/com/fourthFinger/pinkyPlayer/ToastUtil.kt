@@ -1,14 +1,8 @@
 package com.fourthFinger.pinkyPlayer
 
 import android.content.Context
-import android.graphics.BlendMode
-import android.graphics.BlendModeColorFilter
-import android.graphics.PorterDuff
-import android.os.Build
-import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.StringRes
-import androidx.core.content.ContextCompat
 
 class ToastUtil {
 

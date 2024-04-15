@@ -184,22 +184,6 @@ class ActivityMain : AppCompatActivity() {
 
     private fun setUpToolbar() {
         setSupportActionBar(binding.toolbar)
-        // TODO should not be needed
-        // toolbar.setTitleTextColor(
-        //     ContextCompat.getColor(applicationContext, R.color.colorOnPrimary)
-        // )
-        setOverflowIconColor()
-    }
-
-    private fun setOverflowIconColor() {
-//        binding.toolbar.overflowIcon?.colorFilter =
-//            PorterDuffColorFilter(
-//                ContextCompat.getColor(
-//                    applicationContext,
-//                    R.color.colorOnPrimary
-//                ),
-//                PorterDuff.Mode.SRC_ATOP
-//            )
     }
 
     private fun startAndBindServiceMain() {

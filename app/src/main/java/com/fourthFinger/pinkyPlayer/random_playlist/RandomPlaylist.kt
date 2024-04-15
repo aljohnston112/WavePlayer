@@ -102,13 +102,13 @@ class RandomPlaylist(
         return probabilityFunction.getProbability(song)
     }
 
-    fun resetProbabilities(context: Context, playlistsRepo: PlaylistsRepo,) {
+    fun resetProbabilities(context: Context, playlistsRepo: PlaylistsRepo) {
         probabilityFunction.resetProbabilities()
         SaveFile.saveFile(context, playlistsRepo)
     }
 
     fun lowerProbabilities(context: Context, playlistsRepo: PlaylistsRepo, lowerProb: Double) {
-        probabilityFunction.lowerProbs(lowerProb)
+        probabilityFunction.lowerProbabilities(lowerProb)
         SaveFile.saveFile(context, playlistsRepo)
     }
 
@@ -156,7 +156,7 @@ class RandomPlaylist(
     }
 
     companion object {
-        private const val serialVersionUID = 2323326608918863420L
+        private const val SERIAL_VERSION_UID = 2323326608918863420L
     }
 
 }

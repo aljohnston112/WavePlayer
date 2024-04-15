@@ -22,17 +22,18 @@ class ViewModelFragmentLoading(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    var loadingText: LiveData<String> = MutableLiveData()
-        private set
+    val loadingText = songRepo.loadingText
 
-    var loadingProgress: LiveData<Int> = MutableLiveData()
-        private set
+    val loadingProgress = songRepo.loadingProgress.map { percent ->
+        (percent * 100.0).roundToInt()
+    }
+
+    private val _showLoadingBar = MutableLiveData(false)
+    val showLoadingBar = _showLoadingBar as LiveData<Boolean>
+
 
     fun permissionGranted(context: Context) {
-        loadingText = songRepo.loadingText
-        loadingProgress = songRepo.loadingProgress.map { percent ->
-            (percent * 100.0).roundToInt()
-        }
+        _showLoadingBar.postValue(true)
         songRepo.loadSongs(
             playlistsRepo,
             mediaPlayerManager,
