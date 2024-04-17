@@ -1,12 +1,20 @@
 package com.fourthFinger.pinkyPlayer.random_playlist
 
 import android.content.Context
+import androidx.room.Room
+import com.fourthFinger.pinkyPlayer.ServiceMain
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutionException
 
 class SongRepo {
 
-    private val mediaDatasource = MediaDatasource.getInstance()
+    private val mediaDatasource = MediaDatasource()
     val loadingText = mediaDatasource.loadingText
     val loadingProgress = mediaDatasource.loadingProgress
+
+    fun loadDatabase(context: Context) {
+        mediaDatasource.loadDatabase(context)
+    }
 
     fun loadSongs(
         playlistsRepo: PlaylistsRepo,
@@ -15,18 +23,9 @@ class SongRepo {
     ){
         mediaDatasource.loadSongs(context, playlistsRepo, mediaPlayerManager)
     }
-    companion object {
 
-        private var INSTANCE: SongRepo? = null
-
-        fun getInstance(): SongRepo {
-            synchronized(this) {
-                if (INSTANCE == null) {
-                    INSTANCE = SongRepo()
-                }
-                return INSTANCE!!
-            }
-        }
+    fun getSong(id: Long): Song? {
+        return mediaDatasource.getSong(id)
     }
 
 }

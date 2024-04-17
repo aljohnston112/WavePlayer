@@ -18,10 +18,13 @@ class FragmentEditPlaylist : Fragment() {
     private var _binding: FragmentEditPlaylistBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>{
+    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain> {
         ViewModelActivityMain.Factory
     }
-    private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>()
+
+    private val viewModelEditPlaylist by activityViewModels<ViewModelFragmentEditPlaylist> {
+        ViewModelFragmentEditPlaylist.Factory
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -35,7 +38,7 @@ class FragmentEditPlaylist : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.buttonEditSongs.setOnClickListener {
-            viewModelUserPicks.editSongsClicked(
+            viewModelEditPlaylist.selectSongsClicked(
                 NavHostFragment.findNavController(this)
             )
         }
@@ -51,13 +54,14 @@ class FragmentEditPlaylist : Fragment() {
         viewModelActivityMain.setFABText(R.string.fab_save)
         viewModelActivityMain.showFab(true)
         val editTextPlaylistName: EditText = binding.editTextPlaylistName
-        viewModelUserPicks.getUserPickedPlaylist()?.let {
-            if(editTextPlaylistName.text.isEmpty()) {
-                editTextPlaylistName.setText(it.getName())
-            }
+        // TODO why the conditional?
+        if (editTextPlaylistName.text.isEmpty()) {
+            editTextPlaylistName.setText(
+                viewModelActivityMain.currentContextPlaylist?.getName()
+            )
         }
         viewModelActivityMain.setFabOnClickListener { view: View ->
-            viewModelUserPicks.editPlaylistFabClicked(
+            viewModelEditPlaylist.editPlaylistFabClicked(
                 this,
                 editTextPlaylistName.text.toString()
             )

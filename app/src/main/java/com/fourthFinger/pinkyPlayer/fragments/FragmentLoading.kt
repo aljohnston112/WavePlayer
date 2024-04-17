@@ -30,17 +30,19 @@ class FragmentLoading : Fragment() {
     private var _binding: FragmentLoadingBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain> {
-        ViewModelActivityMain.Factory
-    }
-    private val viewModelFragmentLoading by activityViewModels<ViewModelFragmentLoading> {
-        ViewModelFragmentLoading.Factory
-    }
+    private val viewModelActivityMain
+            by activityViewModels<ViewModelActivityMain> {
+                ViewModelActivityMain.Factory
+            }
+    private val viewModelFragmentLoading
+            by activityViewModels<ViewModelFragmentLoading> {
+                ViewModelFragmentLoading.Factory
+            }
 
-    private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
+    private lateinit var audioPermissionLauncher: ActivityResultLauncher<String>
+    private lateinit var notificationPermissionLauncher: ActivityResultLauncher<String>
 
-    // TODO don't show loading screen when user denies permission
-    // TODO rerun scan after user comes back from settings screen
+    // TODO stop permission warning after user comes back from settings screen
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -49,33 +51,34 @@ class FragmentLoading : Fragment() {
     ): View {
         setUpObservers()
         registerPermissions()
-        _binding = FragmentLoadingBinding.inflate(inflater, container, false)
+        _binding = FragmentLoadingBinding.inflate(
+            inflater,
+            container,
+            false
+        )
         return binding.root
     }
 
     private fun setUpObservers() {
-        viewModelFragmentLoading.loadingProgress
-            .observe(viewLifecycleOwner) { loadingProgress: Int ->
-                val progressBar: ProgressBar = binding.progressBarLoading
-                progressBar.post {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        progressBar.setProgress(loadingProgress, true)
-                    } else {
-                        progressBar.progress = loadingProgress
-                    }
+        viewModelFragmentLoading.loadingProgress.observe(viewLifecycleOwner) { loadingProgress: Int ->
+            val progressBar: ProgressBar = binding.progressBarLoading
+            progressBar.post {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    progressBar.setProgress(loadingProgress, true)
+                } else {
+                    progressBar.progress = loadingProgress
                 }
             }
-        viewModelFragmentLoading.loadingText
-            .observe(viewLifecycleOwner) { loadingText: String? ->
-                val textView: TextView = binding.textViewLoading
-                textView.post { textView.text = loadingText }
+        }
+        viewModelFragmentLoading.loadingText.observe(viewLifecycleOwner) { loadingText: String? ->
+            val textView: TextView = binding.textViewLoading
+            textView.post { textView.text = loadingText }
+        }
+        viewModelFragmentLoading.showLoadingBar.observe(viewLifecycleOwner) { showLoadingBar: Boolean ->
+            if (showLoadingBar) {
+                binding.progressBarLoading.visibility = VISIBLE
             }
-        viewModelFragmentLoading.showLoadingBar
-            .observe(viewLifecycleOwner) { showLoadingBar: Boolean ->
-                if (showLoadingBar) {
-                    binding.progressBarLoading.visibility = VISIBLE
-                }
-            }
+        }
     }
 
     private fun registerPermissions() {
@@ -99,36 +102,39 @@ class FragmentLoading : Fragment() {
      * @param permission The [Manifest.permission] to request.
      */
     private fun registerPermission(permission: String) {
-
-        val isAudioPermission =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                permission == Manifest.permission.READ_MEDIA_AUDIO
-            } else {
-                permission == Manifest.permission.READ_EXTERNAL_STORAGE
+        val isAudioPermission = isAudioPermission(permission)
+        if (isAudioPermission) {
+            audioPermissionLauncher = registerForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { isGranted: Boolean ->
+                if (isGranted) {
+                    audioPermissionGranted()
+                } else {
+                    showAudioMediaPermissionRationale()
+                }
             }
-
-        requestPermissionLauncher = registerForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) { isGranted: Boolean ->
-            if (isGranted && isAudioPermission) {
-                audioPermissionGranted()
-            } else if (isAudioPermission) {
-                showAudioMediaPermissionRationale()
-            } else if (!isGranted) {
-                showNotificationPermissionRationale()
+        } else {
+            notificationPermissionLauncher = registerForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { isGranted: Boolean ->
+                if (!isGranted) {
+                    showNotificationPermissionRationale()
+                }
             }
         }
 
     }
 
-    private fun askForPermission(permission: String) {
-        val isAudioPermission =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                permission == Manifest.permission.READ_MEDIA_AUDIO
-            } else {
-                permission == Manifest.permission.READ_EXTERNAL_STORAGE
-            }
+    private fun isAudioPermission(permission: String): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permission == Manifest.permission.READ_MEDIA_AUDIO
+        } else {
+            permission == Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+    }
 
+    private fun askForPermission(permission: String) {
+        val isAudioPermission = isAudioPermission(permission)
         when {
             ContextCompat.checkSelfPermission(
                 requireContext(),
@@ -148,7 +154,11 @@ class FragmentLoading : Fragment() {
             }
 
             else -> {
-                requestPermissionLauncher.launch(permission)
+                if(isAudioPermission) {
+                    audioPermissionLauncher.launch(permission)
+                } else {
+                    notificationPermissionLauncher.launch(permission)
+                }
             }
         }
     }
@@ -175,7 +185,7 @@ class FragmentLoading : Fragment() {
             )
             .setTitle(getString(R.string.permission_title))
 
-        dialog.setPositiveButton(R.string.go_to_settings) { dialog, _ ->
+        dialog.setPositiveButton(R.string.go_to_settings) { clicked_dialog, _ ->
             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
             val uri: Uri = Uri.fromParts(
                 "package",
@@ -183,7 +193,7 @@ class FragmentLoading : Fragment() {
                 null
             )
             intent.data = uri
-            dialog.dismiss()
+            clicked_dialog.dismiss()
             startActivity(intent)
         }
             .setNegativeButton(R.string.cancel) { _, _ ->

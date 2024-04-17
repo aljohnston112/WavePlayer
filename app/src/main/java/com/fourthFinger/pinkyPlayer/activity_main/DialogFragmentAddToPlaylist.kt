@@ -9,9 +9,9 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.activityViewModels
 import com.fourthFinger.pinkyPlayer.NavUtil
 import com.fourthFinger.pinkyPlayer.R
+import com.fourthFinger.pinkyPlayer.fragments.ViewModelDialogFragmentAddToPlaylist
 import com.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
 import com.fourthFinger.pinkyPlayer.fragments.ViewModelPlaylists
-import com.fourthFinger.pinkyPlayer.fragments.ViewModelUserPicks
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
 import java.util.*
@@ -19,11 +19,15 @@ import java.util.*
 class DialogFragmentAddToPlaylist : DialogFragment() {
 
     // TODO add a cancel button
-    private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>{
+    private val viewModelPlaylists by activityViewModels<ViewModelPlaylists> {
         ViewModelPlaylists.Factory
     }
-    private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>{
-        ViewModelUserPicks.Factory
+    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain> {
+        ViewModelActivityMain.Factory
+    }
+
+    private val viewModelDialogFragmentAddToPlaylist by activityViewModels<ViewModelDialogFragmentAddToPlaylist> {
+        ViewModelDialogFragmentAddToPlaylist.Factory
     }
 
     private val selectedPlaylistIndices: MutableList<Int> = ArrayList()
@@ -102,7 +106,7 @@ class DialogFragmentAddToPlaylist : DialogFragment() {
                     songs.add(songInPlaylist)
                 }
             }
-            viewModelUserPicks.startNewPlaylistWithSongs(songs)
+            viewModelDialogFragmentAddToPlaylist.startNewPlaylistWithSongs(songs)
             val fragmentManager: FragmentManager = requireActivity().supportFragmentManager
             val fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment)
             fragment?.let {
@@ -115,7 +119,7 @@ class DialogFragmentAddToPlaylist : DialogFragment() {
     }
 
     private fun unselectSongs() {
-        val songs = viewModelPlaylists.getAllSongs()
+        val songs = viewModelActivityMain.getAllSongs()
         for (s in songs) {
             s.setSelected(false)
         }

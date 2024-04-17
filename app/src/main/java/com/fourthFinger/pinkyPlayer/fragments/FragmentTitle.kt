@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
@@ -21,49 +20,14 @@ class FragmentTitle : Fragment() {
     private var _binding: FragmentTitleBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>{
+    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain> {
         ViewModelActivityMain.Factory
     }
-    private val viewModelFragmentTitle by viewModels<ViewModelFragmentTitle>{
+    private val viewModelFragmentTitle by viewModels<ViewModelFragmentTitle> {
         ViewModelFragmentTitle.Factory
-    }
-    private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>{
-        ViewModelUserPicks.Factory
     }
 
     private lateinit var getUri: ActivityResultLauncher<Uri?>
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        getUri = registerForActivityResult(
-            ActivityResultContracts.OpenDocumentTree(),
-            activityResultCallback
-        )
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentTitleBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        viewModelFragmentTitle.clearSongs()
-        viewModelActivityMain.setActionBarTitle(resources.getString(R.string.app_name))
-        viewModelActivityMain.showFab(false)
-        setUpButtons()
-    }
-
-    private fun setUpButtons() {
-        binding.buttonPlaylists.setOnClickListener(onClickListenerFragmentTitleButtons)
-        binding.buttonSongs.setOnClickListener(onClickListenerFragmentTitleButtons)
-        binding.buttonSettings.setOnClickListener(onClickListenerFragmentTitleButtons)
-        binding.buttonFolderSearch.setOnClickListener(onClickListenerFragmentTitleButtons)
-    }
 
     private val onClickListenerFragmentTitleButtons: View.OnClickListener =
         View.OnClickListener { view: View ->
@@ -77,22 +41,45 @@ class FragmentTitle : Fragment() {
             }
         }
 
-    private val activityResultCallback = ActivityResultCallback<Uri?> { uri ->
-        // TODO why is this needed?
-        binding.buttonFolderSearch.setOnClickListener(
-            onClickListenerFragmentTitleButtons
-        )
-        if (uri != null) {
-            val playlist = viewModelFragmentTitle.createPlaylist(
-                requireActivity().applicationContext,
-                requireActivity().contentResolver,
-                uri
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        getUri = registerForActivityResult(
+            ActivityResultContracts.OpenDocumentTree()
+        ) { uri ->
+            // TODO why is this needed?
+            binding.buttonFolderSearch.setOnClickListener(
+                onClickListenerFragmentTitleButtons
             )
-            viewModelUserPicks.playlistCreatedFromFolder(
-                NavHostFragment.findNavController(this@FragmentTitle),
-                playlist
-            )
+            if (uri != null) {
+                viewModelFragmentTitle.createPlaylistFromFolder(
+                    this,
+                    uri
+                )
+            }
         }
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentTitleBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        viewModelActivityMain.setActionBarTitle(resources.getString(R.string.app_name))
+        viewModelActivityMain.showFab(false)
+        setUpButtons()
+    }
+
+    private fun setUpButtons() {
+        binding.buttonPlaylists.setOnClickListener(onClickListenerFragmentTitleButtons)
+        binding.buttonSongs.setOnClickListener(onClickListenerFragmentTitleButtons)
+        binding.buttonSettings.setOnClickListener(onClickListenerFragmentTitleButtons)
+        binding.buttonFolderSearch.setOnClickListener(onClickListenerFragmentTitleButtons)
     }
 
     override fun onDestroyView() {

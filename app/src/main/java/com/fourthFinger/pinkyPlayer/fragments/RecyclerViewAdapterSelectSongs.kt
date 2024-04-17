@@ -12,12 +12,11 @@ import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
 
 class RecyclerViewAdapterSelectSongs(
-        private val listenerCallbackSelectSongs: ListenerCallbackSelectSongs,
-        var allSongs: List<Song>
+    private val listenerCallbackSelectSongs: ListenerCallbackSelectSongs,
+    private var allSongs: List<Song>
 ) : RecyclerView.Adapter<RecyclerViewAdapterSelectSongs.ViewHolder>() {
 
     interface ListenerCallbackSelectSongs {
-        fun getUserPickedSongs(): List<Song>
         fun songUnselected(song: Song)
         fun songSelected(song: Song)
     }
@@ -29,8 +28,10 @@ class RecyclerViewAdapterSelectSongs(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(
-            R.layout.item_song, parent, false)
+        return ViewHolder(
+            LayoutInflater.from(parent.context).inflate(
+                R.layout.item_song, parent, false
+            )
         )
     }
 
@@ -39,7 +40,7 @@ class RecyclerViewAdapterSelectSongs(
             R.id.constraint_layout_song_name
         )
         // TODO use color resources
-        if(allSongs[position].isSelected()){
+        if (allSongs[position].isSelected()) {
             holder.textViewSongName.setBackgroundColor(Color.parseColor("#575757"))
             linearLayout.setBackgroundColor(Color.parseColor("#575757"))
         } else {
@@ -61,7 +62,8 @@ class RecyclerViewAdapterSelectSongs(
         init {
             // TODO invisible or gone?
             view.findViewById<View?>(R.id.song_handle).visibility = View.GONE
-            val constraintLayout: ConstraintLayout = view.findViewById(R.id.constraint_layout_song_name)
+            val constraintLayout: ConstraintLayout =
+                view.findViewById(R.id.constraint_layout_song_name)
             // TODO color resources
             val onClickListener = View.OnClickListener { v: View? ->
                 if (song.isSelected()) {

@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 
-class SettingsRepo private constructor() {
+class SettingsRepo() {
 
     private val settingsDataSource = SettingsDataSource.getInstance()
 
@@ -29,19 +29,6 @@ class SettingsRepo private constructor() {
     ) {
         this._settings.postValue(settings)
         settingsDataSource.saveSettings(context, settings)
-    }
-
-    companion object {
-
-        private var INSTANCE: SettingsRepo? = null
-
-        @Synchronized
-        fun getInstance(): SettingsRepo {
-            if (INSTANCE == null) {
-                INSTANCE = SettingsRepo()
-            }
-            return INSTANCE!!
-        }
     }
 
 }

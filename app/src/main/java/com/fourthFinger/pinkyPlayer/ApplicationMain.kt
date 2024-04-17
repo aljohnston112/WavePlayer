@@ -7,21 +7,25 @@ import com.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
 import com.fourthFinger.pinkyPlayer.random_playlist.SaveFile
 import com.fourthFinger.pinkyPlayer.random_playlist.SongQueue
 import com.fourthFinger.pinkyPlayer.random_playlist.SongRepo
+import com.fourthFinger.pinkyPlayer.random_playlist.UseCaseEditPlaylist
+import com.fourthFinger.pinkyPlayer.random_playlist.UseCaseSongPicker
 import com.fourthFinger.pinkyPlayer.settings.SettingsRepo
 
 class ApplicationMain : Application() {
 
-    val songRepo = SongRepo.getInstance()
-    val settingsRepo = SettingsRepo.getInstance()
-    val playlistsRepo = PlaylistsRepo.getInstance()
-    val songQueue = SongQueue.getInstance(playlistsRepo)
-    val mediaPlayerManager = MediaPlayerManager.getInstance()
+    val songPicker = UseCaseSongPicker()
+    val songRepo = SongRepo()
+    val settingsRepo = SettingsRepo()
+    val playlistsRepo = PlaylistsRepo()
+    val songQueue = SongQueue(songRepo)
+    val mediaPlayerManager = MediaPlayerManager()
     lateinit var mediaSession: MediaSession
+    lateinit var playlistEditor: UseCaseEditPlaylist
 
     override fun onCreate() {
         super.onCreate()
         val settings = settingsRepo.loadSettings(this)
-        playlistsRepo.loadDatabase(this)
+        songRepo.loadDatabase(this)
         // Loading the save file is needed to ensure the master playlist is valid
         // before getting songs from the MediaStore.
         SaveFile.loadSaveFile(
@@ -36,6 +40,10 @@ class ApplicationMain : Application() {
         )
         mediaPlayerManager.setUp(
             this,
+            mediaSession
+        )
+        playlistEditor = UseCaseEditPlaylist(
+            playlistsRepo,
             mediaSession
         )
     }

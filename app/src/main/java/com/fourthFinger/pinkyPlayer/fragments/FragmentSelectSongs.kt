@@ -31,14 +31,12 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
     private var _binding: RecyclerViewSongListBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>{
+    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain> {
         ViewModelActivityMain.Factory
     }
-    private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>{
-        ViewModelPlaylists.Factory
-    }
-    private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>{
-        ViewModelUserPicks.Factory
+
+    private val viewModelFragmentSelectSongs by activityViewModels<ViewModelFragmentSelectSongs> {
+        ViewModelFragmentSelectSongs.Factory
     }
 
     private var recyclerViewSongList: RecyclerView? = null
@@ -50,11 +48,15 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
     }
 
     override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View {
-        _binding = RecyclerViewSongListBinding.inflate(inflater, container, false)
+        _binding = RecyclerViewSongListBinding.inflate(
+            inflater,
+            container,
+            false
+        )
         return binding.root
     }
 
@@ -62,6 +64,8 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
         super.onViewCreated(view, savedInstanceState)
         KeyboardUtil.hideKeyboard(view)
         viewModelActivityMain.setActionBarTitle(resources.getString(R.string.select_songs))
+        val playlist = viewModelActivityMain.currentContextPlaylist
+        viewModelFragmentSelectSongs.selectSongs(playlist)
         setUpRecyclerView()
     }
 
@@ -71,7 +75,7 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
         // TODO respond to LiveData of all songs
         recyclerViewAdapter = RecyclerViewAdapterSelectSongs(
             this,
-            viewModelPlaylists.getAllSongs().toList()
+            viewModelActivityMain.getAllSongs().toList()
         )
         recyclerViewSongList?.adapter = recyclerViewAdapter
     }
@@ -84,20 +88,30 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
     private fun setUpBroadcastReceiver() {
         val intentFilter = IntentFilter()
         intentFilter.addCategory(Intent.CATEGORY_DEFAULT)
-        intentFilter.addAction(requireActivity().resources.getString(
-                R.string.action_service_connected))
+        intentFilter.addAction(
+            requireActivity().resources.getString(
+                R.string.action_service_connected
+            )
+        )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requireActivity().registerReceiver(broadcastReceiver, intentFilter, Service.RECEIVER_EXPORTED)
+            requireActivity().registerReceiver(
+                broadcastReceiver,
+                intentFilter,
+                Service.RECEIVER_EXPORTED
+            )
         } else {
             requireActivity().registerReceiver(broadcastReceiver, intentFilter)
-        }    }
+        }
+    }
 
     private val broadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val action: String? = intent.action
             if (action != null) {
                 if (action == resources.getString(
-                        R.string.action_service_connected)) {
+                        R.string.action_service_connected
+                    )
+                ) {
                     setUpRecyclerView()
                 }
             }
@@ -113,7 +127,7 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
         viewModelActivityMain.setFabImage(R.drawable.ic_check_white_24dp)
         viewModelActivityMain.setFABText(R.string.fab_done)
         viewModelActivityMain.showFab(true)
-        viewModelActivityMain.setFabOnClickListener{
+        viewModelActivityMain.setFabOnClickListener {
             val navController: NavController = NavHostFragment.findNavController(this)
             if (navController.currentDestination?.id == R.id.FragmentSelectSongs) {
                 navController.popBackStack()
@@ -132,7 +146,7 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
                 }
 
                 override fun onQueryTextChange(newText: String): Boolean {
-                    filterSongs(newText)
+                    siftSongs(newText)
                     return true
                 }
             }
@@ -141,28 +155,23 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
         }
     }
 
-    private fun filterSongs(newText: String) {
+    private fun siftSongs(newText: String) {
         if (newText.isNotEmpty()) {
-            val sifted = viewModelPlaylists.siftAllSongs(newText)
+            val sifted = viewModelActivityMain.siftAllSongs(newText)
             recyclerViewAdapter.updateList(sifted)
         } else {
-            viewModelUserPicks.getUserPickedPlaylist()?.getSongs()?.let {
+            viewModelActivityMain.getAllSongs().let {
                 recyclerViewAdapter.updateList(it.toList())
             }
         }
     }
 
-    // TODO should be able to remove
-    override fun getUserPickedSongs(): List<Song> {
-        return viewModelUserPicks.getUserPickedSongs()
-    }
-
     override fun songUnselected(song: Song) {
-        viewModelUserPicks.unselectedSong(song)
+        viewModelFragmentSelectSongs.unselectedSong(song)
     }
 
     override fun songSelected(song: Song) {
-        viewModelUserPicks.selectSong(song)
+        viewModelFragmentSelectSongs.selectSong(song)
     }
 
     override fun onStop() {

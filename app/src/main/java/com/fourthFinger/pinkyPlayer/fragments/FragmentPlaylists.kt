@@ -40,12 +40,6 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
     private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>{
         ViewModelPlaylists.Factory
     }
-    private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>{
-        ViewModelUserPicks.Factory
-    }
-    private val viewModelAddToQueue by activityViewModels<ViewModelAddToQueue>{
-        ViewModelAddToQueue.Factory
-    }
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var recyclerViewAdapterPlaylists: RecyclerViewAdapterPlaylists
@@ -197,7 +191,8 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
         viewModelActivityMain.showFab(true)
         viewModelActivityMain.setFabOnClickListener {
             // userPickedPlaylist is null when user is making a new playlist
-            viewModelUserPicks.fragmentPlaylistsFABClicked(
+            viewModelActivityMain.currentContextPlaylist = null
+            viewModelPlaylists.fabClicked(
                 NavHostFragment.findNavController(this)
             )
         }
@@ -234,11 +229,15 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
     }
 
     override fun onMenuItemClickAddToQueue(randomPlaylist: RandomPlaylist) {
-        viewModelAddToQueue.addToQueue(requireActivity().applicationContext, randomPlaylist)
+        viewModelActivityMain.addToQueue(
+            requireActivity().applicationContext,
+            randomPlaylist
+        )
     }
 
     override fun onClickViewHolder(randomPlaylist: RandomPlaylist) {
-        viewModelUserPicks.playlistClicked(
+        viewModelActivityMain.currentContextPlaylist = randomPlaylist
+        viewModelPlaylists.playlistClicked(
             NavHostFragment.findNavController(this),
             randomPlaylist
         )

@@ -21,7 +21,7 @@ import java.util.*
 class RandomPlaylist(
     context: Context,
     name: String,
-    music: MutableList<Song>,
+    music: List<Song>,
     comparable: Boolean,
     maxPercent: Double,
     playlistsRepo: PlaylistsRepo

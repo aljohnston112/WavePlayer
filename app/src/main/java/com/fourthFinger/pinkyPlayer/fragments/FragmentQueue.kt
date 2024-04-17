@@ -35,14 +35,9 @@ class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>{
         ViewModelActivityMain.Factory
     }
-    private val viewModelAddToQueue by activityViewModels<ViewModelAddToQueue>{
-        ViewModelAddToQueue.Factory
-    }
+
     private val viewModelFragmentQueue by activityViewModels<ViewModelFragmentQueue>{
         ViewModelFragmentQueue.Factory
-    }
-    private val viewModelFragmentSong by activityViewModels<ViewModelFragmentSong>{
-        ViewModelFragmentSong.Factory
     }
 
     private var broadcastReceiver: BroadcastReceiver? = null
@@ -116,8 +111,8 @@ class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
                 val position = viewHolder.absoluteAdapterPosition
                 if(viewModelFragmentQueue.notifySongRemoved(position)){
                     val context = requireActivity().applicationContext
-                    viewModelFragmentSong.playPauseClicked(context)
-                    viewModelFragmentSong.playNext(context)
+                    viewModelActivityMain.playPauseClicked(context)
+                    viewModelActivityMain.playNext(context)
                 }
                 recyclerViewAdapterSongs.updateList(viewModelFragmentQueue.songQueue.value!!.toList())
                 val snackBar: Snackbar = Snackbar.make(
@@ -193,11 +188,11 @@ class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
     }
 
     override fun onMenuItemClickAddToQueue(song: Song) {
-        viewModelAddToQueue.addToQueue(requireActivity().applicationContext, song)
+        viewModelActivityMain.addToQueue(requireActivity().applicationContext, song)
     }
 
     override fun onClickViewHolder(pos: Int, song: Song) {
-        viewModelFragmentQueue.songClicked(
+        viewModelActivityMain.queueSongClicked(
             this,
             pos
         )

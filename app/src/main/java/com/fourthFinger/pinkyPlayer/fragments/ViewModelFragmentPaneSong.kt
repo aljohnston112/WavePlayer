@@ -14,7 +14,7 @@ import com.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerManager
 import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 
 class ViewModelFragmentPaneSong(
-    val mediaSession: MediaSession,
+    private val mediaSession: MediaSession,
     savedStateHandle: SavedStateHandle
 ): ViewModel() {
 

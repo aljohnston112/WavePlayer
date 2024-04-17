@@ -1,37 +1,38 @@
 package com.fourthFinger.pinkyPlayer.fragments
 
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.fourthFinger.pinkyPlayer.ApplicationMain
-import com.fourthFinger.pinkyPlayer.NavUtil
-import com.fourthFinger.pinkyPlayer.R
-import com.fourthFinger.pinkyPlayer.activity_main.ActivityMain
-import com.fourthFinger.pinkyPlayer.random_playlist.*
+import com.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerManager
+import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
+import com.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
+import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
+import com.fourthFinger.pinkyPlayer.random_playlist.Song
+import com.fourthFinger.pinkyPlayer.random_playlist.UseCaseSongPicker
 
-class ViewModelFragmentQueue(
+class ViewModelFragmentSelectSongs(
     val playlistsRepo: PlaylistsRepo,
     val mediaSession: MediaSession,
     val mediaPlayerManager: MediaPlayerManager,
-    private val _songQueue: SongQueue,
-    savedStateHandle: SavedStateHandle,
-): ViewModel() {
+    val songPicker: UseCaseSongPicker,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
-    val songQueue = _songQueue.songQueue
-
-    fun notifyItemInserted(position: Int) {
-        _songQueue.notifyItemInserted(position)
+    fun unselectedSong(song: Song) {
+        songPicker.unselectedSong(song)
     }
 
-    fun notifySongRemoved(position: Int): Boolean {
-       return  _songQueue.notifySongRemoved(position)
+    fun selectSong(song: Song) {
+        songPicker.selectSong(song, playlistsRepo.getMasterPlaylist())
     }
 
-    fun notifySongMoved(from: Int, to: Int) {
-        _songQueue.notifySongMoved(from, to)
+    fun selectSongs(playlist: RandomPlaylist?) {
+        if (playlist != null) {
+            songPicker.selectSongsInPlaylist(playlist, playlistsRepo.getMasterPlaylist())
+        }
     }
 
     companion object {
@@ -44,11 +45,11 @@ class ViewModelFragmentQueue(
             ): T {
                 val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
                 val savedStateHandle = extras.createSavedStateHandle()
-                return ViewModelFragmentQueue(
+                return ViewModelFragmentSelectSongs(
                     (application as ApplicationMain).playlistsRepo,
                     application.mediaSession,
                     application.mediaPlayerManager,
-                    application.songQueue,
+                    application.songPicker,
                     savedStateHandle
                 ) as T
             }

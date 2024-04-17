@@ -2,38 +2,23 @@ package com.fourthFinger.pinkyPlayer.random_playlist
 
 import android.content.Context
 import android.content.Intent
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.ServiceMain
 
 class MediaSession private constructor(
     private val playlistsRepo: PlaylistsRepo,
     private val mediaPlayerManager: MediaPlayerManager,
-    val songQueue: SongQueue
+    private val songQueue: SongQueue
 ) {
 
-    private var currentPlaylist: RandomPlaylist = playlistsRepo.getMasterPlaylist()
+    private val _currentPlaylist = MutableLiveData(playlistsRepo.getMasterPlaylist())
+    val currentPlaylist = _currentPlaylist as LiveData<RandomPlaylist?>
+    val currentAudioUri = mediaPlayerManager.currentAudioUri
+    val isPlaying = mediaPlayerManager.isPlaying
 
-    fun getCurrentPlaylist(): RandomPlaylist {
-        return currentPlaylist
-    }
-
-    fun setCurrentPlaylist(currentPlaylist: RandomPlaylist) {
-        this.currentPlaylist = currentPlaylist
-    }
-
-    fun setCurrentPlaylistToMaster() {
-        setCurrentPlaylist(playlistsRepo.getMasterPlaylist())
-    }
-
-    fun resetProbabilities(context: Context) {
-        currentPlaylist.resetProbabilities(context, playlistsRepo)
-    }
-
-    fun lowerProbabilities(context: Context, lowerProb: Double) {
-        currentPlaylist.lowerProbabilities(context, playlistsRepo, lowerProb)
-    }
-
-    @Volatile
+        @Volatile
     private var shuffling: Boolean = true
 
     @Volatile
@@ -41,6 +26,22 @@ class MediaSession private constructor(
 
     @Volatile
     private var loopingOne: Boolean = false
+
+    fun setCurrentPlaylist(currentPlaylist: RandomPlaylist?) {
+        this._currentPlaylist.postValue(currentPlaylist)
+    }
+
+    fun setCurrentPlaylistToMaster() {
+        this._currentPlaylist.postValue(playlistsRepo.getMasterPlaylist())
+    }
+
+    fun resetProbabilities(context: Context) {
+        currentPlaylist.value?.resetProbabilities(context, playlistsRepo)
+    }
+
+    fun lowerProbabilities(context: Context, lowerProb: Double) {
+        currentPlaylist.value?.lowerProbabilities(context, playlistsRepo, lowerProb)
+    }
 
     @Synchronized
     fun isShuffling(): Boolean {
@@ -50,25 +51,27 @@ class MediaSession private constructor(
     @Synchronized
     fun setShuffling(context: Context, shuffling: Boolean) {
         this.shuffling = shuffling
-        val songList = currentPlaylist.getSongIDs().toMutableList()
-        if (shuffling) {
-            if (looping) {
-                restartLoopingShuffle()
-            } else {
-                // Not looping
-                val song = currentPlaylist.nextRandomSong(context)
-                if (song != null) {
-                    songQueue.newSessionStarted(song.id)
+        val songList = currentPlaylist.value?.getSongIDs()?.toMutableList()
+        if(songList != null) {
+            if (shuffling) {
+                if (looping) {
+                    restartLoopingShuffle()
+                } else {
+                    // Not looping
+                    val song = currentPlaylist.value?.nextRandomSong(context)
+                    if (song != null) {
+                        songQueue.newSessionStarted(song.id)
+                    }
                 }
-            }
-        } else {
-            // Not shuffling
-            restartLoopingNonShuffle()
-            if (songQueue.hasPrevious()) {
-                val i = songList.indexOf(songQueue.previous().id)
-                if (i != -1) {
-                    for (j in 0 until i) {
-                        songQueue.next()
+            } else {
+                // Not shuffling
+                restartLoopingNonShuffle()
+                if (songQueue.hasPrevious()) {
+                    val i = songList.indexOf(songQueue.previous().id)
+                    if (i != -1) {
+                        for (j in 0 until i) {
+                            songQueue.next()
+                        }
                     }
                 }
             }
@@ -76,32 +79,36 @@ class MediaSession private constructor(
     }
 
     private fun restartLoopingNonShuffle() {
-        val songList = currentPlaylist.getSongIDs().toMutableList()
-        songQueue.newSessionStarted(songList[0])
-        for (j in 1 until songList.size) {
-            songQueue.addToQueue(songList[j])
+        val songList = currentPlaylist.value?.getSongIDs()?.toMutableList()
+        if(songList != null) {
+            songQueue.newSessionStarted(songList[0])
+            for (j in 1 until songList.size) {
+                songQueue.addToQueue(songList[j])
+            }
         }
     }
 
     private fun restartLoopingShuffle() {
-        val songList = currentPlaylist.getSongIDs().toMutableList()
-        songList.shuffle()
-        if (songList.isNotEmpty()) {
-            if (songQueue.hasPrevious()) {
-                val previous = songQueue.previous().id
-                if (songList.contains(previous)) {
-                    songQueue.newSessionStarted(previous)
-                    songList.remove(previous)
-                    songQueue.next()
-                    songQueue.addToQueue(songList[0])
+        val songList = currentPlaylist.value?.getSongIDs()?.toMutableList()
+        if(songList != null) {
+            songList.shuffle()
+            if (songList.isNotEmpty()) {
+                if (songQueue.hasPrevious()) {
+                    val previous = songQueue.previous().id
+                    if (songList.contains(previous)) {
+                        songQueue.newSessionStarted(previous)
+                        songList.remove(previous)
+                        songQueue.next()
+                        songQueue.addToQueue(songList[0])
+                    } else {
+                        songQueue.newSessionStarted(songList[0])
+                    }
                 } else {
                     songQueue.newSessionStarted(songList[0])
                 }
-            } else {
-                songQueue.newSessionStarted(songList[0])
-            }
-            for (i in 1 until songList.size) {
-                songQueue.addToQueue(songList[i])
+                for (i in 1 until songList.size) {
+                    songQueue.addToQueue(songList[i])
+                }
             }
         }
     }
@@ -124,12 +131,6 @@ class MediaSession private constructor(
     @Synchronized
     fun setLoopingOne(loopingOne: Boolean) {
         this.loopingOne = loopingOne
-    }
-
-    init {
-        ServiceMain.executorServiceFIFO.execute {
-            currentPlaylist = playlistsRepo.getMasterPlaylist()
-        }
     }
 
     /** Plays the next song.
@@ -195,7 +196,7 @@ class MediaSession private constructor(
         } else {
             // Not looping
             if(shuffling){
-                val song = currentPlaylist.nextRandomSong(context)
+                val song = currentPlaylist.value?.nextRandomSong(context)
                 if (song != null) {
                     songQueue.addToQueue(song.id)
                 }

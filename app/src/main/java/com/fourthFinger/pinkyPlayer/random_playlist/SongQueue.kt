@@ -5,8 +5,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.map
 import java.util.LinkedList
 
-class SongQueue private constructor(
-    val playlistsRepo: PlaylistsRepo
+class SongQueue(
+    val songRepo: SongRepo
 ) {
 
     private val _songQueue: LinkedList<Song> = LinkedList()
@@ -55,7 +55,7 @@ class SongQueue private constructor(
     fun addToQueue(songID: Long) {
         val i = songQueueIterator.nextIndex()
         goToBack()
-        playlistsRepo.getSong(songID)?.let { songQueueIterator.add(it) }
+        songRepo.getSong(songID)?.let { songQueueIterator.add(it) }
         songQueueIterator = _songQueue.listIterator(i)
         mLDSongQueue.value = _songQueue
     }
@@ -131,19 +131,5 @@ class SongQueue private constructor(
     init {
         songQueueIterator = _songQueue.listIterator()
     }
-
-    companion object {
-        private var INSTANCE: SongQueue? = null
-
-        @Synchronized
-        fun getInstance(playlistsRepo: PlaylistsRepo): SongQueue {
-            if (INSTANCE == null) {
-                INSTANCE = SongQueue(playlistsRepo)
-            }
-            return INSTANCE!!
-        }
-
-    }
-
 
 }

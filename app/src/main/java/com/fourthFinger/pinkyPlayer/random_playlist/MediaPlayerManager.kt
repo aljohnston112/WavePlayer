@@ -10,29 +10,21 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import java.util.*
 
-class MediaPlayerManager private constructor() {
+class MediaPlayerManager {
 
     private var haveAudioFocus: Boolean = false
+
     private var _songInProgress: MutableLiveData<Boolean> = MutableLiveData(false)
     val songInProgress = _songInProgress as LiveData<Boolean>
-    fun isSongInProgress(): Boolean? {
-        return _songInProgress.value
-    }
 
     private val _isPlaying: MutableLiveData<Boolean> = MutableLiveData(false)
     val isPlaying = _isPlaying as LiveData<Boolean>
-    fun setIsPlaying(isPlaying: Boolean) {
-        this._isPlaying.postValue(isPlaying)
-        _songInProgress.value = isPlaying
-    }
 
     private var _currentAudioUri = MutableLiveData<AudioUri>()
     val currentAudioUri = _currentAudioUri as LiveData<AudioUri>
-    fun setCurrentAudioUri(audioUri: AudioUri) {
-        _currentAudioUri.value = (audioUri)
-    }
 
     lateinit var onCompletionListener: MediaPlayer.OnCompletionListener
+    lateinit var onErrorListener: MediaPlayer.OnErrorListener
 
     fun setUp(
         context: Context,
@@ -50,6 +42,19 @@ class MediaPlayerManager private constructor() {
                 return@OnErrorListener false
             }
         }
+    }
+
+    fun isSongInProgress(): Boolean? {
+        return _songInProgress.value
+    }
+
+    fun setIsPlaying(isPlaying: Boolean) {
+        this._isPlaying.postValue(isPlaying)
+        _songInProgress.value = isPlaying
+    }
+
+    fun setCurrentAudioUri(audioUri: AudioUri) {
+        _currentAudioUri.value = (audioUri)
     }
 
     fun getCurrentTime(): Int {
@@ -94,8 +99,6 @@ class MediaPlayerManager private constructor() {
         }
         releaseMediaPlayers()
     }
-
-    lateinit var onErrorListener: MediaPlayer.OnErrorListener
 
     private fun requestAudioFocus(context: Context): Boolean {
         if (haveAudioFocus) {
@@ -243,19 +246,6 @@ class MediaPlayerManager private constructor() {
         currentAudioUri.value?.let {
             getCurrentMediaPlayerWUri()?.seekTo(context, it, progress)
         }
-    }
-
-    companion object {
-
-        private var INSTANCE: MediaPlayerManager? = null
-
-        fun getInstance(): MediaPlayerManager {
-            if (INSTANCE == null) {
-                INSTANCE = MediaPlayerManager()
-            }
-            return INSTANCE!!
-        }
-
     }
 
 }

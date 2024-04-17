@@ -23,7 +23,6 @@ import com.fourthFinger.pinkyPlayer.NavUtil.Companion.navigateTo
 import com.fourthFinger.pinkyPlayer.R
 import com.fourthFinger.pinkyPlayer.ServiceMain
 import com.fourthFinger.pinkyPlayer.databinding.ActivityMainBinding
-import com.fourthFinger.pinkyPlayer.fragments.ViewModelAddToQueue
 import com.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerManager
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 
@@ -37,9 +36,6 @@ class ActivityMain : AppCompatActivity() {
 
     private val viewModelActivityMain by viewModels<ViewModelActivityMain>{
         ViewModelActivityMain.Factory
-    }
-    private val viewModelAddToQueue by viewModels<ViewModelAddToQueue>{
-        ViewModelAddToQueue.Factory
     }
 
     private lateinit var mediaPlayerManager: MediaPlayerManager
@@ -324,7 +320,7 @@ class ActivityMain : AppCompatActivity() {
             }
 
             R.id.action_add_to_queue -> {
-                viewModelAddToQueue.actionAddToQueue(applicationContext)
+                viewModelActivityMain.actionAddToQueue(applicationContext)
                 if (viewModelActivityMain.fragmentSongVisible.value == false &&
                     mediaPlayerManager.isSongInProgress() == true
                 ) {
@@ -334,7 +330,7 @@ class ActivityMain : AppCompatActivity() {
             }
 
             R.id.action_add_to_playlist -> {
-                viewModelAddToQueue.actionAddToPlaylist(supportFragmentManager)
+                viewModelActivityMain.actionAddToPlaylist(supportFragmentManager)
                 return true
             }
 

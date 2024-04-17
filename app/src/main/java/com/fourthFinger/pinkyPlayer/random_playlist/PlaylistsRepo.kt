@@ -7,9 +7,8 @@ import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 
-class PlaylistsRepo private constructor() {
+class PlaylistsRepo() {
 
-    private lateinit var songDAO: SongDAO
     private val playlists: MutableList<RandomPlaylist> = mutableListOf()
 
     fun getPlaylists(): List<RandomPlaylist> {
@@ -55,27 +54,6 @@ class PlaylistsRepo private constructor() {
     fun isMasterPlaylistInitialized(): Boolean {
         return ::masterPlaylist.isInitialized
     }
-    fun getSong(songID: Long): Song? {
-        var song: Song? = null
-        try {
-            song = ServiceMain.executorServicePool.submit(
-                Callable { songDAO.getSong(songID) }
-            ).get()
-        } catch (e: ExecutionException) {
-            e.printStackTrace()
-        } catch (e: InterruptedException) {
-            e.printStackTrace()
-        }
-        return song
-    }
-
-    fun addSongToDB(song: Song) {
-        songDAO.insertAll(song)
-    }
-
-    fun removeSongFromDB(it: Song) {
-        songDAO.delete(it)
-    }
 
     fun addPlaylistsFromSaveFile(randomPlaylist: List<RandomPlaylist>) {
         for(p in randomPlaylist) {
@@ -107,26 +85,6 @@ class PlaylistsRepo private constructor() {
             titlesArray[i++] = title
         }
         return titlesArray
-    }
-
-    fun loadDatabase(context: Context) {
-        val songDatabase = Room.databaseBuilder(
-            context, SongDatabase::class.java,
-            MediaDatasource.SONG_DATABASE_NAME
-        ).build()
-        songDAO = songDatabase.songDAO()
-    }
-
-    companion object {
-
-        private var INSTANCE: PlaylistsRepo? = null
-
-        fun getInstance(): PlaylistsRepo {
-            if (INSTANCE == null) {
-                INSTANCE = PlaylistsRepo()
-            }
-            return INSTANCE!!
-        }
     }
 
 }

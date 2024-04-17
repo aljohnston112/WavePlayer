@@ -43,9 +43,7 @@ class FragmentSong : Fragment() {
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain> {
         ViewModelActivityMain.Factory
     }
-    private val viewModelAddToQueue by activityViewModels<ViewModelAddToQueue> {
-        ViewModelAddToQueue.Factory
-    }
+
     private val viewModelFragmentSong by viewModels<ViewModelFragmentSong> {
         ViewModelFragmentSong.Factory
     }
@@ -72,7 +70,7 @@ class FragmentSong : Fragment() {
         KeyboardUtil.hideKeyboard(view)
         viewModelFragmentSong.currentAudioUri.observe(viewLifecycleOwner) {
             if (it != null) {
-                viewModelAddToQueue.setSongToAddToQueue(it.id)
+                viewModelActivityMain.setSongToAddToQueue(it.id)
                 binding.textViewSongName.text = it.title
                 setUpSeekBar(it.getDuration(requireActivity().applicationContext).toInt())
                 setUpSeekBarUpdater()

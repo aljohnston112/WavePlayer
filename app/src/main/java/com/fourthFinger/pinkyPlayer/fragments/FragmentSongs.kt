@@ -34,15 +34,6 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
     private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>{
         ViewModelActivityMain.Factory
     }
-    private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>{
-        ViewModelPlaylists.Factory
-    }
-    private val viewModelUserPicks by activityViewModels<ViewModelUserPicks>{
-        ViewModelUserPicks.Factory
-    }
-    private val viewModelAddToQueue by activityViewModels<ViewModelAddToQueue>{
-        ViewModelAddToQueue.Factory
-    }
 
     private lateinit var recyclerViewSongs: RecyclerView
     private lateinit var recyclerViewAdapterSongs: RecyclerViewAdapterSongs
@@ -74,7 +65,7 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         recyclerViewSongs = binding.recyclerViewSongList
         recyclerViewAdapterSongs = RecyclerViewAdapterSongs(
             this,
-            viewModelPlaylists.getAllSongs().toList()
+            viewModelActivityMain.getAllSongs().toList()
         )
         recyclerViewSongs.adapter = recyclerViewAdapterSongs
         recyclerViewSongs.layoutManager = LinearLayoutManager(recyclerViewSongs.context)
@@ -91,10 +82,10 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
 
     private fun filterSongs(newText: String?) {
         if (newText != null && newText != "") {
-            val sifted = viewModelPlaylists.siftAllSongs(newText)
+            val sifted = viewModelActivityMain.siftAllSongs(newText)
             recyclerViewAdapterSongs.updateList(sifted)
         } else {
-            recyclerViewAdapterSongs.updateList(viewModelPlaylists.getAllSongs().toList())
+            recyclerViewAdapterSongs.updateList(viewModelActivityMain.getAllSongs().toList())
         }
     }
 
@@ -168,13 +159,12 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
     }
 
     override fun onMenuItemClickAddToQueue(song: Song) {
-        viewModelAddToQueue.addToQueue(requireActivity().applicationContext, song)
+        viewModelActivityMain.addToQueue(requireActivity().applicationContext, song)
     }
 
     override fun onClickViewHolder(pos: Int, song: Song) {
-        viewModelUserPicks.songClicked(
-            requireActivity().applicationContext,
-            NavHostFragment.findNavController(this),
+        viewModelActivityMain.playlistSongClicked(
+            this,
             song
         )
     }

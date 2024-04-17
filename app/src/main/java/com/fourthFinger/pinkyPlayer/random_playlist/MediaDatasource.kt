@@ -5,18 +5,32 @@ import android.content.Intent
 import android.provider.MediaStore
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.room.Room
 import com.fourthFinger.pinkyPlayer.R
+import com.fourthFinger.pinkyPlayer.ServiceMain
 import java.io.File
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class MediaDatasource private constructor() {
+class MediaDatasource() {
 
     private val _loadingText: MutableLiveData<String> = MutableLiveData()
     val loadingText = _loadingText as LiveData<String>
 
     private val _loadingProgress: MutableLiveData<Double> = MutableLiveData(0.0)
     val loadingProgress = _loadingProgress as LiveData<Double>
+
+    private lateinit var songDAO: SongDAO
+
+    fun loadDatabase(context: Context) {
+        val songDatabase = Room.databaseBuilder(
+            context, SongDatabase::class.java,
+            SONG_DATABASE_NAME
+        ).build()
+        songDAO = songDatabase.songDAO()
+    }
 
     fun loadSongs(
         context: Context,
@@ -88,7 +102,7 @@ class MediaDatasource private constructor() {
             val i = newSongs.size
             _loadingText.postValue(context.resources.getString(R.string.loading2))
             for ((k, song) in newSongs.withIndex()) {
-                playlistsRepo.addSongToDB(song)
+                songDAO.insertAll(song)
                 _loadingProgress.postValue(k.toDouble() / i.toDouble())
             }
         }
@@ -131,9 +145,9 @@ class MediaDatasource private constructor() {
         val ids = playlistsRepo.getMasterPlaylist().getSongIDs()
         for ((j, songID) in ids.withIndex()) {
             if (!filesThatExist.contains(songID)) {
-                playlistsRepo.getSong(songID)?.let {
+                getSong(songID)?.let {
                     playlistsRepo.getMasterPlaylist().remove(context, playlistsRepo, it)
-                    playlistsRepo.removeSongFromDB(it)
+                    songDAO.delete(it)
                 }
                 mediaPlayerManager.removeMediaPlayerWUri(songID)
             }
@@ -141,19 +155,23 @@ class MediaDatasource private constructor() {
         }
     }
 
+    fun getSong(songID: Long): Song? {
+        var song: Song? = null
+        try {
+            song = ServiceMain.executorServicePool.submit(
+                Callable { songDAO.getSong(songID) }
+            ).get()
+        } catch (e: ExecutionException) {
+            e.printStackTrace()
+        } catch (e: InterruptedException) {
+            e.printStackTrace()
+        }
+        return song
+    }
+
     companion object {
         const val SONG_DATABASE_NAME: String = "SONG_DATABASE_NAME"
         private val MEDIA_DATA_LOCK: Any = Any()
-        private var INSTANCE: MediaDatasource? = null
-
-        fun getInstance(
-        ): MediaDatasource {
-            synchronized(MEDIA_DATA_LOCK) {
-                if (INSTANCE == null) {
-                    INSTANCE = MediaDatasource()
-                }
-                return INSTANCE!!
-            }
-        }
     }
+
 }

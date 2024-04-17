@@ -11,9 +11,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.navigation.NavController
+import androidx.navigation.fragment.findNavController
 import com.fourthFinger.pinkyPlayer.ApplicationMain
 import com.fourthFinger.pinkyPlayer.NavUtil
 import com.fourthFinger.pinkyPlayer.R
+import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 import com.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
@@ -23,15 +25,11 @@ import com.fourthFinger.pinkyPlayer.settings.SettingsRepo
 class ViewModelFragmentTitle(
     val settingsRepo: SettingsRepo,
     val playlistsRepo: PlaylistsRepo,
+    val mediaSession: MediaSession,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-
-    private var songs: MutableList<Song> = mutableListOf()
-
-    fun clearSongs() {
-        songs.clear()
-    }
+    // TODO add loading progress
 
     fun buttonClicked(id: Int, navController: NavController) {
         when (id) {
@@ -41,12 +39,14 @@ class ViewModelFragmentTitle(
                     FragmentTitleDirections.actionFragmentTitleToFragmentPlaylists()
                 )
             }
+
             R.id.button_songs -> {
                 NavUtil.navigate(
                     navController,
                     FragmentTitleDirections.actionFragmentTitleToFragmentSongs()
                 )
             }
+
             R.id.button_settings -> {
                 NavUtil.navigate(
                     navController,
@@ -56,48 +56,61 @@ class ViewModelFragmentTitle(
         }
     }
 
-    fun createPlaylist(
-        context: Context,
-        contentResolver: ContentResolver,
+    fun createPlaylistFromFolder(
+        fragmentTitle: FragmentTitle,
         uri: Uri
-    ): RandomPlaylist? {
-        getFilesFromDirRecursive(contentResolver, uri)
-        if (songs.isNotEmpty()) {
-            var randomPlaylist: RandomPlaylist? = uri.path?.let {
-                playlistsRepo.getPlaylist(it)
-            }
-            if (randomPlaylist == null) {
-                randomPlaylist = uri.path?.let {
-                    RandomPlaylist(
-                        context,
-                        it,
-                        songs,
-                        false,
-                        settingsRepo.settings.value!!.maxPercent,
-                        playlistsRepo
-                    )
-                }
-                if (randomPlaylist != null) {
-                    playlistsRepo.addPlaylist(context, randomPlaylist)
-                }
-            } else {
-                addNewSongs(context, randomPlaylist)
-                removeMissingSongs(context, randomPlaylist)
-            }
-            return randomPlaylist
+    ) {
+        val context = fragmentTitle.requireContext()
+        val contentResolver = fragmentTitle.requireContext().contentResolver
+        val songs = getFilesFromDirRecursive(contentResolver, uri)
+        var randomPlaylist: RandomPlaylist? = uri.path?.let {
+            playlistsRepo.getPlaylist(it)
         }
-        return null
+        if (randomPlaylist == null) {
+            randomPlaylist = uri.path?.let {
+                RandomPlaylist(
+                    context,
+                    it,
+                    songs,
+                    false,
+                    settingsRepo.settings.value!!.maxPercent,
+                    playlistsRepo
+                )
+            }
+            if (randomPlaylist != null) {
+                playlistsRepo.addPlaylist(context, randomPlaylist)
+            }
+        } else {
+            addNewSongs(context, randomPlaylist, songs)
+            removeMissingSongs(context, randomPlaylist, songs)
+        }
+        if (randomPlaylist != null) {
+            NavUtil.navigate(
+                fragmentTitle.findNavController(),
+                FragmentTitleDirections.actionFragmentTitleToFragmentPlaylists()
+            )
+        } else{
+            // TODO The uri path was null
+        }
     }
 
-    private fun getFilesFromDirRecursive(contentResolver: ContentResolver, rootUri: Uri) {
+    private fun getFilesFromDirRecursive(
+        contentResolver: ContentResolver,
+        rootUri: Uri
+    ): MutableList<Song> {
         val childUri: Uri = DocumentsContract.buildChildDocumentsUriUsingTree(
             rootUri,
             DocumentsContract.getTreeDocumentId(rootUri)
         )
-        searchFilesForMusic(contentResolver, childUri, rootUri)
+        return searchFilesForMusic(contentResolver, childUri, rootUri)
     }
 
-    private fun searchFilesForMusic(contentResolver: ContentResolver, childUri: Uri, rootUri: Uri) {
+    private fun searchFilesForMusic(
+        contentResolver: ContentResolver,
+        childUri: Uri,
+        rootUri: Uri
+    ): MutableList<Song> {
+        val songs: MutableList<Song> = mutableListOf()
         val selection = MediaStore.Audio.Media.IS_MUSIC + " != ? OR" +
                 DocumentsContract.Document.COLUMN_MIME_TYPE + " " + "== ?"
         val selectionArgs = arrayOf("0", DocumentsContract.Document.MIME_TYPE_DIR)
@@ -131,16 +144,24 @@ class ViewModelFragmentTitle(
                             rootUri,
                             docId
                         )
-                        searchFilesForMusic(contentResolver, newNode, rootUri)
+                        songs.addAll(
+                            searchFilesForMusic(contentResolver, newNode, rootUri)
+                        )
                     } else {
-                        getSong(contentResolver, displayName)?.let { songs.add(it) }
+                        getSong(contentResolver, displayName)?.let {
+                            songs.add(it)
+                        }
                     }
                 }
             }
         }
+        return songs
     }
 
-    private fun getSong(contentResolver: ContentResolver, displayName: String): Song? {
+    private fun getSong(
+        contentResolver: ContentResolver,
+        displayName: String
+    ): Song? {
         val selection = MediaStore.Audio.Media.DISPLAY_NAME + " == ?"
         val selectionArgs = arrayOf(displayName)
         contentResolver.query(
@@ -166,8 +187,11 @@ class ViewModelFragmentTitle(
         return null
     }
 
-
-    private fun addNewSongs(context: Context, randomPlaylist: RandomPlaylist) {
+    private fun addNewSongs(
+        context: Context,
+        randomPlaylist: RandomPlaylist,
+        songs: List<Song>
+    ) {
         for (song in songs) {
             if (!randomPlaylist.contains(song.id)) {
                 randomPlaylist.add(
@@ -179,7 +203,11 @@ class ViewModelFragmentTitle(
         }
     }
 
-    private fun removeMissingSongs(context: Context, randomPlaylist: RandomPlaylist) {
+    private fun removeMissingSongs(
+        context: Context,
+        randomPlaylist: RandomPlaylist,
+        songs: MutableList<Song>
+    ) {
         for (song in randomPlaylist.getSongs()) {
             if (!songs.contains(song)) {
                 randomPlaylist.remove(context, playlistsRepo, song)
@@ -202,6 +230,7 @@ class ViewModelFragmentTitle(
                 return ViewModelFragmentTitle(
                     (application as ApplicationMain).settingsRepo,
                     application.playlistsRepo,
+                    application.mediaSession,
                     savedStateHandle
                 ) as T
             }

@@ -7,24 +7,26 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
+import androidx.navigation.NavController
 import com.fourthFinger.pinkyPlayer.ApplicationMain
+import com.fourthFinger.pinkyPlayer.NavUtil
+import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 import com.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
 import com.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
 import com.fourthFinger.pinkyPlayer.random_playlist.SaveFile
 import com.fourthFinger.pinkyPlayer.random_playlist.Song
+import com.fourthFinger.pinkyPlayer.random_playlist.UseCaseSongPicker
 import java.util.*
 
 class ViewModelPlaylists(
     val playlistsRepo: PlaylistsRepo,
+    val mediaSession: MediaSession,
+    val songPicker: UseCaseSongPicker,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     fun getPlaylists(): List<RandomPlaylist> {
         return playlistsRepo.getPlaylists()
-    }
-
-    fun getAllSongs(): Set<Song> {
-        return playlistsRepo.getAllSongs()
     }
 
     fun notifyPlaylistMoved(context: Context, fromPosition: Int, toPosition: Int) {
@@ -61,20 +63,27 @@ class ViewModelPlaylists(
         return sifted
     }
 
-    fun siftAllSongs(newText: String): List<Song> {
-        val sifted: MutableList<Song> = mutableListOf()
-        for (song in getAllSongs()) {
-            if (song.title.lowercase(Locale.ROOT)
-                    .contains(newText.lowercase(Locale.ROOT))
-            ) {
-                sifted.add(song)
-            }
-        }
-        return sifted
-    }
-
     fun getPlaylistTitles(): Array<String> {
         return playlistsRepo.getPlaylistTitles()
+    }
+
+    fun playlistClicked(
+        navController: NavController,
+        playlist: RandomPlaylist
+    ) {
+        mediaSession.setCurrentPlaylist(playlist)
+        NavUtil.navigate(
+            navController,
+            FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentPlaylist()
+        )
+    }
+
+    fun fabClicked(navController: NavController) {
+        songPicker.unselectAllSongs()
+        NavUtil.navigate(
+            navController,
+            FragmentPlaylistsDirections.actionFragmentPlaylistsToFragmentEditPlaylist()
+        )
     }
 
     companion object {
@@ -89,6 +98,8 @@ class ViewModelPlaylists(
                 val savedStateHandle = extras.createSavedStateHandle()
                 return ViewModelPlaylists(
                     (application as ApplicationMain).playlistsRepo,
+                    application.mediaSession,
+                    application.songPicker,
                     savedStateHandle
                 ) as T
             }

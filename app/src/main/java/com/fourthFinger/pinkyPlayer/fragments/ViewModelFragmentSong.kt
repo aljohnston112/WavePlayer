@@ -11,13 +11,15 @@ import com.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 import com.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerManager
 import com.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 import com.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
+import com.fourthFinger.pinkyPlayer.random_playlist.SongRepo
 import com.fourthFinger.pinkyPlayer.settings.SettingsRepo
 
 class ViewModelFragmentSong(
-    val playlistsRepo: PlaylistsRepo,
-    val settingsRepo: SettingsRepo,
-    val mediaPlayerManager: MediaPlayerManager,
-    val mediaSession: MediaSession,
+    private val songRepo: SongRepo,
+    private val playlistsRepo: PlaylistsRepo,
+    private val settingsRepo: SettingsRepo,
+    private val mediaPlayerManager: MediaPlayerManager,
+    private val mediaSession: MediaSession,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -29,8 +31,8 @@ class ViewModelFragmentSong(
         context: Context,
         currentAudioUri: AudioUri
     ) {
-        playlistsRepo.getSong(currentAudioUri.id)?.let { song ->
-            mediaSession.getCurrentPlaylist().bad(
+        songRepo.getSong(currentAudioUri.id)?.let { song ->
+            mediaSession.currentPlaylist.value?.bad(
                 context,
                 playlistsRepo,
                 song,
@@ -43,8 +45,8 @@ class ViewModelFragmentSong(
         context: Context,
         currentAudioUri: AudioUri
     ) {
-        playlistsRepo.getSong(currentAudioUri.id)?.let { song ->
-            mediaSession.getCurrentPlaylist().good(
+        songRepo.getSong(currentAudioUri.id)?.let { song ->
+            mediaSession.currentPlaylist.value?.good(
                 context,
                 playlistsRepo,
                 song,
@@ -74,8 +76,8 @@ class ViewModelFragmentSong(
         currentAudioUri: AudioUri
     ) {
         mediaSession.playNext(context)
-        playlistsRepo.getSong(currentAudioUri.id)?.let {
-            mediaSession.getCurrentPlaylist().bad(
+        songRepo.getSong(currentAudioUri.id)?.let {
+            mediaSession.currentPlaylist.value?.bad(
                 context,
                 playlistsRepo,
                 it,
@@ -138,7 +140,8 @@ class ViewModelFragmentSong(
                     checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
                 val savedStateHandle = extras.createSavedStateHandle()
                 return ViewModelFragmentSong(
-                    (application as ApplicationMain).playlistsRepo,
+                    (application as ApplicationMain).songRepo,
+                    application.playlistsRepo,
                     application.settingsRepo,
                     application.mediaPlayerManager,
                     application.mediaSession,
