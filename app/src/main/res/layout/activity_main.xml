@@ -16,7 +16,7 @@
 
             <androidx.fragment.app.FragmentContainerView
                 android:id="@+id/fragmentSongPane"
-                android:name="com.fourthFinger.pinkyPlayer.fragments.FragmentPaneSong"
+                android:name="io.fourthFinger.pinkyPlayer.fragments.FragmentPaneSong"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:layout_constraintBottom_toBottomOf="parent"
