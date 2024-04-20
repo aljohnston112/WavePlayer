@@ -72,7 +72,7 @@ class FragmentSong : Fragment() {
             if (it != null) {
                 viewModelActivityMain.setSongToAddToQueue(it.id)
                 binding.textViewSongName.text = it.title
-                setUpSeekBar(it.getDuration(requireActivity().applicationContext).toInt())
+                setUpSeekBar(it.getDurationMS(requireActivity().applicationContext).toInt())
                 setUpSeekBarUpdater()
                 updateSongArt(it)
                 setUpButtons(it)

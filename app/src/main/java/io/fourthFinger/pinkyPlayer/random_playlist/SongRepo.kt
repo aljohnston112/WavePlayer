@@ -1,10 +1,6 @@
 package io.fourthFinger.pinkyPlayer.random_playlist
 
 import android.content.Context
-import androidx.room.Room
-import io.fourthFinger.pinkyPlayer.ServiceMain
-import java.util.concurrent.Callable
-import java.util.concurrent.ExecutionException
 
 class SongRepo {
 
@@ -25,7 +21,7 @@ class SongRepo {
     }
 
     fun getSong(id: Long): Song? {
-        return mediaDatasource.getSong(id)
+        return mediaDatasource.getSongFromDatabase(id)
     }
 
     fun getAllSongs(): List<Song> {

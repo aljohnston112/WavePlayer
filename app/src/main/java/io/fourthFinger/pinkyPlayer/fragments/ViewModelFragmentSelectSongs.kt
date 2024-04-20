@@ -32,8 +32,6 @@ class ViewModelFragmentSelectSongs(
     fun selectSongs(playlist: RandomPlaylist?) {
         if (playlist != null) {
             songPicker.selectSongsInPlaylist(playlist)
-        } else {
-            songPicker.unselectAllSongs()
         }
     }
 
