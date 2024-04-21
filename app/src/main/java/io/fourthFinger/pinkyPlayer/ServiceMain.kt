@@ -1,5 +1,5 @@
 package io.fourthFinger.pinkyPlayer
-import android.annotation.SuppressLint
+
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -48,6 +48,52 @@ class ServiceMain : LifecycleService() {
 
     private lateinit var mediaPlayerManager: MediaPlayerManager
 
+    private var broadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(
+            context: Context,
+            intent: Intent
+        ) {
+            synchronized(LOCK) {
+                val action: String? = intent.action
+                if (action != null) {
+                    val mediaSession = (application as ApplicationMain).mediaSession
+                    when (action) {
+                        resources.getString(
+                            R.string.action_next
+                        ) -> {
+                            mediaSession.playNext(applicationContext)
+                        }
+
+                        resources.getString(
+                            R.string.action_play_pause
+                        ) -> {
+                            mediaSession.pauseOrPlay(applicationContext)
+                        }
+
+                        resources.getString(
+                            R.string.action_previous
+                        ) -> {
+                            mediaSession.playPrevious(applicationContext)
+                        }
+
+                        resources.getString(
+                            R.string.action_new_song
+                        ) -> {
+                            //updateNotification()
+                            val notificationManager = getSystemService(
+                                NOTIFICATION_SERVICE
+                            ) as NotificationManager
+                            notificationManager.notify(
+                                NOTIFICATION_CHANNEL_ID.hashCode(),
+                                notification
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // region lifecycle
     // region onCreate
     override fun onCreate() {
@@ -59,33 +105,46 @@ class ServiceMain : LifecycleService() {
     }
 
     private fun setUpExceptionSaver() {
-        Thread.setDefaultUncaughtExceptionHandler { _, paramThrowable ->
-            val file = File(baseContext.filesDir, FILE_ERROR_LOG)
+        Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
+            val file = File(
+                baseContext.filesDir,
+                FILE_ERROR_LOG
+            )
             file.delete()
             try {
-                PrintWriter(file).use { pw ->
-                    paramThrowable.printStackTrace(pw)
-                    pw.flush()
-                    paramThrowable.printStackTrace()
+                PrintWriter(file).use { printWriter ->
+                    throwable.printStackTrace(printWriter)
+                    printWriter.flush()
+                    throwable.printStackTrace()
                 }
             } catch (e: FileNotFoundException) {
                 e.printStackTrace()
             }
-            throw paramThrowable
+            throw throwable
         }
     }
 
     private fun logLastThrownException() {
-        val file = File(baseContext.filesDir, FILE_ERROR_LOG)
+        val file = File(
+            baseContext.filesDir,
+            FILE_ERROR_LOG
+        )
         if (file.exists()) {
             try {
                 BufferedReader(FileReader(file)).use { bufferedReader ->
                     val stringBuilder: StringBuilder = StringBuilder()
-                    var sCurrentLine: String?
-                    while ((bufferedReader.readLine().also { sCurrentLine = it }) != null) {
-                        stringBuilder.append(sCurrentLine)
+                    var currentLine: String?
+                    while (
+                        (bufferedReader.readLine().also {
+                            currentLine = it
+                        }) != null
+                    ) {
+                        stringBuilder.append(currentLine)
                     }
-                    Log.e(TAG_ERROR, stringBuilder.toString())
+                    Log.e(
+                        TAG_ERROR,
+                        stringBuilder.toString()
+                    )
                 }
             } catch (e: IOException) {
                 e.printStackTrace()
@@ -101,52 +160,31 @@ class ServiceMain : LifecycleService() {
         intentFilter.addAction(resources.getString(R.string.action_play_pause))
         intentFilter.addAction(resources.getString(R.string.action_new_song))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(broadcastReceiver, intentFilter, RECEIVER_EXPORTED)
+            registerReceiver(
+                broadcastReceiver,
+                intentFilter,
+                RECEIVER_EXPORTED
+            )
         } else {
-            registerReceiver(broadcastReceiver, intentFilter)
-        }
-    }
-
-    private var broadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            synchronized(LOCK) {
-                val action: String? = intent.action
-                if (action != null) {
-                    val mediaSession = (application as ApplicationMain).mediaSession
-                    when (action) {
-                        resources.getString(
-                            R.string.action_next
-                        ) -> {
-                            mediaSession.playNext(applicationContext)
-                        }
-                        resources.getString(
-                            R.string.action_play_pause
-                        ) -> {
-                            mediaSession.pauseOrPlay(applicationContext)
-                        }
-                        resources.getString(
-                            R.string.action_previous
-                        ) -> {
-                            mediaSession.playPrevious(applicationContext)
-                        }
-                        resources.getString(
-                            R.string.action_new_song
-                        ) -> {
-                            //updateNotification()
-                            val notificationManager: NotificationManager =
-                                getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-                            notificationManager.notify(NOTIFICATION_CHANNEL_ID.hashCode(), notification)
-                        }
-                    }
-                }
-            }
+            registerReceiver(
+                broadcastReceiver,
+                intentFilter
+            )
         }
     }
 
     // endregion onCreate
     // region onStartCommand
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        super.onStartCommand(intent, flags, startId)
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int
+    ): Int {
+        super.onStartCommand(
+            intent,
+            flags,
+            startId
+        )
         if (!serviceStarted) {
             setUpNotificationBuilder()
             setUpBroadCastsForNotificationButtons()
@@ -165,15 +203,11 @@ class ServiceMain : LifecycleService() {
                 )
             }
             mediaPlayerManager.currentAudioUri.observe(this) {
-                setUpNotificationBuilder()
-                setUpBroadCastsForNotificationButtons()
                 updateSongArt(it)
                 updateNotificationSongName(it)
                 updateNotification()
             }
             mediaPlayerManager.isPlaying.observe(this) {
-                setUpNotificationBuilder()
-                setUpBroadCastsForNotificationButtons()
                 updateNotificationPlayButton(it)
                 updateNotification()
             }
@@ -182,27 +216,6 @@ class ServiceMain : LifecycleService() {
         return START_STICKY
     }
 
-    private fun updateNotification() {
-        remoteViewsNotificationLayout?.removeAllViews(R.id.pane_notification_linear_layout)
-        if (notificationHasArt) {
-            remoteViewsNotificationLayout?.addView(
-                R.id.pane_notification_linear_layout,
-                remoteViewsNotificationLayoutWithArt
-            )
-        } else {
-            remoteViewsNotificationLayout?.addView(
-                R.id.pane_notification_linear_layout,
-                remoteViewsNotificationLayoutWithoutArt
-            )
-        }
-        notificationCompatBuilder?.setCustomContentView(remoteViewsNotificationLayout)
-        notification = notificationCompatBuilder?.build()
-        val notificationManager: NotificationManager =
-            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(NOTIFICATION_CHANNEL_ID.hashCode(), notification)
-    }
-
-    @SuppressLint("UnspecifiedImmutableFlag")
     private fun setUpNotificationBuilder() {
         notificationCompatBuilder = NotificationCompat.Builder(
             applicationContext,
@@ -214,42 +227,43 @@ class ServiceMain : LifecycleService() {
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-        remoteViewsNotificationLayoutWithoutArt =
-            RemoteViews(packageName, R.layout.pane_notification_without_art)
-        remoteViewsNotificationLayoutWithArt =
-            RemoteViews(packageName, R.layout.pane_notification_with_art)
-        remoteViewsNotificationLayout = RemoteViews(packageName, R.layout.pane_notification)
+        remoteViewsNotificationLayoutWithoutArt = RemoteViews(
+            packageName,
+            R.layout.pane_notification_without_art
+        )
+        remoteViewsNotificationLayoutWithArt = RemoteViews(
+            packageName,
+            R.layout.pane_notification_with_art
+        )
+        remoteViewsNotificationLayout = RemoteViews(
+            packageName,
+            R.layout.pane_notification
+        )
 
-        val notificationIntent = Intent(applicationContext, ActivityMain::class.java)
-        val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            getActivity(
-                applicationContext,
-                0,
-                notificationIntent,
-                FLAG_CANCEL_CURRENT or FLAG_IMMUTABLE
-            )
-        } else {
-            getActivity(
-                applicationContext,
-                0,
-                notificationIntent,
-                FLAG_CANCEL_CURRENT
-            )
-        }
+        val notificationIntent = Intent(
+            applicationContext,
+            ActivityMain::class.java
+        )
+        val pendingIntent = getActivity(
+            applicationContext,
+            0,
+            notificationIntent,
+            FLAG_CANCEL_CURRENT or FLAG_IMMUTABLE
+        )
         notificationCompatBuilder?.setContentIntent(pendingIntent)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val importance = NotificationManager.IMPORTANCE_LOW
             val channel = NotificationChannel(
                 NOTIFICATION_CHANNEL_ID,
                 NOTIFICATION_CHANNEL_ID,
-                importance
+                NotificationManager.IMPORTANCE_LOW
             )
             val description = getString(R.string.description)
             channel.description = description
-            val notificationManager = getSystemService(NotificationManager::class.java)
+            val notificationManager = getSystemService(
+                NotificationManager::class.java
+            )
             notificationManager.createNotificationChannel(channel)
         }
-        // Log.v(TAG, "Done setting up notification builder");
     }
 
     private fun setUpBroadCastsForNotificationButtons() {
@@ -258,84 +272,90 @@ class ServiceMain : LifecycleService() {
         setUpBroadcastPrevious()
     }
 
-    @SuppressLint("UnspecifiedImmutableFlag")
     private fun setUpBroadcastNext() {
         val intentNext = Intent(resources.getString(R.string.action_next))
         intentNext.addCategory(Intent.CATEGORY_DEFAULT)
-        val pendingIntentNext = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        val pendingIntentNext =
             getBroadcast(
                 applicationContext,
                 0,
                 intentNext,
                 FLAG_CANCEL_CURRENT or FLAG_IMMUTABLE
             )
-        } else {
-            getBroadcast(
-                applicationContext,
-                0,
-                intentNext,
-                FLAG_CANCEL_CURRENT
-            )
-        }
         remoteViewsNotificationLayoutWithoutArt?.setOnClickPendingIntent(
-            R.id.imageButtonNotificationSongPaneNext, pendingIntentNext
+            R.id.imageButtonNotificationSongPaneNext,
+            pendingIntentNext
         )
         remoteViewsNotificationLayoutWithArt?.setOnClickPendingIntent(
-            R.id.imageButtonNotificationSongPaneNextWArt, pendingIntentNext
+            R.id.imageButtonNotificationSongPaneNextWithArt,
+            pendingIntentNext
         )
     }
 
-    @SuppressLint("UnspecifiedImmutableFlag")
     private fun setUpBroadcastPlayPause() {
         val intentPlayPause = Intent(resources.getString(R.string.action_play_pause))
         intentPlayPause.addCategory(Intent.CATEGORY_DEFAULT)
-        val pendingIntentPlayPause = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            getBroadcast(
-                applicationContext,
-                0,
-                intentPlayPause,
-                FLAG_CANCEL_CURRENT or FLAG_IMMUTABLE
-            )
-        } else {
-            getBroadcast(
-                applicationContext,
-                0,
-                intentPlayPause,
-                FLAG_CANCEL_CURRENT
-            )
-        }
+        val pendingIntentPlayPause = getBroadcast(
+            applicationContext,
+            0,
+            intentPlayPause,
+            FLAG_CANCEL_CURRENT or FLAG_IMMUTABLE
+        )
+
         remoteViewsNotificationLayoutWithoutArt?.setOnClickPendingIntent(
-            R.id.imageButtonNotificationSongPanePlayPause, pendingIntentPlayPause
+            R.id.imageButtonNotificationSongPanePlayPause,
+            pendingIntentPlayPause
         )
         remoteViewsNotificationLayoutWithArt?.setOnClickPendingIntent(
-            R.id.imageButtonNotificationSongPanePlayPauseWArt, pendingIntentPlayPause
+            R.id.imageButtonNotificationSongPanePlayPauseWithArt,
+            pendingIntentPlayPause
         )
     }
 
-    @SuppressLint("UnspecifiedImmutableFlag")
     private fun setUpBroadcastPrevious() {
         val intentPrev = Intent(resources.getString(R.string.action_previous))
         intentPrev.addCategory(Intent.CATEGORY_DEFAULT)
-        val pendingIntentPrev = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            getBroadcast(
-                applicationContext,
-                0,
-                intentPrev,
-                FLAG_CANCEL_CURRENT or FLAG_IMMUTABLE
-            )
-        } else {
-            getBroadcast(
-                applicationContext,
-                0,
-                intentPrev,
-                FLAG_CANCEL_CURRENT
-            )
-        }
+        val pendingIntentPrev = getBroadcast(
+            applicationContext,
+            0,
+            intentPrev,
+            FLAG_CANCEL_CURRENT or FLAG_IMMUTABLE
+        )
         remoteViewsNotificationLayoutWithoutArt?.setOnClickPendingIntent(
-            R.id.imageButtonNotificationSongPanePrev, pendingIntentPrev
+            R.id.imageButtonNotificationSongPanePrev,
+            pendingIntentPrev
         )
         remoteViewsNotificationLayoutWithArt?.setOnClickPendingIntent(
-            R.id.imageButtonNotificationSongPanePrevWArt, pendingIntentPrev
+            R.id.imageButtonNotificationSongPanePrevWithArt,
+            pendingIntentPrev
+        )
+    }
+
+    private fun updateNotification() {
+        remoteViewsNotificationLayout?.removeAllViews(
+            R.id.pane_notification_linear_layout
+        )
+        if (notificationHasArt) {
+            remoteViewsNotificationLayout?.addView(
+                R.id.pane_notification_linear_layout,
+                remoteViewsNotificationLayoutWithArt
+            )
+        } else {
+            remoteViewsNotificationLayout?.addView(
+                R.id.pane_notification_linear_layout,
+                remoteViewsNotificationLayoutWithoutArt
+            )
+        }
+        notificationCompatBuilder?.setCustomContentView(
+            remoteViewsNotificationLayout
+        )
+        notification = notificationCompatBuilder?.build()
+        val notificationManager = getSystemService(
+            NOTIFICATION_SERVICE
+        ) as NotificationManager
+        notificationManager.notify(
+            NOTIFICATION_CHANNEL_ID.hashCode(),
+            notification
         )
     }
 
@@ -343,13 +363,13 @@ class ServiceMain : LifecycleService() {
         // TODO 92? Seems to get resized for the Notification
         val bitmap = BitmapUtil.getThumbnail(
             audioUri.getUri(),
-            92,
-            92,
+            920,
+            920,
             applicationContext
         )
         notificationHasArt = if (bitmap != null) {
             remoteViewsNotificationLayoutWithArt?.setImageViewBitmap(
-                R.id.imageViewNotificationSongPaneSongArtWArt,
+                R.id.imageViewNotificationSongPaneSongArtWithArt,
                 bitmap
             )
             true
@@ -363,32 +383,35 @@ class ServiceMain : LifecycleService() {
     }
 
     private fun updateNotificationSongName(audioUri: AudioUri) {
-            remoteViewsNotificationLayoutWithArt?.setTextViewText(
-                R.id.textViewNotificationSongPaneSongNameWArt,
-                audioUri.title
-            )
-            remoteViewsNotificationLayoutWithoutArt?.setTextViewText(
-                R.id.textViewNotificationSongPaneSongName,
-                audioUri.title
-            )
+        remoteViewsNotificationLayoutWithArt?.setTextViewText(
+            R.id.textViewNotificationSongPaneSongNameWithArt,
+            audioUri.title
+        )
+        remoteViewsNotificationLayoutWithoutArt?.setTextViewText(
+            R.id.textViewNotificationSongPaneSongName,
+            audioUri.title
+        )
     }
 
     private fun updateNotificationPlayButton(isPlaying: Boolean) {
         if (isPlaying) {
-                remoteViewsNotificationLayoutWithArt?.setImageViewResource(
-                    R.id.imageButtonNotificationSongPanePlayPauseWArt, R.drawable.pause_black_24dp
-                )
-                remoteViewsNotificationLayoutWithoutArt?.setImageViewResource(
-                    R.id.imageButtonNotificationSongPanePlayPause, R.drawable.pause_black_24dp
-                )
+            remoteViewsNotificationLayoutWithArt?.setImageViewResource(
+                R.id.imageButtonNotificationSongPanePlayPauseWithArt,
+                R.drawable.pause_black_24dp
+            )
+            remoteViewsNotificationLayoutWithoutArt?.setImageViewResource(
+                R.id.imageButtonNotificationSongPanePlayPause,
+                R.drawable.pause_black_24dp
+            )
         } else {
-                remoteViewsNotificationLayoutWithArt?.setImageViewResource(
-                    R.id.imageButtonNotificationSongPanePlayPauseWArt,
-                    R.drawable.play_arrow_black_24dp
-                )
-                remoteViewsNotificationLayoutWithoutArt?.setImageViewResource(
-                    R.id.imageButtonNotificationSongPanePlayPause, R.drawable.play_arrow_black_24dp
-                )
+            remoteViewsNotificationLayoutWithArt?.setImageViewResource(
+                R.id.imageButtonNotificationSongPanePlayPauseWithArt,
+                R.drawable.play_arrow_black_24dp
+            )
+            remoteViewsNotificationLayoutWithoutArt?.setImageViewResource(
+                R.id.imageButtonNotificationSongPanePlayPause,
+                R.drawable.play_arrow_black_24dp
+            )
         }
     }
 
@@ -423,10 +446,10 @@ class ServiceMain : LifecycleService() {
 
     companion object {
         private val LOCK: Any = Any()
-        val executorServiceFIFO: ExecutorService = Executors.newSingleThreadExecutor()
         val executorServicePool: ExecutorService = Executors.newCachedThreadPool()
         private const val TAG_ERROR: String = "ServiceMainErrors"
         private const val FILE_ERROR_LOG: String = "error"
         private const val NOTIFICATION_CHANNEL_ID: String = "PinkyPlayer"
     }
+
 }

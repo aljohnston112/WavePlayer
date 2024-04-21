@@ -6,7 +6,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
         <ImageView
-            android:id="@+id/imageViewNotificationSongPaneSongArtWArt"
+            android:id="@+id/imageViewNotificationSongPaneSongArtWithArt"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -15,7 +15,7 @@
             android:src="@drawable/music_note_black_48dp" />
 
         <TextView
-            android:id="@+id/textViewNotificationSongPaneSongNameWArt"
+            android:id="@+id/textViewNotificationSongPaneSongNameWithArt"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginStart="4dp"
@@ -24,7 +24,7 @@
             android:text="@string/easter_egg" />
 
         <ImageButton
-            android:id="@+id/imageButtonNotificationSongPanePrevWArt"
+            android:id="@+id/imageButtonNotificationSongPanePrevWithArt"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginStart="4dp"
@@ -33,7 +33,7 @@
             android:src="@drawable/skip_previous_black_24dp" />
 
         <ImageButton
-            android:id="@+id/imageButtonNotificationSongPanePlayPauseWArt"
+            android:id="@+id/imageButtonNotificationSongPanePlayPauseWithArt"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginStart="4dp"
@@ -42,7 +42,7 @@
             android:src="@drawable/play_arrow_black_24dp" />
 
         <ImageButton
-            android:id="@+id/imageButtonNotificationSongPaneNextWArt"
+            android:id="@+id/imageButtonNotificationSongPaneNextWithArt"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginStart="4dp"
