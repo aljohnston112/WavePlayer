@@ -36,7 +36,6 @@ class ViewModelFragmentLoading(
         _showLoadingBar.postValue(true)
         songRepo.loadSongs(
             playlistsRepo,
-            mediaPlayerManager,
             context
         )
     }

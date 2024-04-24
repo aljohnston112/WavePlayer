@@ -17,40 +17,54 @@ object SaveFile {
 
     private val FILE_LOCK: Any = Any()
 
+    /**
+     * Loads the playlists saved on disk.
+     * If a master playlist has not been saved, a new one will be created.
+     *
+     * @param context
+     * @param playlistsRepo
+     * @param maxPercent The max percent that a song can have in a playlist.
+     */
     fun loadSaveFile(
         context: Context,
         playlistsRepo: PlaylistsRepo,
         maxPercent: Double
     ) {
         synchronized(FILE_LOCK) {
-            val playlist = FileUtil.load<RandomPlaylist>(
+            val loadedMasterPlaylist = FileUtil.load<RandomPlaylist>(
                 context,
                 FILE_NAME_MASTER_PLAYLIST,
                 SAVE_FILE_VERIFICATION_NUMBER
             )
-            playlist?.let {
-                playlistsRepo.setMasterPlaylist(it)
-            }?: run {
+            loadedMasterPlaylist?.let { masterPlaylist ->
+                playlistsRepo.setMasterPlaylist(masterPlaylist)
+            } ?: run {
                 playlistsRepo.setMasterPlaylist(
                     RandomPlaylist(
-                        context,
                         MASTER_PLAYLIST_NAME,
                         ArrayList(),
                         true,
-                        maxPercent,
-                        playlistsRepo
+                        maxPercent
                     )
                 )
             }
+
             FileUtil.loadList<RandomPlaylist>(
                 context,
                 FILE_NAME_PLAYLISTS,
                 SAVE_FILE_VERIFICATION_NUMBER
-            )?.let { playlistsRepo.addPlaylistsFromSaveFile(it) }
+            )?.let { playlists ->
+                playlistsRepo.addPlaylistsFromSaveFile(playlists)
+            }
         }
     }
 
-
+    /**
+     * Saves all playlists to disk.
+     *
+     * @param context
+     * @param playlistsRepo
+     */
     fun saveFile(
         context: Context,
         playlistsRepo: PlaylistsRepo
@@ -63,6 +77,7 @@ object SaveFile {
                     FILE_NAME_MASTER_PLAYLIST,
                     SAVE_FILE_VERIFICATION_NUMBER
                 )
+
                 FileUtil.saveList(
                     playlistsRepo.getPlaylists(),
                     context,

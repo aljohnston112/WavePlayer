@@ -54,7 +54,7 @@ class MediaPlayerManager {
     }
 
     fun setCurrentAudioUri(audioUri: AudioUri) {
-        _currentAudioUri.value = (audioUri)
+        _currentAudioUri.value = audioUri
     }
 
     fun getCurrentTime(): Int {

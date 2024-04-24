@@ -70,12 +70,10 @@ class ViewModelFragmentTitle(
         if (randomPlaylist == null) {
             randomPlaylist = uri.path?.let {
                 RandomPlaylist(
-                    context,
                     it,
                     songs,
                     false,
-                    settingsRepo.settings.value!!.maxPercent,
-                    playlistsRepo
+                    settingsRepo.settings.value!!.maxPercent
                 )
             }
             if (randomPlaylist != null) {

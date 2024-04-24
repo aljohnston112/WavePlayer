@@ -7,57 +7,65 @@ import java.util.*
 /**
  * @author Alexander Johnston
  * @since Copyright 2019
- * A playlist where a group of media files are picked from randomly.
- */
-
-/**
- * Creates a random playlist.
  *
- * @param name            The name of this RandomPlaylist.
- * @param music           The List of AudioURIs to add to this playlist.
- * @throws IllegalArgumentException if there is not at least one AudioURI in music.
- * @throws IllegalArgumentException if folder is not a directory.
+ * A playlist where a group of media files are picked
+ * from a adjustable probability distribution.
+ *
+ * @param name The name of this RandomPlaylist.
+ * @param music The List of AudioURIs to add to this playlist.
+ * @param isSorted Whether or not the playlist is alphabetically sorted.
+ * @param maxPercent The max percent that a song can have.
+ *
  */
 class RandomPlaylist(
-    context: Context,
     name: String,
     music: List<Song>,
-    comparable: Boolean,
+    isSorted: Boolean,
     maxPercent: Double,
-    playlistsRepo: PlaylistsRepo
 ) : Serializable {
 
+    private var probabilityFunction: ProbabilityFunction<Song>
     private val playlistArray: MutableList<Long> = ArrayList()
 
     private var name: String
-    fun getName(): String {
-        return name
-    }
-
-    fun setName(context: Context, playlistsRepo: PlaylistsRepo, name: String) {
-        this.name = name
-        SaveFile.saveFile(context, playlistsRepo)
-    }
-
-    // The ProbFun that randomly picks the media to play
-    private var probabilityFunction: ProbFun<Song>
 
     init {
         val files: MutableSet<Song> = LinkedHashSet(music)
-        probabilityFunction = if (comparable) {
-            ProbFun.ProbFunTreeMap(files, maxPercent)
+        probabilityFunction = if (isSorted) {
+            ProbabilityFunction.ProbabilityFunctionTreeMap(
+                files,
+                maxPercent
+            )
         } else {
-            ProbFun.ProbFunLinkedMap(files, maxPercent)
+            ProbabilityFunction.ProbabilityFunctionLinkedMap(
+                files,
+                maxPercent
+            )
         }
         this.name = name
         for (song in music) {
             playlistArray.add(song.id)
         }
-        SaveFile.saveFile(context, playlistsRepo)
+    }
+
+    fun getName(): String {
+        return name
+    }
+
+    fun setName(
+        context: Context,
+        playlistsRepo: PlaylistsRepo,
+        name: String
+    ) {
+        this.name = name
+        SaveFile.saveFile(
+            context,
+            playlistsRepo
+        )
     }
 
     fun getSongs(): Set<Song> {
-        return probabilityFunction.getKeys()
+        return probabilityFunction.getItems()
     }
 
     fun getSongIDs(): List<Long> {
@@ -69,8 +77,14 @@ class RandomPlaylist(
         playlistArray.add(song.id)
     }
 
-    fun add(song: Song, probability: Double) {
-        probabilityFunction.add(song, probability)
+    fun add(
+        song: Song,
+        probability: Double
+    ) {
+        probabilityFunction.add(
+            song,
+            probability
+        )
         playlistArray.add(song.id)
     }
 
@@ -79,69 +93,111 @@ class RandomPlaylist(
         playlistArray.remove(song.id)
     }
 
-    @Deprecated(
-        "Use contains(Long) instead",
-        ReplaceWith(
-            expression = "contains(song.id)",
-            imports = emptyArray()
-        ),
-        DeprecationLevel.WARNING
-    )
-    operator fun contains(song: Song): Boolean {
-        return probabilityFunction.contains(song)
-    }
-
-    operator fun contains(songID: Long): Boolean {
-        return playlistArray.contains(songID)
-    }
-
     fun getProbability(song: Song): Double {
         return probabilityFunction.getProbability(song)
     }
 
-    fun resetProbabilities(context: Context, playlistsRepo: PlaylistsRepo) {
+    fun resetProbabilities(
+        context: Context,
+        playlistsRepo: PlaylistsRepo
+    ) {
         probabilityFunction.resetProbabilities()
-        SaveFile.saveFile(context, playlistsRepo)
+        SaveFile.saveFile(
+            context,
+            playlistsRepo
+        )
     }
 
-    fun lowerProbabilities(context: Context, playlistsRepo: PlaylistsRepo, lowerProb: Double) {
-        probabilityFunction.lowerProbabilities(lowerProb)
-        SaveFile.saveFile(context, playlistsRepo)
+    fun lowerProbabilities(
+        context: Context,
+        playlistsRepo: PlaylistsRepo,
+        probabilityFloor: Double
+    ) {
+        probabilityFunction.lowerProbabilities(probabilityFloor)
+        SaveFile.saveFile(
+            context,
+            playlistsRepo
+        )
     }
 
     fun nextRandomSong(context: Context): AudioUri? {
         val song: Song = probabilityFunction.next()
-        return AudioUri.getAudioUri(context, song.id)
+        return AudioUri.getAudioUri(
+            context,
+            song.id
+        )
     }
 
     fun size(): Int {
-        return probabilityFunction.size()
+        return probabilityFunction.getSize()
     }
 
-    fun swapSongPositions(context: Context, playlistsRepo: PlaylistsRepo, oldPosition: Int, newPosition: Int) {
-        (probabilityFunction as? ProbFun.ProbFunLinkedMap)?.swapTwoPositions(
+    fun swapSongPositions(
+        context: Context,
+        playlistsRepo: PlaylistsRepo,
+        oldPosition: Int,
+        newPosition: Int
+    ) {
+        (probabilityFunction as? ProbabilityFunction.ProbabilityFunctionLinkedMap)?.swapTwoItems(
             oldPosition,
             newPosition
         )
-        SaveFile.saveFile(context, playlistsRepo)
+        SaveFile.saveFile(
+            context,
+            playlistsRepo
+        )
     }
 
-    fun switchSongPositions(context: Context, playlistsRepo: PlaylistsRepo, oldPosition: Int, newPosition: Int) {
-        (probabilityFunction as? ProbFun.ProbFunLinkedMap)?.switchOnesPosition(
+    fun switchSongPositions(
+        context: Context,
+        playlistsRepo: PlaylistsRepo,
+        oldPosition: Int,
+        newPosition: Int
+    ) {
+        (probabilityFunction as? ProbabilityFunction.ProbabilityFunctionLinkedMap)?.switchOnesPosition(
             oldPosition,
             newPosition
         )
-        SaveFile.saveFile(context, playlistsRepo)
+        SaveFile.saveFile(
+            context,
+            playlistsRepo
+        )
     }
 
-    fun bad(context: Context, playlistsRepo: PlaylistsRepo, song: Song, percentChangeDown: Double) {
-        val i = probabilityFunction.bad(song, percentChangeDown)
-        SaveFile.saveFile(context, playlistsRepo)
+    fun bad(
+        context: Context,
+        playlistsRepo: PlaylistsRepo,
+        song: Song,
+        percentChangeDown: Double
+    ) {
+        probabilityFunction.bad(
+            song,
+            percentChangeDown
+        )
+        SaveFile.saveFile(
+            context,
+            playlistsRepo
+        )
     }
 
-    fun good(context: Context, playlistsRepo: PlaylistsRepo, song: Song, percentChangeUp: Double) {
-        probabilityFunction.good(song, percentChangeUp)
-        SaveFile.saveFile(context, playlistsRepo)
+    fun good(
+        context: Context,
+        playlistsRepo: PlaylistsRepo,
+        song: Song,
+        percentChangeUp: Double
+    ) {
+        probabilityFunction.good(
+            song,
+            percentChangeUp
+        )
+        SaveFile.saveFile(
+            context,
+            playlistsRepo
+        )
+    }
+
+    operator fun contains(songID: Long): Boolean {
+        return playlistArray.contains(songID)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -150,10 +206,6 @@ class RandomPlaylist(
 
     override fun hashCode(): Int {
         return name.hashCode()
-    }
-
-    companion object {
-        private const val SERIAL_VERSION_UID = 2323326608918863420L
     }
 
 }

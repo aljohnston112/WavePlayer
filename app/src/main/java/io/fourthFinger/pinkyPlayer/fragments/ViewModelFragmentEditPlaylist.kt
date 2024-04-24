@@ -114,12 +114,10 @@ class ViewModelFragmentEditPlaylist(
     ) {
         val newPlaylistSongs = songPicker.getPickedSongs()
         val finalPlaylist = RandomPlaylist(
-            context,
             playlistName,
             newPlaylistSongs,
             false,
-            settingsRepo.settings.value!!.maxPercent,
-            playlistsRepo
+            settingsRepo.settings.value!!.maxPercent
         )
         playlistsRepo.addPlaylist(context, finalPlaylist)
     }

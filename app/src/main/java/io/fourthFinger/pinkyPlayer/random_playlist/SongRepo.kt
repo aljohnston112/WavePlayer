@@ -2,22 +2,17 @@ package io.fourthFinger.pinkyPlayer.random_playlist
 
 import android.content.Context
 
-class SongRepo {
+class SongRepo(context: Context) {
 
-    private val mediaDatasource = MediaDatasource()
+    private val mediaDatasource = MediaDatasource(context)
     val loadingText = mediaDatasource.loadingText
     val loadingProgress = mediaDatasource.loadingProgress
 
-    fun loadDatabase(context: Context) {
-        mediaDatasource.loadDatabase(context)
-    }
-
     fun loadSongs(
         playlistsRepo: PlaylistsRepo,
-        mediaPlayerManager: MediaPlayerManager,
         context: Context
     ){
-        mediaDatasource.loadSongs(context, playlistsRepo, mediaPlayerManager)
+        mediaDatasource.loadSongsFromMediaStore(context, playlistsRepo)
     }
 
     fun getSong(id: Long): Song? {

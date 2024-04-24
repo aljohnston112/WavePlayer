@@ -2,9 +2,11 @@ package io.fourthFinger.pinkyPlayer.random_playlist
 
 import android.content.ContentUris
 import android.content.Context
+import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
+import io.fourthFinger.pinkyPlayer.BitmapUtil
 import java.io.*
 
 class AudioUri(
@@ -18,6 +20,16 @@ class AudioUri(
 
     fun getUri(): Uri {
         return getUri(id)
+    }
+
+    fun getBitmap(context: Context): Bitmap? {
+        // TODO 92? Seems to get resized for the Notification
+        return BitmapUtil.getThumbnail(
+            getUri(),
+            92,
+            92,
+            context
+        )
     }
 
     /**

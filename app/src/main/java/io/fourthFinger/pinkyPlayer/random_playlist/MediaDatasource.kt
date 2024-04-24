@@ -11,23 +11,36 @@ import io.fourthFinger.pinkyPlayer.R
 import io.fourthFinger.pinkyPlayer.ServiceMain
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class MediaDatasource {
-
-    private val _loadingText: MutableLiveData<String> = MutableLiveData()
-    val loadingText = _loadingText as LiveData<String>
-
-    private val _loadingProgress: MutableLiveData<Double> = MutableLiveData(0.0)
-    val loadingProgress = _loadingProgress as LiveData<Double>
+/**
+ * A data source for music in the MediaStore.
+ *
+ * @param context
+ */
+class MediaDatasource(context: Context) {
 
     private lateinit var songDAO: SongDAO
+
+    private val _loadingText = MutableLiveData<String>()
+    val loadingText = _loadingText as LiveData<String>
+
+    private val _loadingProgress = MutableLiveData(0.0)
+    val loadingProgress = _loadingProgress as LiveData<Double>
 
     private val _allSongs = mutableListOf<Song>()
     val allSongs = _allSongs as List<Song>
 
-    fun loadDatabase(context: Context) {
+    init {
+        loadDatabase(context)
+    }
+
+    /**
+     * Loads this app's song database.
+     *
+     * @param context
+     */
+    private fun loadDatabase(context: Context) {
         val songDatabase = Room.databaseBuilder(
             context, SongDatabase::class.java,
             SONG_DATABASE_NAME
@@ -35,6 +48,13 @@ class MediaDatasource {
         songDAO = songDatabase.songDAO()
     }
 
+    /**
+     * Gets a Song from the database.
+     *
+     * @param songID The id of the Song to get from the database.
+     *
+     * @return The Song if it was found in the database, else null.
+     */
     fun getSongFromDatabase(songID: Long): Song? {
         var song: Song? = null
         try {
@@ -52,55 +72,46 @@ class MediaDatasource {
         return song
     }
 
-    fun loadSongs(
+    /**
+     * Loads songs from the MediaStore and updates the app's backend cache.
+     *
+     * @param context
+     * @param playlistsRepo
+     */
+    fun loadSongsFromMediaStore(
         context: Context,
-        playlistsRepo: PlaylistsRepo,
-        mediaPlayerManager: MediaPlayerManager
+        playlistsRepo: PlaylistsRepo
     ) {
-        loadSongsFromMediaStore(
-            context,
-            playlistsRepo,
-            mediaPlayerManager
-        )
-    }
-
-    private fun loadSongsFromMediaStore(
-        context: Context,
-        playlistsRepo: PlaylistsRepo,
-        mediaPlayerManager: MediaPlayerManager
-    ) {
-        val executorFIFO: ExecutorService = Executors.newSingleThreadExecutor()
+        val executorFIFO = Executors.newSingleThreadExecutor()
         executorFIFO.execute {
+            val resources = context.resources
             val masterPlaylist = playlistsRepo.getMasterPlaylist()
-            _allSongs.addAll(masterPlaylist.getSongs())
-            val songsThatExist =  mutableListOf<Long>()
-            val newSongs = scanDatabaseForNewMusic(
-                context,
-                masterPlaylist.getSongIDs(),
-                songsThatExist
+
+            _loadingText.postValue(
+                resources.getString(R.string.loading1)
             )
-            insertNewSongsIntoDatabase(
+            val newSongs = scanMediaStoreForNewMusic(
                 context,
+                masterPlaylist.getSongIDs()
+            )
+
+            _loadingText.postValue(
+                resources.getString(R.string.loading2)
+            )
+            addNewSongs(
+                context,
+                playlistsRepo,
                 newSongs
             )
-            val resources = context.resources
+
             _loadingText.postValue(
                 resources.getString(R.string.loading3)
             )
-            addNewSongsToMasterPlaylist(
+            removeMissingSongs(
                 context,
-                playlistsRepo,
-                newSongs
+                playlistsRepo
             )
-            _loadingText.postValue(
-                resources.getString(R.string.loading4)
-            )
-            removeMissingSongsFromMasterPlaylist(
-                context,
-                playlistsRepo,
-                mediaPlayerManager,
-                songsThatExist
-            )
+
             SaveFile.saveFile(
                 context,
                 playlistsRepo
@@ -113,16 +124,19 @@ class MediaDatasource {
         }
     }
 
-    private fun scanDatabaseForNewMusic(
+    /**
+     * Gets new music from the MediaStore.
+     *
+     * @param context
+     * @param currentMusic A list of all the cached music.
+     *
+     * @return Music in the MediaStore that is not in currentMusic.
+     */
+    private fun scanMediaStoreForNewMusic(
         context: Context,
-        currentMusic: List<Long>,
-        songsThatExist: MutableList<Long>
+        currentMusic: List<Long>
     ): List<Song> {
-        val resources = context.resources
         val newSongs = mutableListOf<Song>()
-        _loadingText.postValue(
-            resources.getString(R.string.loading1)
-        )
         val cursor = queryMediaStoreForMusic(context)
         if (cursor != null) {
             val idCol = cursor.getColumnIndexOrThrow(
@@ -144,6 +158,8 @@ class MediaDatasource {
                 val displayName = cursor.getString(nameCol)
                 val title = cursor.getString(titleCol)
                 val artist = cursor.getString(artistCol)
+
+                val song = Song(id, title)
                 if (!currentMusic.contains(id)) {
                     AudioUri.saveAudioUri(
                         context,
@@ -154,19 +170,26 @@ class MediaDatasource {
                             id
                         )
                     )
-                    val song = Song(id, title)
-                    _allSongs.add(song)
                     newSongs.add(song)
                 }
-                songsThatExist.add(id)
-                _loadingProgress.postValue(currentSongNumber.toDouble() / numberOfSongs.toDouble())
+                _allSongs.add(song)
+                _loadingProgress.postValue(
+                    currentSongNumber.toDouble() / numberOfSongs.toDouble()
+                )
                 currentSongNumber++
             }
-            _loadingText.postValue(resources.getString(R.string.loading2))
         }
         return newSongs
     }
 
+    /**
+     * Does a query to get all the music in the MediaStore.
+     *
+     * @param context
+     *
+     * @return A cursor for the results of the query,
+     * or null if the query failed.
+     */
     private fun queryMediaStoreForMusic(context: Context): Cursor? {
         val projection = arrayOf(
             MediaStore.Audio.Media._ID,
@@ -187,32 +210,23 @@ class MediaDatasource {
         )
     }
 
-    private fun insertNewSongsIntoDatabase(
-        context: Context,
-        newSongs: List<Song>
-    ) {
-        val numberOfNewSongs = newSongs.size
-        _loadingText.postValue(
-            context.resources.getString(R.string.loading2)
-        )
-        for ((k, song) in newSongs.withIndex()) {
-            songDAO.insertAll(song)
-            _loadingProgress.postValue(
-                k.toDouble() / numberOfNewSongs.toDouble()
-            )
-        }
-    }
-
-
-    private fun addNewSongsToMasterPlaylist(
+    /**
+     *  Adds new songs to the master playlist.
+     *
+     *  @param context
+     *  @param playlistsRepo
+     *  @param newSongs A list of new songs.
+     */
+    private fun addNewSongs(
         context: Context,
         playlistsRepo: PlaylistsRepo,
         newSongs: List<Song>
     ) {
         val masterPlaylist = playlistsRepo.getMasterPlaylist()
         val numberOfNewSongs = newSongs.size
-        for ((i, songID) in newSongs.withIndex()) {
-            masterPlaylist.add(songID)
+        for ((i, song) in newSongs.withIndex()) {
+            songDAO.insertAll(song)
+            masterPlaylist.add(song)
             SaveFile.saveFile(
                 context,
                 playlistsRepo
@@ -223,26 +237,29 @@ class MediaDatasource {
         }
     }
 
-    private fun removeMissingSongsFromMasterPlaylist(
+    /**
+     * Removes missing songs from the master playlist.
+     *
+     * @param context
+     * @param playlistsRepo
+     */
+    private fun removeMissingSongs(
         context: Context,
-        playlistsRepo: PlaylistsRepo,
-        mediaPlayerManager: MediaPlayerManager,
-        songsThatExist: List<Long>
+        playlistsRepo: PlaylistsRepo
     ) {
         val masterPlaylist = playlistsRepo.getMasterPlaylist()
-        val numberOfSongs = songsThatExist.size
-        val ids = masterPlaylist.getSongIDs()
-        for ((j, songID) in ids.withIndex()) {
-            if (!songsThatExist.contains(songID)) {
-                getSongFromDatabase(songID)?.let {
+        val numberOfSongs = _allSongs.size
+        val oldSongs = masterPlaylist.getSongs()
+        for ((j, song) in oldSongs.withIndex()) {
+            if (!_allSongs.contains(song)) {
+                getSongFromDatabase(song.id)?.let {
                     masterPlaylist.remove(it)
+                    songDAO.delete(it)
                     SaveFile.saveFile(
                         context,
                         playlistsRepo
                     )
-                    songDAO.delete(it)
                 }
-                mediaPlayerManager.removeMediaPlayerWUri(songID)
             }
             _loadingProgress.postValue(
                 j.toDouble() / numberOfSongs.toDouble()

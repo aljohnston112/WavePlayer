@@ -12,19 +12,19 @@ import io.fourthFinger.pinkyPlayer.settings.SettingsRepo
 
 class ApplicationMain : Application() {
 
-    val songRepo = SongRepo()
     val settingsRepo = SettingsRepo()
     val playlistsRepo = PlaylistsRepo()
-    val songQueue = SongQueue(songRepo)
     val mediaPlayerManager = MediaPlayerManager()
-    val songPicker = UseCaseSongPicker(songRepo)
+
+    lateinit var songRepo: SongRepo
+    lateinit var songQueue: SongQueue
+    lateinit var songPicker: UseCaseSongPicker
     lateinit var mediaSession: MediaSession
     lateinit var playlistEditor: UseCaseEditPlaylist
 
     override fun onCreate() {
         super.onCreate()
         val settings = settingsRepo.loadSettings(this)
-        songRepo.loadDatabase(this)
         // Loading the save file is needed to ensure the master playlist is valid
         // before getting songs from the MediaStore.
         SaveFile.loadSaveFile(
@@ -32,6 +32,10 @@ class ApplicationMain : Application() {
             playlistsRepo,
             settings.maxPercent
         )
+
+        songRepo = SongRepo(this)
+        songQueue = SongQueue(songRepo)
+        songPicker = UseCaseSongPicker(songRepo)
         mediaSession = MediaSession(
             playlistsRepo,
             mediaPlayerManager,

@@ -9,7 +9,6 @@ import androidx.navigation.NavController
 import io.fourthFinger.pinkyPlayer.ApplicationMain
 import io.fourthFinger.pinkyPlayer.NavUtil
 import io.fourthFinger.pinkyPlayer.random_playlist.MediaSession
-import io.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
 import io.fourthFinger.pinkyPlayer.random_playlist.UseCaseSongPicker
 
 class ViewModelFragmentPlaylist(
