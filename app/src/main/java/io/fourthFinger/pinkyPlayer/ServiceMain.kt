@@ -87,8 +87,6 @@ class ServiceMain : LifecycleService() {
         }
     }
 
-    // region lifecycle
-    // region onCreate
     override fun onCreate() {
         super.onCreate()
         mediaPlayerManager = (application as ApplicationMain).mediaPlayerManager
@@ -222,18 +220,6 @@ class ServiceMain : LifecycleService() {
         return START_STICKY
     }
 
-    private fun updateNotification(remoteViews: RemoteViews) {
-        notificationCompatBuilder?.setCustomContentView(remoteViews)
-        notification = notificationCompatBuilder?.build()
-        val notificationManager = getSystemService(
-            NOTIFICATION_SERVICE
-        ) as NotificationManager
-        notificationManager.notify(
-            NOTIFICATION_CHANNEL_ID.hashCode(),
-            notification
-        )
-    }
-
     private fun setUpNotificationBuilder() {
         notificationCompatBuilder = NotificationCompat.Builder(
             applicationContext,
@@ -272,8 +258,18 @@ class ServiceMain : LifecycleService() {
         }
     }
 
-    // endregion onStartCommand
-    // region onBind
+    private fun updateNotification(remoteViews: RemoteViews) {
+        notificationCompatBuilder?.setCustomContentView(remoteViews)
+        notification = notificationCompatBuilder?.build()
+        val notificationManager = getSystemService(
+            NOTIFICATION_SERVICE
+        ) as NotificationManager
+        notificationManager.notify(
+            NOTIFICATION_CHANNEL_ID.hashCode(),
+            notification
+        )
+    }
+
     override fun onBind(intent: Intent): IBinder {
         super.onBind(intent)
         return serviceMainBinder
@@ -285,7 +281,6 @@ class ServiceMain : LifecycleService() {
         }
     }
 
-    // endregion onBind
 
     override fun onDestroy() {
         super.onDestroy()
@@ -297,9 +292,6 @@ class ServiceMain : LifecycleService() {
         unregisterReceiver(broadcastReceiver)
         stopSelf()
     }
-
-    // endregion lifecycle
-    // region mediaControls
 
     companion object {
         private val MEDIA_LOCK = Any()

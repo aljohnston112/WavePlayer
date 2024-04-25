@@ -208,4 +208,8 @@ class RandomPlaylist(
         return name.hashCode()
     }
 
+    fun setMaxPercent(maxPercent: Double) {
+        probabilityFunction.maxPercent(maxPercent)
+    }
+
 }

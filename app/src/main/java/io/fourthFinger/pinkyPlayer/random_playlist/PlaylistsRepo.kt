@@ -84,4 +84,11 @@ class PlaylistsRepo {
         return titlesArray
     }
 
+    fun setMaxPercent(maxPercent: Double) {
+        masterPlaylist.setMaxPercent(maxPercent)
+        for (playlist in playlists){
+            playlist.setMaxPercent(maxPercent)
+        }
+    }
+
 }

@@ -2,6 +2,8 @@ package io.fourthFinger.pinkyPlayer.random_playlist
 
 import java.io.Serializable
 import java.util.*
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.random.Random
 
 const val MIN_VALUE = 0.0000000000000005
@@ -21,7 +23,7 @@ const val MIN_VALUE = 0.0000000000000005
 sealed class ProbabilityFunction<T>(
     items: Set<T>,
     comparable: Boolean,
-    var maxPercent: Double,
+    protected var maxPercent: Double,
 ) : Serializable, Cloneable {
 
     // The set of elements to be picked from,
@@ -137,13 +139,13 @@ sealed class ProbabilityFunction<T>(
     }
 
     /**
-     * Adds element to this ProbabilityFunction, 
+     * Adds element to this ProbabilityFunction,
      * making the probability equal to 1.0 / n
      * where n is the number of elements contained in this ProbabilityFunction.
-     * 
-     * If this ProbabilityFunction already contains the element, 
+     *
+     * If this ProbabilityFunction already contains the element,
      * then nothing will be added.
-     * 
+     *
      * @param element The element to add to this ProbabilityFunction.
      * @throws NullPointerException if element is null.
      */
@@ -187,8 +189,9 @@ sealed class ProbabilityFunction<T>(
         percent: Double
     ) {
         Objects.requireNonNull(element)
-        require((percent >= ((getSize() + 1) * MIN_VALUE)) &&
-                percent <= (1.0 - ((getSize() + 1) * MIN_VALUE))
+        require(
+            (percent >= ((getSize() + 1) * MIN_VALUE)) &&
+                    percent <= (1.0 - ((getSize() + 1) * MIN_VALUE))
         ) {
             "percent passed to add() was not above 0 or under 1 by MIN_VALUE * getSize()"
         }
@@ -441,7 +444,8 @@ sealed class ProbabilityFunction<T>(
         val probabilityToSubtract = oldProbability * percentChange
         val newProbability = oldProbability - probabilityToSubtract
         if (newProbability <= roundingError ||
-            newProbability <= (getSize() * MIN_VALUE)) return -1.0
+            newProbability <= (getSize() * MIN_VALUE)
+        ) return -1.0
 
         probabilityMap[element] = newProbability
         val newLeftover = 1.0 - newProbability
@@ -464,7 +468,8 @@ sealed class ProbabilityFunction<T>(
      * @param low The low chance between 0.0 and 1.0.
      */
     fun lowerProbabilities(low: Double) {
-        require((low >= (getSize() * MIN_VALUE)) && low <= (1.0 - (getSize() * MIN_VALUE)))
+        var low = min(low, (getSize() * MIN_VALUE))
+        low = max(low, (1.0 - (getSize() * MIN_VALUE)))
         val probabilities: Collection<T> = probabilityMap.keys
         for (item in probabilities) {
             if (probabilityMap[item]!! > low) {
@@ -502,15 +507,6 @@ sealed class ProbabilityFunction<T>(
     }
 
     /**
-     * @param item The item to get the probability of.
-     *
-     * @return The probability next() will return this element.
-     */
-    fun getProbability(item: T): Double {
-        return probabilityMap[item]!!
-    }
-
-    /**
      * Returns a randomly picked element from this ProbabilityFunction.
      *
      * @return a randomly picked element from this ProbabilityFunction.
@@ -521,13 +517,31 @@ sealed class ProbabilityFunction<T>(
         val entries = probabilityMap.entries.iterator()
         var entry = entries.next()
         var sumOfProbabilities = entry.value
-        if(randomChoice != 0.0){
+        if (randomChoice != 0.0) {
             while (randomChoice > sumOfProbabilities) {
                 entry = entries.next()
                 sumOfProbabilities += entry.value
             }
         }
         return entry.key
+    }
+
+    /**
+     * @param item The item to get the probability of.
+     *
+     * @return The probability next() will return this element.
+     */
+    fun getProbability(item: T): Double {
+        return probabilityMap[item]!!
+    }
+
+    fun maxPercent(): Double {
+        return maxPercent
+    }
+
+    fun maxPercent(maxPercent: Double) {
+        this.maxPercent = maxPercent
+        lowerProbabilities(maxPercent)
     }
 
     operator fun contains(t: T): Boolean {
