@@ -9,7 +9,7 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import io.fourthFinger.pinkyPlayer.R
-import io.fourthFinger.pinkyPlayer.random_playlist.Song
+import io.fourthFinger.playlistDataSource.Song
 
 class RecyclerViewAdapterSelectSongs(
     private val listenerCallbackSelectSongs: ListenerCallbackSelectSongs,

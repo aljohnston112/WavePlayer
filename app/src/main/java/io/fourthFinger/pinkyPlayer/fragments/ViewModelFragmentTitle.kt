@@ -16,17 +16,16 @@ import io.fourthFinger.pinkyPlayer.ApplicationMain
 import io.fourthFinger.pinkyPlayer.NavUtil
 import io.fourthFinger.pinkyPlayer.R
 import io.fourthFinger.pinkyPlayer.random_playlist.MediaSession
-import io.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
-import io.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
-import io.fourthFinger.pinkyPlayer.random_playlist.SaveFile
-import io.fourthFinger.pinkyPlayer.random_playlist.Song
 import io.fourthFinger.pinkyPlayer.settings.SettingsRepo
+import io.fourthFinger.playlistDataSource.PlaylistsRepo
+import io.fourthFinger.playlistDataSource.RandomPlaylist
+import io.fourthFinger.playlistDataSource.Song
 
 
 class ViewModelFragmentTitle(
-    val settingsRepo: SettingsRepo,
-    val playlistsRepo: PlaylistsRepo,
-    val mediaSession: MediaSession,
+    private val settingsRepo: SettingsRepo,
+    private val playlistsRepo: PlaylistsRepo,
+    private val mediaSession: MediaSession,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -193,8 +192,11 @@ class ViewModelFragmentTitle(
     ) {
         for (song in songs) {
             if (!randomPlaylist.contains(song.id)) {
-                randomPlaylist.add(song)
-                SaveFile.saveFile(context, playlistsRepo)
+                playlistsRepo.addSong(
+                    context,
+                    randomPlaylist,
+                    song
+                )
             }
         }
     }
@@ -206,11 +208,18 @@ class ViewModelFragmentTitle(
     ) {
         for (song in randomPlaylist.getSongs()) {
             if (!songs.contains(song)) {
-                randomPlaylist.remove(song)
-                SaveFile.saveFile(context, playlistsRepo)
+                playlistsRepo.removeSong(
+                    context,
+                    randomPlaylist,
+                    song
+                )
                 songs.remove(song)
             }
         }
+    }
+
+    fun viewCreated() {
+        mediaSession.setCurrentPlaylistToMaster()
     }
 
     companion object {
@@ -225,9 +234,9 @@ class ViewModelFragmentTitle(
                     checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
                 val savedStateHandle = extras.createSavedStateHandle()
                 return ViewModelFragmentTitle(
-                    (application as ApplicationMain).settingsRepo,
-                    application.playlistsRepo,
-                    application.mediaSession,
+                    (application as ApplicationMain).settingsRepo!!,
+                    application.playlistsRepo!!,
+                    application.mediaSession!!,
                     savedStateHandle
                 ) as T
             }

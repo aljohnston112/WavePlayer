@@ -8,6 +8,7 @@ import android.media.MediaPlayer
 import android.os.Build
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import io.fourthFinger.playlistDataSource.AudioUri
 import java.util.*
 
 class MediaPlayerManager {
@@ -23,8 +24,9 @@ class MediaPlayerManager {
     private var _currentAudioUri = MutableLiveData<AudioUri>()
     val currentAudioUri = _currentAudioUri as LiveData<AudioUri>
 
-    lateinit var onCompletionListener: MediaPlayer.OnCompletionListener
-    lateinit var onErrorListener: MediaPlayer.OnErrorListener
+    var onCompletionListener: MediaPlayer.OnCompletionListener? = null
+    var onErrorListener: MediaPlayer.OnErrorListener? = null
+    private var onAudioFocusChangeListener: AudioManager.OnAudioFocusChangeListener? = null
 
     fun setUp(
         context: Context,
@@ -40,6 +42,34 @@ class MediaPlayerManager {
                     mediaSession.playNext(context)
                 }
                 return@OnErrorListener false
+            }
+        }
+        onAudioFocusChangeListener = object : AudioManager.OnAudioFocusChangeListener {
+            val lock: Any = Any()
+            var wasPlaying: Boolean = false
+            override fun onAudioFocusChange(i: Int) {
+                when (i) {
+                    AudioManager.AUDIOFOCUS_GAIN -> {
+                        synchronized(lock) {
+                            haveAudioFocus = true
+                            if (isPlaying.value == false && wasPlaying) {
+                                pauseOrPlay(context)
+                            }
+                        }
+                    }
+
+                    AudioManager.AUDIOFOCUS_LOSS -> {
+                        synchronized(lock) {
+                            haveAudioFocus = false
+                            if (isPlaying.value == true) {
+                                wasPlaying = true
+                                pauseOrPlay(context)
+                            } else {
+                                wasPlaying = false
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -87,54 +117,22 @@ class MediaPlayerManager {
             songIDToMediaPlayerWUriHashMap.clear()
         }
         _isPlaying.postValue(false)
-        _songInProgress.value = false
+        _songInProgress.postValue(false)
     }
 
-    fun cleanUp(
-        context: Context,
-        mediaSession: MediaSession
-    ) {
-        if (isPlaying.value == true) {
-            mediaSession.pauseOrPlay(context)
-        }
+    fun cleanUp() {
         releaseMediaPlayers()
+        onAudioFocusChangeListener = null
+        onErrorListener = null
+        onCompletionListener = null
+        _currentAudioUri.postValue(null)
     }
 
     private fun requestAudioFocus(context: Context): Boolean {
+        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         if (haveAudioFocus) {
             return true
         }
-        val audioManager: AudioManager =
-            context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        val onAudioFocusChangeListener: AudioManager.OnAudioFocusChangeListener =
-            object : AudioManager.OnAudioFocusChangeListener {
-                val lock: Any = Any()
-                var wasPlaying: Boolean = false
-                override fun onAudioFocusChange(i: Int) {
-                    when (i) {
-                        AudioManager.AUDIOFOCUS_GAIN -> {
-                            synchronized(lock) {
-                                haveAudioFocus = true
-                                if (isPlaying.value == false && wasPlaying) {
-                                    pauseOrPlay(context)
-                                }
-                            }
-                        }
-
-                        AudioManager.AUDIOFOCUS_LOSS -> {
-                            synchronized(lock) {
-                                haveAudioFocus = false
-                                if (isPlaying.value == true) {
-                                    wasPlaying = true
-                                    pauseOrPlay(context)
-                                } else {
-                                    wasPlaying = false
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         val result: Int
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val audioAttributes: AudioAttributes = AudioAttributes.Builder()
@@ -147,7 +145,7 @@ class MediaPlayerManager {
                 .setAudioAttributes(audioAttributes)
                 .setAcceptsDelayedFocusGain(true)
                 .setWillPauseWhenDucked(false)
-                .setOnAudioFocusChangeListener(onAudioFocusChangeListener)
+                .setOnAudioFocusChangeListener(onAudioFocusChangeListener!!)
                 .build()
             result = audioManager.requestAudioFocus(audioFocusRequest)
         } else {

@@ -1,6 +1,7 @@
 package io.fourthFinger.pinkyPlayer.random_playlist
 
 import androidx.room.*
+import io.fourthFinger.playlistDataSource.Song
 
 /**
  * The data access object for the SongDatabase.

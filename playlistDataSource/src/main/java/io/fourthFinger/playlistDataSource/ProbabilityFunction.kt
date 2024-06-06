@@ -1,4 +1,4 @@
-package io.fourthFinger.pinkyPlayer.random_playlist
+package io.fourthFinger.playlistDataSource
 
 import java.io.Serializable
 import java.util.*

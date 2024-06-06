@@ -10,15 +10,13 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.map
 import androidx.lifecycle.viewmodel.CreationExtras
 import io.fourthFinger.pinkyPlayer.ApplicationMain
-import io.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerManager
-import io.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
 import io.fourthFinger.pinkyPlayer.random_playlist.SongRepo
+import io.fourthFinger.playlistDataSource.PlaylistsRepo
 import kotlin.math.roundToInt
 
 class ViewModelFragmentLoading(
-    val songRepo: SongRepo,
-    val playlistsRepo: PlaylistsRepo,
-    val mediaPlayerManager: MediaPlayerManager,
+    private val songRepo: SongRepo,
+    private val playlistsRepo: PlaylistsRepo,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -32,7 +30,9 @@ class ViewModelFragmentLoading(
     val showLoadingBar = _showLoadingBar as LiveData<Boolean>
 
 
-    fun permissionGranted(context: Context) {
+    fun permissionGranted(
+        context: Context
+    ) {
         _showLoadingBar.postValue(true)
         songRepo.loadSongs(
             playlistsRepo,
@@ -51,9 +51,8 @@ class ViewModelFragmentLoading(
                     checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
                 val savedStateHandle = extras.createSavedStateHandle()
                 return ViewModelFragmentLoading(
-                    (application as ApplicationMain).songRepo,
-                    application.playlistsRepo,
-                    application.mediaPlayerManager,
+                    (application as ApplicationMain).songRepo!!,
+                    application.playlistsRepo!!,
                     savedStateHandle
                 ) as T
             }

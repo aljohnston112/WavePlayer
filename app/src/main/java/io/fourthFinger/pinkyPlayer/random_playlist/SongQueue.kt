@@ -3,6 +3,7 @@ package io.fourthFinger.pinkyPlayer.random_playlist
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.map
+import io.fourthFinger.playlistDataSource.Song
 import java.util.LinkedList
 
 class SongQueue(
@@ -65,10 +66,6 @@ class SongQueue(
         addToQueue(song)
     }
 
-    fun queue(): Set<Song> {
-        return _songQueue.toSet()
-    }
-
     // TODO update FragmentQueue after all moves have been completed!
 
     fun notifySongMoved(from: Int, to: Int) {
@@ -122,10 +119,6 @@ class SongQueue(
         val song = songQueueIterator.next()
         songQueueIterator.previous()
         return song
-    }
-
-    fun updateSongQueue() {
-        mLDSongQueue.value = _songQueue
     }
 
     init {

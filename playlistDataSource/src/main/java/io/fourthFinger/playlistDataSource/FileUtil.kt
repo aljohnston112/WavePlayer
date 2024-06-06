@@ -1,14 +1,20 @@
-package io.fourthFinger.pinkyPlayer
-import android.content.Context
-import java.io.*
+package io.fourthFinger.playlistDataSource
 
-private const val N_BACKUPS = 10
+import android.content.Context
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.IOException
+import java.io.InvalidClassException
+import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
+import java.io.Serializable
 
 class FileUtil {
 
     companion object {
 
         private val fileLock = Any()
+        private const val N_BACKUPS = 10
 
         /**
          * Tries to save a file with the given [fileName].
@@ -32,7 +38,10 @@ class FileUtil {
                     file2.renameTo(file)
                     file = File(context.filesDir, fileNames[i])
                 }
-                context.openFileOutput(fileNames[0], Context.MODE_PRIVATE).use { fileOutputStream ->
+                context.openFileOutput(
+                    fileNames[0],
+                    Context.MODE_PRIVATE
+                ).use { fileOutputStream ->
                     ObjectOutputStream(fileOutputStream).use { objectOutputStream ->
                         objectOutputStream.writeObject(t)
                         objectOutputStream.writeLong(saveFileVerificationNumber)
@@ -74,7 +83,10 @@ class FileUtil {
                     file2.renameTo(file)
                     file = File(context.filesDir, fileNames[i])
                 }
-                context.openFileOutput(fileNames[0], Context.MODE_PRIVATE).use { fileOutputStream ->
+                context.openFileOutput(
+                    fileNames[0],
+                    Context.MODE_PRIVATE
+                ).use { fileOutputStream ->
                     ObjectOutputStream(fileOutputStream).use { objectOutputStream ->
                         objectOutputStream.writeInt(t.size)
                         for (t2 in t) {
@@ -100,7 +112,11 @@ class FileUtil {
             var t: T? = null
             var i = 0
             while (i < fileNames.size) {
-                t = attemptLoadFile(context, fileNames[i], saveFileVerificationNumber)
+                t = attemptLoadFile(
+                    context,
+                    fileNames[i],
+                    saveFileVerificationNumber
+                )
                 i++
                 if (t != null) {
                     break
@@ -161,7 +177,11 @@ class FileUtil {
             var t: List<T>? = null
             var i = 0
             while (i < fileNames.size) {
-                t = attemptLoadListFile(context, fileNames[i], saveFileVerificationNumber)
+                t = attemptLoadListFile(
+                    context,
+                    fileNames[i],
+                    saveFileVerificationNumber
+                )
                 i++
                 if (t != null) {
                     break
@@ -183,7 +203,10 @@ class FileUtil {
             var longEOF = 0L
             val t = mutableListOf<T>()
             synchronized(fileLock) {
-                val file = File(context.filesDir, fileSave)
+                val file = File(
+                    context.filesDir,
+                    fileSave
+                )
                 if (file.exists()) {
                     try {
                         context.openFileInput(fileSave).use { fileInputStream ->
@@ -202,7 +225,7 @@ class FileUtil {
                         e.printStackTrace()
                     } catch (e: ClassNotFoundException) {
                         e.printStackTrace()
-                    } catch (e: InvalidClassException){
+                    } catch (e: InvalidClassException) {
                         e.printStackTrace()
                     }
                 }

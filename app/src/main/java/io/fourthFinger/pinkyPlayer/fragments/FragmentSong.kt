@@ -23,7 +23,6 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
-import io.fourthFinger.pinkyPlayer.BitmapUtil
 import io.fourthFinger.pinkyPlayer.KeyboardUtil
 import io.fourthFinger.pinkyPlayer.R
 import io.fourthFinger.pinkyPlayer.TextUtil.Companion.formatMillis
@@ -31,7 +30,7 @@ import io.fourthFinger.pinkyPlayer.ToastUtil
 import io.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import io.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import io.fourthFinger.pinkyPlayer.databinding.FragmentSongBinding
-import io.fourthFinger.pinkyPlayer.random_playlist.AudioUri
+import io.fourthFinger.playlistDataSource.AudioUri
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -61,7 +60,11 @@ class FragmentSong : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentSongBinding.inflate(inflater, container, false)
+        _binding = FragmentSongBinding.inflate(
+            inflater,
+            container,
+            false
+        )
         return binding.root
     }
 
@@ -144,7 +147,7 @@ class FragmentSong : Fragment() {
 
     private fun shutDownSeekBarUpdater() {
         if (scheduledExecutorService != null) {
-            scheduledExecutorService.shutdown()
+            scheduledExecutorService.shutdownNow()
             scheduledExecutorService = null
         }
     }
@@ -174,7 +177,7 @@ class FragmentSong : Fragment() {
                 songArtHeight = songArtWidth
             }
             if (songArtHeight > 0) {
-                val bitmap: Bitmap? = BitmapUtil.getThumbnailBitmap(
+                val bitmap: Bitmap? = io.fourthFinger.playlistDataSource.BitmapUtil.getThumbnailBitmap(
                     currentAudioUri,
                     songArtWidth,
                     imageViewSongArt.context
@@ -313,39 +316,6 @@ class FragmentSong : Fragment() {
         buttonNext.setOnClickListener(onClickListenerFragmentSong)
         buttonLoop.setOnClickListener(onClickListenerFragmentSong)
         buttonNext.isLongClickable = true
-        val onTouchListenerFragmentSongButtons =
-            View.OnTouchListener { view1: View, motionEvent: MotionEvent ->
-                when (motionEvent.action) {
-                    MotionEvent.ACTION_DOWN -> {
-//                        view1.setBackgroundColor(
-//                            ContextCompat.getColor(
-//                                requireContext(),
-//                                R.color.colorOnSecondary
-//                            )
-//                        )
-                        return@OnTouchListener false
-                    }
-
-                    MotionEvent.ACTION_UP -> {
-//                        view1.setBackgroundColor(
-//                            ContextCompat.getColor(
-//                                requireContext(),
-//                                R.color.colorPrimary
-//                            )
-//                        )
-                        view1.performClick()
-                        return@OnTouchListener true
-                    }
-                }
-                false
-            }
-        buttonBad.setOnTouchListener(onTouchListenerFragmentSongButtons)
-        buttonGood.setOnTouchListener(onTouchListenerFragmentSongButtons)
-        buttonShuffle.setOnTouchListener(onTouchListenerFragmentSongButtons)
-        buttonPrev.setOnTouchListener(onTouchListenerFragmentSongButtons)
-        buttonPause.setOnTouchListener(onTouchListenerFragmentSongButtons)
-        buttonNext.setOnTouchListener(onTouchListenerFragmentSongButtons)
-        buttonLoop.setOnTouchListener(onTouchListenerFragmentSongButtons)
         if (viewModelFragmentSong.isShuffling()) {
             buttonShuffle.setImageResource(R.drawable.ic_shuffle_black_24dp)
         } else {

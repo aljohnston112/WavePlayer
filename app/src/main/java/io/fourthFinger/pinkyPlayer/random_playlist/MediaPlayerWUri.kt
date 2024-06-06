@@ -4,10 +4,11 @@ import android.content.Context
 import android.media.MediaPlayer
 import android.media.MediaPlayer.OnPreparedListener
 import android.os.Build
+import io.fourthFinger.playlistDataSource.AudioUri
 import java.util.*
 
 class MediaPlayerWUri(
-    val mediaPlayerManager: MediaPlayerManager,
+    private val mediaPlayerManager: MediaPlayerManager,
     private var mediaPlayer: MediaPlayer,
     val id: Long
 ) {

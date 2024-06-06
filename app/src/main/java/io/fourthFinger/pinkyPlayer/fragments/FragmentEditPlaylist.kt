@@ -65,7 +65,7 @@ class FragmentEditPlaylist : Fragment() {
         // TODO why the conditional?
         if (editTextPlaylistName.text.isEmpty()) {
             editTextPlaylistName.setText(
-                viewModelActivityMain.currentContextPlaylist?.getName()
+                viewModelActivityMain.currentContextPlaylist?.name
             )
         }
         viewModelActivityMain.setFabOnClickListener { view: View ->

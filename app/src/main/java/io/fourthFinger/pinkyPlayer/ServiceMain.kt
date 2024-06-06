@@ -11,24 +11,21 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ServiceInfo
-import android.os.Binder
 import android.os.Build
-import android.os.IBinder
 import android.util.Log
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.lifecycle.LifecycleService
 import io.fourthFinger.pinkyPlayer.activity_main.ActivityMain
-import io.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerManager
+import io.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileReader
 import java.io.IOException
 import java.io.PrintWriter
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
+import java.lang.Thread.UncaughtExceptionHandler
 
 class ServiceMain : LifecycleService() {
 
@@ -36,12 +33,11 @@ class ServiceMain : LifecycleService() {
     private var notification: Notification? = null
 
     private var serviceStarted = false
-    private val serviceMainBinder: IBinder = ServiceMainBinder()
 
-    private lateinit var mediaPlayerManager: MediaPlayerManager
+    private lateinit var mediaSession: MediaSession
     private lateinit var remoteViewCreator: RemoteViewCreator
 
-    private var broadcastReceiver = object : BroadcastReceiver() {
+    private var broadcastReceiver: BroadcastReceiver? = object : BroadcastReceiver() {
         override fun onReceive(
             context: Context,
             intent: Intent
@@ -49,7 +45,7 @@ class ServiceMain : LifecycleService() {
             synchronized(MEDIA_LOCK) {
                 val action: String? = intent.action
                 if (action != null) {
-                    val mediaSession = (application as ApplicationMain).mediaSession
+                    val mediaSession = (application as ApplicationMain).mediaSession!!
                     when (action) {
                         resources.getString(
                             R.string.action_next
@@ -87,13 +83,32 @@ class ServiceMain : LifecycleService() {
         }
     }
 
+    private var defaultExceptionHandler: UncaughtExceptionHandler? =
+        UncaughtExceptionHandler { _, throwable ->
+        val file = File(
+            baseContext.filesDir,
+            FILE_ERROR_LOG
+        )
+        file.delete()
+        try {
+            PrintWriter(file).use { printWriter ->
+                throwable.printStackTrace(printWriter)
+                printWriter.flush()
+                throwable.printStackTrace()
+            }
+        } catch (e: FileNotFoundException) {
+            e.printStackTrace()
+        }
+        throw throwable
+    }
+
     override fun onCreate() {
         super.onCreate()
-        mediaPlayerManager = (application as ApplicationMain).mediaPlayerManager
+        mediaSession = (application as ApplicationMain).mediaSession!!
         remoteViewCreator = RemoteViewCreator(
             packageName,
             applicationContext,
-            mediaPlayerManager
+            mediaSession
         )
         setUpExceptionSaver()
         logLastThrownException()
@@ -101,23 +116,7 @@ class ServiceMain : LifecycleService() {
     }
 
     private fun setUpExceptionSaver() {
-        Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
-            val file = File(
-                baseContext.filesDir,
-                FILE_ERROR_LOG
-            )
-            file.delete()
-            try {
-                PrintWriter(file).use { printWriter ->
-                    throwable.printStackTrace(printWriter)
-                    printWriter.flush()
-                    throwable.printStackTrace()
-                }
-            } catch (e: FileNotFoundException) {
-                e.printStackTrace()
-            }
-            throw throwable
-        }
+        Thread.setDefaultUncaughtExceptionHandler(defaultExceptionHandler)
     }
 
     private fun logLastThrownException() {
@@ -199,7 +198,7 @@ class ServiceMain : LifecycleService() {
                     notification
                 )
             }
-            mediaPlayerManager.currentAudioUri.observe(this) {
+            mediaSession.currentAudioUri.observe(this) {
                 updateNotification(
                     remoteViewCreator.createRemoteView(
                         applicationContext,
@@ -207,7 +206,7 @@ class ServiceMain : LifecycleService() {
                     )
                 )
             }
-            mediaPlayerManager.isPlaying.observe(this) {
+            mediaSession.isPlaying.observe(this) {
                 updateNotification(
                     remoteViewCreator.createRemoteView(
                         applicationContext,
@@ -217,7 +216,7 @@ class ServiceMain : LifecycleService() {
             }
         }
         serviceStarted = true
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     private fun setUpNotificationBuilder() {
@@ -270,32 +269,25 @@ class ServiceMain : LifecycleService() {
         )
     }
 
-    override fun onBind(intent: Intent): IBinder {
-        super.onBind(intent)
-        return serviceMainBinder
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        stopSelf()
     }
-
-    inner class ServiceMainBinder : Binder() {
-        fun getService(): ServiceMain {
-            return this@ServiceMain
-        }
-    }
-
 
     override fun onDestroy() {
         super.onDestroy()
-        val mediaSession = (application as ApplicationMain).mediaSession
-        mediaPlayerManager.cleanUp(
-            applicationContext,
-            mediaSession
-        )
+        (application as ApplicationMain).cleanUp()
+        remoteViewCreator.cleanUp()
         unregisterReceiver(broadcastReceiver)
-        stopSelf()
+        broadcastReceiver = null
+        notification = null
+        notificationCompatBuilder = null
+        Thread.setDefaultUncaughtExceptionHandler(null)
+        defaultExceptionHandler = null
     }
 
     companion object {
         private val MEDIA_LOCK = Any()
-        val executorServicePool: ExecutorService = Executors.newCachedThreadPool()
         private const val TAG_ERROR: String = "ServiceMainErrors"
         private const val FILE_ERROR_LOG: String = "error"
         private const val NOTIFICATION_CHANNEL_ID: String = "PinkyPlayer"

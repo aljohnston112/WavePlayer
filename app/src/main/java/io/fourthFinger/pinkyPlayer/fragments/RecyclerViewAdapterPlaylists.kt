@@ -10,11 +10,11 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import io.fourthFinger.pinkyPlayer.R
-import io.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
+import io.fourthFinger.playlistDataSource.RandomPlaylist
 
 class RecyclerViewAdapterPlaylists(
     private var listenerCallbackPlaylists: ListenerCallbackPlaylists,
-    var randomPlaylists: List<RandomPlaylist>
+    private var randomPlaylists: List<RandomPlaylist>
 ) : RecyclerView.Adapter<RecyclerViewAdapterPlaylists.ViewHolder>() {
 
 
@@ -42,7 +42,7 @@ class RecyclerViewAdapterPlaylists(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.randomPlaylist = randomPlaylists[position]
-        holder.textViewPlaylistName.text = randomPlaylists[position].getName()
+        holder.textViewPlaylistName.text = randomPlaylists[position].name
         holder.handle.setOnCreateContextMenuListener { menu: ContextMenu?, _: View?, _: ContextMenuInfo? ->
             val itemAddToPlaylist = menu?.add(R.string.add_to_playlist)
             itemAddToPlaylist?.setOnMenuItemClickListener {
@@ -72,7 +72,7 @@ class RecyclerViewAdapterPlaylists(
         lateinit var randomPlaylist: RandomPlaylist
 
         override fun toString(): String {
-            return randomPlaylist.getName()
+            return randomPlaylist.name
         }
 
     }

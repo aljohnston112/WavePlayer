@@ -1,4 +1,4 @@
-package io.fourthFinger.pinkyPlayer
+package io.fourthFinger.playlistDataSource
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -10,7 +10,6 @@ import android.os.Build
 import android.util.Size
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.toBitmap
-import io.fourthFinger.pinkyPlayer.random_playlist.AudioUri
 import java.io.ByteArrayInputStream
 import java.io.FileNotFoundException
 import java.io.InputStream
@@ -19,9 +18,10 @@ class BitmapUtil {
 
     companion object {
 
-        fun getThumbnailBitmap(audioUri: AudioUri?,
-                               songArtWidth : Int,
-                               context: Context
+        fun getThumbnailBitmap(
+            audioUri: AudioUri?,
+            songArtWidth: Int,
+            context: Context
         ): Bitmap? {
             return audioUri?.id?.let { id ->
                 getThumbnail(
@@ -32,17 +32,23 @@ class BitmapUtil {
             }
         }
 
-        fun getThumbnail(uri: Uri, width: Int, height: Int, context: Context): Bitmap? {
+        fun getThumbnail(
+            uri: Uri,
+            width: Int,
+            height: Int,
+            context: Context
+        ): Bitmap? {
             var bitmap: Bitmap? = null
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                try {
-                    bitmap = context.contentResolver.loadThumbnail(
+                bitmap = try {
+                    context.contentResolver.loadThumbnail(
                         uri,
                         Size(width, height),
-                        null)
+                        null
+                    )
 
                 } catch (e: FileNotFoundException) {
-                    bitmap = null
+                    null
                 }
             } else {
                 val mmr = MediaMetadataRetriever()
@@ -69,7 +75,10 @@ class BitmapUtil {
             return bitmap
         }
 
-        fun getDefaultBitmap(songArtWidth: Int, context: Context): Bitmap? {
+        fun getDefaultBitmap(
+            songArtWidth: Int,
+            context: Context
+        ): Bitmap? {
             // TODO cache bitmap
             if (songArtWidth > 0) {
                 val drawableSongArt: Drawable? = ResourcesCompat.getDrawable(
@@ -78,7 +87,10 @@ class BitmapUtil {
                     context.theme
                 )
                 if (drawableSongArt != null) {
-                    return drawableSongArt.toBitmap(songArtWidth, songArtWidth)
+                    return drawableSongArt.toBitmap(
+                        songArtWidth,
+                        songArtWidth
+                    )
                 }
             }
             return null

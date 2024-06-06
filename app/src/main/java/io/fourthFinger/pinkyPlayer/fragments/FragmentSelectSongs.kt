@@ -18,13 +18,11 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import io.fourthFinger.pinkyPlayer.KeyboardUtil
 import io.fourthFinger.pinkyPlayer.R
 import io.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import io.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import io.fourthFinger.pinkyPlayer.databinding.RecyclerViewSongListBinding
-import io.fourthFinger.pinkyPlayer.random_playlist.Song
 
 class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerCallbackSelectSongs {
 
@@ -39,7 +37,6 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
         ViewModelFragmentSelectSongs.Factory
     }
 
-    private var recyclerViewSongList: RecyclerView? = null
     private lateinit var recyclerViewAdapter: RecyclerViewAdapterSelectSongs
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,14 +67,14 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
     }
 
     private fun setUpRecyclerView() {
-        recyclerViewSongList = binding.recyclerViewSongList
-        recyclerViewSongList?.layoutManager = LinearLayoutManager(requireContext())
+        val recyclerViewSongList = binding.recyclerViewSongList
+        recyclerViewSongList.layoutManager = LinearLayoutManager(requireContext())
         // TODO respond to LiveData of all songs
         recyclerViewAdapter = RecyclerViewAdapterSelectSongs(
             this,
             viewModelActivityMain.getAllSongs()
         )
-        recyclerViewSongList?.adapter = recyclerViewAdapter
+        recyclerViewSongList.adapter = recyclerViewAdapter
     }
 
     override fun onStart() {
@@ -166,11 +163,11 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
         }
     }
 
-    override fun songUnselected(song: Song) {
+    override fun songUnselected(song: io.fourthFinger.playlistDataSource.Song) {
         viewModelFragmentSelectSongs.unselectedSong(song)
     }
 
-    override fun songSelected(song: Song) {
+    override fun songSelected(song: io.fourthFinger.playlistDataSource.Song) {
         viewModelFragmentSelectSongs.selectSong(song)
     }
 

@@ -1,4 +1,4 @@
-package io.fourthFinger.pinkyPlayer.random_playlist
+package io.fourthFinger.playlistDataSource
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

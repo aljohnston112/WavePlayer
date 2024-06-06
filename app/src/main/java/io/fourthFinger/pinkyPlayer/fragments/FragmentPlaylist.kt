@@ -20,17 +20,15 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.snackbar.BaseTransientBottomBar
+import com.google.android.material.snackbar.Snackbar
 import io.fourthFinger.pinkyPlayer.KeyboardUtil
 import io.fourthFinger.pinkyPlayer.R
 import io.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import io.fourthFinger.pinkyPlayer.activity_main.DialogFragmentAddToPlaylist
 import io.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import io.fourthFinger.pinkyPlayer.databinding.RecyclerViewSongListBinding
-import io.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
-import io.fourthFinger.pinkyPlayer.random_playlist.Song
-import com.google.android.material.snackbar.BaseTransientBottomBar
-import com.google.android.material.snackbar.Snackbar
-import java.util.ArrayList
+import io.fourthFinger.playlistDataSource.Song
 import java.util.Locale
 
 class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs {
@@ -47,7 +45,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
     }
 
     private var broadcastReceiver: BroadcastReceiver? = null
-    private var recyclerViewSongList: RecyclerView? = null
+
     private lateinit var recyclerViewAdapterSongs: RecyclerViewAdapterSongs
     private var dragFlags: Int = ItemTouchHelper.UP or ItemTouchHelper.DOWN
     private val swipeFlags: Int = ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
@@ -71,15 +69,15 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
         KeyboardUtil.hideKeyboard(view)
         val currentPlaylist = viewModelActivityMain.currentPlaylist.value!!
         viewModelActivityMain.setPlaylistToAddToQueue(currentPlaylist)
-        viewModelActivityMain.setActionBarTitle(currentPlaylist.getName())
+        viewModelActivityMain.setActionBarTitle(currentPlaylist.name)
         // TODO why is this set up twice in all the fragments?!
         // I think due to incomplete state
         setUpRecyclerView(currentPlaylist)
         setUpSearchView()
     }
 
-    private fun setUpRecyclerView(userPickedPlaylist: RandomPlaylist) {
-        recyclerViewSongList = binding.recyclerViewSongList
+    private fun setUpRecyclerView(userPickedPlaylist: io.fourthFinger.playlistDataSource.RandomPlaylist) {
+        val recyclerViewSongList = binding.recyclerViewSongList
         recyclerViewSongList?.layoutManager = LinearLayoutManager(recyclerViewSongList?.context)
         recyclerViewAdapterSongs = RecyclerViewAdapterSongs(
             this,
@@ -174,13 +172,13 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
 
     override fun onStart() {
         super.onStart()
-        val randomPlaylist: RandomPlaylist? = viewModelActivityMain.currentPlaylist.value
+        val randomPlaylist: io.fourthFinger.playlistDataSource.RandomPlaylist? = viewModelActivityMain.currentPlaylist.value
         if (randomPlaylist != null) {
             setUpBroadcastReceiver(randomPlaylist)
         }
     }
 
-    private fun setUpBroadcastReceiver(randomPlaylist: RandomPlaylist) {
+    private fun setUpBroadcastReceiver(randomPlaylist: io.fourthFinger.playlistDataSource.RandomPlaylist) {
         val filterComplete = IntentFilter()
         filterComplete.addCategory(Intent.CATEGORY_DEFAULT)
         filterComplete.addAction(

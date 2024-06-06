@@ -8,9 +8,12 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.room.Room
 import io.fourthFinger.pinkyPlayer.R
-import io.fourthFinger.pinkyPlayer.ServiceMain
+import io.fourthFinger.playlistDataSource.AudioUri
+import io.fourthFinger.playlistDataSource.PlaylistsRepo
+import io.fourthFinger.playlistDataSource.Song
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 /**
@@ -20,7 +23,10 @@ import java.util.concurrent.Executors
  */
 class MediaDatasource(context: Context) {
 
-    private lateinit var songDAO: SongDAO
+    private var executorServicePool: ExecutorService? = Executors.newCachedThreadPool()
+
+    private var database: SongDatabase? = null
+    private var songDAO: SongDAO? = null
 
     private val _loadingText = MutableLiveData<String>()
     val loadingText = _loadingText as LiveData<String>
@@ -41,11 +47,11 @@ class MediaDatasource(context: Context) {
      * @param context
      */
     private fun loadDatabase(context: Context) {
-        val songDatabase = Room.databaseBuilder(
+        database = Room.databaseBuilder(
             context, SongDatabase::class.java,
             SONG_DATABASE_NAME
         ).build()
-        songDAO = songDatabase.songDAO()
+        songDAO = database?.songDAO()
     }
 
     /**
@@ -58,11 +64,11 @@ class MediaDatasource(context: Context) {
     fun getSongFromDatabase(songID: Long): Song? {
         var song: Song? = null
         try {
-            song = ServiceMain.executorServicePool.submit(
+            song = executorServicePool?.submit(
                 Callable {
-                    songDAO.getSong(songID)
+                    songDAO?.getSong(songID)
                 }
-            ).get()
+            )?.get()
             // TODO better error handling
         } catch (e: ExecutionException) {
             e.printStackTrace()
@@ -80,12 +86,18 @@ class MediaDatasource(context: Context) {
      */
     fun loadSongsFromMediaStore(
         context: Context,
-        playlistsRepo: PlaylistsRepo
+        playlistsRepo: PlaylistsRepo,
+        maxPercent: Double
     ) {
         val executorFIFO = Executors.newSingleThreadExecutor()
         executorFIFO.execute {
             val resources = context.resources
-            val masterPlaylist = playlistsRepo.getMasterPlaylist()
+            playlistsRepo.loadPlaylists(
+                context,
+                maxPercent
+            )
+
+            val masterPlaylist = playlistsRepo.playlists.value?.masterPlaylist!!
 
             _loadingText.postValue(
                 resources.getString(R.string.loading1)
@@ -108,11 +120,6 @@ class MediaDatasource(context: Context) {
                 resources.getString(R.string.loading3)
             )
             removeMissingSongs(
-                context,
-                playlistsRepo
-            )
-
-            SaveFile.saveFile(
                 context,
                 playlistsRepo
             )
@@ -179,6 +186,7 @@ class MediaDatasource(context: Context) {
                 currentSongNumber++
             }
         }
+        cursor?.close()
         return newSongs
     }
 
@@ -222,14 +230,12 @@ class MediaDatasource(context: Context) {
         playlistsRepo: PlaylistsRepo,
         newSongs: List<Song>
     ) {
-        val masterPlaylist = playlistsRepo.getMasterPlaylist()
         val numberOfNewSongs = newSongs.size
         for ((i, song) in newSongs.withIndex()) {
-            songDAO.insertAll(song)
-            masterPlaylist.add(song)
-            SaveFile.saveFile(
+            songDAO?.insertAll(song)
+            playlistsRepo.addToMasterPlaylist(
                 context,
-                playlistsRepo
+                song
             )
             _loadingProgress.postValue(
                 i.toDouble() / numberOfNewSongs.toDouble()
@@ -253,11 +259,10 @@ class MediaDatasource(context: Context) {
         for ((j, song) in oldSongs.withIndex()) {
             if (!_allSongs.contains(song)) {
                 getSongFromDatabase(song.id)?.let {
-                    masterPlaylist.remove(it)
-                    songDAO.delete(it)
-                    SaveFile.saveFile(
+                    songDAO?.delete(it)
+                    playlistsRepo.removeFromMasterPlaylist(
                         context,
-                        playlistsRepo
+                        song
                     )
                 }
             }
@@ -265,6 +270,14 @@ class MediaDatasource(context: Context) {
                 j.toDouble() / numberOfSongs.toDouble()
             )
         }
+    }
+
+    fun cleanUp() {
+        executorServicePool?.shutdownNow()
+        executorServicePool = null
+        database?.close()
+        database = null
+        songDAO = null
     }
 
     companion object {

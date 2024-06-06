@@ -19,31 +19,28 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.snackbar.BaseTransientBottomBar
+import com.google.android.material.snackbar.Snackbar
 import io.fourthFinger.pinkyPlayer.KeyboardUtil
 import io.fourthFinger.pinkyPlayer.R
 import io.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import io.fourthFinger.pinkyPlayer.activity_main.DialogFragmentAddToPlaylist
 import io.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import io.fourthFinger.pinkyPlayer.databinding.RecyclerViewPlaylistListBinding
-import io.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
-import com.google.android.material.snackbar.BaseTransientBottomBar
-import com.google.android.material.snackbar.Snackbar
 
 class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallbackPlaylists {
 
     private var _binding: RecyclerViewPlaylistListBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>{
+    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain> {
         ViewModelActivityMain.Factory
     }
-    private val viewModelPlaylists by activityViewModels<ViewModelPlaylists>{
+    private val viewModelPlaylists by activityViewModels<ViewModelPlaylists> {
         ViewModelPlaylists.Factory
     }
 
-    private lateinit var recyclerView: RecyclerView
     private lateinit var recyclerViewAdapterPlaylists: RecyclerViewAdapterPlaylists
-
     var dragFlags: Int = ItemTouchHelper.UP or ItemTouchHelper.DOWN
     val swipeFlags: Int = ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
 
@@ -70,11 +67,12 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
     }
 
     private fun setUpRecyclerView() {
-        recyclerView = binding.recyclerViewPlaylistList
+        val playlists = viewModelPlaylists.playlists.value!!
+        val recyclerView = binding.recyclerViewPlaylistList
         recyclerView.layoutManager = LinearLayoutManager(recyclerView.context)
         recyclerViewAdapterPlaylists = RecyclerViewAdapterPlaylists(
             this,
-            viewModelPlaylists.getPlaylists()
+            playlists
         )
         recyclerView.adapter = recyclerViewAdapterPlaylists
         ItemTouchHelper(object : ItemTouchHelper.Callback() {
@@ -108,7 +106,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
                     requireActivity().applicationContext,
                     position
                 )
-                recyclerViewAdapterPlaylists.updateList(viewModelPlaylists.getPlaylists())
+                recyclerViewAdapterPlaylists.updateList(playlists)
                 val snackBar: Snackbar = Snackbar.make(
                     binding.recyclerViewPlaylistList,
                     R.string.playlist_deleted, BaseTransientBottomBar.LENGTH_LONG
@@ -118,11 +116,15 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
                         requireActivity().applicationContext,
                         position
                     )
-                    recyclerViewAdapterPlaylists.updateList(viewModelPlaylists.getPlaylists())
+                    recyclerViewAdapterPlaylists.updateList(playlists)
                 }
                 snackBar.show()
             }
         }).attachToRecyclerView(recyclerView)
+
+        viewModelPlaylists.playlists.observe(viewLifecycleOwner) {
+            recyclerViewAdapterPlaylists.updateList(it)
+        }
     }
 
 
@@ -141,7 +143,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
             recyclerViewAdapterPlaylists.updateList(sifted)
             0
         } else {
-            recyclerViewAdapterPlaylists.updateList(viewModelPlaylists.getPlaylists())
+            recyclerViewAdapterPlaylists.updateList(viewModelPlaylists.playlists.value!!)
             ItemTouchHelper.UP or ItemTouchHelper.DOWN
         }
     }
@@ -160,7 +162,11 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
             )
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requireActivity().registerReceiver(broadcastReceiver, intentFilter, Service.RECEIVER_EXPORTED)
+            requireActivity().registerReceiver(
+                broadcastReceiver,
+                intentFilter,
+                Service.RECEIVER_EXPORTED
+            )
         } else {
             requireActivity().registerReceiver(broadcastReceiver, intentFilter)
         }
@@ -217,7 +223,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
         }
     }
 
-    override fun onMenuItemClickAddToPlaylist(randomPlaylist: RandomPlaylist) {
+    override fun onMenuItemClickAddToPlaylist(randomPlaylist: io.fourthFinger.playlistDataSource.RandomPlaylist) {
         val bundle = Bundle()
         bundle.putSerializable(
             DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST,
@@ -228,14 +234,14 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
         dialogFragmentAddToPlaylist.show(parentFragmentManager, tag)
     }
 
-    override fun onMenuItemClickAddToQueue(randomPlaylist: RandomPlaylist) {
+    override fun onMenuItemClickAddToQueue(randomPlaylist: io.fourthFinger.playlistDataSource.RandomPlaylist) {
         viewModelActivityMain.addToQueue(
             requireActivity().applicationContext,
             randomPlaylist
         )
     }
 
-    override fun onClickViewHolder(randomPlaylist: RandomPlaylist) {
+    override fun onClickViewHolder(randomPlaylist: io.fourthFinger.playlistDataSource.RandomPlaylist) {
         viewModelActivityMain.currentContextPlaylist = randomPlaylist
         viewModelPlaylists.playlistClicked(
             NavHostFragment.findNavController(this),

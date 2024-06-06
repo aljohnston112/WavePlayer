@@ -39,8 +39,8 @@ class ViewModelFragmentPlaylist(
                 val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
                 val savedStateHandle = extras.createSavedStateHandle()
                 return ViewModelFragmentPlaylist(
-                    (application as ApplicationMain).songPicker,
-                    application.mediaSession,
+                    (application as ApplicationMain).songPicker!!,
+                    application.mediaSession!!,
                     savedStateHandle
                 ) as T
             }

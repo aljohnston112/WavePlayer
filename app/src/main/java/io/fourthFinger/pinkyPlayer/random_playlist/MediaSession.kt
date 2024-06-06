@@ -5,7 +5,8 @@ import android.content.Intent
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import io.fourthFinger.pinkyPlayer.R
-import io.fourthFinger.pinkyPlayer.ServiceMain
+import io.fourthFinger.playlistDataSource.PlaylistsRepo
+import io.fourthFinger.playlistDataSource.RandomPlaylist
 
 class MediaSession(
     private val playlistsRepo: PlaylistsRepo,
@@ -13,12 +14,14 @@ class MediaSession(
     private val songQueue: SongQueue
 ) {
 
-    private val _currentPlaylist = MutableLiveData(playlistsRepo.getMasterPlaylist())
-    val currentPlaylist = _currentPlaylist as LiveData<RandomPlaylist?>
+    private val _currentPlaylist = MutableLiveData<RandomPlaylist>()
+    val currentPlaylist = _currentPlaylist as LiveData<RandomPlaylist>
+
     val currentAudioUri = mediaPlayerManager.currentAudioUri
     val isPlaying = mediaPlayerManager.isPlaying
+    val songInProgress = mediaPlayerManager.songInProgress
 
-        @Volatile
+    @Volatile
     private var shuffling: Boolean = true
 
     @Volatile
@@ -36,11 +39,25 @@ class MediaSession(
     }
 
     fun resetProbabilities(context: Context) {
-        currentPlaylist.value?.resetProbabilities(context, playlistsRepo)
+        currentPlaylist.value?.let {
+            playlistsRepo.resetProbabilities(
+                context, it
+            )
+        }
     }
 
     fun lowerProbabilities(context: Context, lowerProb: Double) {
-        currentPlaylist.value?.lowerProbabilities(context, playlistsRepo, lowerProb)
+        currentPlaylist.value?.let {
+            playlistsRepo.lowerProbabilities(
+                context,
+                it,
+                lowerProb
+            )
+        }
+    }
+
+    fun getCurrentTime(): Int {
+        return mediaPlayerManager.getCurrentTime()
     }
 
     @Synchronized
@@ -49,7 +66,10 @@ class MediaSession(
     }
 
     @Synchronized
-    fun setShuffling(context: Context, shuffling: Boolean) {
+    fun setShuffling(
+        context: Context,
+        shuffling: Boolean
+    ) {
         this.shuffling = shuffling
         val songList = currentPlaylist.value?.getSongIDs()?.toMutableList()
         if(songList != null) {
@@ -65,7 +85,9 @@ class MediaSession(
                 }
             } else {
                 // Not shuffling
-                restartLoopingNonShuffle()
+                restartLoopingNonShuffle(
+                    songList.indexOf(currentAudioUri.value!!.id) + 1
+                )
                 if (songQueue.hasPrevious()) {
                     val i = songList.indexOf(songQueue.previous().id)
                     if (i != -1) {
@@ -78,11 +100,11 @@ class MediaSession(
         }
     }
 
-    private fun restartLoopingNonShuffle() {
+    private fun restartLoopingNonShuffle(index: Int) {
         val songList = currentPlaylist.value?.getSongIDs()?.toMutableList()
         if(songList != null) {
-            songQueue.newSessionStarted(songList[0])
-            for (j in 1 until songList.size) {
+            songQueue.newSessionStarted(songList[index])
+            for (j in index until songList.size) {
                 songQueue.addToQueue(songList[j])
             }
         }
@@ -189,7 +211,7 @@ class MediaSession(
                 restartLoopingShuffle()
                 makeIfNeededAndPlay(context, songQueue.next())
             } else {
-                restartLoopingNonShuffle()
+                restartLoopingNonShuffle(0)
                 makeIfNeededAndPlay(context, songQueue.next())
             }
             return true
@@ -216,7 +238,7 @@ class MediaSession(
      */
     private fun makeIfNeededAndPlay(
         context: Context,
-        song: Song
+        song: io.fourthFinger.playlistDataSource.Song
     ) {
         stopCurrentSong(context)
         mediaPlayerManager.makeIfNeededAndPlay(context, mediaPlayerManager, song.id)
@@ -248,7 +270,12 @@ class MediaSession(
                 if(shuffling){
                     restartLoopingShuffle()
                 } else {
-                    restartLoopingNonShuffle()
+                    val songList = currentPlaylist.value?.getSongIDs()?.toMutableList()
+                    var i = songList?.indexOf(currentAudioUri.value!!.id)!!
+                    if(i == songList.size - 1){
+                        i = 0
+                    }
+                    restartLoopingNonShuffle(i)
                 }
                 songQueue.goToBack()
                 if(songQueue.hasPrevious()){
@@ -309,6 +336,14 @@ class MediaSession(
         if (mediaPlayerManager.isPlaying.value == false) {
             pauseOrPlay(context)
         }
+    }
+
+    fun cleanUp(context: Context) {
+
+        if (isPlaying.value == true) {
+            pauseOrPlay(context)
+        }
+        mediaPlayerManager.cleanUp()
     }
 
 }

@@ -1,5 +1,7 @@
 package io.fourthFinger.pinkyPlayer.random_playlist
 
+import io.fourthFinger.playlistDataSource.Song
+
 class UseCaseSongPicker(
     songRepo: SongRepo
 ) {
@@ -34,7 +36,7 @@ class UseCaseSongPicker(
 
     @Synchronized
     fun selectSongsInPlaylist(
-        playlist: RandomPlaylist
+        playlist: io.fourthFinger.playlistDataSource.RandomPlaylist
     ) {
         for (song in playlist.getSongs()) {
             val s = allSongs.first { it.id == song.id }

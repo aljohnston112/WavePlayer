@@ -3,6 +3,8 @@ package io.fourthFinger.pinkyPlayer.random_playlist
 import android.content.Context
 import androidx.fragment.app.Fragment
 import io.fourthFinger.pinkyPlayer.NavUtil
+import io.fourthFinger.playlistDataSource.PlaylistsRepo
+import io.fourthFinger.playlistDataSource.Song
 
 class UseCaseEditPlaylist(
     val playlistsRepo: PlaylistsRepo,
@@ -18,12 +20,14 @@ class UseCaseEditPlaylist(
         toPosition: Int
     ) {
         // TODO make sure changes are persistent across app restarts
-        mediaSession.currentPlaylist.value?.swapSongPositions(
-            context,
-            playlistsRepo,
-            fromPosition,
-            toPosition
-        )
+        mediaSession.currentPlaylist.value?.let {
+            playlistsRepo.swapSongPositions(
+                context,
+                it,
+                fromPosition,
+                toPosition
+            )
+        }
     }
 
     fun notifySongRemoved(fragment: Fragment, position: Int) {
@@ -42,8 +46,11 @@ class UseCaseEditPlaylist(
             } else {
                 // Remove the song; this is NOT the undo
                 songForUndo?.let {
-                    currentPlaylist.remove(it)
-                    SaveFile.saveFile(context, playlistsRepo)
+                    playlistsRepo.removeSong(
+                        context,
+                        currentPlaylist,
+                        it
+                    )
                 }
             }
         }
@@ -54,16 +61,17 @@ class UseCaseEditPlaylist(
         if (currentPlaylist != null) {
             songForUndo?.let { song ->
                 probabilityForUndo?.let { probability ->
-                    currentPlaylist.add(
+                    playlistsRepo.addSong(
+                        context,
+                        currentPlaylist,
                         song,
                         probability
                     )
-                    SaveFile.saveFile(context, playlistsRepo)
                 }
             }
-            currentPlaylist.switchSongPositions(
+            playlistsRepo.switchSongPositions(
                 context,
-                playlistsRepo,
+                currentPlaylist,
                 currentPlaylist.size() - 1,
                 position
             )

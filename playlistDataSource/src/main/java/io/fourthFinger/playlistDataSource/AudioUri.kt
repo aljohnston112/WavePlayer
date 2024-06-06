@@ -1,4 +1,4 @@
-package io.fourthFinger.pinkyPlayer.random_playlist
+package io.fourthFinger.playlistDataSource
 
 import android.content.ContentUris
 import android.content.Context
@@ -6,7 +6,6 @@ import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
-import io.fourthFinger.pinkyPlayer.BitmapUtil
 import java.io.*
 
 class AudioUri(

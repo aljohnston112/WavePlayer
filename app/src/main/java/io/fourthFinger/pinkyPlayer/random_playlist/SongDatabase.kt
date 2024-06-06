@@ -2,6 +2,7 @@ package io.fourthFinger.pinkyPlayer.random_playlist
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import io.fourthFinger.playlistDataSource.Song
 
 /**
  * A database for caching songs.

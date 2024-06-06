@@ -23,15 +23,14 @@ import io.fourthFinger.pinkyPlayer.NavUtil
 import io.fourthFinger.pinkyPlayer.R
 import io.fourthFinger.pinkyPlayer.fragments.FragmentPlaylistDirections
 import io.fourthFinger.pinkyPlayer.fragments.FragmentSongsDirections
-import io.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerManager
 import io.fourthFinger.pinkyPlayer.random_playlist.MediaSession
-import io.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
-import io.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
-import io.fourthFinger.pinkyPlayer.random_playlist.Song
 import io.fourthFinger.pinkyPlayer.random_playlist.SongQueue
 import io.fourthFinger.pinkyPlayer.random_playlist.SongRepo
 import io.fourthFinger.pinkyPlayer.random_playlist.UseCaseEditPlaylist
 import io.fourthFinger.pinkyPlayer.settings.SettingsRepo
+import io.fourthFinger.playlistDataSource.PlaylistsRepo
+import io.fourthFinger.playlistDataSource.RandomPlaylist
+import io.fourthFinger.playlistDataSource.Song
 import java.util.Locale
 
 class ViewModelActivityMain(
@@ -39,18 +38,15 @@ class ViewModelActivityMain(
     private val mediaSession: MediaSession,
     private val playlistEditor: UseCaseEditPlaylist,
     private val playlistsRepo: PlaylistsRepo,
-    private val mediaPlayerManager: MediaPlayerManager,
     private val songQueue: SongQueue,
     private val songRepo: SongRepo,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    // TODO maybe remove the mediaPlayerManager dependency to avoid issues with calling the wrong methods
-    // The mediaSession has similarly named methods that use the mediaPlayerManager but add logic over them
-
     val currentPlaylist = mediaSession.currentPlaylist
     val currentAudioUri = mediaSession.currentAudioUri
     val isPlaying = mediaSession.isPlaying
+    val songInProgress = mediaSession.songInProgress
 
     var currentContextPlaylist: RandomPlaylist? = null
         set(playlist){
@@ -99,20 +95,14 @@ class ViewModelActivityMain(
         this._fragmentSongVisible.postValue(visible)
     }
 
-    fun lowerProbabilities(
-        context: Context,
-        mediaSession: MediaSession
-    ) {
+    fun lowerProbabilities(context: Context) {
         mediaSession.lowerProbabilities(
             context,
             settingsRepo.settings.value!!.lowerProb
         )
     }
 
-    fun resetProbabilities(
-        context: Context,
-        mediaSession: MediaSession
-    ) {
+    fun resetProbabilities(context: Context) {
         mediaSession.resetProbabilities(context)
     }
 
@@ -135,12 +125,12 @@ class ViewModelActivityMain(
     // TODO add setting to stop playlist from continuing after queue is done
     // shuffle is off and looping is on or something like that?
 
-    private val _playlistToAddToQueue = MutableLiveData<RandomPlaylist?>()
-    private val playlistToAddToQueue = _playlistToAddToQueue as LiveData<RandomPlaylist?>
-    private fun getPlaylistToAddToQueue(): RandomPlaylist? {
-        return playlistToAddToQueue.value?.let { playlistsRepo.getPlaylist(it.getName()) }
+    private val _playlistToAddToQueue = MutableLiveData<io.fourthFinger.playlistDataSource.RandomPlaylist?>()
+    private val playlistToAddToQueue = _playlistToAddToQueue as LiveData<io.fourthFinger.playlistDataSource.RandomPlaylist?>
+    private fun getPlaylistToAddToQueue(): io.fourthFinger.playlistDataSource.RandomPlaylist? {
+        return playlistToAddToQueue.value?.let { playlistsRepo.getPlaylist(it.name) }
     }
-    fun setPlaylistToAddToQueue(playlistToAddToQueue: RandomPlaylist?) {
+    fun setPlaylistToAddToQueue(playlistToAddToQueue: io.fourthFinger.playlistDataSource.RandomPlaylist?) {
         _playlistToAddToQueue.postValue(playlistToAddToQueue)
         _songToAddToQueue.postValue(null)
     }
@@ -157,17 +147,17 @@ class ViewModelActivityMain(
 
     fun addToQueue(context: Context, song: Song) {
         songQueue.addToQueue(song.id)
-        if (mediaPlayerManager.isSongInProgress() == false) {
+        if (songInProgress.value == false) {
             mediaSession.playNext(context)
         }
     }
 
-    fun addToQueue(context: Context, randomPlaylist: RandomPlaylist) {
+    fun addToQueue(context: Context, randomPlaylist: io.fourthFinger.playlistDataSource.RandomPlaylist) {
         val songs = randomPlaylist.getSongs()
         for (song in songs) {
             songQueue.addToQueue(song.id)
         }
-        if (mediaPlayerManager.isSongInProgress() == false) {
+        if (songInProgress.value == false) {
             mediaSession.playNext(context)
         }
     }
@@ -181,7 +171,7 @@ class ViewModelActivityMain(
             }
         }
         // TODO Song will play even though user might not want it. Make a setting.
-        if (mediaPlayerManager.isSongInProgress() == false) {
+        if (songInProgress.value == false) {
             mediaSession.playNext(context)
         }
     }
@@ -205,11 +195,14 @@ class ViewModelActivityMain(
         dialogFragment.show(supportFragmentManager, DialogFragmentAddToPlaylist.TAG)
     }
 
-    fun queueSongClicked(fragment: Fragment, queuePosition: Int) {
+    fun queueSongClicked(
+        fragment: Fragment,
+        queuePosition: Int
+    ) {
         val song: Song = songQueue.setIndex(queuePosition)
         val context = fragment.requireContext()
         synchronized(ActivityMain.MUSIC_CONTROL_LOCK) {
-            if (song == mediaPlayerManager.currentAudioUri.value?.id?.let {
+            if (song == mediaSession.currentAudioUri.value?.id?.let {
                     songRepo.getSong(it)
                 }
             ) {
@@ -221,12 +214,15 @@ class ViewModelActivityMain(
     }
 
 
-    fun playlistSongClicked(fragment: Fragment, song: Song) {
+    fun playlistSongClicked(
+        fragment: Fragment,
+        song: Song
+    ) {
         val context = fragment.requireContext()
         val navController = fragment.findNavController()
         synchronized(ActivityMain.MUSIC_CONTROL_LOCK) {
-            // TODO pass this in?
-            if (song == mediaPlayerManager.currentAudioUri.value?.id?.let {
+            // TODO pass current song in?
+            if (song == mediaSession.currentAudioUri.value?.id?.let {
                     songRepo.getSong(it)
                 }
             ) {
@@ -240,6 +236,13 @@ class ViewModelActivityMain(
                 mediaSession.setCurrentPlaylistToMaster()
             }
             songQueue.newSessionStarted(song.id)
+            val songList = currentPlaylist.value?.getSongIDs()?.toMutableList()
+            if(songList != null) {
+                val index = songList.indexOf(song.id) + 1
+                for (j in index until songList.size) {
+                    songQueue.addToQueue(songList[j])
+                }
+            }
             mediaSession.playNext(context)
         }
         if (navController.currentDestination?.id == R.id.fragmentPlaylist) {
@@ -293,13 +296,12 @@ class ViewModelActivityMain(
                 val savedStateHandle = extras.createSavedStateHandle()
 
                 return ViewModelActivityMain(
-                    (application as ApplicationMain).settingsRepo,
-                    application.mediaSession,
-                    application.playlistEditor,
-                    application.playlistsRepo,
-                    application.mediaPlayerManager,
-                    application.songQueue,
-                    application.songRepo,
+                    (application as ApplicationMain).settingsRepo!!,
+                    application.mediaSession!!,
+                    application.playlistEditor!!,
+                    application.playlistsRepo!!,
+                    application.songQueue!!,
+                    application.songRepo!!,
                     savedStateHandle
                 ) as T
             }

@@ -5,29 +5,38 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.widget.RemoteViews
-import io.fourthFinger.pinkyPlayer.random_playlist.AudioUri
-import io.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerManager
+import androidx.lifecycle.Observer
+import io.fourthFinger.playlistDataSource.AudioUri
+import io.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 
 class RemoteViewCreator(
     private val packageName: String,
     context: Context,
-    mediaPlayerManager: MediaPlayerManager
+    private var mediaSession: MediaSession?
 ) {
 
     private var isPlaying = false
     private var songName = ""
     private var notificationHasArt = false
     private var songArt: Bitmap? = null
-    
+
+    private var songObserver: Observer<AudioUri>? = Observer { value ->
+        songName = value.title
+        songArt = value.getBitmap(context)
+        createRemoteView(context)
+    }
+
+    private var isPlayingObserver: Observer<Boolean>? = Observer { isPlaying ->
+        this.isPlaying = isPlaying
+        createRemoteView(context)
+    }
+
     init {
-        mediaPlayerManager.currentAudioUri.observeForever {
-            songName = it.title
-            songArt = it.getBitmap(context)
-            createRemoteView(context)
+        songObserver?.let {
+            mediaSession?.currentAudioUri?.observeForever(it)
         }
-        mediaPlayerManager.isPlaying.observeForever {
-            isPlaying = it
-            createRemoteView(context)
+        isPlayingObserver?.let {
+            mediaSession?.isPlaying?.observeForever(it)
         }
     }
 
@@ -65,24 +74,24 @@ class RemoteViewCreator(
         )
         setUpBroadCastsForNotificationButtons(
             context,
-            remoteViewsWithArt, 
+            remoteViewsWithArt,
             remoteViewsWithoutArt
         )
         updatePlayButton(
-            remoteViewsWithArt, 
+            remoteViewsWithArt,
             remoteViewsWithoutArt
         )
         updateNotificationSongName(
-            remoteViewsWithArt, 
+            remoteViewsWithArt,
             remoteViewsWithoutArt
         )
         updateSongArt(
-            remoteViewsWithArt, 
+            remoteViewsWithArt,
             remoteViewsWithoutArt
         )
         return updateNotification(
-            remoteViewsWithArt, 
-            remoteViewsWithoutArt, 
+            remoteViewsWithArt,
+            remoteViewsWithoutArt,
             remoteViewsNotification
         )
     }
@@ -94,7 +103,7 @@ class RemoteViewCreator(
     ) {
         setUpBroadcastNext(
             context,
-            remoteViewsWithArt, 
+            remoteViewsWithArt,
             remoteViewsWithoutArt
         )
         setUpBroadcastPlayPause(
@@ -238,7 +247,7 @@ class RemoteViewCreator(
             )
         }
     }
-    
+
     private fun updateNotification(
         remoteViewsWithArt: RemoteViews,
         remoteViewsWithoutArt: RemoteViews,
@@ -259,7 +268,19 @@ class RemoteViewCreator(
             )
         }
         return remoteViewsNotification
-        
+
     }
-    
+
+    fun cleanUp() {
+        songObserver?.let {
+            mediaSession?.currentAudioUri?.removeObserver(it)
+        }
+        songObserver = null
+        isPlayingObserver?.let {
+            mediaSession?.isPlaying?.removeObserver(it)
+        }
+        isPlayingObserver = null
+        mediaSession = null
+    }
+
 }

@@ -10,12 +10,8 @@ import androidx.fragment.app.activityViewModels
 import io.fourthFinger.pinkyPlayer.NavUtil
 import io.fourthFinger.pinkyPlayer.R
 import io.fourthFinger.pinkyPlayer.fragments.ViewModelDialogFragmentAddToPlaylist
-import io.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
 import io.fourthFinger.pinkyPlayer.fragments.ViewModelPlaylists
-import io.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
-import io.fourthFinger.pinkyPlayer.random_playlist.SaveFile
-import io.fourthFinger.pinkyPlayer.random_playlist.Song
-import java.util.*
+import io.fourthFinger.playlistDataSource.RandomPlaylist
 
 class DialogFragmentAddToPlaylist : DialogFragment() {
 
@@ -38,8 +34,15 @@ class DialogFragmentAddToPlaylist : DialogFragment() {
         builder.setTitle(R.string.add_to_playlist)
         val bundle = arguments
         if (bundle != null) {
-            setUpChoices(builder, selectedPlaylistIndices)
-            setUpButtons(builder, bundle, selectedPlaylistIndices, viewModelPlaylists.playlistsRepo)
+            setUpChoices(
+                builder,
+                selectedPlaylistIndices
+            )
+            setUpButtons(
+                builder,
+                bundle,
+                selectedPlaylistIndices
+            )
             return builder.create()
         }
         throw IllegalArgumentException("arguments must be passed to DialogFragmentAddToPlaylist")
@@ -49,7 +52,7 @@ class DialogFragmentAddToPlaylist : DialogFragment() {
         builder: AlertDialog.Builder,
         selectedPlaylistIndices: MutableList<Int>
     ) {
-        viewModelPlaylists.getPlaylists().map { it.getName() }
+        viewModelPlaylists.playlists.value?.map { it.name }
         builder.setMultiChoiceItems(
             viewModelPlaylists.getPlaylistTitles(),
             null
@@ -66,25 +69,30 @@ class DialogFragmentAddToPlaylist : DialogFragment() {
         builder: AlertDialog.Builder,
         bundle: Bundle,
         selectedPlaylistIndices: MutableList<Int>,
-        playlistsRepo: PlaylistsRepo
     ) {
         // These are here to prevent code duplication
-        val song = bundle.getSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG) as Song?
+        val song = bundle.getSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG) as io.fourthFinger.playlistDataSource.Song?
         val randomPlaylist = bundle.getSerializable(
             BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST
         ) as RandomPlaylist?
         builder.setPositiveButton(R.string.add) { _: DialogInterface?, _: Int ->
             if (song != null) {
                 for (index in selectedPlaylistIndices) {
-                    viewModelPlaylists.getPlaylists()[index].add(song)
-                    SaveFile.saveFile(requireContext(), playlistsRepo)
+                    viewModelPlaylists.addToPlaylist(
+                        requireContext(),
+                        index,
+                        song
+                    )
                 }
             }
             if (randomPlaylist != null) {
                 for (randomPlaylistSong in randomPlaylist.getSongs()) {
                     for (index in selectedPlaylistIndices) {
-                        viewModelPlaylists.getPlaylists()[index].add(randomPlaylistSong)
-                        SaveFile.saveFile(requireContext(), playlistsRepo)
+                        viewModelPlaylists.addToPlaylist(
+                            requireContext(),
+                            index,
+                            randomPlaylistSong
+                        )
                     }
                 }
             }
@@ -93,7 +101,7 @@ class DialogFragmentAddToPlaylist : DialogFragment() {
             // currentContextPlaylist needs to be null for FragmentEditPlaylist to make a new playlist
             unselectSongs()
             viewModelActivityMain.currentContextPlaylist = null
-            val songs = mutableListOf<Song>()
+            val songs = mutableListOf<io.fourthFinger.playlistDataSource.Song>()
             if (song != null) {
                 songs.add(song)
             }

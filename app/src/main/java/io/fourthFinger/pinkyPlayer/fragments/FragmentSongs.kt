@@ -15,16 +15,13 @@ import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import io.fourthFinger.pinkyPlayer.KeyboardUtil
 import io.fourthFinger.pinkyPlayer.R
 import io.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import io.fourthFinger.pinkyPlayer.activity_main.DialogFragmentAddToPlaylist
 import io.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import io.fourthFinger.pinkyPlayer.databinding.RecyclerViewSongListBinding
-import io.fourthFinger.pinkyPlayer.random_playlist.Song
 
 class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs {
 
@@ -35,7 +32,6 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         ViewModelActivityMain.Factory
     }
 
-    private lateinit var recyclerViewSongs: RecyclerView
     private lateinit var recyclerViewAdapterSongs: RecyclerViewAdapterSongs
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,7 +58,7 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
     }
 
     private fun setUpRecyclerView() {
-        recyclerViewSongs = binding.recyclerViewSongList
+        val recyclerViewSongs = binding.recyclerViewSongList
         recyclerViewAdapterSongs = RecyclerViewAdapterSongs(
             this,
             viewModelActivityMain.getAllSongs()
@@ -152,7 +148,7 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         setUpToolbar()
     }
 
-    override fun onMenuItemClickAddToPlaylist(song: Song) {
+    override fun onMenuItemClickAddToPlaylist(song: io.fourthFinger.playlistDataSource.Song) {
         val bundle = Bundle()
         bundle.putSerializable(DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, song)
         val dialogFragmentAddToPlaylist = DialogFragmentAddToPlaylist()
@@ -160,11 +156,11 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         dialogFragmentAddToPlaylist.show(parentFragmentManager, tag)
     }
 
-    override fun onMenuItemClickAddToQueue(song: Song) {
+    override fun onMenuItemClickAddToQueue(song: io.fourthFinger.playlistDataSource.Song) {
         viewModelActivityMain.addToQueue(requireActivity().applicationContext, song)
     }
 
-    override fun onClickViewHolder(pos: Int, song: Song) {
+    override fun onClickViewHolder(pos: Int, song: io.fourthFinger.playlistDataSource.Song) {
         viewModelActivityMain.playlistSongClicked(
             this,
             song

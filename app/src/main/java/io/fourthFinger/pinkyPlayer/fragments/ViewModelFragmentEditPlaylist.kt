@@ -12,16 +12,15 @@ import io.fourthFinger.pinkyPlayer.ApplicationMain
 import io.fourthFinger.pinkyPlayer.NavUtil
 import io.fourthFinger.pinkyPlayer.R
 import io.fourthFinger.pinkyPlayer.ToastUtil
-import io.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
-import io.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
-import io.fourthFinger.pinkyPlayer.random_playlist.SaveFile
 import io.fourthFinger.pinkyPlayer.random_playlist.UseCaseSongPicker
 import io.fourthFinger.pinkyPlayer.settings.SettingsRepo
+import io.fourthFinger.playlistDataSource.PlaylistsRepo
+import io.fourthFinger.playlistDataSource.RandomPlaylist
 
 class ViewModelFragmentEditPlaylist(
-    val songPicker: UseCaseSongPicker,
-    val playlistsRepo: PlaylistsRepo,
-    val settingsRepo: SettingsRepo,
+    private val songPicker: UseCaseSongPicker,
+    private val playlistsRepo: PlaylistsRepo,
+    private val settingsRepo: SettingsRepo,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -43,6 +42,7 @@ class ViewModelFragmentEditPlaylist(
             NavUtil.popBackStack(fragment)
         }
     }
+
 
     private fun validatePlaylistInput(
         context: Context,
@@ -71,13 +71,11 @@ class ViewModelFragmentEditPlaylist(
         oldPlaylist: RandomPlaylist,
         playlistName: String
     ) {
-        playlistsRepo.removePlaylist(context, oldPlaylist)
-        oldPlaylist.setName(
+        playlistsRepo.setName(
             context,
-            playlistsRepo,
+            oldPlaylist,
             playlistName
         )
-        playlistsRepo.addPlaylist(context, oldPlaylist)
         removeMissingSongs(context, oldPlaylist)
         addNewSongs(context, oldPlaylist)
     }
@@ -90,8 +88,11 @@ class ViewModelFragmentEditPlaylist(
         val newPlaylistSongs = songPicker.getPickedSongs()
         for (song in oldPlaylistSongs) {
             if (!newPlaylistSongs.contains(song)) {
-                oldPlaylist.remove(song)
-                SaveFile.saveFile(context, playlistsRepo)
+                playlistsRepo.removeSong(
+                    context,
+                    oldPlaylist,
+                    song
+                )
             }
         }
     }
@@ -102,8 +103,11 @@ class ViewModelFragmentEditPlaylist(
     ) {
         val newPlaylistSongs = songPicker.getPickedSongs()
         for (song in newPlaylistSongs) {
-            finalPlaylist.add(song)
-            SaveFile.saveFile(context, playlistsRepo)
+            playlistsRepo.addSong(
+                context,
+                finalPlaylist,
+                song
+            )
             song.setSelected(false)
         }
     }
@@ -144,9 +148,9 @@ class ViewModelFragmentEditPlaylist(
                 val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
                 val savedStateHandle = extras.createSavedStateHandle()
                 return ViewModelFragmentEditPlaylist(
-                    (application as ApplicationMain).songPicker,
-                    application.playlistsRepo,
-                    application.settingsRepo,
+                    (application as ApplicationMain).songPicker!!,
+                    application.playlistsRepo!!,
+                    application.settingsRepo!!,
                     savedStateHandle
                 ) as T
             }

@@ -10,7 +10,6 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import io.fourthFinger.pinkyPlayer.ApplicationMain
 import io.fourthFinger.pinkyPlayer.NavUtil
 import io.fourthFinger.pinkyPlayer.R
-import io.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerManager
 import io.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 
 class ViewModelFragmentPaneSong(
@@ -48,7 +47,7 @@ class ViewModelFragmentPaneSong(
                     checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
                 val savedStateHandle = extras.createSavedStateHandle()
                 return ViewModelFragmentPaneSong(
-                    (application as ApplicationMain).mediaSession,
+                    (application as ApplicationMain).mediaSession!!,
                     savedStateHandle
                 ) as T
             }

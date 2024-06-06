@@ -7,51 +7,52 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import io.fourthFinger.pinkyPlayer.ApplicationMain
-import io.fourthFinger.pinkyPlayer.random_playlist.AudioUri
-import io.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerManager
 import io.fourthFinger.pinkyPlayer.random_playlist.MediaSession
-import io.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
 import io.fourthFinger.pinkyPlayer.random_playlist.SongRepo
 import io.fourthFinger.pinkyPlayer.settings.SettingsRepo
+import io.fourthFinger.playlistDataSource.PlaylistsRepo
 
 class ViewModelFragmentSong(
     private val songRepo: SongRepo,
     private val playlistsRepo: PlaylistsRepo,
     private val settingsRepo: SettingsRepo,
-    private val mediaPlayerManager: MediaPlayerManager,
     private val mediaSession: MediaSession,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
 
-    val currentAudioUri = mediaPlayerManager.currentAudioUri
-    val isPlaying = mediaPlayerManager.isPlaying
+    val currentAudioUri = mediaSession.currentAudioUri
+    val isPlaying = mediaSession.isPlaying
 
     fun thumbDownClicked(
         context: Context,
-        currentAudioUri: AudioUri
+        currentAudioUri: io.fourthFinger.playlistDataSource.AudioUri
     ) {
         songRepo.getSong(currentAudioUri.id)?.let { song ->
-            mediaSession.currentPlaylist.value?.bad(
-                context,
-                playlistsRepo,
-                song,
-                settingsRepo.settings.value!!.percentChangeDown
-            )
+            mediaSession.currentPlaylist.value?.let {
+                playlistsRepo.bad(
+                    context,
+                    it,
+                    song,
+                    settingsRepo.settings.value!!.percentChangeDown
+                )
+            }
         }
     }
 
     fun thumbUpClicked(
         context: Context,
-        currentAudioUri: AudioUri
+        currentAudioUri: io.fourthFinger.playlistDataSource.AudioUri
     ) {
         songRepo.getSong(currentAudioUri.id)?.let { song ->
-            mediaSession.currentPlaylist.value?.good(
-                context,
-                playlistsRepo,
-                song,
-                settingsRepo.settings.value!!.percentChangeUp
-            )
+            mediaSession.currentPlaylist.value?.let {
+                playlistsRepo.good(
+                    context,
+                    it,
+                    song,
+                    settingsRepo.settings.value!!.percentChangeDown
+                )
+            }
         }
     }
 
@@ -73,17 +74,19 @@ class ViewModelFragmentSong(
 
     fun nextClicked(
         context: Context,
-        currentAudioUri: AudioUri
+        currentAudioUri: io.fourthFinger.playlistDataSource.AudioUri
     ) {
-        mediaSession.playNext(context)
-        songRepo.getSong(currentAudioUri.id)?.let {
-            mediaSession.currentPlaylist.value?.bad(
-                context,
-                playlistsRepo,
-                it,
-                settingsRepo.settings.value!!.percentChangeDown
-            )
+        songRepo.getSong(currentAudioUri.id)?.let { song ->
+            mediaSession.currentPlaylist.value?.let {
+                playlistsRepo.bad(
+                    context,
+                    it,
+                    song,
+                    settingsRepo.settings.value!!.percentChangeDown
+                )
+            }
         }
+        mediaSession.playNext(context)
     }
 
     fun repeatClicked() {
@@ -109,11 +112,11 @@ class ViewModelFragmentSong(
     }
 
     fun getCurrentTime(): Int {
-        return mediaPlayerManager.getCurrentTime()
+        return mediaSession.getCurrentTime()
     }
 
     fun seekTo(context: Context, progress: Int) {
-        mediaPlayerManager.seekTo(context, progress)
+        mediaSession.seekTo(context, progress)
     }
 
     fun isShuffling(): Boolean {
@@ -140,11 +143,10 @@ class ViewModelFragmentSong(
                     checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
                 val savedStateHandle = extras.createSavedStateHandle()
                 return ViewModelFragmentSong(
-                    (application as ApplicationMain).songRepo,
-                    application.playlistsRepo,
-                    application.settingsRepo,
-                    application.mediaPlayerManager,
-                    application.mediaSession,
+                    (application as ApplicationMain).songRepo!!,
+                    application.playlistsRepo!!,
+                    application.settingsRepo!!,
+                    application.mediaSession!!,
                     savedStateHandle
                 ) as T
             }

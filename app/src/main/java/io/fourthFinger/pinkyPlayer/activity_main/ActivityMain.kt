@@ -1,9 +1,11 @@
 package io.fourthFinger.pinkyPlayer.activity_main
 
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
-import android.os.IBinder
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -16,15 +18,12 @@ import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
-import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
-import io.fourthFinger.pinkyPlayer.ApplicationMain
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import io.fourthFinger.pinkyPlayer.NavUtil.Companion.navigateTo
 import io.fourthFinger.pinkyPlayer.R
 import io.fourthFinger.pinkyPlayer.ServiceMain
 import io.fourthFinger.pinkyPlayer.databinding.ActivityMainBinding
-import io.fourthFinger.pinkyPlayer.random_playlist.MediaPlayerManager
-import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 
 class ActivityMain : AppCompatActivity() {
 
@@ -32,58 +31,34 @@ class ActivityMain : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
-    private lateinit var serviceMain: ServiceMain
-
-    private val viewModelActivityMain by viewModels<ViewModelActivityMain>{
+    private val viewModelActivityMain by viewModels<ViewModelActivityMain> {
         ViewModelActivityMain.Factory
     }
 
-    private lateinit var mediaPlayerManager: MediaPlayerManager
-
     private var loaded = false
 
-    // region lifecycle
-    // region onCreate
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        setUpOnDestinationChangedListener()
-        setUpViewModelActivityMainObservers()
-        mediaPlayerManager = (application as ApplicationMain).mediaPlayerManager
-        mediaPlayerManager.songInProgress.observe(this) { songInProgress ->
-            val currentFragment: Fragment? = supportFragmentManager.findFragmentById(
-                binding.navHostFragment.id
-            )
-            if (currentFragment != null) {
-                val n = NavHostFragment.findNavController(currentFragment)
-                if (n.currentDestination?.id != R.id.fragmentSong &&
-                    songInProgress == true
-                ) {
-                    showSongPane()
-                }
-                if (songInProgress) {
-                    val toolbar = binding.toolbar
-                    if (toolbar.menu.size() > 0)
-                        toolbar.menu.getItem(MENU_ACTION_QUEUE).isVisible = true
+    private var broadcastReceiverServiceMain = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            when (intent.action) {
+                (resources.getString(R.string.action_loaded)) -> {
+                    loaded = true
+                    val fragment: Fragment? = supportFragmentManager.findFragmentById(
+                        binding.navHostFragment.id
+                    )
+                    fragment?.let {
+                        navigateTo(it, R.id.FragmentTitle)
+                    }
                 }
             }
         }
     }
 
-    private fun setUpOnDestinationChangedListener() {
-        supportFragmentManager.findFragmentById(R.id.nav_host_fragment)?.let {
-            NavHostFragment.findNavController(it).addOnDestinationChangedListener(
-                onDestinationChangedListenerSongPane
-            )
-        }
-    }
-
-    private val onDestinationChangedListenerSongPane =
-        { _: NavController, destination: NavDestination, _: Bundle? ->
+    private var onDestinationChangedListenerSongPane:
+            NavController.OnDestinationChangedListener? =
+        NavController.OnDestinationChangedListener { _, destination, _ ->
             if (destination.id != R.id.fragmentLoading) {
                 if (destination.id != R.id.fragmentSong) {
-                    if (mediaPlayerManager.isSongInProgress() == true) {
+                    if (viewModelActivityMain.songInProgress.value == true) {
                         fragmentSongVisible(false)
                         showSongPane()
                     }
@@ -138,7 +113,50 @@ class ActivityMain : AppCompatActivity() {
         }
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        setUpOnDestinationChangedListener()
+        setUpViewModelActivityMainObservers()
+    }
+
+    private fun setUpOnDestinationChangedListener() {
+        supportFragmentManager.findFragmentById(R.id.nav_host_fragment)?.let {
+            NavHostFragment.findNavController(it).addOnDestinationChangedListener(
+                onDestinationChangedListenerSongPane!!
+            )
+        }
+    }
+
     private fun setUpViewModelActivityMainObservers() {
+        setUpFABObservers()
+
+        val toolbar = binding.toolbar
+        viewModelActivityMain.actionBarTitle.observe(this) { title ->
+            toolbar.title = title
+        }
+
+        viewModelActivityMain.songInProgress.observe(this) { songInProgress ->
+            val currentFragment: Fragment? = supportFragmentManager.findFragmentById(
+                binding.navHostFragment.id
+            )
+            if (currentFragment != null) {
+                val n = NavHostFragment.findNavController(currentFragment)
+                if (n.currentDestination?.id != R.id.fragmentSong &&
+                    songInProgress == true
+                ) {
+                    showSongPane()
+                }
+                if (songInProgress) {
+                    makeToolbarQueueActionVisible()
+                }
+            }
+        }
+    }
+
+    private fun setUpFABObservers() {
         val fab: ExtendedFloatingActionButton = binding.fab
         viewModelActivityMain.showFab.observe(this) { showFAB: Boolean ->
             when (showFAB) {
@@ -152,59 +170,67 @@ class ActivityMain : AppCompatActivity() {
             }
         }
         viewModelActivityMain.fabImageID.observe(this) { drawableID: Int ->
-            fab.icon = ResourcesCompat.getDrawable(resources, drawableID, theme)
+            fab.icon = ResourcesCompat.getDrawable(
+                resources,
+                drawableID,
+                theme
+            )
         }
         viewModelActivityMain.fabOnClickListener.observe(this) {
             fab.setOnClickListener(it)
         }
-        val toolbar = binding.toolbar
-        viewModelActivityMain.actionBarTitle.observe(this) { title ->
-            toolbar.title = title
-        }
     }
 
-    // endregion onCreate
+    private fun makeToolbarQueueActionVisible() {
+        val toolbar = binding.toolbar
+        if (toolbar.menu.size() > 0)
+            toolbar.menu.getItem(MENU_ACTION_QUEUE).isVisible = true
+    }
 
-    // region onStart
     override fun onStart() {
         setUpToolbar()
-        startAndBindServiceMain()
+        startServiceMain()
         setUpBroadcastReceiver()
         super.onStart()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        unregisterReceiver(broadcastReceiverServiceMain)
     }
 
     private fun setUpToolbar() {
         setSupportActionBar(binding.toolbar)
     }
 
-    private fun startAndBindServiceMain() {
-        val intentServiceMain = Intent(applicationContext, ServiceMain::class.java)
+    private fun startServiceMain() {
+        val intentServiceMain = Intent(
+            applicationContext,
+            ServiceMain::class.java
+        )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(intentServiceMain)
         } else {
             startService(intentServiceMain)
         }
-        applicationContext.bindService(
-            intentServiceMain,
-            connectionServiceMain,
-            Context.BIND_AUTO_CREATE or Context.BIND_IMPORTANT
-        )
     }
 
-    private val connectionServiceMain = object : ServiceConnection {
-        override fun onServiceConnected(className: ComponentName, service: IBinder) {
-            val binder: ServiceMain.ServiceMainBinder = service as ServiceMain.ServiceMainBinder
-            serviceMain = binder.getService()
-            sendBroadcastServiceConnected()
-            setUpAfterServiceConnection()
+    private fun setUpBroadcastReceiver() {
+        val filter = IntentFilter()
+        filter.addCategory(Intent.CATEGORY_DEFAULT)
+        filter.addAction(resources.getString(R.string.action_loaded))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(
+                broadcastReceiverServiceMain,
+                filter,
+                RECEIVER_EXPORTED
+            )
+        } else {
+            registerReceiver(
+                broadcastReceiverServiceMain,
+                filter
+            )
         }
+    }
 
-        override fun onServiceDisconnected(arg0: ComponentName) {}
+    override fun onStop() {
+        super.onStop()
+        unregisterReceiver(broadcastReceiverServiceMain)
     }
 
     private fun sendBroadcastServiceConnected() {
@@ -225,7 +251,7 @@ class ActivityMain : AppCompatActivity() {
         )
         if (fragment != null) {
             if (loaded) {
-                if (mediaPlayerManager.isPlaying.value == true) {
+                if (viewModelActivityMain.isPlaying.value == true) {
                     hideSongPane()
                     navigateTo(fragment, R.id.fragmentSong)
                 } else {
@@ -243,38 +269,10 @@ class ActivityMain : AppCompatActivity() {
         }
     }
 
-    private fun setUpBroadcastReceiver() {
-        val filter = IntentFilter()
-        filter.addCategory(Intent.CATEGORY_DEFAULT)
-        filter.addAction(resources.getString(R.string.action_loaded))
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(broadcastReceiverServiceMain, filter, RECEIVER_EXPORTED)
-        } else {
-            registerReceiver(broadcastReceiverServiceMain, filter)
-        }
-    }
-
-    private var broadcastReceiverServiceMain = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            when (intent.action) {
-                (resources.getString(R.string.action_loaded)) -> {
-                    loaded = true
-                    val fragment: Fragment? = supportFragmentManager.findFragmentById(
-                        binding.navHostFragment.id
-                    )
-                    fragment?.let {
-                        navigateTo(it, R.id.FragmentTitle)
-                    }
-                }
-            }
-        }
-    }
-// endregion onStart
-
     override fun onDestroy() {
         super.onDestroy()
-        applicationContext.unbindService(connectionServiceMain)
         removeListeners()
+        finishAndRemoveTask()
     }
 
     private fun removeListeners() {
@@ -283,46 +281,36 @@ class ActivityMain : AppCompatActivity() {
         )
         if (fragment != null) {
             NavHostFragment.findNavController(fragment).removeOnDestinationChangedListener(
-                onDestinationChangedListenerSongPane
+                onDestinationChangedListenerSongPane!!
             )
         }
+        onDestinationChangedListenerSongPane = null
     }
-
-// endregion lifecycle
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_toolbar, menu)
-        if (mediaPlayerManager.isSongInProgress() == true) {
-            val toolbar = binding.toolbar
-            if (toolbar.menu.size() > 0)
-                toolbar.menu.getItem(MENU_ACTION_QUEUE).isVisible = true
+        if (viewModelActivityMain.songInProgress.value == true) {
+            makeToolbarQueueActionVisible()
         }
         return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val mediaSession = (application as ApplicationMain).mediaSession
         when (item.itemId) {
             R.id.action_reset_probs -> {
-                viewModelActivityMain.resetProbabilities(
-                    applicationContext,
-                    mediaSession
-                )
+                viewModelActivityMain.resetProbabilities(applicationContext)
                 return true
             }
 
             R.id.action_lower_probs -> {
-                viewModelActivityMain.lowerProbabilities(
-                    applicationContext,
-                    mediaSession
-                )
+                viewModelActivityMain.lowerProbabilities(applicationContext,)
                 return true
             }
 
             R.id.action_add_to_queue -> {
                 viewModelActivityMain.actionAddToQueue(applicationContext)
                 if (viewModelActivityMain.fragmentSongVisible.value == false &&
-                    mediaPlayerManager.isSongInProgress() == true
+                    viewModelActivityMain.songInProgress.value == true
                 ) {
                     showSongPane()
                 }

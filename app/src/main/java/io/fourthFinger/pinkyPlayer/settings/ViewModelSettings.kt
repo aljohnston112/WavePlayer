@@ -10,7 +10,7 @@ import androidx.navigation.NavController
 import io.fourthFinger.pinkyPlayer.ApplicationMain
 import io.fourthFinger.pinkyPlayer.R
 import io.fourthFinger.pinkyPlayer.ToastUtil
-import io.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
+import io.fourthFinger.playlistDataSource.PlaylistsRepo
 import kotlin.math.roundToInt
 
 class ViewModelSettings(
@@ -87,7 +87,10 @@ class ViewModelSettings(
             context,
             settings
             )
-        playlistsRepo.setMaxPercent(settings.maxPercent)
+        playlistsRepo.setMaxPercent(
+            context,
+            settings.maxPercent
+        )
     }
 
     companion object {
@@ -104,8 +107,8 @@ class ViewModelSettings(
                 val savedStateHandle = extras.createSavedStateHandle()
 
                 return ViewModelSettings(
-                    (application as ApplicationMain).settingsRepo,
-                    application.playlistsRepo,
+                    (application as ApplicationMain).settingsRepo!!,
+                    application.playlistsRepo!!,
                     savedStateHandle
                 ) as T
             }

@@ -5,6 +5,7 @@ import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.OnLayoutChangeListener
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.core.content.res.ResourcesCompat
@@ -13,12 +14,11 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
-import io.fourthFinger.pinkyPlayer.BitmapUtil
 import io.fourthFinger.pinkyPlayer.R
 import io.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import io.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import io.fourthFinger.pinkyPlayer.databinding.FragmentPaneSongBinding
-import io.fourthFinger.pinkyPlayer.random_playlist.AudioUri
+import io.fourthFinger.playlistDataSource.BitmapUtil
 
 class FragmentPaneSong : Fragment() {
 
@@ -52,7 +52,7 @@ class FragmentPaneSong : Fragment() {
     }
 
     private fun setUpObservers() {
-        viewModelActivityMain.currentAudioUri.observe(viewLifecycleOwner) { currentAudioUri: AudioUri? ->
+        viewModelActivityMain.currentAudioUri.observe(viewLifecycleOwner) { currentAudioUri: io.fourthFinger.playlistDataSource.AudioUri? ->
             updateSongUI(currentAudioUri)
         }
         viewModelActivityMain.isPlaying.observe(viewLifecycleOwner) { isPlaying: Boolean? ->
@@ -62,22 +62,22 @@ class FragmentPaneSong : Fragment() {
         }
     }
 
-    private val onLayoutChangeListenerSongPane =
-        { _: View?, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int ->
+    private var onLayoutChangeListenerSongPane: OnLayoutChangeListener? =
+        OnLayoutChangeListener { _: View?, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int ->
                 songArtWidth = binding.imageViewSongPaneSongArt.width
                 setUpPrev()
                 setUpPlayButton(viewModelActivityMain.isPlaying.value?:false)
                 setUpNext()
         }
 
-    private fun updateSongUI(currentAudioUri: AudioUri?) {
+    private fun updateSongUI(currentAudioUri: io.fourthFinger.playlistDataSource.AudioUri?) {
         if (currentAudioUri != null) {
             binding.textViewSongPaneSongName.text = currentAudioUri.title
             binding.imageViewSongPaneSongArt.post(runnableSongPaneArtUpdater)
         }
     }
 
-    private var runnableSongPaneArtUpdater = Runnable {
+    private var runnableSongPaneArtUpdater: Runnable? = Runnable {
         val imageViewSongPaneSongArt: ImageView = binding.imageViewSongPaneSongArt
         if (songArtWidth > 0) {
             val bitmapSongArt: Bitmap? = BitmapUtil.getThumbnailBitmap(
@@ -122,7 +122,6 @@ class FragmentPaneSong : Fragment() {
             )
         }
 
-
         if (drawable != null && songArtWidth > 0) {
             imageView.setImageBitmap(drawable.toBitmap(songArtWidth, songArtWidth))
         }
@@ -148,7 +147,7 @@ class FragmentPaneSong : Fragment() {
         binding.imageViewSongPaneSongArt.setOnClickListener(onClickListenerSongPane)
     }
 
-    private val onClickListenerSongPane = View.OnClickListener { v: View ->
+    private var onClickListenerSongPane: View.OnClickListener? = View.OnClickListener { v: View ->
         synchronized(ActivityMain.MUSIC_CONTROL_LOCK) {
             val fragmentManager: FragmentManager = requireActivity().supportFragmentManager
             val fragment = fragmentManager.findFragmentById(R.id.nav_host_fragment)
@@ -163,8 +162,16 @@ class FragmentPaneSong : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        binding.imageButtonSongPaneNext.setOnClickListener(null)
+        binding.imageButtonSongPanePlayPause.setOnClickListener(null)
+        binding.imageButtonSongPanePrev.setOnClickListener(null)
+        binding.textViewSongPaneSongName.setOnClickListener(null)
+        binding.imageViewSongPaneSongArt.setOnClickListener(null)
         _binding = null
         removeListeners()
+        runnableSongPaneArtUpdater = null
+        onLayoutChangeListenerSongPane = null
+        onClickListenerSongPane = null
     }
 
     private fun removeListeners() {

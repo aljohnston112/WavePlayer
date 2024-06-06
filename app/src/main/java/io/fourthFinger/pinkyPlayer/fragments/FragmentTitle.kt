@@ -70,6 +70,7 @@ class FragmentTitle : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        viewModelFragmentTitle.viewCreated()
         viewModelActivityMain.setActionBarTitle(resources.getString(R.string.app_name))
         viewModelActivityMain.showFab(false)
         setUpButtons()

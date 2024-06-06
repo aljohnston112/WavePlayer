@@ -6,42 +6,47 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.map
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.navigation.NavController
 import io.fourthFinger.pinkyPlayer.ApplicationMain
 import io.fourthFinger.pinkyPlayer.NavUtil
 import io.fourthFinger.pinkyPlayer.random_playlist.MediaSession
-import io.fourthFinger.pinkyPlayer.random_playlist.PlaylistsRepo
-import io.fourthFinger.pinkyPlayer.random_playlist.RandomPlaylist
-import io.fourthFinger.pinkyPlayer.random_playlist.SaveFile
 import io.fourthFinger.pinkyPlayer.random_playlist.UseCaseSongPicker
+import io.fourthFinger.playlistDataSource.PlaylistsRepo
+import io.fourthFinger.playlistDataSource.RandomPlaylist
+import io.fourthFinger.playlistDataSource.Song
 import java.util.*
 
 class ViewModelPlaylists(
-    val playlistsRepo: PlaylistsRepo,
-    val mediaSession: MediaSession,
-    val songPicker: UseCaseSongPicker,
+    private val playlistsRepo: PlaylistsRepo,
+    private val mediaSession: MediaSession,
+    private val songPicker: UseCaseSongPicker,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    fun getPlaylists(): List<RandomPlaylist> {
-        return playlistsRepo.getPlaylists()
+    private var playlistForUndo: RandomPlaylist? = null
+
+    val playlists = playlistsRepo.playlists.map {
+        it.playlists
     }
 
-    fun notifyPlaylistMoved(context: Context, fromPosition: Int, toPosition: Int) {
+    fun notifyPlaylistMoved(
+        context: Context,
+        fromPosition: Int,
+        toPosition: Int
+    ) {
         // TODO make sure changes are persistent across app restarts
+        // Definitely not saved if this is the code to swap
         Collections.swap(
-            getPlaylists(),
+            playlists.value!!,
             fromPosition,
             toPosition
         )
-        SaveFile.saveFile(context, playlistsRepo)
     }
 
-    private var playlistForUndo: RandomPlaylist? = null
-
     fun notifyPlaylistRemoved(context: Context, position: Int) {
-        playlistForUndo = getPlaylists()[position]
+        playlistForUndo = playlists.value!![position]
         playlistForUndo?.let { playlistsRepo.removePlaylist(context, it) }
     }
 
@@ -52,8 +57,8 @@ class ViewModelPlaylists(
 
     fun siftPlaylists(newText: String): List<RandomPlaylist> {
         val sifted: MutableList<RandomPlaylist> = mutableListOf()
-        for (randomPlaylist in getPlaylists()) {
-            if (randomPlaylist.getName().lowercase(Locale.ROOT)
+        for (randomPlaylist in playlists.value!!) {
+            if (randomPlaylist.name.lowercase(Locale.ROOT)
                     .contains(newText.lowercase(Locale.ROOT))
             ) {
                 sifted.add(randomPlaylist)
@@ -85,6 +90,18 @@ class ViewModelPlaylists(
         )
     }
 
+    fun addToPlaylist(
+        context: Context,
+        index: Int,
+        song: Song
+    ) {
+        playlistsRepo.addSong(
+            context,
+            playlists.value!![index],
+            song
+        )
+    }
+
     companion object {
 
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
@@ -96,9 +113,9 @@ class ViewModelPlaylists(
                 val application = checkNotNull(extras[APPLICATION_KEY])
                 val savedStateHandle = extras.createSavedStateHandle()
                 return ViewModelPlaylists(
-                    (application as ApplicationMain).playlistsRepo,
-                    application.mediaSession,
-                    application.songPicker,
+                    (application as ApplicationMain).playlistsRepo!!,
+                    application.mediaSession!!,
+                    application.songPicker!!,
                     savedStateHandle
                 ) as T
             }
