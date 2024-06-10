@@ -7,12 +7,15 @@ import androidx.lifecycle.MutableLiveData
 import io.fourthFinger.pinkyPlayer.R
 import io.fourthFinger.playlistDataSource.PlaylistsRepo
 import io.fourthFinger.playlistDataSource.RandomPlaylist
+import io.fourthFinger.playlistDataSource.Song
 
 class MediaSession(
     private val playlistsRepo: PlaylistsRepo,
+    private  val songRepo: SongRepo,
     private val mediaPlayerManager: MediaPlayerManager,
-    private val songQueue: SongQueue
 ) {
+
+    private val songQueue = SongQueue(songRepo)
 
     private val _currentlyPlayingPlaylist = MutableLiveData<RandomPlaylist>()
     val currentlyPlayingPlaylist = _currentlyPlayingPlaylist as LiveData<RandomPlaylist>
@@ -20,6 +23,7 @@ class MediaSession(
     val currentAudioUri = mediaPlayerManager.currentAudioUri
     val isPlaying = mediaPlayerManager.isPlaying
     val songInProgress = mediaPlayerManager.songInProgress
+    val songList = songQueue.songQueue
 
     @Volatile
     private var shuffling: Boolean = true
@@ -56,8 +60,8 @@ class MediaSession(
         }
     }
 
-    fun getCurrentTime(): Int {
-        return mediaPlayerManager.getCurrentTime()
+    fun getCurrentTimeOfPlayingMedia(): Int {
+        return mediaPlayerManager.getCurrentTimeOfPlayingMedia()
     }
 
     @Synchronized
@@ -67,70 +71,62 @@ class MediaSession(
 
     @Synchronized
     fun setShuffling(
-        context: Context,
         shuffling: Boolean
     ) {
         this.shuffling = shuffling
         val songList = currentlyPlayingPlaylist.value?.getSongIDs()?.toMutableList()
-        if(songList != null) {
+        if (songList != null) {
             if (shuffling) {
-                if (looping) {
-                    restartLoopingShuffle()
-                } else {
-                    // Not looping
-                    val song = currentlyPlayingPlaylist.value?.nextRandomSong(context)
-                    if (song != null) {
-                        songQueue.newSessionStarted(song.id)
-                    }
-                }
+                startShuffle()
             } else {
-                // Not shuffling
-                restartLoopingNonShuffle(
-                    songList.indexOf(currentAudioUri.value!!.id) + 1
-                )
                 if (songQueue.hasPrevious()) {
-                    val i = songList.indexOf(songQueue.previous().id)
-                    if (i != -1) {
-                        for (j in 0 until i) {
-                            songQueue.next()
-                        }
-                    }
+                    startNonShuffle(songList.indexOf(songQueue.previous().id) + 1)
+                } else {
+                    startNonShuffle(0)
                 }
             }
         }
     }
 
-    private fun restartLoopingNonShuffle(index: Int) {
+    private fun startShuffle(index: Int = -1) {
         val songList = currentlyPlayingPlaylist.value?.getSongIDs()?.toMutableList()
-        if(songList != null) {
-            songQueue.newSessionStarted(songList[index])
-            for (j in index until songList.size) {
-                songQueue.addToQueue(songList[j])
-            }
-        }
-    }
-
-    private fun restartLoopingShuffle() {
-        val songList = currentlyPlayingPlaylist.value?.getSongIDs()?.toMutableList()
-        if(songList != null) {
-            songList.shuffle()
+        if (songList != null) {
             if (songList.isNotEmpty()) {
-                if (songQueue.hasPrevious()) {
+                if(index != -1){
+                    val songToStartAt = songList[index]
+                    songQueue.clearQueueAndAddSong(songToStartAt)
+                    songList.remove(songToStartAt)
+                } else if (songQueue.hasPrevious()) {
                     val previous = songQueue.previous().id
                     if (songList.contains(previous)) {
-                        songQueue.newSessionStarted(previous)
-                        songList.remove(previous)
+                        // Current playing song counts as first song in the shuffle
+                        songQueue.clearQueueAndAddSong(previous)
                         songQueue.next()
-                        songQueue.addToQueue(songList[0])
+                        songList.remove(previous)
                     } else {
-                        songQueue.newSessionStarted(songList[0])
+                        songQueue.clearSongQueue()
                     }
                 } else {
-                    songQueue.newSessionStarted(songList[0])
+                    songQueue.clearSongQueue()
                 }
-                for (i in 1 until songList.size) {
+                // Add the rest of the shuffled music to the queue
+                songList.shuffle()
+                for (i in 0 until songList.size) {
                     songQueue.addToQueue(songList[i])
                 }
+            }
+        }
+    }
+
+    private fun startNonShuffle(index: Int) {
+        val songList = currentlyPlayingPlaylist.value?.getSongIDs()?.toMutableList()
+        if (songList != null) {
+            songQueue.clearSongQueue()
+            for (j in 0 until songList.size) {
+                songQueue.addToQueue(songList[j])
+            }
+            for (j in 0 until index) {
+                songQueue.next()
             }
         }
     }
@@ -168,7 +164,7 @@ class MediaSession(
         if (loopingOne) {
             playLoopingOne(context)
         } else {
-            loopSafePlayNextInQueue(context)
+            playNextInQueue(context)
         }
         sendBroadcastNewSong(context)
     }
@@ -191,7 +187,10 @@ class MediaSession(
     private fun playLoopingOne(
         context: Context
     ) {
-        mediaPlayerManager.playLoopingOne(context, mediaPlayerManager)
+        mediaPlayerManager.playLoopingOne(
+            context,
+            mediaPlayerManager
+        )
     }
 
     /** Plays the next song in the queue
@@ -200,33 +199,36 @@ class MediaSession(
      * if a song was played
      * @return True if there was a song to play, else false.
      */
-    private fun loopSafePlayNextInQueue(
+    private fun playNextInQueue(
         context: Context,
     ): Boolean {
+        var playedNext = false
         if (songQueue.hasNext()) {
-            makeIfNeededAndPlay(context, songQueue.next())
-            return true
+            makeIfNeededAndPlay(
+                context,
+                songQueue.next()
+            )
+            playedNext = true
         } else if (looping) {
+            songQueue.goToFront()
             if (shuffling) {
-                restartLoopingShuffle()
                 makeIfNeededAndPlay(context, songQueue.next())
             } else {
-                restartLoopingNonShuffle(0)
                 makeIfNeededAndPlay(context, songQueue.next())
             }
-            return true
+            playedNext = true
         } else {
             // Not looping
-            if(shuffling){
+            if (shuffling) {
                 val song = currentlyPlayingPlaylist.value?.nextRandomSong(context)
                 if (song != null) {
                     songQueue.addToQueue(song.id)
                 }
                 makeIfNeededAndPlay(context, songQueue.next())
-                return true
+                playedNext = true
             }
         }
-        return false
+        return playedNext
     }
 
     /** Makes a [MediaPlayerWUri] for the song if one doesn't exist, and then plays the song.
@@ -238,7 +240,7 @@ class MediaSession(
      */
     private fun makeIfNeededAndPlay(
         context: Context,
-        song: io.fourthFinger.playlistDataSource.Song
+        song: Song
     ) {
         stopCurrentSong(context)
         mediaPlayerManager.makeIfNeededAndPlay(context, mediaPlayerManager, song.id)
@@ -265,20 +267,20 @@ class MediaSession(
         if (loopingOne) {
             playLoopingOne(context)
             sendBroadcastNewSong(context)
-        } else if(!playPreviousInQueue(context)){
-            if (looping){
-                if(shuffling){
-                    restartLoopingShuffle()
+        } else if (!playPreviousInQueue(context)) {
+            if (looping) {
+                if (shuffling) {
+                    startShuffle()
                 } else {
                     val songList = currentlyPlayingPlaylist.value?.getSongIDs()?.toMutableList()
                     var i = songList?.indexOf(currentAudioUri.value!!.id)!!
-                    if(i == songList.size - 1){
+                    if (i == songList.size - 1) {
                         i = 0
                     }
-                    restartLoopingNonShuffle(i)
+                    startNonShuffle(i)
                 }
                 songQueue.goToBack()
-                if(songQueue.hasPrevious()){
+                if (songQueue.hasPrevious()) {
                     songQueue.previous()
                     playNext(context)
                 }
@@ -344,6 +346,59 @@ class MediaSession(
             pauseOrPlay(context)
         }
         mediaPlayerManager.cleanUp()
+    }
+
+    fun addToQueueAndStartIfNeeded(context: Context, songID: Long) {
+        songQueue.addToQueue(songID)
+        if (songInProgress.value == false) {
+            playNext(context)
+        }
+    }
+
+    fun addToQueueAndStartIfNeeded(context: Context, randomPlaylist: RandomPlaylist) {
+        val songs = randomPlaylist.getSongs()
+        for (song in songs) {
+            songQueue.addToQueue(song.id)
+        }
+        if (songInProgress.value == false) {
+            playNext(context)
+        }
+    }
+
+    fun startFromIndex(context: Context, index: Int) {
+        val song = songQueue.setIndex(index)
+        if (song == currentAudioUri.value?.id?.let {
+                songRepo.getSong(it)
+            }
+        ) {
+            seekTo(context,0)
+        }
+        playNext(context)
+    }
+
+    fun startPlaylistFromSong(context: Context, id: Long) {
+        val songList = currentlyPlayingPlaylist.value?.getSongIDs()?.toMutableList()
+        if(songList != null) {
+            val index = songList.indexOf(id)
+            if (shuffling) {
+                startShuffle(index)
+            } else {
+                startNonShuffle(index)
+            }
+        }
+        playNext(context)
+    }
+
+    fun notifyItemInserted(position: Int) {
+        songQueue.notifyItemInserted(position)
+    }
+
+    fun notifySongRemoved(position: Int): Boolean {
+        return songQueue.notifySongRemoved(position)
+    }
+
+    fun notifySongMoved(from: Int, to: Int) {
+        songQueue.notifySongMoved(from, to)
     }
 
 }

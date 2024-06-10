@@ -24,7 +24,6 @@ import io.fourthFinger.pinkyPlayer.R
 import io.fourthFinger.pinkyPlayer.fragments.FragmentPlaylistDirections
 import io.fourthFinger.pinkyPlayer.fragments.FragmentSongsDirections
 import io.fourthFinger.pinkyPlayer.random_playlist.MediaSession
-import io.fourthFinger.pinkyPlayer.random_playlist.SongQueue
 import io.fourthFinger.pinkyPlayer.random_playlist.SongRepo
 import io.fourthFinger.pinkyPlayer.random_playlist.UseCaseEditPlaylist
 import io.fourthFinger.pinkyPlayer.settings.SettingsRepo
@@ -38,7 +37,6 @@ class ViewModelActivityMain(
     private val mediaSession: MediaSession,
     private val playlistEditor: UseCaseEditPlaylist,
     private val playlistsRepo: PlaylistsRepo,
-    private val songQueue: SongQueue,
     private val songRepo: SongRepo,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -125,12 +123,12 @@ class ViewModelActivityMain(
     // TODO add setting to stop playlist from continuing after queue is done
     // shuffle is off and looping is on or something like that?
 
-    private val _playlistToAddToQueue = MutableLiveData<io.fourthFinger.playlistDataSource.RandomPlaylist?>()
-    private val playlistToAddToQueue = _playlistToAddToQueue as LiveData<io.fourthFinger.playlistDataSource.RandomPlaylist?>
-    private fun getPlaylistToAddToQueue(): io.fourthFinger.playlistDataSource.RandomPlaylist? {
+    private val _playlistToAddToQueue = MutableLiveData<RandomPlaylist?>()
+    private val playlistToAddToQueue = _playlistToAddToQueue as LiveData<RandomPlaylist?>
+    private fun getPlaylistToAddToQueue(): RandomPlaylist? {
         return playlistToAddToQueue.value?.let { playlistsRepo.getPlaylist(it.name) }
     }
-    fun setPlaylistToAddToQueue(playlistToAddToQueue: io.fourthFinger.playlistDataSource.RandomPlaylist?) {
+    fun setPlaylistToAddToQueue(playlistToAddToQueue: RandomPlaylist?) {
         _playlistToAddToQueue.postValue(playlistToAddToQueue)
         _songToAddToQueue.postValue(null)
     }
@@ -146,33 +144,19 @@ class ViewModelActivityMain(
     }
 
     fun addToQueue(context: Context, song: Song) {
-        songQueue.addToQueue(song.id)
-        if (songInProgress.value == false) {
-            mediaSession.playNext(context)
-        }
+        mediaSession.addToQueueAndStartIfNeeded(context, song.id)
     }
 
-    fun addToQueue(context: Context, randomPlaylist: io.fourthFinger.playlistDataSource.RandomPlaylist) {
-        val songs = randomPlaylist.getSongs()
-        for (song in songs) {
-            songQueue.addToQueue(song.id)
-        }
-        if (songInProgress.value == false) {
-            mediaSession.playNext(context)
-        }
+    fun addToQueue(context: Context, randomPlaylist: RandomPlaylist) {
+        mediaSession.addToQueueAndStartIfNeeded(context, randomPlaylist)
     }
 
     fun actionAddToQueue(context: Context) {
-        // TODO pretty sure song and playlist could be non-null at the same time
-        songToAddToQueue.value?.let { songQueue.addToQueue(it) }
-        playlistToAddToQueue.value?.getSongs()?.let {
-            for (songs in it) {
-                songQueue.addToQueue(songs.id)
-            }
-        }
+        // TODO song and playlist could be non-null at the same time
         // TODO Song will play even though user might not want it. Make a setting.
-        if (songInProgress.value == false) {
-            mediaSession.playNext(context)
+        songToAddToQueue.value?.let { mediaSession.addToQueueAndStartIfNeeded(context, it) }
+        playlistToAddToQueue.value?.let {
+            mediaSession.addToQueueAndStartIfNeeded(context, it)
         }
     }
 
@@ -199,16 +183,9 @@ class ViewModelActivityMain(
         fragment: Fragment,
         queuePosition: Int
     ) {
-        val song: Song = songQueue.setIndex(queuePosition)
-        val context = fragment.requireContext()
         synchronized(ActivityMain.MUSIC_CONTROL_LOCK) {
-            if (song == mediaSession.currentAudioUri.value?.id?.let {
-                    songRepo.getSong(it)
-                }
-            ) {
-                mediaSession.seekTo(context,0)
-            }
-            mediaSession.playNext(context)
+            val context = fragment.requireContext()
+            mediaSession.startFromIndex(context, queuePosition)
         }
         NavUtil.navigateTo(fragment, R.id.fragmentSong)
     }
@@ -231,15 +208,7 @@ class ViewModelActivityMain(
             if(navController.currentDestination?.id == R.id.fragmentSongs){
                 mediaSession.setCurrentPlaylistToMaster()
             }
-            songQueue.newSessionStarted(song.id)
-            val songList = currentlyPlayingPlaylist.value?.getSongIDs()?.toMutableList()
-            if(songList != null) {
-                val index = songList.indexOf(song.id) + 1
-                for (j in index until songList.size) {
-                    songQueue.addToQueue(songList[j])
-                }
-            }
-            mediaSession.playNext(context)
+            mediaSession.startPlaylistFromSong(context, song.id)
         }
         if (navController.currentDestination?.id == R.id.fragmentPlaylist) {
             NavUtil.navigate(
@@ -296,7 +265,6 @@ class ViewModelActivityMain(
                     application.mediaSession!!,
                     application.playlistEditor!!,
                     application.playlistsRepo!!,
-                    application.songQueue!!,
                     application.songRepo!!,
                     savedStateHandle
                 ) as T

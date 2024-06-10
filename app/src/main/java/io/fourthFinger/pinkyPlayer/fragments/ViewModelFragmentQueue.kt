@@ -6,25 +6,26 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import io.fourthFinger.pinkyPlayer.ApplicationMain
-import io.fourthFinger.pinkyPlayer.random_playlist.SongQueue
+import io.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 
 class ViewModelFragmentQueue(
-    private val _songQueue: SongQueue,
+    private val mediaSession: MediaSession,
     savedStateHandle: SavedStateHandle,
 ): ViewModel() {
 
-    val songQueue = _songQueue.songQueue
+    val songQueue = mediaSession.songList
+
 
     fun notifyItemInserted(position: Int) {
-        _songQueue.notifyItemInserted(position)
+        mediaSession.notifyItemInserted(position)
     }
 
     fun notifySongRemoved(position: Int): Boolean {
-       return  _songQueue.notifySongRemoved(position)
+       return  mediaSession.notifySongRemoved(position)
     }
 
     fun notifySongMoved(from: Int, to: Int) {
-        _songQueue.notifySongMoved(from, to)
+        mediaSession.notifySongMoved(from, to)
     }
 
     companion object {
@@ -38,7 +39,7 @@ class ViewModelFragmentQueue(
                 val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
                 val savedStateHandle = extras.createSavedStateHandle()
                 return ViewModelFragmentQueue(
-                    (application as ApplicationMain).songQueue!!,
+                    (application as ApplicationMain).mediaSession!!,
                     savedStateHandle
                 ) as T
             }

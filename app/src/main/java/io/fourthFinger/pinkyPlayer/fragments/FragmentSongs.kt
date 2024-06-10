@@ -22,6 +22,7 @@ import io.fourthFinger.pinkyPlayer.activity_main.ActivityMain
 import io.fourthFinger.pinkyPlayer.activity_main.DialogFragmentAddToPlaylist
 import io.fourthFinger.pinkyPlayer.activity_main.ViewModelActivityMain
 import io.fourthFinger.pinkyPlayer.databinding.RecyclerViewSongListBinding
+import io.fourthFinger.playlistDataSource.Song
 
 class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs {
 
@@ -148,7 +149,7 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         setUpToolbar()
     }
 
-    override fun onMenuItemClickAddToPlaylist(song: io.fourthFinger.playlistDataSource.Song) {
+    override fun onMenuItemClickAddToPlaylist(song: Song) {
         val bundle = Bundle()
         bundle.putSerializable(DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, song)
         val dialogFragmentAddToPlaylist = DialogFragmentAddToPlaylist()
@@ -156,11 +157,11 @@ class FragmentSongs : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         dialogFragmentAddToPlaylist.show(parentFragmentManager, tag)
     }
 
-    override fun onMenuItemClickAddToQueue(song: io.fourthFinger.playlistDataSource.Song) {
+    override fun onMenuItemClickAddToQueue(song: Song) {
         viewModelActivityMain.addToQueue(requireActivity().applicationContext, song)
     }
 
-    override fun onClickViewHolder(pos: Int, song: io.fourthFinger.playlistDataSource.Song) {
+    override fun onClickViewHolder(pos: Int, song: Song) {
         viewModelActivityMain.playlistSongClicked(
             this,
             song

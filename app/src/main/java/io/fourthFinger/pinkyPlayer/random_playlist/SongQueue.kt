@@ -7,7 +7,7 @@ import io.fourthFinger.playlistDataSource.Song
 import java.util.LinkedList
 
 class SongQueue(
-    val songRepo: SongRepo
+    private val songRepo: SongRepo
 ) {
 
     private val _songQueue: LinkedList<Song> = LinkedList()
@@ -39,7 +39,7 @@ class SongQueue(
         return songQueueIterator.previous()
     }
 
-    private fun clearSongQueue() {
+    fun clearSongQueue() {
         _songQueue.clear()
         mLDSongQueue.value = _songQueue
         songQueueIterator = _songQueue.listIterator()
@@ -61,9 +61,9 @@ class SongQueue(
         mLDSongQueue.value = _songQueue
     }
 
-    fun newSessionStarted(song: Long) {
+    fun clearQueueAndAddSong(songID: Long) {
         clearSongQueue()
-        addToQueue(song)
+        addToQueue(songID)
     }
 
     // TODO update FragmentQueue after all moves have been completed!

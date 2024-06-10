@@ -10,6 +10,7 @@ import io.fourthFinger.pinkyPlayer.ApplicationMain
 import io.fourthFinger.pinkyPlayer.random_playlist.MediaSession
 import io.fourthFinger.pinkyPlayer.random_playlist.SongRepo
 import io.fourthFinger.pinkyPlayer.settings.SettingsRepo
+import io.fourthFinger.playlistDataSource.AudioUri
 import io.fourthFinger.playlistDataSource.PlaylistsRepo
 
 class ViewModelFragmentSong(
@@ -26,7 +27,7 @@ class ViewModelFragmentSong(
 
     fun thumbDownClicked(
         context: Context,
-        currentAudioUri: io.fourthFinger.playlistDataSource.AudioUri
+        currentAudioUri: AudioUri
     ) {
         songRepo.getSong(currentAudioUri.id)?.let { song ->
             mediaSession.currentlyPlayingPlaylist.value?.let {
@@ -42,7 +43,7 @@ class ViewModelFragmentSong(
 
     fun thumbUpClicked(
         context: Context,
-        currentAudioUri: io.fourthFinger.playlistDataSource.AudioUri
+        currentAudioUri: AudioUri
     ) {
         songRepo.getSong(currentAudioUri.id)?.let { song ->
             mediaSession.currentlyPlayingPlaylist.value?.let {
@@ -56,11 +57,11 @@ class ViewModelFragmentSong(
         }
     }
 
-    fun shuffleClicked(context: Context) {
+    fun shuffleClicked() {
         if (mediaSession.isShuffling()) {
-            mediaSession.setShuffling(context, false)
+            mediaSession.setShuffling(false)
         } else {
-            mediaSession.setShuffling(context, true)
+            mediaSession.setShuffling(true)
         }
     }
 
@@ -74,7 +75,7 @@ class ViewModelFragmentSong(
 
     fun nextClicked(
         context: Context,
-        currentAudioUri: io.fourthFinger.playlistDataSource.AudioUri
+        currentAudioUri: AudioUri
     ) {
         songRepo.getSong(currentAudioUri.id)?.let { song ->
             mediaSession.currentlyPlayingPlaylist.value?.let {
@@ -112,7 +113,7 @@ class ViewModelFragmentSong(
     }
 
     fun getCurrentTime(): Int {
-        return mediaSession.getCurrentTime()
+        return mediaSession.getCurrentTimeOfPlayingMedia()
     }
 
     fun seekTo(context: Context, progress: Int) {

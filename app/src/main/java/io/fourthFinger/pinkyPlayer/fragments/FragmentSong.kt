@@ -258,7 +258,7 @@ class FragmentSong : Fragment() {
                     }
 
                     R.id.imageButtonShuffle -> {
-                        viewModelFragmentSong.shuffleClicked(requireContext())
+                        viewModelFragmentSong.shuffleClicked()
                         val imageButton: ImageButton = clickedView as ImageButton
                         if (viewModelFragmentSong.isShuffling()) {
                             imageButton.setImageResource(R.drawable.ic_shuffle_black_24dp)

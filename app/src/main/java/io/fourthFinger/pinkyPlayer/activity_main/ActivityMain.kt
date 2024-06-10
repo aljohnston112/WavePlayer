@@ -46,6 +46,8 @@ class ActivityMain : AppCompatActivity() {
                         binding.navHostFragment.id
                     )
                     fragment?.let {
+                        val navController: NavController = NavHostFragment.findNavController(fragment)
+                        navController.popBackStack()
                         navigateTo(it, R.id.FragmentTitle)
                     }
                 }
@@ -188,10 +190,10 @@ class ActivityMain : AppCompatActivity() {
     }
 
     override fun onStart() {
+        super.onStart()
         setUpToolbar()
         startServiceMain()
         setUpBroadcastReceiver()
-        super.onStart()
     }
 
     private fun setUpToolbar() {
@@ -233,46 +235,9 @@ class ActivityMain : AppCompatActivity() {
         unregisterReceiver(broadcastReceiverServiceMain)
     }
 
-    private fun sendBroadcastServiceConnected() {
-        val intent = Intent()
-        intent.addCategory(Intent.CATEGORY_DEFAULT)
-        intent.action = resources.getString(R.string.action_service_connected)
-        sendBroadcast(intent)
-    }
-
-    private fun setUpAfterServiceConnection() {
-        goToFirstFragment()
-        hideSongPane()
-    }
-
-    private fun goToFirstFragment() {
-        val fragment: Fragment? = supportFragmentManager.findFragmentById(
-            binding.navHostFragment.id
-        )
-        if (fragment != null) {
-            if (loaded) {
-                if (viewModelActivityMain.isPlaying.value == true) {
-                    hideSongPane()
-                    navigateTo(fragment, R.id.fragmentSong)
-                } else {
-                    navigateTo(fragment, R.id.FragmentTitle)
-                }
-
-            } else {
-                // TODO inclusive why?
-//                val navController = NavHostFragment.findNavController(fragment)
-//                navController.popBackStack(
-//                    R.id.fragmentLoading,
-//                    true
-//                )
-            }
-        }
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         removeListeners()
-        finishAndRemoveTask()
     }
 
     private fun removeListeners() {
