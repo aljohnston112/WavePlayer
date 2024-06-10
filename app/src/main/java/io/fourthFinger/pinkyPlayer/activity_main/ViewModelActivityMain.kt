@@ -43,7 +43,7 @@ class ViewModelActivityMain(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    val currentPlaylist = mediaSession.currentPlaylist
+    val currentlyPlayingPlaylist = mediaSession.currentlyPlayingPlaylist
     val currentAudioUri = mediaSession.currentAudioUri
     val isPlaying = mediaSession.isPlaying
     val songInProgress = mediaSession.songInProgress
@@ -228,15 +228,11 @@ class ViewModelActivityMain(
             ) {
                 mediaSession.seekTo(context, 0)
             }
-            if (navController.currentDestination?.id == R.id.fragmentPlaylist) {
-                mediaSession.currentPlaylist.value?.let {
-                    mediaSession.setCurrentPlaylist(it)
-                }
-            } else if(navController.currentDestination?.id == R.id.fragmentSongs){
+            if(navController.currentDestination?.id == R.id.fragmentSongs){
                 mediaSession.setCurrentPlaylistToMaster()
             }
             songQueue.newSessionStarted(song.id)
-            val songList = currentPlaylist.value?.getSongIDs()?.toMutableList()
+            val songList = currentlyPlayingPlaylist.value?.getSongIDs()?.toMutableList()
             if(songList != null) {
                 val index = songList.indexOf(song.id) + 1
                 for (j in index until songList.size) {

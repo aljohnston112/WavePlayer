@@ -67,7 +67,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         KeyboardUtil.hideKeyboard(view)
-        val currentPlaylist = viewModelActivityMain.currentPlaylist.value!!
+        val currentPlaylist = viewModelActivityMain.currentlyPlayingPlaylist.value!!
         viewModelActivityMain.setPlaylistToAddToQueue(currentPlaylist)
         viewModelActivityMain.setActionBarTitle(currentPlaylist.name)
         // TODO why is this set up twice in all the fragments?!
@@ -147,7 +147,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
             recyclerViewAdapterSongs.updateList(sifted)
             0
         } else {
-            viewModelActivityMain.currentPlaylist.value?.getSongs()?.let {
+            viewModelActivityMain.currentlyPlayingPlaylist.value?.getSongs()?.let {
                 recyclerViewAdapterSongs.updateList(it.toList())
             }
             ItemTouchHelper.UP or ItemTouchHelper.DOWN
@@ -156,7 +156,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
 
     // TODO move to view model?
     private fun siftPlaylistSongs(string: String): List<Song> {
-        val songs: Set<Song>? = viewModelActivityMain.currentPlaylist.value?.getSongs()
+        val songs: Set<Song>? = viewModelActivityMain.currentlyPlayingPlaylist.value?.getSongs()
         val sifted: MutableList<Song> = ArrayList<Song>()
         if (songs != null) {
             for (song in songs) {
@@ -172,7 +172,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
 
     override fun onStart() {
         super.onStart()
-        val randomPlaylist: io.fourthFinger.playlistDataSource.RandomPlaylist? = viewModelActivityMain.currentPlaylist.value
+        val randomPlaylist: io.fourthFinger.playlistDataSource.RandomPlaylist? = viewModelActivityMain.currentlyPlayingPlaylist.value
         if (randomPlaylist != null) {
             setUpBroadcastReceiver(randomPlaylist)
         }

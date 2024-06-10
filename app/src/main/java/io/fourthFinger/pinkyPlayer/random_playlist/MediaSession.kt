@@ -14,8 +14,8 @@ class MediaSession(
     private val songQueue: SongQueue
 ) {
 
-    private val _currentPlaylist = MutableLiveData<RandomPlaylist>()
-    val currentPlaylist = _currentPlaylist as LiveData<RandomPlaylist>
+    private val _currentlyPlayingPlaylist = MutableLiveData<RandomPlaylist>()
+    val currentlyPlayingPlaylist = _currentlyPlayingPlaylist as LiveData<RandomPlaylist>
 
     val currentAudioUri = mediaPlayerManager.currentAudioUri
     val isPlaying = mediaPlayerManager.isPlaying
@@ -31,15 +31,15 @@ class MediaSession(
     private var loopingOne: Boolean = false
 
     fun setCurrentPlaylist(currentPlaylist: RandomPlaylist?) {
-        this._currentPlaylist.postValue(currentPlaylist)
+        this._currentlyPlayingPlaylist.postValue(currentPlaylist)
     }
 
     fun setCurrentPlaylistToMaster() {
-        this._currentPlaylist.postValue(playlistsRepo.getMasterPlaylist())
+        this._currentlyPlayingPlaylist.postValue(playlistsRepo.getMasterPlaylist())
     }
 
     fun resetProbabilities(context: Context) {
-        currentPlaylist.value?.let {
+        currentlyPlayingPlaylist.value?.let {
             playlistsRepo.resetProbabilities(
                 context, it
             )
@@ -47,7 +47,7 @@ class MediaSession(
     }
 
     fun lowerProbabilities(context: Context, lowerProb: Double) {
-        currentPlaylist.value?.let {
+        currentlyPlayingPlaylist.value?.let {
             playlistsRepo.lowerProbabilities(
                 context,
                 it,
@@ -71,14 +71,14 @@ class MediaSession(
         shuffling: Boolean
     ) {
         this.shuffling = shuffling
-        val songList = currentPlaylist.value?.getSongIDs()?.toMutableList()
+        val songList = currentlyPlayingPlaylist.value?.getSongIDs()?.toMutableList()
         if(songList != null) {
             if (shuffling) {
                 if (looping) {
                     restartLoopingShuffle()
                 } else {
                     // Not looping
-                    val song = currentPlaylist.value?.nextRandomSong(context)
+                    val song = currentlyPlayingPlaylist.value?.nextRandomSong(context)
                     if (song != null) {
                         songQueue.newSessionStarted(song.id)
                     }
@@ -101,7 +101,7 @@ class MediaSession(
     }
 
     private fun restartLoopingNonShuffle(index: Int) {
-        val songList = currentPlaylist.value?.getSongIDs()?.toMutableList()
+        val songList = currentlyPlayingPlaylist.value?.getSongIDs()?.toMutableList()
         if(songList != null) {
             songQueue.newSessionStarted(songList[index])
             for (j in index until songList.size) {
@@ -111,7 +111,7 @@ class MediaSession(
     }
 
     private fun restartLoopingShuffle() {
-        val songList = currentPlaylist.value?.getSongIDs()?.toMutableList()
+        val songList = currentlyPlayingPlaylist.value?.getSongIDs()?.toMutableList()
         if(songList != null) {
             songList.shuffle()
             if (songList.isNotEmpty()) {
@@ -218,7 +218,7 @@ class MediaSession(
         } else {
             // Not looping
             if(shuffling){
-                val song = currentPlaylist.value?.nextRandomSong(context)
+                val song = currentlyPlayingPlaylist.value?.nextRandomSong(context)
                 if (song != null) {
                     songQueue.addToQueue(song.id)
                 }
@@ -270,7 +270,7 @@ class MediaSession(
                 if(shuffling){
                     restartLoopingShuffle()
                 } else {
-                    val songList = currentPlaylist.value?.getSongIDs()?.toMutableList()
+                    val songList = currentlyPlayingPlaylist.value?.getSongIDs()?.toMutableList()
                     var i = songList?.indexOf(currentAudioUri.value!!.id)!!
                     if(i == songList.size - 1){
                         i = 0

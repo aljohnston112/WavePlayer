@@ -19,7 +19,7 @@ class ViewModelFragmentPlaylist(
 
     fun fabClicked(navController: NavController) {
         songPicker.unselectAllSongs()
-        mediaSession.currentPlaylist.value?.let {
+        mediaSession.currentlyPlayingPlaylist.value?.let {
             songPicker.selectSongsInPlaylist(it)
         }
         NavUtil.navigate(

@@ -29,7 +29,7 @@ class ViewModelFragmentSong(
         currentAudioUri: io.fourthFinger.playlistDataSource.AudioUri
     ) {
         songRepo.getSong(currentAudioUri.id)?.let { song ->
-            mediaSession.currentPlaylist.value?.let {
+            mediaSession.currentlyPlayingPlaylist.value?.let {
                 playlistsRepo.bad(
                     context,
                     it,
@@ -45,7 +45,7 @@ class ViewModelFragmentSong(
         currentAudioUri: io.fourthFinger.playlistDataSource.AudioUri
     ) {
         songRepo.getSong(currentAudioUri.id)?.let { song ->
-            mediaSession.currentPlaylist.value?.let {
+            mediaSession.currentlyPlayingPlaylist.value?.let {
                 playlistsRepo.good(
                     context,
                     it,
@@ -77,7 +77,7 @@ class ViewModelFragmentSong(
         currentAudioUri: io.fourthFinger.playlistDataSource.AudioUri
     ) {
         songRepo.getSong(currentAudioUri.id)?.let { song ->
-            mediaSession.currentPlaylist.value?.let {
+            mediaSession.currentlyPlayingPlaylist.value?.let {
                 playlistsRepo.bad(
                     context,
                     it,

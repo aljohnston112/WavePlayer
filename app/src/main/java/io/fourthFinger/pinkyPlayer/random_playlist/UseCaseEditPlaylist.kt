@@ -20,7 +20,7 @@ class UseCaseEditPlaylist(
         toPosition: Int
     ) {
         // TODO make sure changes are persistent across app restarts
-        mediaSession.currentPlaylist.value?.let {
+        mediaSession.currentlyPlayingPlaylist.value?.let {
             playlistsRepo.swapSongPositions(
                 context,
                 it,
@@ -31,7 +31,7 @@ class UseCaseEditPlaylist(
     }
 
     fun notifySongRemoved(fragment: Fragment, position: Int) {
-        val currentPlaylist = mediaSession.currentPlaylist.value
+        val currentPlaylist = mediaSession.currentlyPlayingPlaylist.value
         if (currentPlaylist != null) {
             val context = fragment.requireActivity().applicationContext
             songForUndo = currentPlaylist.getSongs().toList()[position]
@@ -57,7 +57,7 @@ class UseCaseEditPlaylist(
     }
 
     fun notifyItemInserted(context: Context, position: Int) {
-        val currentPlaylist = mediaSession.currentPlaylist.value
+        val currentPlaylist = mediaSession.currentlyPlayingPlaylist.value
         if (currentPlaylist != null) {
             songForUndo?.let { song ->
                 probabilityForUndo?.let { probability ->
