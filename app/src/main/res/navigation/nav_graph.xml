@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/FragmentTitle"
-        android:name="io.fourthFinger.pinkyPlayer.fragments.FragmentTitle"
+        android:name="io.fourth_finger.pinky_player.fragments.FragmentTitle"
         android:label="fragment_title"
         tools:layout="@layout/fragment_title">
 
@@ -26,12 +26,12 @@
     </fragment>
     <fragment
         android:id="@+id/FragmentSettings"
-        android:name="io.fourthFinger.pinkyPlayer.settings.FragmentSettings"
+        android:name="io.fourth_finger.pinky_player.settings.FragmentSettings"
         android:label="fragment_settings"
         tools:layout="@layout/fragment_settings" />
     <fragment
         android:id="@+id/FragmentPlaylists"
-        android:name="io.fourthFinger.pinkyPlayer.fragments.FragmentPlaylists"
+        android:name="io.fourth_finger.pinky_player.fragments.FragmentPlaylists"
         android:label="fragment_playlist_list"
         tools:layout="@layout/recycler_view_playlist_list">
         <action
@@ -43,7 +43,7 @@
     </fragment>
     <fragment
         android:id="@+id/fragmentSongs"
-        android:name="io.fourthFinger.pinkyPlayer.fragments.FragmentSongs"
+        android:name="io.fourth_finger.pinky_player.fragments.FragmentSongs"
         android:label="fragment_songs_list"
         tools:layout="@layout/recycler_view_song_list" >
         <action
@@ -52,12 +52,12 @@
     </fragment>
     <fragment
         android:id="@+id/fragmentSong"
-        android:name="io.fourthFinger.pinkyPlayer.fragments.FragmentSong"
+        android:name="io.fourth_finger.pinky_player.fragments.FragmentSong"
         android:label="fragment_song2"
         tools:layout="@layout/fragment_song" />
     <fragment
         android:id="@+id/fragmentPlaylist"
-        android:name="io.fourthFinger.pinkyPlayer.fragments.FragmentPlaylist"
+        android:name="io.fourth_finger.pinky_player.fragments.FragmentPlaylist"
         android:label="fragment_playlist"
         tools:layout="@layout/recycler_view_playlist_list" >
         <action
@@ -69,12 +69,12 @@
     </fragment>
     <fragment
         android:id="@+id/FragmentSelectSongs"
-        android:name="io.fourthFinger.pinkyPlayer.fragments.FragmentSelectSongs"
+        android:name="io.fourth_finger.pinky_player.fragments.FragmentSelectSongs"
         android:label="fragment_select_song_list"
         tools:layout="@layout/recycler_view_song_list"/>
     <fragment
         android:id="@+id/fragmentEditPlaylist"
-        android:name="io.fourthFinger.pinkyPlayer.fragments.FragmentEditPlaylist"
+        android:name="io.fourth_finger.pinky_player.fragments.FragmentEditPlaylist"
         android:label="fragment_edit_playlist"
         tools:layout="@layout/fragment_edit_playlist" >
         <action
@@ -83,7 +83,7 @@
     </fragment>
     <fragment
         android:id="@+id/fragmentLoading"
-        android:name="io.fourthFinger.pinkyPlayer.fragments.FragmentLoading"
+        android:name="io.fourth_finger.pinky_player.fragments.FragmentLoading"
         android:label="fragment_loading"
         tools:layout="@layout/fragment_loading" >
         <action
@@ -92,7 +92,7 @@
     </fragment>
     <fragment
         android:id="@+id/fragmentQueue"
-        android:name="io.fourthFinger.pinkyPlayer.fragments.FragmentQueue"
+        android:name="io.fourth_finger.pinky_player.fragments.FragmentQueue"
         android:label="fragment_queue"
         tools:layout="@layout/recycler_view_song_list" />
 

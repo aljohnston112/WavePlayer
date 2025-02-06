@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "io.fourthFinger.playlistDataSource"
+    namespace = "io.fourth_finger.playlist_data_source"
     compileSdk = 34
 
     defaultConfig {
