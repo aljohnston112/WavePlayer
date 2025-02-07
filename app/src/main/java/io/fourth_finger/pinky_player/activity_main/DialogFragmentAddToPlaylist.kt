@@ -2,6 +2,7 @@ package io.fourth_finger.pinky_player.activity_main
 
 import android.app.Dialog
 import android.content.DialogInterface
+import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
@@ -12,6 +13,7 @@ import io.fourth_finger.pinky_player.R
 import io.fourth_finger.pinky_player.fragments.ViewModelDialogFragmentAddToPlaylist
 import io.fourth_finger.pinky_player.fragments.ViewModelPlaylists
 import io.fourth_finger.playlist_data_source.RandomPlaylist
+import io.fourth_finger.playlist_data_source.Song
 
 class DialogFragmentAddToPlaylist : DialogFragment() {
 
@@ -71,10 +73,21 @@ class DialogFragmentAddToPlaylist : DialogFragment() {
         selectedPlaylistIndices: MutableList<Int>,
     ) {
         // These are here to prevent code duplication
-        val song = bundle.getSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG) as io.fourth_finger.playlist_data_source.Song?
-        val randomPlaylist = bundle.getSerializable(
-            BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST
-        ) as RandomPlaylist?
+
+        @Suppress("DEPRECATION")
+        val song = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            bundle.getSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG) as Song?
+        } else {
+            bundle.getSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, Song::class.java)
+        }
+
+        @Suppress("DEPRECATION")
+        val randomPlaylist = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            bundle.getSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST) as RandomPlaylist?
+        } else {
+            bundle.getSerializable(BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST, RandomPlaylist::class.java)
+        }
+
         builder.setPositiveButton(R.string.add) { _: DialogInterface?, _: Int ->
             if (song != null) {
                 for (index in selectedPlaylistIndices) {

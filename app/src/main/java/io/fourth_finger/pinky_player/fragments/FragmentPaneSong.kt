@@ -25,11 +25,11 @@ class FragmentPaneSong : Fragment() {
     private var _binding: FragmentPaneSongBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain>{
+    private val viewModelActivityMain by activityViewModels<ViewModelActivityMain> {
         ViewModelActivityMain.Factory
     }
 
-    private val viewModelFragmentPaneSong by viewModels<ViewModelFragmentPaneSong>{
+    private val viewModelFragmentPaneSong by viewModels<ViewModelFragmentPaneSong> {
         ViewModelFragmentPaneSong.Factory
     }
 
@@ -64,10 +64,10 @@ class FragmentPaneSong : Fragment() {
 
     private var onLayoutChangeListenerSongPane: OnLayoutChangeListener? =
         OnLayoutChangeListener { _: View?, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int, _: Int ->
-                songArtWidth = binding.imageViewSongPaneSongArt.width
-                setUpPrev()
-                setUpPlayButton(viewModelActivityMain.isPlaying.value?:false)
-                setUpNext()
+            songArtWidth = binding.imageViewSongPaneSongArt.width
+            setUpPrev()
+            setUpPlayButton(viewModelActivityMain.isPlaying.value ?: false)
+            setUpNext()
         }
 
     private fun updateSongUI(currentAudioUri: io.fourth_finger.playlist_data_source.AudioUri?) {
@@ -81,17 +81,17 @@ class FragmentPaneSong : Fragment() {
         val imageViewSongPaneSongArt: ImageView = binding.imageViewSongPaneSongArt
         if (songArtWidth > 0) {
             val bitmapSongArt: Bitmap? = BitmapUtil.getThumbnailBitmap(
+                requireActivity().applicationContext,
                 viewModelActivityMain.currentAudioUri.value,
-                songArtWidth,
-                requireActivity().applicationContext
+                songArtWidth
             )
             if (bitmapSongArt != null) {
                 imageViewSongPaneSongArt.setImageBitmap(bitmapSongArt)
             } else {
                 imageViewSongPaneSongArt.setImageBitmap(
                     BitmapUtil.getDefaultBitmap(
-                        songArtWidth,
-                        requireActivity().applicationContext
+                        requireActivity().applicationContext,
+                        songArtWidth
                     )
                 )
             }

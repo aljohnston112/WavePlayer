@@ -7,7 +7,7 @@ import io.fourth_finger.playlist_data_source.Song
 /**
  * A database for caching songs.
  */
-@Database(entities = [Song::class], version = 1)
+@Database(entities = [Song::class], version = 1, exportSchema = false) // TODO create schema for release
 abstract class SongDatabase : RoomDatabase() {
 
     abstract fun songDAO(): SongDAO

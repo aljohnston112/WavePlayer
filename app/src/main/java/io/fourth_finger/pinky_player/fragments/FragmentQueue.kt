@@ -177,7 +177,7 @@ class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         menu.getItem(ActivityMain.MENU_ACTION_QUEUE).isVisible = false
     }
 
-    override fun onMenuItemClickAddToPlaylist(song: io.fourth_finger.playlist_data_source.Song) {
+    override fun onContextMenuItemClickAddToPlaylist(song: io.fourth_finger.playlist_data_source.Song) {
         val bundle = Bundle()
         bundle.putSerializable(DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, song)
         val dialogFragment: DialogFragment = DialogFragmentAddToPlaylist()
@@ -185,7 +185,7 @@ class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         dialogFragment.show(parentFragmentManager, tag)
     }
 
-    override fun onMenuItemClickAddToQueue(song: io.fourth_finger.playlist_data_source.Song) {
+    override fun onContextMenuItemClickAddToQueue(song: io.fourth_finger.playlist_data_source.Song) {
         viewModelActivityMain.addToQueue(requireActivity().applicationContext, song)
     }
 

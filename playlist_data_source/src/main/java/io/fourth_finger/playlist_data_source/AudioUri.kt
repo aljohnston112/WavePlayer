@@ -6,16 +6,22 @@ import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
-import java.io.*
+
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.IOException
+import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
+import java.io.Serializable
 
 class AudioUri(
+    val id: Long,
     val displayName: String,
-    val artist: String,
     val title: String,
-    val id: Long
+    val artist: String,
 ) : Comparable<AudioUri>, Serializable {
 
-    private var duration: Long = -1
+    private var duration: Long = DURATION_NOT_CHECKED
 
     fun getUri(): Uri {
         return getUri(id)
@@ -24,10 +30,10 @@ class AudioUri(
     fun getBitmap(context: Context): Bitmap? {
         // TODO 92? Seems to get resized for the Notification
         return BitmapUtil.getThumbnail(
+            context,
             getUri(),
             92,
-            92,
-            context
+            92
         )
     }
 
@@ -38,20 +44,22 @@ class AudioUri(
      * if unable to retrieve the duration.
      */
     fun getDurationMS(context: Context): Long {
-        if (duration == -1L) {
+
+        if (duration == DURATION_NOT_CHECKED) {
             val mediaMetadataRetriever = MediaMetadataRetriever()
+
             mediaMetadataRetriever.setDataSource(
                 context,
                 getUri(id)
             )
-            var time =
-                mediaMetadataRetriever.extractMetadata(
-                    MediaMetadataRetriever.METADATA_KEY_DURATION
-                )
-            if (time == null) {
-                time = "0"
+            var time = mediaMetadataRetriever.extractMetadata(
+                MediaMetadataRetriever.METADATA_KEY_DURATION
+            )
+            duration = 0
+            if (time != null) {
+                duration = time.toLong()
             }
-            duration = time.toLong()
+
             mediaMetadataRetriever.release()
         }
         return duration
@@ -65,44 +73,17 @@ class AudioUri(
         return i
     }
 
-    // If two songs have the same id, then they have the same title
     override fun equals(other: Any?): Boolean {
-        return other is AudioUri &&
-                getUri(id) == getUri(other.id)
+        return other is AudioUri && id == other.id
     }
 
     override fun hashCode(): Int {
-        return getUri(id).toString().hashCode()
+        return id.hashCode()
     }
 
     companion object {
 
-        /**
-         * Saves the given AudioUri to persistent storage.
-         *
-         * @param context
-         * @param audioUri The AudioUri to save to persistent storage.
-         */
-        fun saveAudioUri(
-            context: Context,
-            audioUri: AudioUri
-        ) {
-            try {
-                context.openFileOutput(
-                    audioUri.id.toString(),
-                    Context.MODE_PRIVATE
-                ).use { fileOutputStream ->
-                    ObjectOutputStream(fileOutputStream).use { objectOutputStream ->
-                        objectOutputStream.writeObject(audioUri)
-                    }
-                }
-                // TODO better error handling
-            } catch (e: FileNotFoundException) {
-                e.printStackTrace()
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
-        }
+        private const val DURATION_NOT_CHECKED = -1L
 
         /**
          * Gets the Uri corresponding to the given song id.
@@ -119,40 +100,8 @@ class AudioUri(
         }
 
         /**
-         * Gets the AudioUri corresponding to the given song id.
-         *
-         * @param context
-         * @param songID The song id of the AudioUri to get.
-         *
-         * @return The AudioUri if it was found, else null.
-         */
-        fun getAudioUri(
-            context: Context,
-            songID: Long
-        ): AudioUri? {
-            var audioUri: AudioUri? = null
-            val file = File(
-                context.filesDir,
-                songID.toString()
-            )
-            if (file.exists()) {
-                audioUri = tryLoadingAudioUri(
-                    context,
-                    songID
-                )
-            }
-            if (audioUri == null) {
-                audioUri = tryCreatingAudioUri(
-                    context,
-                    songID
-                )
-            }
-            return audioUri
-        }
-
-        /**
          * Tries to open the AudioUri file that corresponds to the given song id and
-         * return its AudioUri.
+         * returns its AudioUri.
          *
          * @param context
          * @param songID The song id of the AudioUri being requested.
@@ -180,6 +129,33 @@ class AudioUri(
                 e.printStackTrace()
             }
             return audioUri
+        }
+
+        /**
+         * Saves the given AudioUri to persistent storage.
+         *
+         * @param context
+         * @param audioUri The AudioUri to save to persistent storage.
+         */
+        fun saveAudioUri(
+            context: Context,
+            audioUri: AudioUri
+        ) {
+            try {
+                context.openFileOutput(
+                    audioUri.id.toString(),
+                    Context.MODE_PRIVATE
+                ).use { fileOutputStream ->
+                    ObjectOutputStream(fileOutputStream).use { objectOutputStream ->
+                        objectOutputStream.writeObject(audioUri)
+                    }
+                }
+                // TODO better error handling
+            } catch (e: FileNotFoundException) {
+                e.printStackTrace()
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
         }
 
         /**
@@ -228,10 +204,10 @@ class AudioUri(
                         val title = cursor.getString(titleCol)
                         val artist = cursor.getString(artistCol)
                         val newAudioUri = AudioUri(
+                            songID,
                             displayName,
-                            artist,
                             title,
-                            songID
+                            artist
                         )
                         saveAudioUri(
                             context,
@@ -240,6 +216,33 @@ class AudioUri(
                         audioUri = newAudioUri
                     }
                 }
+            }
+            return audioUri
+        }
+
+        /**
+         * @return The AudioUri if it was found, else null.
+         */
+        fun getAudioUri(
+            context: Context,
+            songID: Long
+        ): AudioUri? {
+            var audioUri: AudioUri? = null
+            val file = File(
+                context.filesDir,
+                songID.toString()
+            )
+            if (file.exists()) {
+                audioUri = tryLoadingAudioUri(
+                    context,
+                    songID
+                )
+            }
+            if (audioUri == null) {
+                audioUri = tryCreatingAudioUri(
+                    context,
+                    songID
+                )
             }
             return audioUri
         }

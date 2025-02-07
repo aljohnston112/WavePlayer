@@ -9,10 +9,13 @@ import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.NavHostFragment
@@ -46,7 +49,6 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
     }
 
     override fun onCreateView(
@@ -61,6 +63,37 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         KeyboardUtil.hideKeyboard(requireView())
+
+        requireActivity().addMenuProvider(
+            object : MenuProvider {
+                override fun onCreateMenu(
+                    menu: Menu,
+                    menuInflater: MenuInflater
+                ) {
+                    menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).isVisible = true
+                    val itemSearch = menu.findItem(R.id.action_search)
+                    if (itemSearch != null) {
+                        val searchView = itemSearch.actionView as SearchView
+                        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                            override fun onQueryTextSubmit(query: String?): Boolean {
+                                return false
+                            }
+
+                            override fun onQueryTextChange(newText: String): Boolean {
+                                filterPlaylists(newText)
+                                return true
+                            }
+                        })
+                    }
+                }
+
+                override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                    TODO("Not yet implemented")
+                }
+
+            }
+        )
+
         viewModelActivityMain.setActionBarTitle(resources.getString(R.string.playlists))
         setUpRecyclerView()
         setSearchView()
@@ -204,25 +237,6 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
         }
     }
 
-    override fun onPrepareOptionsMenu(menu: Menu) {
-        super.onPrepareOptionsMenu(menu)
-        menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).isVisible = true
-        val itemSearch = menu.findItem(R.id.action_search)
-        if (itemSearch != null) {
-            val searchView = itemSearch.actionView as SearchView
-            searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-                override fun onQueryTextSubmit(query: String?): Boolean {
-                    return false
-                }
-
-                override fun onQueryTextChange(newText: String): Boolean {
-                    filterPlaylists(newText)
-                    return true
-                }
-            })
-        }
-    }
-
     override fun onMenuItemClickAddToPlaylist(randomPlaylist: io.fourth_finger.playlist_data_source.RandomPlaylist) {
         val bundle = Bundle()
         bundle.putSerializable(
@@ -259,7 +273,7 @@ class FragmentPlaylists : Fragment(), RecyclerViewAdapterPlaylists.ListenerCallb
         _binding = null
     }
 
-    // Should this be in onDestroyView like was changed in FragmentPlaylist
+    // TODO Should this be in onDestroyView like was changed in FragmentPlaylist?
     override fun onDestroy() {
         val activityMain: ActivityMain = requireActivity() as ActivityMain
         super.onDestroy()

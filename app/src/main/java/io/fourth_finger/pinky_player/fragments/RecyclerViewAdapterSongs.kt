@@ -13,14 +13,14 @@ import io.fourth_finger.pinky_player.R
 import io.fourth_finger.playlist_data_source.Song
 
 class RecyclerViewAdapterSongs(
-        private val listenerCallbackSongs: ListenerCallbackSongs,
-        var songs: List<Song>
+    private val listenerCallbackSongs: ListenerCallbackSongs,
+    var songs: List<Song>
 ) : RecyclerView.Adapter<RecyclerViewAdapterSongs.ViewHolder>() {
 
     interface ListenerCallbackSongs {
         fun onClickViewHolder(pos: Int, song: Song)
-        fun onMenuItemClickAddToPlaylist(song: Song)
-        fun onMenuItemClickAddToQueue(song: Song)
+        fun onContextMenuItemClickAddToPlaylist(song: Song)
+        fun onContextMenuItemClickAddToQueue(song: Song)
     }
 
 
@@ -31,26 +31,30 @@ class RecyclerViewAdapterSongs(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_song, parent, false))
+        return ViewHolder(
+            LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_song, parent, false)
+        )
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.song = songs[position]
         holder.handle.setOnClickListener { holder.handle.performLongClick() }
         holder.songView.setOnClickListener {
-                listenerCallbackSongs.onClickViewHolder(position, holder.song)
+            listenerCallbackSongs.onClickViewHolder(position, holder.song)
         }
         holder.textViewSongName.text = songs[position].title
-        holder.handle.setOnCreateContextMenuListener{ menu: ContextMenu?, _: View?, _: ContextMenuInfo? ->
-            val menuItemAddToPlaylist = menu?.add(R.string.add_to_playlist)
-            menuItemAddToPlaylist?.setOnMenuItemClickListener {
-                listenerCallbackSongs.onMenuItemClickAddToPlaylist(holder.song)
+        holder.handle.setOnCreateContextMenuListener { contextMenu: ContextMenu?,
+                                                       _: View?,
+                                                       _: ContextMenuInfo? ->
+            val contextMenuItemAddToPlaylist = contextMenu?.add(R.string.add_to_playlist)
+            contextMenuItemAddToPlaylist?.setOnMenuItemClickListener {
+                listenerCallbackSongs.onContextMenuItemClickAddToPlaylist(holder.song)
                 true
             }
-            val menuItemAddToQueue = menu?.add(R.string.add_to_queue)
-            menuItemAddToQueue?.setOnMenuItemClickListener {
-                listenerCallbackSongs.onMenuItemClickAddToQueue(holder.song)
+            val contextMenuItemAddToQueue = contextMenu?.add(R.string.add_to_queue)
+            contextMenuItemAddToQueue?.setOnMenuItemClickListener {
+                listenerCallbackSongs.onContextMenuItemClickAddToQueue(holder.song)
                 true
             }
         }

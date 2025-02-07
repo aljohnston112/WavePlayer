@@ -136,7 +136,7 @@ class FragmentSong : Fragment() {
                 }
             }
         }
-        scheduledExecutorService.scheduleAtFixedRate(
+        scheduledExecutorService.scheduleWithFixedDelay(
             runnableSeekBarUpdater,
             0L,
             1L,
@@ -176,11 +176,12 @@ class FragmentSong : Fragment() {
                 songArtHeight = songArtWidth
             }
             if (songArtHeight > 0) {
-                val bitmap: Bitmap? = io.fourth_finger.playlist_data_source.BitmapUtil.getThumbnailBitmap(
-                    currentAudioUri,
-                    songArtWidth,
-                    imageViewSongArt.context
-                )
+                val bitmap: Bitmap? =
+                    io.fourth_finger.playlist_data_source.BitmapUtil.getThumbnailBitmap(
+                        imageViewSongArt.context,
+                        currentAudioUri,
+                        songArtWidth,
+                    )
                 if (bitmap == null) {
                     val drawable: Drawable? = ResourcesCompat.getDrawable(
                         resources,
@@ -242,7 +243,8 @@ class FragmentSong : Fragment() {
                 when (clickedView.id) {
                     R.id.button_thumb_down -> {
                         currentAudioUri?.let {
-                            viewModelFragmentSong.thumbDownClicked(requireContext(),
+                            viewModelFragmentSong.thumbDownClicked(
+                                requireContext(),
                                 it
                             )
                         }
@@ -250,7 +252,8 @@ class FragmentSong : Fragment() {
 
                     R.id.button_thumb_up -> {
                         currentAudioUri?.let {
-                            viewModelFragmentSong.thumbUpClicked(requireContext(),
+                            viewModelFragmentSong.thumbUpClicked(
+                                requireContext(),
                                 it
                             )
                         }

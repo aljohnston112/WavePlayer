@@ -16,6 +16,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
@@ -47,7 +50,8 @@ class ActivityMain : AppCompatActivity() {
                         binding.navHostFragment.id
                     )
                     fragment?.let {
-                        val navController: NavController = NavHostFragment.findNavController(fragment)
+                        val navController: NavController =
+                            NavHostFragment.findNavController(fragment)
                         navController.popBackStack()
                         navigateTo(it, R.id.FragmentTitle)
                     }
@@ -56,8 +60,7 @@ class ActivityMain : AppCompatActivity() {
         }
     }
 
-    private var onDestinationChangedListenerSongPane:
-            NavController.OnDestinationChangedListener? =
+    private var onDestinationChangedListenerSongPane: NavController.OnDestinationChangedListener? =
         NavController.OnDestinationChangedListener { _, destination, _ ->
             if (destination.id != R.id.fragmentLoading) {
                 if (destination.id != R.id.fragmentSong) {
@@ -120,6 +123,13 @@ class ActivityMain : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        setOnApplyWindowInsetsListener(binding.root) { view, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
 
         setUpOnDestinationChangedListener()
         setUpViewModelActivityMainObservers()
@@ -269,7 +279,7 @@ class ActivityMain : AppCompatActivity() {
             }
 
             R.id.action_lower_probs -> {
-                viewModelActivityMain.lowerProbabilities(applicationContext,)
+                viewModelActivityMain.lowerProbabilities(applicationContext)
                 return true
             }
 

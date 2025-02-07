@@ -138,6 +138,8 @@ class ViewModelActivityMain(
     private fun getSongToAddToQueue(): Song? {
         return songToAddToQueue.value?.let { songRepo.getSong(it) }
     }
+
+    // TODO This needs to be updated when the user clicks in a context menu of a song
     fun setSongToAddToQueue(songToAddToQueue: Long?) {
         _songToAddToQueue.postValue(songToAddToQueue)
         _playlistToAddToQueue.postValue(null)
@@ -183,7 +185,7 @@ class ViewModelActivityMain(
         fragment: Fragment,
         queuePosition: Int
     ) {
-        synchronized(io.fourth_finger.pinky_player.activity_main.ActivityMain.Companion.MUSIC_CONTROL_LOCK) {
+        synchronized(ActivityMain.Companion.MUSIC_CONTROL_LOCK) {
             val context = fragment.requireContext()
             mediaSession.startFromIndex(context, queuePosition)
         }
@@ -197,7 +199,7 @@ class ViewModelActivityMain(
     ) {
         val context = fragment.requireContext()
         val navController = fragment.findNavController()
-        synchronized(io.fourth_finger.pinky_player.activity_main.ActivityMain.Companion.MUSIC_CONTROL_LOCK) {
+        synchronized(ActivityMain.Companion.MUSIC_CONTROL_LOCK) {
             // TODO pass current song in?
             if (song == mediaSession.currentAudioUri.value?.id?.let {
                     songRepo.getSong(it)

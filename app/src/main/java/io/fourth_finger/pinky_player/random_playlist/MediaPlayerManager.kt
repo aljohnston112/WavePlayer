@@ -28,6 +28,8 @@ class MediaPlayerManager {
     var onErrorListener: MediaPlayer.OnErrorListener? = null
     private var onAudioFocusChangeListener: AudioManager.OnAudioFocusChangeListener? = null
 
+    private val songIDToMediaPlayerWithUriHashMap: HashMap<Long, MediaPlayerWithUri> = HashMap()
+
     fun setUp(
         context: Context,
         mediaSession: MediaSession
@@ -36,9 +38,9 @@ class MediaPlayerManager {
             mediaSession.playNext(context)
         }
         onErrorListener = MediaPlayer.OnErrorListener { _: MediaPlayer?, _: Int, _: Int ->
-            synchronized(MediaPlayerWUri.lock) {
+            synchronized(MediaPlayerWithUri.lock) {
                 releaseMediaPlayers()
-                if (isSongInProgress() == false) {
+                if (songInProgress.value == false) {
                     mediaSession.playNext(context)
                 }
                 return@OnErrorListener false
@@ -53,7 +55,7 @@ class MediaPlayerManager {
                         synchronized(lock) {
                             haveAudioFocus = true
                             if (isPlaying.value == false && wasPlaying) {
-                                pauseOrPlay(context)
+                                togglePlay(context)
                             }
                         }
                     }
@@ -63,7 +65,7 @@ class MediaPlayerManager {
                             haveAudioFocus = false
                             if (isPlaying.value == true) {
                                 wasPlaying = true
-                                pauseOrPlay(context)
+                                togglePlay(context)
                             } else {
                                 wasPlaying = false
                             }
@@ -74,58 +76,37 @@ class MediaPlayerManager {
         }
     }
 
-    fun isSongInProgress(): Boolean? {
-        return _songInProgress.value
-    }
-
     fun setIsPlaying(isPlaying: Boolean) {
         this._isPlaying.postValue(isPlaying)
-        _songInProgress.value = isPlaying
     }
+
+    fun setSongInProgress(songInProgress: Boolean) {
+        _songInProgress.postValue(songInProgress)
+    }
+
 
     fun setCurrentAudioUri(audioUri: AudioUri) {
-        _currentAudioUri.value = audioUri
+        _currentAudioUri.postValue(audioUri)
     }
 
-    fun getCurrentTimeOfPlayingMedia(): Int {
-        return getCurrentMediaPlayerWUri()?.getCurrentPosition() ?: -1
+    /**
+     * @return The current position of the current media or
+     * TIME_UNKNOWN if the time was not able to be extracted.
+     */
+    fun getCurrentTimeOfCurrentMedia(): Int {
+        return getCurrentMediaPlayerWithUri()?.getCurrentPosition() ?: TIME_UNKNOWN
     }
 
-    private fun getCurrentMediaPlayerWUri(): MediaPlayerWUri? {
-        return _currentAudioUri.value?.id?.let { getMediaPlayerWUri(it) }
+    private fun getCurrentMediaPlayerWithUri(): MediaPlayerWithUri? {
+        return _currentAudioUri.value?.id?.let { getMediaPlayerWithUri(it) }
     }
 
-    private val songIDToMediaPlayerWUriHashMap: HashMap<Long, MediaPlayerWUri> = HashMap()
-    private fun getMediaPlayerWUri(songID: Long): MediaPlayerWUri? {
-        return songIDToMediaPlayerWUriHashMap[songID]
+    private fun getMediaPlayerWithUri(songID: Long): MediaPlayerWithUri? {
+        return songIDToMediaPlayerWithUriHashMap[songID]
     }
 
-    private fun addMediaPlayerWUri(mediaPlayerWURI: MediaPlayerWUri) {
-        songIDToMediaPlayerWUriHashMap[mediaPlayerWURI.id] = mediaPlayerWURI
-    }
-
-    fun removeMediaPlayerWUri(songID: Long) {
-        songIDToMediaPlayerWUriHashMap.remove(songID)
-    }
-
-    private fun releaseMediaPlayers() {
-        // TODO properly synchronize hashMap
-        synchronized(this) {
-            for (mediaPlayerWURI in songIDToMediaPlayerWUriHashMap.values) {
-                mediaPlayerWURI.release()
-            }
-            songIDToMediaPlayerWUriHashMap.clear()
-        }
-        _isPlaying.postValue(false)
-        _songInProgress.postValue(false)
-    }
-
-    fun cleanUp() {
-        releaseMediaPlayers()
-        onAudioFocusChangeListener = null
-        onErrorListener = null
-        onCompletionListener = null
-        _currentAudioUri.postValue(null)
+    private fun addMediaPlayerWithUri(mediaPlayerWithURI: MediaPlayerWithUri) {
+        songIDToMediaPlayerWithUriHashMap[mediaPlayerWithURI.id] = mediaPlayerWithURI
     }
 
     private fun requestAudioFocus(context: Context): Boolean {
@@ -149,6 +130,7 @@ class MediaPlayerManager {
                 .build()
             result = audioManager.requestAudioFocus(audioFocusRequest)
         } else {
+            @Suppress("DEPRECATION")
             result = audioManager.requestAudioFocus(
                 onAudioFocusChangeListener,
                 AudioManager.STREAM_MUSIC,
@@ -159,55 +141,42 @@ class MediaPlayerManager {
         return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
     }
 
-    fun pauseOrPlay(context: Context) {
-        val mediaPlayerWURI: MediaPlayerWUri? = getCurrentMediaPlayerWUri()
-        if (mediaPlayerWURI != null) {
-            if (mediaPlayerWURI.isPrepared() && mediaPlayerWURI.isPlaying()) {
-                mediaPlayerWURI.pause()
-                setIsPlaying(false)
-            } else {
-                if (requestAudioFocus(context)) {
-                    mediaPlayerWURI.shouldPlay(true)
-                    setIsPlaying(true)
-                    _songInProgress.value = true
-                }
-            }
+    private fun startPlayback(
+        context: Context,
+        mediaPlayerWithURI: MediaPlayerWithUri
+    ) {
+        if (requestAudioFocus(context)) {
+            mediaPlayerWithURI.shouldPlay(true)
+            setIsPlaying(false)
+            // TODO Song may not be in progress
+            setSongInProgress(false)
+        }
+    }
+
+    fun togglePlay(context: Context) {
+        val mediaPlayerWithURI: MediaPlayerWithUri? = getCurrentMediaPlayerWithUri()
+        if (mediaPlayerWithURI == null) {
+            return
         }
 
-    }
-
-    fun stopCurrentSong(context: Context) {
-        getCurrentMediaPlayerWUri()?.let {
-            if (it.isPrepared() && it.isPlaying()) {
-                currentAudioUri.value?.let { it1 ->
-                    it.stop(context, it1)
-                    it.prepareAsync()
-                }
-            } else {
-                it.shouldPlay(false)
-            }
-        } ?: releaseMediaPlayers()
-        _songInProgress.value = false
-        setIsPlaying(false)
-    }
-
-    fun playLoopingOne(
-        context: Context,
-        mediaPlayerManager: MediaPlayerManager,
-    ) {
-        val mediaPlayerWURI: MediaPlayerWUri? = getCurrentMediaPlayerWUri()
-        if (mediaPlayerWURI != null) {
-            currentAudioUri.value?.let {
-                mediaPlayerWURI.seekTo(context, it, 0)
-                mediaPlayerWURI.shouldPlay(true)
-                setIsPlaying(true)
-                // TODO make a setting?
-                //addToQueueAtCurrentIndex(currentSong.getUri());
-            }
+        if (mediaPlayerWithURI.isPrepared() && mediaPlayerWithURI.isPlaying()) {
+            mediaPlayerWithURI.pause()
+            setIsPlaying(false)
         } else {
-            currentAudioUri.value?.let {
-                makeIfNeededAndPlay(context, mediaPlayerManager, it.id)
-            }
+            startPlayback(
+                context,
+                mediaPlayerWithURI
+            )
+        }
+    }
+
+    fun seekTo(context: Context, progress: Int) {
+        currentAudioUri.value?.let {
+            getCurrentMediaPlayerWithUri()?.seekTo(
+                context,
+                it,
+                progress
+            )
         }
     }
 
@@ -216,34 +185,106 @@ class MediaPlayerManager {
         mediaPlayerManager: MediaPlayerManager,
         songID: Long
     ) {
-        val audioUriCurrent = AudioUri.getAudioUri(context, songID)
+        val audioUriCurrent = AudioUri.getAudioUri(
+            context,
+            songID
+        )
         if (audioUriCurrent != null) {
             setCurrentAudioUri(audioUriCurrent)
         }
-        var mediaPlayerWUri: MediaPlayerWUri? = getMediaPlayerWUri(songID)
-        if (mediaPlayerWUri == null) {
+        var mediaPlayerWithUri: MediaPlayerWithUri? = getMediaPlayerWithUri(songID)
+        if (mediaPlayerWithUri == null) {
             try {
-                mediaPlayerWUri = MediaPlayerWUri(
+                mediaPlayerWithUri = MediaPlayerWithUri(
                     mediaPlayerManager,
-                    MediaPlayer.create(context, AudioUri.getUri(songID)),
+                    MediaPlayer.create(
+                        context,
+                        AudioUri.getUri(songID)
+                    ),
                     songID
                 )
+                // TODO better error handling
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-            mediaPlayerWUri?.let { addMediaPlayerWUri(it) }
+            mediaPlayerWithUri?.let { addMediaPlayerWithUri(it) }
         }
-        if (requestAudioFocus(context)) {
-            mediaPlayerWUri?.shouldPlay(true)
-            setIsPlaying(true)
-            _songInProgress.value = true
+        mediaPlayerWithUri?.let {
+            startPlayback(
+                context,
+                it
+            )
         }
     }
 
-    fun seekTo(context: Context, progress: Int) {
-        currentAudioUri.value?.let {
-            getCurrentMediaPlayerWUri()?.seekTo(context, it, progress)
+    fun restartCurrentSong(
+        context: Context,
+        mediaPlayerManager: MediaPlayerManager,
+    ) {
+        val mediaPlayerWURI: MediaPlayerWithUri? = getCurrentMediaPlayerWithUri()
+        if (mediaPlayerWURI != null) {
+            currentAudioUri.value?.let {
+                mediaPlayerWURI.seekTo(
+                    context,
+                    it,
+                    0
+                )
+                mediaPlayerWURI.shouldPlay(true)
+                setIsPlaying(true)
+                // TODO may not start playing
+                setSongInProgress(true)
+            }
+        } else {
+            currentAudioUri.value?.let {
+                makeIfNeededAndPlay(
+                    context,
+                    mediaPlayerManager,
+                    it.id
+                )
+            }
         }
+    }
+
+    fun stopCurrentSong(context: Context) {
+        getCurrentMediaPlayerWithUri()?.let { currentMediaPlayerWithUri ->
+            if (currentMediaPlayerWithUri.isPrepared() && currentMediaPlayerWithUri.isPlaying()) {
+                currentAudioUri.value?.let { audioUri ->
+                    currentMediaPlayerWithUri.stop(
+                        context,
+                        audioUri
+                    )
+                    currentMediaPlayerWithUri.prepareAsync()
+                }
+            } else {
+                currentMediaPlayerWithUri.shouldPlay(false)
+            }
+        } ?: releaseMediaPlayers()
+        setIsPlaying(false)
+        setSongInProgress(false)
+    }
+
+    private fun releaseMediaPlayers() {
+        // TODO properly synchronize hashMap
+        setIsPlaying(false)
+        setSongInProgress(false)
+        synchronized(this) {
+            for (mediaPlayerWURI in songIDToMediaPlayerWithUriHashMap.values) {
+                mediaPlayerWURI.release()
+            }
+            songIDToMediaPlayerWithUriHashMap.clear()
+        }
+    }
+
+    fun cleanUp() {
+        releaseMediaPlayers()
+        onAudioFocusChangeListener = null
+        onErrorListener = null
+        onCompletionListener = null
+        _currentAudioUri.postValue(null)
+    }
+
+    companion object {
+        const val TIME_UNKNOWN = -1
     }
 
 }

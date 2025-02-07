@@ -113,7 +113,7 @@ class ViewModelFragmentSong(
     }
 
     fun getCurrentTime(): Int {
-        return mediaSession.getCurrentTimeOfPlayingMedia()
+        return mediaSession.getCurrentTimeOfCurrentMedia()
     }
 
     fun seekTo(context: Context, progress: Int) {

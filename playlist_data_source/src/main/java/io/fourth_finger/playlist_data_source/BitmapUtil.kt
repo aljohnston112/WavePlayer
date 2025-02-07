@@ -19,24 +19,24 @@ class BitmapUtil {
     companion object {
 
         fun getThumbnailBitmap(
+            context: Context,
             audioUri: AudioUri?,
-            songArtWidth: Int,
-            context: Context
+            songArtWidth: Int
         ): Bitmap? {
             return audioUri?.id?.let { id ->
                 getThumbnail(
+                    context,
                     AudioUri.getUri(id), songArtWidth,
-                    songArtWidth,
-                    context
+                    songArtWidth
                 )
             }
         }
 
         fun getThumbnail(
+            context: Context,
             uri: Uri,
             width: Int,
-            height: Int,
-            context: Context
+            height: Int
         ): Bitmap? {
             var bitmap: Bitmap?
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -76,8 +76,8 @@ class BitmapUtil {
         }
 
         fun getDefaultBitmap(
-            songArtWidth: Int,
-            context: Context
+            context: Context,
+            songArtWidth: Int
         ): Bitmap? {
             // TODO cache bitmap
             if (songArtWidth > 0) {

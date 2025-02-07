@@ -172,10 +172,10 @@ class MediaDatasource(context: Context) {
                     AudioUri.saveAudioUri(
                         context,
                         AudioUri(
+                            id,
                             displayName,
-                            artist,
                             title,
-                            id
+                            artist,
                         )
                     )
                     newSongs.add(song)
