@@ -9,9 +9,9 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import io.fourth_finger.pinky_player.ApplicationMain
 import io.fourth_finger.pinky_player.random_playlist.MediaSession
 import io.fourth_finger.pinky_player.random_playlist.SongRepo
-import io.fourth_finger.pinky_player.settings.SettingsRepo
 import io.fourth_finger.playlist_data_source.AudioUri
 import io.fourth_finger.playlist_data_source.PlaylistsRepo
+import io.fourth_finger.settings_repository.SettingsRepo
 
 class ViewModelFragmentSong(
     private val songRepo: SongRepo,

@@ -31,6 +31,8 @@ class MediaPlayerWithUri(
                 mediaPlayer.setOnCompletionListener(mediaPlayerManager.onCompletionListener)
                 mediaPlayer.start()
                 shouldPlay = false
+                mediaPlayerManager.setIsPlaying(true)
+                mediaPlayerManager.setSongInProgress(true)
             }
         }
     }
@@ -57,6 +59,8 @@ class MediaPlayerWithUri(
         synchronized(lock) {
             if (shouldPlay && isPrepared) {
                 mediaPlayer.start()
+                mediaPlayerManager.setIsPlaying(true)
+                mediaPlayerManager.setSongInProgress(true)
             } else {
                 this.shouldPlay = shouldPlay
             }

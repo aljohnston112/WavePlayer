@@ -1,4 +1,4 @@
-package io.fourth_finger.pinky_player.settings
+package io.fourth_finger.settings_repository
 
 import java.io.Serializable
 

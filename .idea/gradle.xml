@@ -11,7 +11,9 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/file_utility" />
             <option value="$PROJECT_DIR$/playlist_data_source" />
+            <option value="$PROJECT_DIR$/settings_repository" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="false" />

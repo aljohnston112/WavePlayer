@@ -33,6 +33,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":file_utility"))
 
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.core:core-ktx:1.15.0")

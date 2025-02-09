@@ -29,6 +29,7 @@
             android:description="@string/service_description"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback"
+            android:stopWithTask="true"
             />
 
         <activity

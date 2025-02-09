@@ -9,10 +9,13 @@ import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.NavController
@@ -20,9 +23,10 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import io.fourth_finger.pinky_player.KeyboardUtil
 import io.fourth_finger.pinky_player.R
-import io.fourth_finger.pinky_player.activity_main.ActivityMain
+import io.fourth_finger.pinky_player.activity_main.MenuActionIndex
 import io.fourth_finger.pinky_player.activity_main.ViewModelActivityMain
 import io.fourth_finger.pinky_player.databinding.RecyclerViewSongListBinding
+import io.fourth_finger.playlist_data_source.Song
 
 class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerCallbackSelectSongs {
 
@@ -41,7 +45,6 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
     }
 
     override fun onCreateView(
@@ -57,11 +60,74 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
         return binding.root
     }
 
+    private fun setUpMenu() {
+        requireActivity().addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(
+                menu: Menu,
+                menuInflater: MenuInflater
+            ) {
+                menuInflater.inflate(
+                    R.menu.menu_toolbar,
+                    menu
+                )
+                for (menuActionIndex in MenuActionIndex.entries) {
+                    val menuItem = menu.getItem(menuActionIndex.ordinal)
+                    val songInProgress = viewModelActivityMain.songInProgress.value == true
+                    when (menuActionIndex) {
+                        MenuActionIndex.MENU_ACTION_ADD_TO_PLAYLIST_INDEX -> {
+                            menuItem.isVisible = false
+                        }
+
+                        MenuActionIndex.MENU_ACTION_QUEUE_INDEX -> {
+                            menuItem.isVisible = songInProgress
+                        }
+
+                        MenuActionIndex.MENU_ACTION_SEARCH_INDEX -> {
+                            menuItem.isVisible = true
+                            val itemSearch = menu.findItem(R.id.action_search)
+                            if (itemSearch != null) {
+                                val onQueryTextListenerSearch = object : SearchView.OnQueryTextListener {
+                                    override fun onQueryTextSubmit(query: String?): Boolean {
+                                        return false
+                                    }
+
+                                    override fun onQueryTextChange(newText: String): Boolean {
+                                        siftSongs(newText)
+                                        return true
+                                    }
+                                }
+                                val searchView = itemSearch.actionView as SearchView
+                                searchView.setOnQueryTextListener(onQueryTextListenerSearch)
+                            }
+                        }
+
+                        MenuActionIndex.MENU_ACTION_ADD_TO_QUEUE_INDEX -> {
+                            menuItem.isVisible = false
+                        }
+
+                        MenuActionIndex.MENU_ACTION_LOWER_PROBABILITIES_INDEX -> {
+                            menuItem.isVisible = false
+                        }
+
+                        MenuActionIndex.MENU_ACTION_RESET_PROBABILITIES_INDEX -> {
+                            menuItem.isVisible = false
+                        }
+                    }
+                }
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return false
+            }
+        })
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         KeyboardUtil.hideKeyboard(view)
+        setUpMenu()
         viewModelActivityMain.setActionBarTitle(resources.getString(R.string.select_songs))
-        val playlist = viewModelActivityMain.currentContextPlaylist
+        val playlist = viewModelActivityMain.playlistToEdit
         viewModelFragmentSelectSongs.selectSongs(playlist)
         setUpRecyclerView()
     }
@@ -132,26 +198,6 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
         }
     }
 
-    override fun onPrepareOptionsMenu(menu: Menu) {
-        super.onPrepareOptionsMenu(menu)
-        menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).isVisible = true
-        val itemSearch = menu.findItem(R.id.action_search)
-        if (itemSearch != null) {
-            val onQueryTextListenerSearch = object : SearchView.OnQueryTextListener {
-                override fun onQueryTextSubmit(query: String?): Boolean {
-                    return false
-                }
-
-                override fun onQueryTextChange(newText: String): Boolean {
-                    siftSongs(newText)
-                    return true
-                }
-            }
-            val searchView = itemSearch.actionView as SearchView
-            searchView.setOnQueryTextListener(onQueryTextListenerSearch)
-        }
-    }
-
     private fun siftSongs(newText: String) {
         if (newText.isNotEmpty()) {
             val sifted = viewModelActivityMain.siftAllSongs(newText)
@@ -163,11 +209,11 @@ class FragmentSelectSongs : Fragment(), RecyclerViewAdapterSelectSongs.ListenerC
         }
     }
 
-    override fun songUnselected(song: io.fourth_finger.playlist_data_source.Song) {
+    override fun songUnselected(song: Song) {
         viewModelFragmentSelectSongs.unselectedSong(song)
     }
 
-    override fun songSelected(song: io.fourth_finger.playlist_data_source.Song) {
+    override fun songSelected(song: Song) {
         viewModelFragmentSelectSongs.selectSong(song)
     }
 

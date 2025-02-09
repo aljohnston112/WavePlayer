@@ -3,7 +3,9 @@
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel target="17">
       <module name="WavePlayer.app" target="21" />
+      <module name="WavePlayer.file_utility" target="21" />
       <module name="WavePlayer.playlist_data_source" target="21" />
+      <module name="WavePlayer.settings_repository" target="21" />
     </bytecodeTargetLevel>
   </component>
 </project>

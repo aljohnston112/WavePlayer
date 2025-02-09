@@ -26,10 +26,10 @@ import io.fourth_finger.pinky_player.fragments.FragmentSongsDirections
 import io.fourth_finger.pinky_player.random_playlist.MediaSession
 import io.fourth_finger.pinky_player.random_playlist.SongRepo
 import io.fourth_finger.pinky_player.random_playlist.UseCaseEditPlaylist
-import io.fourth_finger.pinky_player.settings.SettingsRepo
 import io.fourth_finger.playlist_data_source.PlaylistsRepo
 import io.fourth_finger.playlist_data_source.RandomPlaylist
 import io.fourth_finger.playlist_data_source.Song
+import io.fourth_finger.settings_repository.SettingsRepo
 import java.util.Locale
 
 class ViewModelActivityMain(
@@ -46,7 +46,7 @@ class ViewModelActivityMain(
     val isPlaying = mediaSession.isPlaying
     val songInProgress = mediaSession.songInProgress
 
-    var currentContextPlaylist: RandomPlaylist? = null
+    var playlistToEdit: RandomPlaylist? = null
         set(playlist){
             field = playlist
         }

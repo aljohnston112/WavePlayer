@@ -226,6 +226,7 @@ class MediaSession(
             // End of queue and not looping
             if (shuffling) {
                 val songList = currentlyPlayingPlaylist.value?.getSongIDs()?.toMutableList()
+                songList?.shuffle()
                 songList?.forEach {
                     songQueue.addToQueue(it)
                 }
@@ -277,9 +278,9 @@ class MediaSession(
      * isPlaying will be true
      * if a song was played
      */
-    fun playNext(context: Context) {
+    fun playNext(context: Context, songClicked: Boolean = false) {
         stopCurrentSong(context)
-        if (loopingOne) {
+        if (loopingOne && !songClicked) {
             restartCurrentSong(context)
         } else {
             playNextInQueue(context)
@@ -408,7 +409,7 @@ class MediaSession(
                 startNonShuffle(index)
             }
         }
-        playNext(context)
+        playNext(context, true)
     }
 
     fun notifyItemInserted(position: Int) {

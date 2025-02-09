@@ -113,8 +113,8 @@ class DialogFragmentAddToPlaylist : DialogFragment() {
         builder.setNeutralButton(R.string.new_playlist) { _: DialogInterface?, _: Int ->
             // currentContextPlaylist needs to be null for FragmentEditPlaylist to make a new playlist
             unselectSongs()
-            viewModelActivityMain.currentContextPlaylist = null
-            val songs = mutableListOf<io.fourth_finger.playlist_data_source.Song>()
+            viewModelActivityMain.playlistToEdit = null
+            val songs = mutableListOf<Song>()
             if (song != null) {
                 songs.add(song)
             }

@@ -1,16 +1,18 @@
 package io.fourth_finger.pinky_player
+
 import android.app.Application
 import io.fourth_finger.pinky_player.random_playlist.MediaPlayerManager
 import io.fourth_finger.pinky_player.random_playlist.MediaSession
 import io.fourth_finger.pinky_player.random_playlist.SongRepo
 import io.fourth_finger.pinky_player.random_playlist.UseCaseEditPlaylist
 import io.fourth_finger.pinky_player.random_playlist.UseCaseSongPicker
-import io.fourth_finger.pinky_player.settings.SettingsRepo
 import io.fourth_finger.playlist_data_source.PlaylistsRepo
+import io.fourth_finger.settings_repository.SettingsRepo
 
 class ApplicationMain : Application() {
 
-    var settingsRepo: SettingsRepo? = SettingsRepo()
+    var settingsRepo: SettingsRepo? =
+        SettingsRepo()
     var playlistsRepo: PlaylistsRepo? = PlaylistsRepo()
 
     var songRepo: SongRepo? = null
@@ -20,34 +22,43 @@ class ApplicationMain : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        val settings = settingsRepo?.loadSettings(this)
-        // Loading the save file is needed to ensure the master playlist is valid
-        // before getting songs from the MediaStore.
-        settings?.maxPercent?.let {
-            playlistsRepo?.loadPlaylists(
-                this,
-                it
-            )
+
+
+        val settingsRepo = this.settingsRepo
+        val playlistsRepo = this.playlistsRepo
+        if (settingsRepo == null || playlistsRepo == null) {
+            return
         }
 
-        songRepo = settingsRepo?.let { SongRepo(this, it) }!!
-        songPicker = UseCaseSongPicker(songRepo!!)
+        val settings = settingsRepo.loadSettings(this)
+        // Loading the save file is needed to ensure the master playlist is valid
+        // before getting songs from the MediaStore.
+        playlistsRepo.loadPlaylists(
+            this,
+            settings.maxPercent
+        )
+
+        val songRepo = SongRepo(
+            this,
+            settingsRepo
+        )
+        this.songRepo = songRepo
+        songPicker = UseCaseSongPicker(songRepo)
 
         val mediaPlayerManager = MediaPlayerManager()
-        mediaSession = playlistsRepo?.let {
-            MediaSession(
-                it,
-                songRepo!!,
-                mediaPlayerManager
-            )
-        }!!
-        mediaPlayerManager.setUp(
+        val mediaSession = MediaSession(
+            playlistsRepo,
+            songRepo,
+            mediaPlayerManager
+        )
+        this.mediaSession = mediaSession
+        mediaPlayerManager.setUpListeners(
             this,
-            mediaSession!!
+            mediaSession
         )
         playlistEditor = UseCaseEditPlaylist(
-            playlistsRepo!!,
-            mediaSession!!
+            playlistsRepo,
+            mediaSession
         )
     }
 
@@ -64,5 +75,8 @@ class ApplicationMain : Application() {
         mediaSession = null
         playlistEditor = null
     }
-    
+
+    // TODO When the queue is empty,
+    //  it uses the playlist that the current user is in to refill the queue
+
 }

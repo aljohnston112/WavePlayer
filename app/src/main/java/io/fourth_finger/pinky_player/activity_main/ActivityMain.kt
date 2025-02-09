@@ -26,8 +26,17 @@ import com.google.android.material.floatingactionbutton.ExtendedFloatingActionBu
 import io.fourth_finger.pinky_player.NavUtil.Companion.navigateTo
 import io.fourth_finger.pinky_player.R
 import io.fourth_finger.pinky_player.ServiceMain
-import io.fourth_finger.pinky_player.activity_main.ViewModelActivityMain
 import io.fourth_finger.pinky_player.databinding.ActivityMainBinding
+
+
+enum class MenuActionIndex {
+    MENU_ACTION_RESET_PROBABILITIES_INDEX,
+    MENU_ACTION_LOWER_PROBABILITIES_INDEX,
+    MENU_ACTION_ADD_TO_PLAYLIST_INDEX,
+    MENU_ACTION_SEARCH_INDEX,
+    MENU_ACTION_ADD_TO_QUEUE_INDEX,
+    MENU_ACTION_QUEUE_INDEX;
+}
 
 class ActivityMain : AppCompatActivity() {
 
@@ -196,8 +205,9 @@ class ActivityMain : AppCompatActivity() {
 
     private fun makeToolbarQueueActionVisible() {
         val toolbar = binding.toolbar
-        if (toolbar.menu.size() > 0)
-            toolbar.menu.getItem(MENU_ACTION_QUEUE).isVisible = true
+        if (toolbar.menu.size() > 0) {
+            toolbar.menu.getItem(MenuActionIndex.MENU_ACTION_QUEUE_INDEX.ordinal).isVisible = true
+        }
     }
 
     override fun onStart() {
@@ -336,13 +346,6 @@ class ActivityMain : AppCompatActivity() {
         // TODO add feature to show what is playing next
         // TODO play song from file system (mp3 intent)
         val MUSIC_CONTROL_LOCK: Any = Any()
-
-        const val MENU_ACTION_RESET_PROBABILITIES_INDEX = 0
-        const val MENU_ACTION_LOWER_PROBABILITIES_INDEX = 1
-        const val MENU_ACTION_ADD_TO_PLAYLIST_INDEX = 2
-        const val MENU_ACTION_SEARCH_INDEX = 3
-        const val MENU_ACTION_ADD_TO_QUEUE_INDEX = 4
-        const val MENU_ACTION_QUEUE = 5
 
     }
 

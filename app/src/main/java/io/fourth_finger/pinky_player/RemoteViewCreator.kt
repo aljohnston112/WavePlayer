@@ -57,9 +57,9 @@ class RemoteViewCreator(
 
     fun createRemoteView(
         context: Context,
-        it: Boolean
+        isPlaying: Boolean
     ): RemoteViews {
-        isPlaying = it
+        this@RemoteViewCreator.isPlaying = isPlaying
         createRemoteView(context)
         return createRemoteView(context)
     }

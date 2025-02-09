@@ -1,9 +1,9 @@
 package io.fourth_finger.pinky_player.random_playlist
 
 import android.content.Context
-import io.fourth_finger.pinky_player.settings.SettingsRepo
 import io.fourth_finger.playlist_data_source.PlaylistsRepo
 import io.fourth_finger.playlist_data_source.Song
+import io.fourth_finger.settings_repository.SettingsRepo
 
 class SongRepo(
     context: Context,

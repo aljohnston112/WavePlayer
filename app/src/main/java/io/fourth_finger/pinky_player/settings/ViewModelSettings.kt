@@ -11,12 +11,14 @@ import io.fourth_finger.pinky_player.ApplicationMain
 import io.fourth_finger.pinky_player.R
 import io.fourth_finger.pinky_player.ToastUtil
 import io.fourth_finger.playlist_data_source.PlaylistsRepo
+import io.fourth_finger.settings_repository.Settings
+import io.fourth_finger.settings_repository.SettingsRepo
 import kotlin.math.roundToInt
 
 class ViewModelSettings(
     private val settingsRepo: SettingsRepo,
     private val playlistsRepo: PlaylistsRepo,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
     fun getMaxNumberOfSongs(): String {
@@ -24,11 +26,11 @@ class ViewModelSettings(
     }
 
     fun getPercentChangeUp(): String {
-        return (settingsRepo.settings.value!!.percentChangeUp*100.0).roundToInt().toString()
+        return (settingsRepo.settings.value!!.percentChangeUp * 100.0).roundToInt().toString()
     }
 
     fun getPercentChangeDown(): String {
-        return (settingsRepo.settings.value!!.percentChangeDown*100.0).roundToInt().toString()
+        return (settingsRepo.settings.value!!.percentChangeDown * 100.0).roundToInt().toString()
     }
 
     fun fabClicked(
@@ -36,7 +38,7 @@ class ViewModelSettings(
         navController: NavController,
         nSongs: Int,
         percentChangeUp: Int,
-        percentChangeDown: Int
+        percentChangeDown: Int,
     ) {
         if (validateInput(context, nSongs, percentChangeUp, percentChangeDown)) {
             updateSettings(context, nSongs, percentChangeUp, percentChangeDown)
@@ -54,7 +56,7 @@ class ViewModelSettings(
         context: Context,
         nSongs: Int,
         percentChangeUp: Int,
-        percentChangeDown: Int
+        percentChangeDown: Int,
     ): Boolean {
         return if (nSongs < 1) {
             ToastUtil.showToast(context, R.string.max_percent_error)
@@ -74,7 +76,7 @@ class ViewModelSettings(
         context: Context,
         nSongs: Int,
         percentChangeUp: Int,
-        percentChangeDown: Int
+        percentChangeDown: Int,
     ) {
         // TODO add lower prob UI
         val settings = Settings(
@@ -86,7 +88,7 @@ class ViewModelSettings(
         settingsRepo.setSettings(
             context,
             settings
-            )
+        )
         playlistsRepo.setMaxPercent(
             context,
             settings.maxPercent
@@ -99,10 +101,12 @@ class ViewModelSettings(
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(
                 modelClass: Class<T>,
-                extras: CreationExtras
+                extras: CreationExtras,
             ): T {
                 // Get the Application object from extras
-                val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
+                val application = checkNotNull(
+                    extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]
+                )
                 // Create a SavedStateHandle for this ViewModel from extras
                 val savedStateHandle = extras.createSavedStateHandle()
 

@@ -64,6 +64,7 @@ android {
 dependencies {
 
     implementation project(':playlist_data_source')
+    implementation project(':settings_repository')
     ksp "androidx.room:room-compiler:2.6.1"
 
     implementation "androidx.activity:activity-ktx:1.10.0"

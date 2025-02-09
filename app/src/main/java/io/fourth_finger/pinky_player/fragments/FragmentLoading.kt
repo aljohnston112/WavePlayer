@@ -9,6 +9,9 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.View.VISIBLE
 import android.view.ViewGroup
@@ -17,10 +20,13 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import io.fourth_finger.pinky_player.R
+import io.fourth_finger.pinky_player.activity_main.MenuActionIndex
 import io.fourth_finger.pinky_player.activity_main.ViewModelActivityMain
 import io.fourth_finger.pinky_player.databinding.FragmentLoadingBinding
 
@@ -236,6 +242,33 @@ class FragmentLoading : Fragment() {
 
     private fun audioPermissionGranted() {
         viewModelFragmentLoading.permissionGranted(requireActivity())
+    }
+
+    private fun setUpMenu() {
+        requireActivity().addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(
+                menu: Menu,
+                menuInflater: MenuInflater
+            ) {
+                menuInflater.inflate(
+                    R.menu.menu_toolbar,
+                    menu
+                )
+                for (menuActionIndex in MenuActionIndex.entries) {
+                    val menuItem = menu.getItem(menuActionIndex.ordinal)
+                    menuItem.isVisible = false
+                }
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return false
+            }
+        })
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setUpMenu()
     }
 
     override fun onStart() {

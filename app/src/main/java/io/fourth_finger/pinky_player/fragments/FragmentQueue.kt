@@ -9,8 +9,12 @@ import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.widget.SearchView
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -23,8 +27,11 @@ import io.fourth_finger.pinky_player.KeyboardUtil
 import io.fourth_finger.pinky_player.R
 import io.fourth_finger.pinky_player.activity_main.ActivityMain
 import io.fourth_finger.pinky_player.activity_main.DialogFragmentAddToPlaylist
+import io.fourth_finger.pinky_player.activity_main.MenuActionIndex
 import io.fourth_finger.pinky_player.activity_main.ViewModelActivityMain
 import io.fourth_finger.pinky_player.databinding.RecyclerViewSongListBinding
+import io.fourth_finger.playlist_data_source.Song
+import java.util.Locale
 
 class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs {
 
@@ -48,7 +55,6 @@ class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
     }
 
     override fun onCreateView(
@@ -65,17 +71,106 @@ class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         return binding.root
     }
 
+    private fun setUpMenu() {
+        requireActivity().addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(
+                menu: Menu,
+                menuInflater: MenuInflater
+            ) {
+                menuInflater.inflate(
+                    R.menu.menu_toolbar,
+                    menu
+                )
+                for (menuActionIndex in MenuActionIndex.entries) {
+                    val menuItem = menu.getItem(menuActionIndex.ordinal)
+                    when (menuActionIndex) {
+                        MenuActionIndex.MENU_ACTION_ADD_TO_PLAYLIST_INDEX -> {
+                            menuItem.isVisible = false
+                        }
+
+                        MenuActionIndex.MENU_ACTION_QUEUE_INDEX -> {
+                            menuItem.isVisible = false
+                        }
+
+                        MenuActionIndex.MENU_ACTION_SEARCH_INDEX -> {
+                            menuItem.isVisible = true
+                            val itemSearch = menu.findItem(R.id.action_search)
+                            if (itemSearch != null) {
+                                val onQueryTextListenerSearch = object : SearchView.OnQueryTextListener {
+                                    override fun onQueryTextSubmit(query: String?): Boolean {
+                                        return false
+                                    }
+
+                                    override fun onQueryTextChange(newText: String): Boolean {
+                                        siftSongs(newText)
+                                        return true
+                                    }
+                                }
+                                val searchView = itemSearch.actionView as SearchView
+                                searchView.setOnQueryTextListener(onQueryTextListenerSearch)
+                            }
+                        }
+
+                        MenuActionIndex.MENU_ACTION_ADD_TO_QUEUE_INDEX -> {
+                            menuItem.isVisible = false
+                        }
+
+                        MenuActionIndex.MENU_ACTION_LOWER_PROBABILITIES_INDEX -> {
+                            menuItem.isVisible = false
+                        }
+
+                        MenuActionIndex.MENU_ACTION_RESET_PROBABILITIES_INDEX -> {
+                            menuItem.isVisible = false
+                        }
+                    }
+                }
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return false
+            }
+        })
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         KeyboardUtil.hideKeyboard(view)
+        setUpMenu()
+
         // TODO why is this set up twice in all the fragments?!
         // I think due to incomplete state
         setUpRecyclerView()
     }
 
+    private fun siftSongs(newText: String) {
+        if (newText.isNotEmpty()) {
+            val sifted = siftQueueSongs(newText)
+            recyclerViewAdapterSongs.updateList(sifted)
+        } else {
+            viewModelFragmentQueue.songQueue.value!!.toList().let {
+                recyclerViewAdapterSongs.updateList(it)
+            }
+        }
+    }
+
+    private fun siftQueueSongs(string: String): List<Song> {
+        val songs: List<Song>? = viewModelFragmentQueue.songQueue.value!!.toList()
+        val sifted: MutableList<Song> = ArrayList<Song>()
+        if (songs != null) {
+            for (song in songs) {
+                if (song.title.lowercase(Locale.ROOT)
+                        .contains(string.lowercase(Locale.ROOT))
+                ) {
+                    sifted.add(song)
+                }
+            }
+        }
+        return sifted
+    }
+
     private fun setUpRecyclerView() {
         val recyclerViewSongList = binding.recyclerViewSongList
-        recyclerViewSongList.layoutManager = LinearLayoutManager(recyclerViewSongList?.context)
+        recyclerViewSongList.layoutManager = LinearLayoutManager(recyclerViewSongList.context)
         recyclerViewAdapterSongs = RecyclerViewAdapterSongs(
             this,
             viewModelFragmentQueue.songQueue.value!!.toList()
@@ -170,26 +265,23 @@ class FragmentQueue : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSongs
         viewModelActivityMain.showFab(false)
     }
 
-    override fun onPrepareOptionsMenu(menu: Menu) {
-        super.onPrepareOptionsMenu(menu)
-        // TODO add addToQueue functionality
-        menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).isVisible = false
-        menu.getItem(ActivityMain.MENU_ACTION_QUEUE).isVisible = false
-    }
-
-    override fun onContextMenuItemClickAddToPlaylist(song: io.fourth_finger.playlist_data_source.Song) {
+    override fun onContextMenuItemClickAddToPlaylist(song: Song) {
         val bundle = Bundle()
         bundle.putSerializable(DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG, song)
+        bundle.putSerializable(
+            DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST,
+            null
+        )
         val dialogFragment: DialogFragment = DialogFragmentAddToPlaylist()
         dialogFragment.arguments = bundle
         dialogFragment.show(parentFragmentManager, tag)
     }
 
-    override fun onContextMenuItemClickAddToQueue(song: io.fourth_finger.playlist_data_source.Song) {
+    override fun onContextMenuItemClickAddToQueue(song: Song) {
         viewModelActivityMain.addToQueue(requireActivity().applicationContext, song)
     }
 
-    override fun onClickViewHolder(pos: Int, song: io.fourth_finger.playlist_data_source.Song) {
+    override fun onClickViewHolder(pos: Int, song: Song) {
         viewModelActivityMain.queueSongClicked(
             this,
             pos

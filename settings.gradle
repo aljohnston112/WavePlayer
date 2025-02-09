@@ -16,3 +16,5 @@ dependencyResolutionManagement {
 rootProject.name = "WavePlayer"
 include ':app'
 include ':playlist_data_source'
+include ':settings_repository'
+include ':file_utility'

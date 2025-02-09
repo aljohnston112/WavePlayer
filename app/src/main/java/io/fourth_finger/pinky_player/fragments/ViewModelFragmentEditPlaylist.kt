@@ -13,9 +13,9 @@ import io.fourth_finger.pinky_player.NavUtil
 import io.fourth_finger.pinky_player.R
 import io.fourth_finger.pinky_player.ToastUtil
 import io.fourth_finger.pinky_player.random_playlist.UseCaseSongPicker
-import io.fourth_finger.pinky_player.settings.SettingsRepo
 import io.fourth_finger.playlist_data_source.PlaylistsRepo
 import io.fourth_finger.playlist_data_source.RandomPlaylist
+import io.fourth_finger.settings_repository.SettingsRepo
 
 class ViewModelFragmentEditPlaylist(
     private val songPicker: UseCaseSongPicker,
@@ -51,7 +51,7 @@ class ViewModelFragmentEditPlaylist(
         val userPickedSongs = songPicker.getPickedSongs().toMutableList()
         val userPickedPlaylist = playlistsRepo.getPlaylist(playlistName)
         val makingNewPlaylist = (userPickedPlaylist == null)
-        return if (userPickedSongs.size == 0) {
+        return if (userPickedSongs.isEmpty()) {
             ToastUtil.showToast(context, R.string.not_enough_songs_for_playlist)
             false
         } else if (playlistName.isEmpty()) {

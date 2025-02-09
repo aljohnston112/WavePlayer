@@ -1,4 +1,4 @@
-package io.fourth_finger.pinky_player.settings
+package io.fourth_finger.settings_repository
 
 import android.content.Context
 import androidx.lifecycle.LiveData
@@ -6,7 +6,7 @@ import androidx.lifecycle.MutableLiveData
 
 class SettingsRepo() {
 
-    private val settingsDataSource = SettingsDataSource.getInstance()
+    private val settingsDataSource = SettingsDataSource.Companion.getInstance()
 
     private val _settings = MutableLiveData<Settings>()
     val settings = _settings as LiveData<Settings>

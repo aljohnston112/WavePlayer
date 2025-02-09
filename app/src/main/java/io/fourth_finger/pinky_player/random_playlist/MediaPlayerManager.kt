@@ -30,29 +30,35 @@ class MediaPlayerManager {
 
     private val songIDToMediaPlayerWithUriHashMap: HashMap<Long, MediaPlayerWithUri> = HashMap()
 
-    fun setUp(
+    /**
+     * The [mediaSession] is needed onCompletion to play the next song when a song completes,
+     * onError to attempt resuming playback after an error,
+     * and onAudioFocusChange to control playback during audio focus changes
+     */
+    fun setUpListeners(
         context: Context,
         mediaSession: MediaSession
     ) {
         onCompletionListener = MediaPlayer.OnCompletionListener {
             mediaSession.playNext(context)
         }
+
         onErrorListener = MediaPlayer.OnErrorListener { _: MediaPlayer?, _: Int, _: Int ->
             synchronized(MediaPlayerWithUri.lock) {
                 releaseMediaPlayers()
-                if (songInProgress.value == false) {
+                if (songInProgress.value == true && isPlaying.value == true) {
                     mediaSession.playNext(context)
                 }
                 return@OnErrorListener false
             }
         }
         onAudioFocusChangeListener = object : AudioManager.OnAudioFocusChangeListener {
-            val lock: Any = Any()
+            val audioFocusLock: Any = Any()
             var wasPlaying: Boolean = false
             override fun onAudioFocusChange(i: Int) {
                 when (i) {
                     AudioManager.AUDIOFOCUS_GAIN -> {
-                        synchronized(lock) {
+                        synchronized(audioFocusLock) {
                             haveAudioFocus = true
                             if (isPlaying.value == false && wasPlaying) {
                                 togglePlay(context)
@@ -61,7 +67,7 @@ class MediaPlayerManager {
                     }
 
                     AudioManager.AUDIOFOCUS_LOSS -> {
-                        synchronized(lock) {
+                        synchronized(audioFocusLock) {
                             haveAudioFocus = false
                             if (isPlaying.value == true) {
                                 wasPlaying = true
@@ -146,10 +152,9 @@ class MediaPlayerManager {
         mediaPlayerWithURI: MediaPlayerWithUri
     ) {
         if (requestAudioFocus(context)) {
-            mediaPlayerWithURI.shouldPlay(true)
             setIsPlaying(false)
-            // TODO Song may not be in progress
             setSongInProgress(false)
+            mediaPlayerWithURI.shouldPlay(true)
         }
     }
 
@@ -170,7 +175,10 @@ class MediaPlayerManager {
         }
     }
 
-    fun seekTo(context: Context, progress: Int) {
+    fun seekTo(
+        context: Context,
+        progress: Int
+    ) {
         currentAudioUri.value?.let {
             getCurrentMediaPlayerWithUri()?.seekTo(
                 context,

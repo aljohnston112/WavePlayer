@@ -17,7 +17,6 @@ class ViewModelDialogFragmentAddToPlaylist(
 ) : ViewModel() {
 
     fun startNewPlaylistWithSongs(songs: List<Song>) {
-        mediaSession.setCurrentPlaylist(null)
         songPicker.unselectAllSongs()
         for (song in songs) {
             songPicker.selectSong(song)

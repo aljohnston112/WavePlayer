@@ -27,8 +27,8 @@ import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
 import io.fourth_finger.pinky_player.KeyboardUtil
 import io.fourth_finger.pinky_player.R
-import io.fourth_finger.pinky_player.activity_main.ActivityMain
 import io.fourth_finger.pinky_player.activity_main.DialogFragmentAddToPlaylist
+import io.fourth_finger.pinky_player.activity_main.MenuActionIndex
 import io.fourth_finger.pinky_player.activity_main.ViewModelActivityMain
 import io.fourth_finger.pinky_player.databinding.RecyclerViewSongListBinding
 import io.fourth_finger.playlist_data_source.Song
@@ -66,34 +66,60 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
         return binding.root
     }
 
+    private fun setUpMenu() {
+        requireActivity().addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(
+                menu: Menu,
+                menuInflater: MenuInflater
+            ) {
+                menuInflater.inflate(
+                    R.menu.menu_toolbar,
+                    menu
+                )
+                for (menuActionIndex in MenuActionIndex.entries) {
+                    val menuItem = menu.getItem(menuActionIndex.ordinal)
+                    val songInProgress = viewModelActivityMain.songInProgress.value == true
+                    when (menuActionIndex) {
+                        MenuActionIndex.MENU_ACTION_ADD_TO_PLAYLIST_INDEX -> {
+                            menuItem.isVisible = true
+                        }
+
+                        MenuActionIndex.MENU_ACTION_QUEUE_INDEX -> {
+                            menuItem.isVisible = songInProgress
+                        }
+
+                        MenuActionIndex.MENU_ACTION_SEARCH_INDEX -> {
+                            menuItem.isVisible = true
+                            val itemSearch = menu.findItem(R.id.action_search)
+                            val searchView = itemSearch.actionView as SearchView
+                            searchView.setOnQueryTextListener(onQueryTextListener)
+                        }
+
+                        MenuActionIndex.MENU_ACTION_ADD_TO_QUEUE_INDEX -> {
+                            menuItem.isVisible = true
+                        }
+
+                        MenuActionIndex.MENU_ACTION_LOWER_PROBABILITIES_INDEX -> {
+                            menuItem.isVisible = true
+                        }
+
+                        MenuActionIndex.MENU_ACTION_RESET_PROBABILITIES_INDEX -> {
+                            menuItem.isVisible = true
+                        }
+                    }
+                }
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return false
+            }
+        })
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         KeyboardUtil.hideKeyboard(view)
-
-        requireActivity().addMenuProvider(
-            object : MenuProvider {
-                override fun onCreateMenu(
-                    menu: Menu,
-                    menuInflater: MenuInflater
-                ) {
-                    menu.getItem(ActivityMain.MENU_ACTION_RESET_PROBABILITIES_INDEX).isVisible = true
-                    menu.getItem(ActivityMain.MENU_ACTION_LOWER_PROBABILITIES_INDEX).isVisible = true
-                    menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE_INDEX).isVisible = true
-                    menu.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).isVisible = true
-                    menu.getItem(ActivityMain.MENU_ACTION_SEARCH_INDEX).isVisible = true
-                    val itemSearch = menu.findItem(R.id.action_search)
-                    if (itemSearch != null) {
-                        val searchView = itemSearch.actionView as SearchView
-                        searchView.setOnQueryTextListener(onQueryTextListener)
-                    }
-                }
-
-                override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-                    TODO("Not yet implemented")
-                }
-
-            }
-        )
+        setUpMenu()
 
         val currentPlaylist = viewModelActivityMain.currentlyPlayingPlaylist.value!!
         viewModelActivityMain.setPlaylistToAddToQueue(currentPlaylist)
@@ -165,11 +191,11 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
         ).menu?.findItem(R.id.action_search)?.actionView as SearchView
         if (searchView.query.isNotEmpty()) {
             val newText = searchView.query.toString()
-            filterSongs(newText)
+            siftSongs(newText)
         }
     }
 
-    private fun filterSongs(newText: String) {
+    private fun siftSongs(newText: String) {
         dragFlags = if (newText.isNotEmpty()) {
             val sifted = siftPlaylistSongs(newText)
             recyclerViewAdapterSongs.updateList(sifted)
@@ -260,7 +286,7 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
         }
 
         override fun onQueryTextChange(newText: String): Boolean {
-            filterSongs(newText)
+            siftSongs(newText)
             return true
         }
     }
@@ -270,6 +296,10 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
         bundle.putSerializable(
             DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_SONG,
             song
+        )
+        bundle.putSerializable(
+            DialogFragmentAddToPlaylist.BUNDLE_KEY_ADD_TO_PLAYLIST_PLAYLIST,
+            null
         )
         val dialogFragment: DialogFragment = DialogFragmentAddToPlaylist()
         dialogFragment.arguments = bundle
@@ -290,6 +320,11 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
         )
     }
 
+    override fun onPause() {
+        super.onPause()
+        viewModelActivityMain.setPlaylistToAddToQueue(null)
+    }
+
     override fun onStop() {
         super.onStop()
         requireActivity().unregisterReceiver(broadcastReceiver)
@@ -298,7 +333,6 @@ class FragmentPlaylist : Fragment(), RecyclerViewAdapterSongs.ListenerCallbackSo
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-        viewModelActivityMain.setPlaylistToAddToQueue(null)
         val toolbar: Toolbar = requireActivity().findViewById(R.id.toolbar)
         val menu = toolbar.menu
         if (menu != null) {

@@ -1,15 +1,15 @@
-package io.fourth_finger.pinky_player.settings
+package io.fourth_finger.settings_repository
 
 import android.content.Context
-import io.fourth_finger.playlist_data_source.FileUtil
+import io.fourth_finger.file_utility.FileUtil
 
 private const val FILE_NAME_SETTINGS = "SETTINGS"
 private const val SAVE_FILE_VERIFICATION_NUMBER = 4596834290567902435L
 
-class SettingsDataSource private constructor(){
+internal class SettingsDataSource private constructor(){
 
     fun saveSettings(context: Context, settings: Settings) {
-        FileUtil.save(
+        FileUtil.Companion.save(
             settings,
             context,
             FILE_NAME_SETTINGS,
@@ -18,7 +18,7 @@ class SettingsDataSource private constructor(){
     }
 
     fun loadSettings(context: Context): Settings? {
-        return FileUtil.load(
+        return FileUtil.Companion.load(
             context,
             FILE_NAME_SETTINGS,
             SAVE_FILE_VERIFICATION_NUMBER

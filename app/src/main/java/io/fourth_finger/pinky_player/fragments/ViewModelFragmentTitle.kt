@@ -16,10 +16,10 @@ import io.fourth_finger.pinky_player.ApplicationMain
 import io.fourth_finger.pinky_player.NavUtil
 import io.fourth_finger.pinky_player.R
 import io.fourth_finger.pinky_player.random_playlist.MediaSession
-import io.fourth_finger.pinky_player.settings.SettingsRepo
 import io.fourth_finger.playlist_data_source.PlaylistsRepo
 import io.fourth_finger.playlist_data_source.RandomPlaylist
 import io.fourth_finger.playlist_data_source.Song
+import io.fourth_finger.settings_repository.SettingsRepo
 
 
 class ViewModelFragmentTitle(

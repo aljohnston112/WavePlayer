@@ -10,15 +10,17 @@ import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.SeekBar
 import android.widget.TextView
-import androidx.appcompat.widget.Toolbar
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -27,6 +29,7 @@ import io.fourth_finger.pinky_player.R
 import io.fourth_finger.pinky_player.TextUtil.Companion.formatMillis
 import io.fourth_finger.pinky_player.ToastUtil
 import io.fourth_finger.pinky_player.activity_main.ActivityMain
+import io.fourth_finger.pinky_player.activity_main.MenuActionIndex
 import io.fourth_finger.pinky_player.activity_main.ViewModelActivityMain
 import io.fourth_finger.pinky_player.databinding.FragmentSongBinding
 import io.fourth_finger.playlist_data_source.AudioUri
@@ -51,7 +54,6 @@ class FragmentSong : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
     }
 
     override fun onCreateView(
@@ -67,9 +69,56 @@ class FragmentSong : Fragment() {
         return binding.root
     }
 
+    private fun setUpMenu() {
+        requireActivity().addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(
+                menu: Menu,
+                menuInflater: MenuInflater
+            ) {
+                menuInflater.inflate(
+                    R.menu.menu_toolbar,
+                    menu
+                )
+                for (menuActionIndex in MenuActionIndex.entries) {
+                    val menuItem = menu.getItem(menuActionIndex.ordinal)
+                    when (menuActionIndex) {
+                        MenuActionIndex.MENU_ACTION_ADD_TO_PLAYLIST_INDEX -> {
+                            menuItem.isVisible = true
+                        }
+
+                        MenuActionIndex.MENU_ACTION_QUEUE_INDEX -> {
+                            menuItem.isVisible = true
+                        }
+
+                        MenuActionIndex.MENU_ACTION_SEARCH_INDEX -> {
+                            menuItem.isVisible = false
+                        }
+
+                        MenuActionIndex.MENU_ACTION_ADD_TO_QUEUE_INDEX -> {
+                            menuItem.isVisible = true
+                        }
+
+                        MenuActionIndex.MENU_ACTION_LOWER_PROBABILITIES_INDEX -> {
+                            menuItem.isVisible = false
+                        }
+
+                        MenuActionIndex.MENU_ACTION_RESET_PROBABILITIES_INDEX -> {
+                            menuItem.isVisible = false
+                        }
+                    }
+                }
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return false
+            }
+        })
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         KeyboardUtil.hideKeyboard(view)
+        setUpMenu()
         viewModelFragmentSong.currentAudioUri.observe(viewLifecycleOwner) {
             if (it != null) {
                 viewModelActivityMain.setSongToAddToQueue(it.id)
@@ -390,18 +439,6 @@ class FragmentSong : Fragment() {
                 R.string.action_service_connected
             )
         )
-    }
-
-    private fun setUpToolbar() {
-        requireActivity().findViewById<Toolbar>(R.id.toolbar).menu?.let {
-            it.getItem(ActivityMain.MENU_ACTION_ADD_TO_PLAYLIST_INDEX).isVisible = true
-            it.getItem(ActivityMain.MENU_ACTION_ADD_TO_QUEUE_INDEX).isVisible = true
-        }
-    }
-
-    override fun onPrepareOptionsMenu(menu: Menu) {
-        super.onPrepareOptionsMenu(menu)
-        setUpToolbar()
     }
 
     override fun onDestroyView() {
