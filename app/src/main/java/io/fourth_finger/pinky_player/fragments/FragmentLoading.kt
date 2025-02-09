@@ -20,11 +20,11 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+
 import io.fourth_finger.pinky_player.R
 import io.fourth_finger.pinky_player.activity_main.MenuActionIndex
 import io.fourth_finger.pinky_player.activity_main.ViewModelActivityMain
@@ -45,15 +45,14 @@ class FragmentLoading : Fragment() {
                 ViewModelFragmentLoading.Factory
             }
 
-    private lateinit var audioPermissionLauncher: ActivityResultLauncher<String>
-    private lateinit var notificationPermissionLauncher: ActivityResultLauncher<String>
+    private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
 
     // TODO stop permission warning after user comes back from settings screen
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         setUpObservers()
         registerPermissions()
@@ -87,49 +86,37 @@ class FragmentLoading : Fragment() {
         }
     }
 
-    private fun registerPermissions() {
-        registerAudioPermission()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerPermission(Manifest.permission.POST_NOTIFICATIONS)
-        }
-    }
-
-    private fun registerAudioPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerPermission(Manifest.permission.READ_MEDIA_AUDIO)
+    private fun getManifestAudioPermission(): String {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.READ_MEDIA_AUDIO
         } else {
-            registerPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+            Manifest.permission.READ_EXTERNAL_STORAGE
         }
     }
 
     /**
-     * Requests a permission.
-     *
-     * @param permission The [Manifest.permission] to request.
+     * Requests permissions.
      */
-    private fun registerPermission(permission: String) {
-        val isAudioPermission = isAudioPermission(permission)
-        if (isAudioPermission) {
-            audioPermissionLauncher = registerForActivityResult(
-                ActivityResultContracts.RequestPermission()
-            ) { isGranted: Boolean ->
-                if (isGranted) {
-                    audioPermissionGranted()
-                } else {
-                    showAudioMediaPermissionRationale()
-                }
-            }
-        } else {
-            notificationPermissionLauncher = registerForActivityResult(
-                ActivityResultContracts.RequestPermission()
-            ) { isGranted: Boolean ->
-                if (!isGranted) {
-                    showNotificationPermissionRationale()
+    private fun registerPermissions() {
+        permissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissions ->
+            if (permissions.entries.all { it.value == true }){
+                audioPermissionGranted()
+            } else {
+                for (permission in permissions){
+                    if(!permission.value){
+                        if(isAudioPermission(permission.key)){
+                            showAudioMediaPermissionRationale()
+                        } else {
+                            showNotificationPermissionRationale()
+                        }
+                    }
                 }
             }
         }
-
     }
+
 
     private fun isAudioPermission(permission: String): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -139,48 +126,49 @@ class FragmentLoading : Fragment() {
         }
     }
 
-    private fun askForPermission(permission: String) {
-        val isAudioPermission = isAudioPermission(permission)
+    private fun askForPermissionAndLoadMusic() {
+        val permissions = mutableListOf<String>()
+        val audioPermission = getManifestAudioPermission()
         when {
             ContextCompat.checkSelfPermission(
                 requireContext(),
-                permission
+                audioPermission
             ) == PackageManager.PERMISSION_GRANTED -> {
-                if (isAudioPermission) {
-                    audioPermissionGranted()
-                }
+                audioPermissionGranted()
             }
 
-            shouldShowRequestPermissionRationale(permission) -> {
-                if (isAudioPermission) {
-                    showAudioMediaPermissionRationale()
-                } else {
-                    showNotificationPermissionRationale()
-                }
+            shouldShowRequestPermissionRationale(audioPermission) -> {
+                showAudioMediaPermissionRationale()
             }
 
             else -> {
-                if(isAudioPermission) {
-                    audioPermissionLauncher.launch(permission)
-                } else {
-                    notificationPermissionLauncher.launch(permission)
+                permissions.add(audioPermission)
+            }
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when {
+                ContextCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED -> {
+                    // Nothing needs to be done
+                }
+
+                shouldShowRequestPermissionRationale(audioPermission) -> {
+                    showNotificationPermissionRationale()
+                }
+
+                else -> {
+                    permissions.add(Manifest.permission.POST_NOTIFICATIONS)
                 }
             }
         }
-    }
 
-    private fun askForPermissionsAndLoadMusic() {
-        askForAudioPermissionAndLoadMusic()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            askForPermission(Manifest.permission.POST_NOTIFICATIONS)
-        }
-    }
-
-    private fun askForAudioPermissionAndLoadMusic() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            askForPermission(Manifest.permission.READ_MEDIA_AUDIO)
-        } else {
-            askForPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+        if (permissions.isNotEmpty()) {
+            permissionLauncher.launch(
+                permissions.toTypedArray()
+            )
         }
     }
 
@@ -191,7 +179,7 @@ class FragmentLoading : Fragment() {
             )
             .setTitle(getString(R.string.permission_title))
 
-        dialog.setPositiveButton(R.string.go_to_settings) { clicked_dialog, _ ->
+        dialog.setPositiveButton(R.string.go_to_settings) { clickedDialog, _ ->
             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
             val uri: Uri = Uri.fromParts(
                 "package",
@@ -199,7 +187,7 @@ class FragmentLoading : Fragment() {
                 null
             )
             intent.data = uri
-            clicked_dialog.dismiss()
+            clickedDialog.dismiss()
             startActivity(intent)
         }
             .setNegativeButton(R.string.cancel) { _, _ ->
@@ -248,7 +236,7 @@ class FragmentLoading : Fragment() {
         requireActivity().addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(
                 menu: Menu,
-                menuInflater: MenuInflater
+                menuInflater: MenuInflater,
             ) {
                 menuInflater.inflate(
                     R.menu.menu_toolbar,
@@ -273,7 +261,7 @@ class FragmentLoading : Fragment() {
 
     override fun onStart() {
         super.onStart()
-        askForPermissionsAndLoadMusic()
+        askForPermissionAndLoadMusic()
     }
 
     override fun onResume() {
